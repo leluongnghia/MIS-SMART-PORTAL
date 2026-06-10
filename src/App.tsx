@@ -1676,7 +1676,88 @@ export default function App() {
           <div className="p-4 flex flex-col gap-3.5 flex-1 overflow-y-auto">
             <p className="text-[10px] uppercase tracking-widest font-black text-slate-400 mb-0.5 px-3 font-mono">School OS 2.0</p>
 
-            {/* GROUP 1: FOUNDATION */}
+            {/* GROUP 1: STRATEGY */}
+            <div className="flex flex-col gap-0.5 border-b border-slate-100 dark:border-slate-800 pb-2.5">
+              <button 
+                onClick={() => toggleGroup('strategy')}
+                className="w-full flex items-center justify-between text-[10px] font-black tracking-wider text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 py-1.5 px-3 uppercase font-mono cursor-pointer transition-colors"
+              >
+                <span className="flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                  <span className={expandedGroups.strategy ? 'text-rose-650 font-extrabold' : ''}>1. Chiến lược</span>
+                </span>
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${expandedGroups.strategy ? 'text-rose-650' : '-rotate-90'}`} />
+              </button>
+              
+              {expandedGroups.strategy && (
+                <div className="flex flex-col gap-1 pl-2 ml-2 mt-1 border-l border-rose-100 dark:border-rose-900 transition-all duration-300">
+                  {/* Dashboard */}
+                  <button 
+                    onClick={() => { setOverviewTab('DASHBOARD'); setIsSidebarOpen(false); }}
+                    className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
+                      overviewTab === 'DASHBOARD' 
+                        ? 'bg-rose-50 dark:bg-rose-950/45 text-rose-700 dark:text-rose-300 font-extrabold border-l-4 border-rose-600 shadow-3xs scale-[1.01]' 
+                        : 'text-slate-600 dark:text-slate-350 hover:bg-rose-50/35 hover:text-rose-700 dark:hover:bg-slate-800 dark:hover:text-rose-400 font-semibold border-l-4 border-transparent'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Layout className={`w-4 h-4 transition-colors ${overviewTab === 'DASHBOARD' ? 'text-rose-600 dark:text-rose-400' : 'text-rose-400 dark:text-rose-550'}`} />
+                      <span>Executive Dashboard</span>
+                    </div>
+                  </button>
+
+                  {/* Chỉ đạo BGH */}
+                  <button 
+                    onClick={() => { setOverviewTab('BOARD_DIRECTIVES'); setIsSidebarOpen(false); }}
+                    className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
+                      overviewTab === 'BOARD_DIRECTIVES' 
+                        ? 'bg-rose-50 dark:bg-rose-950/45 text-rose-700 dark:text-rose-300 font-extrabold border-l-4 border-rose-600 shadow-3xs scale-[1.01]' 
+                        : 'text-slate-600 dark:text-slate-350 hover:bg-rose-50/35 hover:text-rose-700 dark:hover:bg-slate-800 dark:hover:text-rose-400 font-semibold border-l-4 border-transparent'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Megaphone className={`w-4 h-4 transition-colors ${overviewTab === 'BOARD_DIRECTIVES' ? 'text-rose-600 dark:text-rose-400' : 'text-rose-400 dark:text-rose-550'}`} />
+                      <span>Chỉ đạo BGH</span>
+                    </div>
+                    <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider font-mono shrink-0 select-none ${
+                      overviewTab === 'BOARD_DIRECTIVES' ? 'bg-rose-600 text-white' : 'bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300'
+                    }`}>NEW</span>
+                  </button>
+
+                  {/* Báo cáo */}
+                  <button 
+                    onClick={() => { setOverviewTab('ANALYTICS'); setIsSidebarOpen(false); }}
+                    className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
+                      overviewTab === 'ANALYTICS' 
+                        ? 'bg-rose-50 dark:bg-rose-950/45 text-rose-700 dark:text-rose-300 font-extrabold border-l-4 border-rose-600 shadow-3xs scale-[1.01]' 
+                        : 'text-slate-600 dark:text-slate-350 hover:bg-rose-50/35 hover:text-rose-700 dark:hover:bg-slate-800 dark:hover:text-rose-400 font-semibold border-l-4 border-transparent'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <FileSpreadsheet className={`w-4 h-4 transition-colors ${overviewTab === 'ANALYTICS' ? 'text-rose-600 dark:text-rose-400' : 'text-rose-400 dark:text-rose-550'}`} />
+                      <span>Báo cáo &amp; Phân tích</span>
+                    </div>
+                  </button>
+
+                  {/* Rủi ro */}
+                  <button 
+                    onClick={() => { setOverviewTab('RISK_CENTER'); setIsSidebarOpen(false); }}
+                    className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
+                      overviewTab === 'RISK_CENTER' 
+                        ? 'bg-rose-50 dark:bg-rose-950/45 text-rose-700 dark:text-rose-300 font-extrabold border-l-4 border-rose-600 shadow-3xs scale-[1.01]' 
+                        : 'text-slate-600 dark:text-slate-350 hover:bg-rose-50/35 hover:text-rose-700 dark:hover:bg-slate-800 dark:hover:text-rose-400 font-semibold border-l-4 border-transparent'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <AlertCircle className={`w-4 h-4 transition-colors ${overviewTab === 'RISK_CENTER' ? 'text-rose-600 dark:text-rose-400' : 'text-rose-400 dark:text-rose-550'}`} />
+                      <span>Quản trị Rủi ro</span>
+                    </div>
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* GROUP 2: FOUNDATION */}
             <div className="flex flex-col gap-0.5 border-b border-slate-100 dark:border-slate-800 pb-2.5">
               <button 
                 onClick={() => toggleGroup('foundation')}
@@ -1684,7 +1765,7 @@ export default function App() {
               >
                 <span className="flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
-                  <span className={expandedGroups.foundation ? 'text-indigo-650 font-extrabold' : ''}>1. Foundation</span>
+                  <span className={expandedGroups.foundation ? 'text-indigo-650 font-extrabold' : ''}>2. Nền tảng</span>
                 </span>
                 <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${expandedGroups.foundation ? 'text-indigo-650' : '-rotate-90'}`} />
               </button>
@@ -1727,7 +1808,7 @@ export default function App() {
               )}
             </div>
 
-            {/* GROUP 2: OPERATION */}
+            {/* GROUP 3: OPERATION */}
             <div className="flex flex-col gap-0.5 border-b border-slate-100 dark:border-slate-800 pb-2.5">
               <button 
                 onClick={() => toggleGroup('operation')}
@@ -1735,7 +1816,7 @@ export default function App() {
               >
                 <span className="flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-violet-500"></span>
-                  <span className={expandedGroups.operation ? 'text-violet-650 font-extrabold' : ''}>2. Operation</span>
+                  <span className={expandedGroups.operation ? 'text-violet-650 font-extrabold' : ''}>3. Vận hành</span>
                 </span>
                 <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${expandedGroups.operation ? 'text-violet-655' : '-rotate-90'}`} />
               </button>
@@ -1801,88 +1882,7 @@ export default function App() {
                   >
                     <div className="flex items-center gap-2.5">
                       <BookOpen className={`w-4 h-4 transition-colors ${overviewTab === 'KNOWLEDGE' ? 'text-violet-600 dark:text-violet-400' : 'text-violet-400 dark:text-violet-550'}`} />
-                      <span>Kho Tri Th�                  {/* Dashboard */}
-                  <button 
-                    onClick={() => { setOverviewTab('DASHBOARD'); setIsSidebarOpen(false); }}
-                    className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
-                      overviewTab === 'DASHBOARD' 
-                        ? 'bg-rose-50 dark:bg-rose-950/45 text-rose-700 dark:text-rose-300 font-extrabold border-l-4 border-rose-600 shadow-3xs scale-[1.01]' 
-                        : 'text-slate-600 dark:text-slate-350 hover:bg-rose-50/35 hover:text-rose-700 dark:hover:bg-slate-800 dark:hover:text-rose-400 font-semibold border-l-4 border-transparent'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <Layout className={`w-4 h-4 transition-colors ${overviewTab === 'DASHBOARD' ? 'text-rose-600 dark:text-rose-400' : 'text-rose-400 dark:text-rose-550'}`} />
-                      <span>Executive Dashboard</span>
-                    </div>
-                  </button>
-
-                  {/* Chỉ đạo BGH */}
-                  <button 
-                    onClick={() => { setOverviewTab('BOARD_DIRECTIVES'); setIsSidebarOpen(false); }}
-                    className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
-                      overviewTab === 'BOARD_DIRECTIVES' 
-                        ? 'bg-rose-50 dark:bg-rose-950/45 text-rose-700 dark:text-rose-300 font-extrabold border-l-4 border-rose-600 shadow-3xs scale-[1.01]' 
-                        : 'text-slate-600 dark:text-slate-350 hover:bg-rose-50/35 hover:text-rose-700 dark:hover:bg-slate-800 dark:hover:text-rose-400 font-semibold border-l-4 border-transparent'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <Megaphone className={`w-4 h-4 transition-colors ${overviewTab === 'BOARD_DIRECTIVES' ? 'text-rose-600 dark:text-rose-400' : 'text-rose-400 dark:text-rose-550'}`} />
-                      <span>Chỉ đạo BGH</span>
-                    </div>
-                    <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider font-mono shrink-0 select-none ${
-                      overviewTab === 'BOARD_DIRECTIVES' ? 'bg-rose-600 text-white' : 'bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300'
-                    }`}>NEW</span>
-                  </button>
-
-                  {/* Báo cáo */}
-                  <button 
-                    onClick={() => { setOverviewTab('ANALYTICS'); setIsSidebarOpen(false); }}
-                    className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
-                      overviewTab === 'ANALYTICS' 
-                        ? 'bg-rose-50 dark:bg-rose-950/45 text-rose-700 dark:text-rose-300 font-extrabold border-l-4 border-rose-600 shadow-3xs scale-[1.01]' 
-                        : 'text-slate-600 dark:text-slate-350 hover:bg-rose-50/35 hover:text-rose-700 dark:hover:bg-slate-800 dark:hover:text-rose-400 font-semibold border-l-4 border-transparent'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <FileSpreadsheet className={`w-4 h-4 transition-colors ${overviewTab === 'ANALYTICS' ? 'text-rose-600 dark:text-rose-400' : 'text-rose-400 dark:text-rose-550'}`} />
-                      <span>Báo cáo &amp; Phân tích</span>
-                    </div>
-                  </button>
-
-                  {/* Rủi ro */}
-                  <button 
-                    onClick={() => { setOverviewTab('RISK_CENTER'); setIsSidebarOpen(false); }}
-                    className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
-                      overviewTab === 'RISK_CENTER' 
-                        ? 'bg-rose-50 dark:bg-rose-950/45 text-rose-700 dark:text-rose-300 font-extrabold border-l-4 border-rose-600 shadow-3xs scale-[1.01]' 
-                        : 'text-slate-600 dark:text-slate-350 hover:bg-rose-50/35 hover:text-rose-700 dark:hover:bg-slate-800 dark:hover:text-rose-400 font-semibold border-l-4 border-transparent'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <AlertCircle className={`w-4 h-4 transition-colors ${overviewTab === 'RISK_CENTER' ? 'text-rose-600 dark:text-rose-400' : 'text-rose-400 dark:text-rose-550'}`} />
-                      <span>Quản trị Rủi ro</span>
-                    </div>
-                  </button>ate-350 hover:bg-rose-50/35 hover:text-rose-750 dark:hover:bg-slate-800 dark:hover:text-rose-400 font-semibold border-l-4 border-transparent'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <FileSpreadsheet className={`w-4 h-4 transition-colors ${overviewTab === 'ANALYTICS' ? 'text-rose-500' : 'text-rose-400 dark:text-rose-550'}`} />
-                      <span>Báo cáo &amp; Phân tích</span>
-                    </div>
-                  </button>
-
-                  {/* Rủi ro */}
-                  <button 
-                    onClick={() => { setOverviewTab('RISK_CENTER'); setIsSidebarOpen(false); }}
-                    className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
-                      overviewTab === 'RISK_CENTER' 
-                        ? 'bg-rose-50 dark:bg-rose-950/45 text-rose-700 dark:text-rose-300 font-extrabold border-l-4 border-rose-600 shadow-3xs scale-[1.01]' 
-                        : 'text-slate-600 dark:text-slate-350 hover:bg-rose-50/35 hover:text-rose-750 dark:hover:bg-slate-800 dark:hover:text-rose-400 font-semibold border-l-4 border-transparent'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <AlertCircle className={`w-4 h-4 transition-colors ${overviewTab === 'RISK_CENTER' ? 'text-rose-500' : 'text-rose-400 dark:text-rose-550'}`} />
-                      <span>Quản trị Rủi ro</span>
+                      <span>Kho Tri Thức</span>
                     </div>
                   </button>
                 </div>
@@ -1897,7 +1897,7 @@ export default function App() {
               >
                 <span className="flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                  <span className={expandedGroups.business ? 'text-emerald-600 font-extrabold' : ''}>4. School Business</span>
+                  <span className={expandedGroups.business ? 'text-emerald-600 font-extrabold' : ''}>4. Nghiệp vụ Trường học</span>
                 </span>
                 <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${expandedGroups.business ? 'text-emerald-600' : '-rotate-90'}`} />
               </button>
@@ -1996,7 +1996,7 @@ export default function App() {
               >
                 <span className="flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-sky-500"></span>
-                  <span className={expandedGroups.campus ? 'text-sky-600 font-extrabold' : ''}>5. Campus Operations</span>
+                  <span className={expandedGroups.campus ? 'text-sky-600 font-extrabold' : ''}>5. Vận hành Học đường</span>
                 </span>
                 <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${expandedGroups.campus ? 'text-sky-600' : '-rotate-90'}`} />
               </button>
