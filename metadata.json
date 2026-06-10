@@ -1,0 +1,8 @@
+{
+  "name": "Quản lý Công việc Trường học",
+  "description": "Hệ thống điều phối, giám sát hoạt động học vụ tích hợp thuyết Đa Trí Tuệ (Multiple Intelligences) áp dụng cho Trường Phổ thông Liên cấp Đa Trí Tuệ (MIS) Hà Nội.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

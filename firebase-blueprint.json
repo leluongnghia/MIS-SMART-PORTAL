@@ -1,0 +1,85 @@
+{
+  "entities": {
+    "task": {
+      "title": "Task",
+      "description": "An academic or administrative task or challenge assigned to a school department member",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier of the task" },
+        "title": { "type": "string", "description": "Title of the task" },
+        "description": { "type": "string", "description": "Detailed description of the action steps" },
+        "workspaceId": { "type": "string", "description": "ID of the school department or 'ALL'" },
+        "assignedId": { "type": "string", "description": "ID of the assigned user" },
+        "assignedName": { "type": "string", "description": "Name of the assigned staff member" },
+        "assignedRole": { "type": "string", "description": "Role description of the assigned staff" },
+        "priority": { "type": "string", "enum": ["THAP", "TRUNG_BINH", "CAO", "KHE_UOC"] },
+        "status": { "type": "string", "enum": ["CHUA_BAT_DA", "DANG_TIEN_HANH", "CHO_DUYET", "HOAN_THANH"] },
+        "deadline": { "type": "string", "description": "Due date in YYYY-MM-DD" },
+        "tag": { "type": "string", "description": "Theme tags" },
+        "createdBy": { "type": "string", "description": "Creator of the task" },
+        "reportEvidence": { "type": "string", "description": "Evidence submitted when requesting approval" },
+        "rejectReason": { "type": "string", "description": "Feedback or rejection notes from BGH" },
+        "comments": { "type": "array", "description": "A list of commentary objects from staff or directors" },
+        "history": { "type": "array", "description": "Audit trail actions" }
+      },
+      "required": ["id", "title", "workspaceId", "priority", "status", "deadline"]
+    },
+    "workspace": {
+      "title": "Workspace",
+      "description": "A school department or administrative board segment",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier for department" },
+        "name": { "type": "string", "description": "Formal Vietnamese title of department" },
+        "description": { "type": "string", "description": "Operational scope of this cabinet" },
+        "color": { "type": "string", "description": "Tailwind color classes" },
+        "iconName": { "type": "string", "description": "Lucide icon key" }
+      },
+      "required": ["id", "name", "color", "iconName"]
+    },
+    "directive": {
+      "title": "Board Directive",
+      "description": "A top-down decision or emergency directive from the board / BGH",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier of directive" },
+        "title": { "type": "string", "description": "Strategic core title" },
+        "description": { "type": "string", "description": "Context and instructions" },
+        "workspaceId": { "type": "string", "description": "Department target or 'ALL'" },
+        "priority": { "type": "string", "description": "CAO/KHE_UOC priority" },
+        "status": { "type": "string", "description": "ACTIVE or ARCHIVED state" },
+        "deadline": { "type": "string", "description": "Target completion date" },
+        "createdAt": { "type": "string", "description": "Creation timestamp string" },
+        "createdByName": { "type": "string", "description": "BGH creator name" },
+        "createdByTitle": { "type": "string", "description": "BGH title" }
+      },
+      "required": ["id", "title", "workspaceId", "status"]
+    },
+    "rbac": {
+      "title": "RBAC Config",
+      "description": "Dynamic role-based permissions matrix",
+      "type": "object",
+      "properties": {
+        "config": { "type": "object", "description": "The nested role keys to permissions map" }
+      }
+    }
+  },
+  "firestore": {
+    "workspaces": {
+      "schema": "workspace",
+      "description": "List of active school departments or workspace cabinets"
+    },
+    "tasks": {
+      "schema": "task",
+      "description": "School tasks, approvals, and report histories"
+    },
+    "directives": {
+      "schema": "directive",
+      "description": "Board directives and executive orders"
+    },
+    "config": {
+      "schema": "rbac",
+      "description": "Centralized metadata configuration profiles"
+    }
+  }
+}

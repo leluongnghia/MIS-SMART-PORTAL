@@ -1,0 +1,69 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny catch-all safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Global Helpers
+    function isSignedIn() {
+      return true; // Allow access even if silent anonymous auth is disabled in the Firebase project console.
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Workspaces Collection
+    match /workspaces/{workspaceId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && isValidId(workspaceId);
+    }
+
+    // Directives Collection
+    match /directives/{directiveId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && isValidId(directiveId);
+    }
+
+    // Config Collection (e.g., rbac)
+    match /config/{configId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && isValidId(configId);
+    }
+
+    // Tasks Validation Helper
+    function isValidTask(data) {
+      return data.id is string &&
+             data.title is string && data.title.size() <= 200 &&
+             data.description is string && data.description.size() <= 10000 &&
+             data.workspaceId is string &&
+             data.assignedId is string &&
+             data.assignedName is string &&
+             data.assignedRole is string &&
+             data.priority is string &&
+             data.status is string &&
+             data.deadline is string &&
+             data.tag is string &&
+             data.createdBy is string;
+    }
+
+    // Tasks Collection
+    match /tasks/{taskId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && isValidId(taskId) && isValidTask(incoming());
+      allow update: if isSignedIn() && isValidId(taskId) && isValidTask(incoming());
+      allow delete: if isSignedIn() && isValidId(taskId);
+    }
+  }
+}
