@@ -17,18 +17,31 @@ import { signInAnonymously } from 'firebase/auth';
 import TaskCard from './components/TaskCard';
 import WorkspaceStats from './components/WorkspaceStats';
 import ProductivityTrendChart from './components/ProductivityTrendChart';
+import ExecutiveDashboard from './components/ExecutiveDashboard';
 import TaskCalendar from './components/TaskCalendar';
 import TaskModal from './components/TaskModal';
 import TaskDetailsModal from './components/TaskDetailsModal';
 import GoogleSheetsCenter from './components/GoogleSheetsCenter';
 import LoginPortal from './components/LoginPortal';
 import WorkspaceManager from './components/WorkspaceManager';
-import IntelligenceAndOkrHub from './components/IntelligenceAndOkrHub';
-import MisLmsCenter from './components/MisLmsCenter';
+import StrategyOkrHub from './components/StrategyOkrHub';
+import WorkflowBuilder from './components/WorkflowBuilder';
+import SchoolCrmHub from './components/SchoolCrmHub';
+import StudentSuccessHub from './components/StudentSuccessHub';
+import TeacherHrHub from './components/TeacherHrHub';
+import RiskManagementCenter from './components/RiskManagementCenter';
+import ReportingAnalyticsBuilder from './components/ReportingAnalyticsBuilder';
 import AcademicOperations from './components/AcademicOperations';
 import SchoolLogistics from './components/SchoolLogistics';
-import HrmCenter from './components/HrmCenter';
 import SchoolRequests from './components/SchoolRequests';
+import HrmCenter from './components/HrmCenter';
+import BoardDirectivePanel from './components/BoardDirectivePanel';
+import IntelligenceAndOkrHub from './components/IntelligenceAndOkrHub';
+import MisLmsCenter from './components/MisLmsCenter';
+import DocumentCenter from './components/DocumentCenter';
+import MeetingCenter from './components/MeetingCenter';
+import KnowledgeBase from './components/KnowledgeBase';
+import EventManagement from './components/EventManagement';
 import RbacSettingsModal, { DEFAULT_RBAC_CONFIG } from './components/RbacSettingsModal';
 import GuideModal from './components/GuideModal';
 import { RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, ResponsiveContainer, Tooltip } from 'recharts';
@@ -77,7 +90,15 @@ import {
   Sparkles,
   Sun,
   Moon,
-  Cloud
+  Cloud,
+  Megaphone,
+  FileText,
+  CalendarDays,
+  GraduationCap,
+  Building2,
+  ClipboardList,
+  Volume2,
+  FolderOpen
 } from 'lucide-react';
 
 const INITIAL_ANNOUNCEMENTS: Announcement[] = [
@@ -173,6 +194,27 @@ const INITIAL_DIRECTIVES: BoardDirective[] = [
 export default function App() {
   const { lang, setLang, t } = useLanguage();
   const [isAuthReady, setIsAuthReady] = useState(false);
+  const [showWorkspaceDropdown, setShowWorkspaceDropdown] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const commandInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setCommandQuery('');
+        setIsCommandPaletteOpen(true);
+        window.setTimeout(() => commandInputRef.current?.focus(), 0);
+      }
+
+      if (e.key === 'Escape') {
+        setIsCommandPaletteOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   const [darkMode, setDarkMode] = useState<boolean>(() => {
     return localStorage.getItem('mis_theme') === 'dark';
   });
@@ -415,8 +457,10 @@ export default function App() {
 
   const [selectedWorkspace, setSelectedWorkspace] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  const [commandQuery, setCommandQuery] = useState('');
   const [activeView, setActiveView] = useState<'KANBAN' | 'CALENDAR' | 'LIST'>('KANBAN');
-  const [overviewTab, setOverviewTab] = useState<'TASKS' | 'INTELLIGENCE' | 'LMS' | 'ACADEMIC' | 'LOGISTICS' | 'HRM' | 'REQUESTS'>('TASKS');
+  const [overviewTab, setOverviewTab] = useState<'DASHBOARD' | 'STRATEGY_OKRS' | 'TASKS' | 'WORKFLOW_APPROVALS' | 'CRM_ADMISSIONS' | 'STUDENT_SUCCESS' | 'TEACHER_HR' | 'RISK_CENTER' | 'ANALYTICS' | 'BOARD_DIRECTIVES' | 'ACADEMIC_OPS' | 'LOGISTICS' | 'REQUESTS' | 'HRM' | 'LMS' | 'GOOGLE_SHEETS' | 'DOCUMENT' | 'MEETING' | 'KNOWLEDGE' | 'EVENTS'>('DASHBOARD');
   const [priorityFilter, setPriorityFilter] = useState<string>('ALL');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [tagFilter, setTagFilter] = useState<string>('ALL');
@@ -439,6 +483,21 @@ export default function App() {
     setExpandedBranches(prev => ({
       ...prev,
       [workspaceId]: !prev[workspaceId]
+    }));
+  };
+
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
+    foundation: true,
+    operation: true,
+    strategy: true,
+    business: true,
+    campus: true,
+  });
+
+  const toggleGroup = (groupKey: string) => {
+    setExpandedGroups(prev => ({
+      ...prev,
+      [groupKey]: !prev[groupKey]
     }));
   };
 
@@ -831,6 +890,17 @@ export default function App() {
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${hrStr}:${minStr}`;
   };
 
+  const handleSyncComplete = async (syncedTasks: Task[]) => {
+    setTasks(syncedTasks);
+    try {
+      for (const t of syncedTasks) {
+        await setDoc(doc(db, 'tasks', t.id), t);
+      }
+    } catch (e) {
+      console.error("Error syncing tasks from Google Sheets:", e);
+    }
+  };
+
   // CREATE TASK
   const handleCreateTask = async (taskData: Omit<Task, 'id' | 'comments' | 'history'>) => {
     if (!hasPermission('createTask')) {
@@ -1187,6 +1257,71 @@ export default function App() {
   // Current active Workspace metadata
   const activeWorkspaceMeta = visibleWorkspaces.find(w => w.id === selectedWorkspace) || visibleWorkspaces[0];
 
+  const openCommandPalette = (initialQuery = '') => {
+    setCommandQuery(initialQuery);
+    setIsCommandPaletteOpen(true);
+    window.setTimeout(() => commandInputRef.current?.focus(), 0);
+  };
+
+  const closeCommandPalette = () => {
+    setIsCommandPaletteOpen(false);
+  };
+
+  const openOverviewSection = (tab: typeof overviewTab) => {
+    setOverviewTab(tab);
+    closeCommandPalette();
+  };
+
+  const openTaskFromCommand = (task: Task) => {
+    setOverviewTab('TASKS');
+    setSearchQuery('');
+    setSelectedWorkspace(task.workspaceId);
+    setSelectedTaskForDetail(task);
+    closeCommandPalette();
+  };
+
+  const openWorkspaceFromCommand = (workspaceId: string) => {
+    setOverviewTab('TASKS');
+    setSelectedWorkspace(workspaceId);
+    setSearchQuery('');
+    closeCommandPalette();
+  };
+
+  const openUserFromCommand = (user: UserProfile) => {
+    setSelectedStaffProfile(user);
+    setProfileActiveTab('INFO');
+    closeCommandPalette();
+  };
+
+  const commandSearchTerm = commandQuery.trim().toLowerCase();
+  const matchesCommandTerm = (...values: Array<string | undefined>) => {
+    if (!commandSearchTerm) return true;
+    return values.some(value => value?.toLowerCase().includes(commandSearchTerm));
+  };
+
+  const commandSectionResults = [
+    { id: 'DASHBOARD', label: 'Tong quan dieu hanh', description: 'Dashboard, thong ke, hieu suat', tab: 'DASHBOARD' as const, icon: Layout },
+    { id: 'TASKS', label: 'Quan ly cong viec', description: 'Kanban, lich bieu, danh sach viec', tab: 'TASKS' as const, icon: ListTodo },
+    { id: 'STRATEGY_OKRS', label: 'OKRs chien luoc', description: 'Muc tieu, KPI, ket qua then chot', tab: 'STRATEGY_OKRS' as const, icon: TrendingUp },
+    { id: 'WORKFLOW_APPROVALS', label: 'Phe duyet quy trinh', description: 'Ho so, luong duyet, nhat ky', tab: 'WORKFLOW_APPROVALS' as const, icon: FileCheck },
+    { id: 'CRM_ADMISSIONS', label: 'CRM tuyen sinh', description: 'Phu huynh, hoc sinh, cham soc', tab: 'CRM_ADMISSIONS' as const, icon: Users },
+    { id: 'TEACHER_HR', label: 'Nhan su giao vien', description: 'Danh ba, KPI, nghi phep', tab: 'TEACHER_HR' as const, icon: UserCheck },
+    { id: 'RISK_CENTER', label: 'Quan tri rui ro', description: 'Canh bao, giam sat, xu ly', tab: 'RISK_CENTER' as const, icon: AlertCircle },
+    { id: 'ANALYTICS', label: 'Bao cao phan tich', description: 'Bao cao, bieu do, truy van', tab: 'ANALYTICS' as const, icon: FileSpreadsheet }
+  ].filter(item => matchesCommandTerm(item.label, item.description)).slice(0, 6);
+
+  const commandTaskResults = roleFilteredTasks
+    .filter(task => matchesCommandTerm(task.title, task.description, task.assignedName, task.createdBy, task.tag))
+    .slice(0, 6);
+
+  const commandUserResults = displayUsers
+    .filter(user => matchesCommandTerm(user.name, user.title, user.roleName))
+    .slice(0, 5);
+
+  const commandWorkspaceResults = visibleWorkspaces
+    .filter(workspace => matchesCommandTerm(workspace.name, workspace.description))
+    .slice(0, 5);
+
   const totalTasksCount = roleFilteredTasks.length;
   const completedTasksCount = roleFilteredTasks.filter(t => t.status === 'HOAN_THANH').length;
   const completionRate = totalTasksCount > 0 ? Math.round((completedTasksCount / totalTasksCount) * 100) : 0;
@@ -1214,8 +1349,8 @@ export default function App() {
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col font-sans text-slate-900 dark:text-slate-100 transition-all">
       
       {/* Header Navigation with premium glassmorphism */}
-      <nav className="h-16 sticky top-0 bg-white/90 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800/80 flex items-center justify-between px-3 md:px-6 shrink-0 shadow-xs z-30 transition-all">
-        <div className="flex items-center gap-2 md:gap-4">
+      <nav className="h-16 sticky top-0 bg-white/90 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800/80 flex items-center justify-between gap-2 px-2 sm:px-3 lg:px-4 shrink-0 shadow-xs z-30 transition-all w-full min-w-0">
+        <div className="flex items-center gap-2 lg:gap-3 shrink-0 min-w-0">
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
             id="btn-toggle-mobile-sidebar"
@@ -1247,22 +1382,75 @@ export default function App() {
             </div>
           </div>
 
-          <div>
-            <span className="text-sm md:text-base font-display font-extrabold tracking-tight text-slate-900 dark:text-white block leading-tight max-w-[150px] sm:max-w-[320px] truncate">
+          <div className="min-w-0">
+            <span className="text-sm md:text-base font-display font-extrabold tracking-tight text-slate-900 dark:text-white block leading-tight max-w-[150px] md:max-w-[190px] xl:max-w-[260px] truncate">
               MIS SMART PORTAL
             </span>
             <span className="text-[9.5px] text-indigo-600 dark:text-indigo-400 uppercase tracking-widest font-black hidden sm:flex items-center gap-1.5 leading-none mt-0.5">
               <span className="h-1.5 w-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
-              Quản Trị Giáo Dục Đa Trí Tuệ
+              Quản Trị Giáo Dục
             </span>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 md:gap-4 lg:gap-6">
+        {/* Prominent Global Search in Header */}
+        <div className="hidden lg:flex items-center flex-1 justify-center max-w-[min(50vw,620px)] mx-2 xl:mx-4 z-40 min-w-0">
+          <div className="relative flex-1 min-w-0">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              ref={searchInputRef}
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onFocus={() => openCommandPalette(searchQuery)}
+              onClick={() => openCommandPalette(searchQuery)}
+              placeholder="Tìm giáo viên, hồ sơ, công việc..."
+              className="w-full pl-9 pr-28 xl:pr-32 py-2 border border-slate-200 dark:border-slate-700 rounded-xl text-xs bg-slate-50/80 dark:bg-slate-900/50 text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+            />
+            <button
+              type="button"
+              onClick={() => openCommandPalette(searchQuery)}
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded-lg border border-indigo-100 bg-indigo-50 px-2 xl:px-2.5 py-1 text-[10px] font-extrabold text-indigo-700 transition-all hover:border-indigo-200 hover:bg-indigo-100 dark:border-indigo-900/50 dark:bg-indigo-950/50 dark:text-indigo-300 whitespace-nowrap"
+            >
+              Tìm kiếm nhanh
+            </button>
+          </div>
+
+          <div className="hidden">
+            <button
+              onClick={() => setShowWorkspaceDropdown(!showWorkspaceDropdown)}
+              className="w-[150px] xl:w-[185px] justify-between px-3 py-2 bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer shadow-3xs flex items-center gap-2 text-xs font-bold focus:outline-none"
+            >
+              <span className="truncate">Bộ phận: {activeWorkspaceMeta.name}</span>
+              <ChevronDown className="w-3.5 h-3.5" />
+            </button>
+            {showWorkspaceDropdown && (
+              <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg py-1 text-xs z-50">
+                {visibleWorkspaces.map(w => (
+                  <button
+                    key={w.id}
+                    onClick={() => {
+                      setSelectedWorkspace(w.id);
+                      setShowWorkspaceDropdown(false);
+                    }}
+                    className={`w-full text-left px-4 py-2 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-250 flex items-center justify-between ${
+                      selectedWorkspace === w.id ? 'font-bold bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-450' : ''
+                    }`}
+                  >
+                    <span>{w.name}</span>
+                    {selectedWorkspace === w.id && <Check className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-1.5 lg:gap-2 xl:gap-3 shrink-0">
           {/* Cloud Sync Status Indicator */}
-          <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-200/60 dark:border-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded-xl text-[10.5px] font-semibold animate-fade-in no-print">
+          <div className="hidden xl:flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-200/60 dark:border-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded-xl text-[10.5px] font-semibold animate-fade-in no-print">
             <Cloud className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 animate-pulse" />
-            <span>Đã kết nối đám mây</span>
+            <span className="hidden 2xl:inline">Đã kết nối đám mây</span>
           </div>
 
           {/* Language Toggle */}
@@ -1289,7 +1477,7 @@ export default function App() {
           <button
             onClick={requestNotificationPermission}
             id="btn-browser-notifications"
-            className={`px-2 md:px-3 py-1.5 rounded-xl border text-[11px] font-bold transition-all flex items-center gap-1 md:gap-1.5 cursor-pointer shadow-3xs ${
+            className={`px-2 xl:px-2.5 py-1.5 rounded-xl border text-[11px] font-bold transition-all flex items-center gap-1 xl:gap-1.5 cursor-pointer shadow-3xs ${
               notificationPermission === 'granted'
                 ? 'bg-indigo-50/80 text-indigo-700 border-indigo-200/60 hover:bg-indigo-100/60'
                 : notificationPermission === 'denied'
@@ -1311,7 +1499,7 @@ export default function App() {
                 ? 'text-slate-400' 
                 : 'text-amber-500 animate-bounce'
             }`} />
-            <span className="leading-none hidden md:inline">
+            <span className="leading-none hidden 2xl:inline">
               {notificationPermission === 'granted' 
                 ? 'Thông báo: Bật' 
                 : notificationPermission === 'denied' 
@@ -1327,7 +1515,7 @@ export default function App() {
             }`}></span>
           </button>
 
-          <div className="hidden sm:flex items-center gap-3">
+          <div className="hidden 2xl:flex items-center gap-3">
             <span className="px-3 py-1 bg-slate-100 border border-slate-200 text-slate-600 text-xs font-bold rounded-full">Học kỳ I - 2026/27</span>
           </div>
 
@@ -1335,7 +1523,7 @@ export default function App() {
           <div className="relative" id="sandbox-sso-container">
             <button
               onClick={() => setIsSandboxOpen(!isSandboxOpen)}
-              className="px-3 py-1.5 bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-300 hover:border-amber-400 text-amber-800 text-xs font-bold rounded-xl shadow-2xs hover:shadow-xs transition-all flex items-center gap-1.5 cursor-pointer focus:outline-none"
+              className="px-2 xl:px-3 py-1.5 bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-300 hover:border-amber-400 text-amber-800 text-xs font-bold rounded-xl shadow-2xs hover:shadow-xs transition-all flex items-center gap-1.5 cursor-pointer focus:outline-none [&>span:nth-of-type(2)]:hidden 2xl:[&>span:nth-of-type(2)]:inline [&>span:nth-of-type(3)]:inline 2xl:[&>span:nth-of-type(3)]:hidden"
               title="Vùng chạy thử nghiệm - Giả lập đăng nhập SSO"
             >
               <span className="relative flex h-2 w-2">
@@ -1454,13 +1642,6 @@ export default function App() {
                 Đăng xuất
               </button>
             </div>
-
-            <img
-              src={getSafeAvatar(currentUser.avatar, displayCurrentUser.name)}
-              alt={displayCurrentUser.name}
-              referrerPolicy="no-referrer"
-              className="w-10 h-10 rounded-xl bg-slate-200 border-2 border-slate-200 shadow-sm object-cover hidden sm:block"
-            />
           </div>
         </div>
       </nav>
@@ -1478,300 +1659,441 @@ export default function App() {
       <div className="flex flex-1 min-h-0 relative">
         
         {/* Sidebar Navigation matching the design HTML */}
-        <aside className={`fixed inset-y-0 left-0 z-40 w-64 bg-white text-slate-600 flex flex-col shrink-0 border-r border-slate-200/80 min-h-full transition-transform duration-300 md:static md:translate-x-0 ${
+        <aside className={`fixed inset-y-0 left-0 z-40 w-64 bg-white dark:bg-slate-900 text-slate-650 dark:text-slate-300 flex flex-col shrink-0 border-r border-slate-200/80 dark:border-slate-800/80 min-h-full transition-transform duration-300 md:static md:translate-x-0 ${
           isSidebarOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'
         }`}>
           {/* Mobile close button inside sidebar */}
-          <div className="flex md:hidden items-center justify-between p-4 border-b border-slate-200/80 bg-slate-50">
-            <span className="font-display font-black text-xs text-indigo-950 uppercase tracking-widest">Danh mục chỉ đạo</span>
+          <div className="flex md:hidden items-center justify-between p-4 border-b border-slate-200/80 dark:border-slate-850 bg-slate-50 dark:bg-slate-900">
+            <span className="font-display font-black text-xs text-indigo-950 dark:text-indigo-400 uppercase tracking-widest">Danh mục chỉ đạo</span>
             <button 
               onClick={() => setIsSidebarOpen(false)}
-              className="p-1 px-1.5 hover:bg-slate-200 text-slate-500 rounded-lg cursor-pointer border border-slate-205 shadow-3xs"
+              className="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-500 rounded-lg cursor-pointer"
+              title="Đóng sidebar"
             >
               <X className="w-4 h-4" />
             </button>
           </div>
+          <div className="p-4 flex flex-col gap-3.5 flex-1 overflow-y-auto">
+            <p className="text-[10px] uppercase tracking-widest font-black text-slate-400 mb-0.5 px-3 font-mono">School OS 2.0</p>
 
-          <div className="p-4 flex flex-col gap-1.5">
-            <p className="text-[10px] uppercase tracking-widest font-extrabold text-slate-400 mb-1 px-3">{t('overview')}</p>
-            
-            <button 
-              onClick={() => handleSelectViewOnMobile('KANBAN')}
-              className={`w-full px-3 py-2 rounded-xl flex items-center gap-3 text-sm cursor-pointer transition-all text-left ${
-                activeView === 'KANBAN' 
-                  ? 'bg-indigo-600 text-white font-bold shadow-sm shadow-indigo-100 scale-[1.01]' 
-                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 font-medium'
-              }`}
-            >
-              <Layout className={`w-4 h-4 ${activeView === 'KANBAN' ? 'text-white' : 'text-slate-500'}`} />
-              <span>{t('dashboard')}</span>
-            </button>
-
-            <button 
-              onClick={() => handleSelectViewOnMobile('CALENDAR')}
-              className={`w-full px-3 py-2 rounded-xl flex items-center gap-3 text-sm cursor-pointer transition-all text-left ${
-                activeView === 'CALENDAR' 
-                  ? 'bg-indigo-600 text-white font-bold shadow-sm shadow-indigo-100 scale-[1.01]' 
-                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 font-medium'
-              }`}
-            >
-              <CalendarIcon className={`w-4 h-4 ${activeView === 'CALENDAR' ? 'text-white' : 'text-slate-500'}`} />
-              <span>{t('schedule')}</span>
-            </button>
-
-            <button 
-              onClick={() => handleSelectViewOnMobile('LIST')}
-              className={`w-full px-3 py-2 rounded-xl flex items-center gap-3 text-sm cursor-pointer transition-all text-left ${
-                activeView === 'LIST' 
-                  ? 'bg-indigo-600 text-white font-bold shadow-sm shadow-indigo-100 scale-[1.01]' 
-                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 font-medium'
-              }`}
-            >
-              <ListTodo className={`w-4 h-4 ${activeView === 'LIST' ? 'text-white' : 'text-slate-500'}`} />
-              <span>{t('progressReport')}</span>
-            </button>
-          </div>
-
-          {/* Chức năng vận hành học đường */}
-          <div className="p-4 pt-0 flex flex-col gap-1.5 border-t border-slate-100 dark:border-slate-850 pt-3">
-            <p className="text-[10px] uppercase tracking-widest font-extrabold text-slate-400 mb-1 px-3">{t('schoolOps')}</p>
-            
-            <button 
-              onClick={() => { setOverviewTab('LMS'); setIsSidebarOpen(false); }}
-              className={`w-full px-3 py-2 rounded-xl flex items-center gap-3 text-sm cursor-pointer transition-all text-left ${
-                overviewTab === 'LMS' 
-                  ? 'bg-indigo-600 text-white font-bold shadow-sm shadow-indigo-100 scale-[1.01]' 
-                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 font-medium'
-              }`}
-              type="button"
-            >
-              <BookOpen className="w-4 h-4 text-indigo-500 group-hover:text-white" />
-              <span>{t('lms')}</span>
-            </button>
-
-            <button 
-              onClick={() => { setOverviewTab('ACADEMIC'); setIsSidebarOpen(false); }}
-              className={`w-full px-3 py-2 rounded-xl flex items-center gap-3 text-sm cursor-pointer transition-all text-left ${
-                overviewTab === 'ACADEMIC' 
-                  ? 'bg-amber-500 text-white font-bold shadow-sm shadow-amber-100 scale-[1.01]' 
-                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 font-medium'
-              }`}
-              type="button"
-            >
-              <CalendarIcon className="w-4 h-4 text-amber-500" />
-              <span>{t('academic')}</span>
-            </button>
-
-            <button 
-              onClick={() => { setOverviewTab('LOGISTICS'); setIsSidebarOpen(false); }}
-              className={`w-full px-3 py-2 rounded-xl flex items-center gap-3 text-sm cursor-pointer transition-all text-left ${
-                overviewTab === 'LOGISTICS' 
-                  ? 'bg-teal-600 text-white font-bold shadow-sm shadow-teal-100 scale-[1.01]' 
-                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 font-medium'
-              }`}
-              type="button"
-            >
-              <SlidersHorizontal className="w-4 h-4 text-teal-500" />
-              <span>{t('logistics')}</span>
-            </button>
-
-            <button 
-              onClick={() => { setOverviewTab('HRM'); setIsSidebarOpen(false); }}
-              className={`w-full px-3 py-2 rounded-xl flex items-center gap-3 text-sm cursor-pointer transition-all text-left ${
-                overviewTab === 'HRM' 
-                  ? 'bg-purple-650 bg-purple-600 text-white font-bold shadow-sm shadow-purple-100 scale-[1.01]' 
-                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 font-medium'
-              }`}
-              type="button"
-            >
-              <Users className="w-4 h-4 text-purple-500" />
-              <span>{t('hrm')}</span>
-            </button>
-
-            <button 
-              onClick={() => { setOverviewTab('REQUESTS'); setIsSidebarOpen(false); }}
-              className={`w-full px-3 py-2 rounded-xl flex items-center gap-3 text-sm cursor-pointer transition-all text-left ${
-                overviewTab === 'REQUESTS' 
-                  ? 'bg-rose-600 text-white font-bold shadow-sm shadow-rose-100 scale-[1.01]' 
-                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 font-medium'
-              }`}
-              type="button"
-            >
-              <FileCheck className="w-4 h-4 text-rose-500" />
-              <span>{t('requests')}</span>
-            </button>
-          </div>
-
-          <div className="mt-2 p-4 flex flex-col gap-1.5">
-            <div className="flex items-center justify-between mb-1 px-3">
-              <p className="text-[10px] uppercase tracking-widest font-extrabold text-slate-400">{t('workspace')}</p>
-              {currentUser.role === 'ADMIN' && (
-                <button
-                  onClick={() => setIsWorkspaceModalOpen(true)}
-                  className="p-1 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-indigo-600 transition-all cursor-pointer flex items-center justify-center border border-transparent hover:border-slate-200"
-                  title="Quản lý Phòng chức năng & Tổ chuyên môn"
-                  id="btn-manage-workspaces-sidebar"
-                >
-                  <Settings className="w-3.5 h-3.5 text-slate-400 hover:text-indigo-600" />
-                </button>
-              )}
-            </div>
-            
-            <div className="space-y-1">
-              {visibleWorkspaces.map((w) => {
-                const isSelected = selectedWorkspace === w.id;
-                const workspaceTaskCount = roleFilteredTasks.filter(t => w.id === 'ALL' || t.workspaceId === w.id).length;
-                
-                let dotColor = 'bg-blue-500';
-                if (w.id === 'ALL') dotColor = 'bg-indigo-400';
-                else if (w.id === 'BGH') dotColor = 'bg-amber-500';
-                else if (w.color) {
-                  const match = w.color.match(/from-([a-z]+-\d+)/);
-                  if (match) {
-                    dotColor = `bg-${match[1]}`;
-                  } else {
-                    dotColor = 'bg-indigo-500';
-                  }
-                }
-
-                return (
-                  <button
-                    key={w.id}
-                    onClick={() => handleSelectWorkspaceOnMobile(w.id)}
-                    className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-sm transition-all cursor-pointer text-left ${
-                      isSelected 
-                        ? 'bg-slate-100 text-slate-900 font-bold border-l-4 border-indigo-600 pl-2 shadow-3xs' 
-                        : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border-l-4 border-transparent'
+            {/* GROUP 1: FOUNDATION */}
+            <div className="flex flex-col gap-0.5 border-b border-slate-100 dark:border-slate-800 pb-2.5">
+              <button 
+                onClick={() => toggleGroup('foundation')}
+                className="w-full flex items-center justify-between text-[10px] font-black tracking-wider text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 py-1.5 px-3 uppercase font-mono cursor-pointer transition-colors"
+              >
+                <span className="flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
+                  <span className={expandedGroups.foundation ? 'text-indigo-650 font-extrabold' : ''}>1. Foundation</span>
+                </span>
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${expandedGroups.foundation ? 'text-indigo-650' : '-rotate-90'}`} />
+              </button>
+              
+              {expandedGroups.foundation && (
+                <div className="flex flex-col gap-1 pl-2 ml-2 mt-1 border-l border-indigo-100 dark:border-indigo-900 transition-all duration-300">
+                  {/* Định hướng & OKRs */}
+                  <button 
+                    onClick={() => { setOverviewTab('STRATEGY_OKRS'); setIsSidebarOpen(false); }}
+                    className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
+                      overviewTab === 'STRATEGY_OKRS' 
+                        ? 'bg-indigo-50 dark:bg-indigo-950/45 text-indigo-700 dark:text-indigo-300 font-extrabold border-l-4 border-indigo-600 shadow-3xs scale-[1.01]' 
+                        : 'text-slate-600 dark:text-slate-350 hover:bg-indigo-50/35 hover:text-indigo-700 dark:hover:bg-slate-800 dark:hover:text-indigo-400 font-semibold border-l-4 border-transparent'
                     }`}
                   >
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <div className={`w-2 h-2 rounded-full shrink-0 ${dotColor}`}></div>
-                      <span className="truncate max-w-[130px] font-semibold text-[12.5px]">{w.name}</span>
+                    <div className="flex items-center gap-2.5">
+                      <Layers className={`w-4 h-4 transition-colors ${overviewTab === 'STRATEGY_OKRS' ? 'text-indigo-600 dark:text-indigo-400' : 'text-indigo-400 dark:text-indigo-550'}`} />
+                      <span>Định hướng &amp; OKRs</span>
                     </div>
-                    <span className={`text-[10px] font-bold font-mono px-1.5 py-0.2 rounded-full ${
-                      isSelected ? 'bg-indigo-600 text-white font-extrabold shadow-3xs' : 'bg-slate-100 text-slate-500 font-medium'
-                    }`}>
-                      {workspaceTaskCount}
-                    </span>
                   </button>
-                );
-              })}
-            </div>
-          </div>
 
-          {/* PERSONNEL SWITCHER BRANCHES SECTION */}
-          <div className="mt-2 p-4 pt-0 flex flex-col gap-1 border-t border-slate-200/80 pt-4">
-            <div className="flex items-center justify-between mb-2.5 px-2">
-              <p className="text-[9.5px] uppercase tracking-wider font-bold text-slate-400 flex items-center gap-1.5">
-                <span className="p-1 bg-indigo-50 text-indigo-600 rounded-md">
-                  <Users className="w-3 h-3 text-indigo-600" />
+                  {/* Văn bản */}
+                  <button 
+                    onClick={() => { setOverviewTab('DOCUMENT'); setIsSidebarOpen(false); }}
+                    className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
+                      overviewTab === 'DOCUMENT' 
+                        ? 'bg-indigo-50 dark:bg-indigo-950/45 text-indigo-700 dark:text-indigo-300 font-extrabold border-l-4 border-indigo-600 shadow-3xs scale-[1.01]' 
+                        : 'text-slate-600 dark:text-slate-350 hover:bg-indigo-50/35 hover:text-indigo-700 dark:hover:bg-slate-800 dark:hover:text-indigo-400 font-semibold border-l-4 border-transparent'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <FileText className={`w-4 h-4 transition-colors ${overviewTab === 'DOCUMENT' ? 'text-indigo-600 dark:text-indigo-400' : 'text-indigo-400 dark:text-indigo-550'}`} />
+                      <span>Quản lý Văn bản</span>
+                    </div>
+                    <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider font-mono shrink-0 select-none ${
+                      overviewTab === 'DOCUMENT' ? 'bg-indigo-600 text-white' : 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300'
+                    }`}>NEW</span>
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* GROUP 2: OPERATION */}
+            <div className="flex flex-col gap-0.5 border-b border-slate-100 dark:border-slate-800 pb-2.5">
+              <button 
+                onClick={() => toggleGroup('operation')}
+                className="w-full flex items-center justify-between text-[10px] font-black tracking-wider text-slate-400 dark:text-slate-500 hover:text-violet-600 dark:hover:text-violet-400 py-1.5 px-3 uppercase font-mono cursor-pointer transition-colors"
+              >
+                <span className="flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-violet-500"></span>
+                  <span className={expandedGroups.operation ? 'text-violet-650 font-extrabold' : ''}>2. Operation</span>
                 </span>
-                Sơ đồ & Nhân sự các Tổ
-              </p>
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${expandedGroups.operation ? 'text-violet-655' : '-rotate-90'}`} />
+              </button>
+              
+              {expandedGroups.operation && (
+                <div className="flex flex-col gap-1 pl-2 ml-2 mt-1 border-l border-violet-100 dark:border-violet-900 transition-all duration-300">
+                  {/* Nhiệm vụ & Dự án */}
+                  <button 
+                    onClick={() => { setOverviewTab('TASKS'); handleSelectViewOnMobile('KANBAN'); }}
+                    className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
+                      overviewTab === 'TASKS' 
+                        ? 'bg-violet-50 dark:bg-violet-950/45 text-violet-700 dark:text-violet-300 font-extrabold border-l-4 border-violet-600 shadow-3xs scale-[1.01]' 
+                        : 'text-slate-600 dark:text-slate-350 hover:bg-violet-50/35 hover:text-violet-750 dark:hover:bg-slate-800 dark:hover:text-violet-400 font-semibold border-l-4 border-transparent'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <ListTodo className={`w-4 h-4 transition-colors ${overviewTab === 'TASKS' ? 'text-violet-600 dark:text-violet-400' : 'text-violet-400 dark:text-violet-550'}`} />
+                      <span>Nhiệm vụ &amp; Dự án</span>
+                    </div>
+                  </button>
+
+                  {/* Quy trình & Phê duyệt */}
+                  <button 
+                    onClick={() => { setOverviewTab('WORKFLOW_APPROVALS'); setIsSidebarOpen(false); }}
+                    className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
+                      overviewTab === 'WORKFLOW_APPROVALS' 
+                        ? 'bg-violet-50 dark:bg-violet-950/45 text-violet-700 dark:text-violet-300 font-extrabold border-l-4 border-violet-600 shadow-3xs scale-[1.01]' 
+                        : 'text-slate-600 dark:text-slate-350 hover:bg-violet-50/35 hover:text-violet-750 dark:hover:bg-slate-800 dark:hover:text-violet-400 font-semibold border-l-4 border-transparent'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <FileCheck className={`w-4 h-4 transition-colors ${overviewTab === 'WORKFLOW_APPROVALS' ? 'text-violet-600 dark:text-violet-400' : 'text-violet-400 dark:text-violet-550'}`} />
+                      <span>Quy trình &amp; Phê duyệt</span>
+                    </div>
+                  </button>
+
+                  {/* Cuộc họp */}
+                  <button 
+                    onClick={() => { setOverviewTab('MEETING'); setIsSidebarOpen(false); }}
+                    className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
+                      overviewTab === 'MEETING' 
+                        ? 'bg-violet-50 dark:bg-violet-950/45 text-violet-700 dark:text-violet-300 font-extrabold border-l-4 border-violet-600 shadow-3xs scale-[1.01]' 
+                        : 'text-slate-600 dark:text-slate-350 hover:bg-violet-50/35 hover:text-violet-750 dark:hover:bg-slate-800 dark:hover:text-violet-400 font-semibold border-l-4 border-transparent'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <CalendarDays className={`w-4 h-4 transition-colors ${overviewTab === 'MEETING' ? 'text-violet-600 dark:text-violet-400' : 'text-violet-400 dark:text-violet-550'}`} />
+                      <span>Quản lý Cuộc họp</span>
+                    </div>
+                    <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider font-mono shrink-0 select-none ${
+                      overviewTab === 'MEETING' ? 'bg-violet-600 text-white' : 'bg-violet-100 text-violet-750 dark:bg-violet-950 dark:text-violet-300'
+                    }`}>NEW</span>
+                  </button>
+
+                  {/* Kho tri thức */}
+                  <button 
+                    onClick={() => { setOverviewTab('KNOWLEDGE'); setIsSidebarOpen(false); }}
+                    className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
+                      overviewTab === 'KNOWLEDGE' 
+                        ? 'bg-violet-50 dark:bg-violet-950/45 text-violet-700 dark:text-violet-300 font-extrabold border-l-4 border-violet-600 shadow-3xs scale-[1.01]' 
+                        : 'text-slate-600 dark:text-slate-350 hover:bg-violet-50/35 hover:text-violet-750 dark:hover:bg-slate-800 dark:hover:text-violet-400 font-semibold border-l-4 border-transparent'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <BookOpen className={`w-4 h-4 transition-colors ${overviewTab === 'KNOWLEDGE' ? 'text-violet-600 dark:text-violet-400' : 'text-violet-400 dark:text-violet-550'}`} />
+                      <span>Kho Tri Th�                  {/* Dashboard */}
+                  <button 
+                    onClick={() => { setOverviewTab('DASHBOARD'); setIsSidebarOpen(false); }}
+                    className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
+                      overviewTab === 'DASHBOARD' 
+                        ? 'bg-rose-50 dark:bg-rose-950/45 text-rose-700 dark:text-rose-300 font-extrabold border-l-4 border-rose-600 shadow-3xs scale-[1.01]' 
+                        : 'text-slate-600 dark:text-slate-350 hover:bg-rose-50/35 hover:text-rose-700 dark:hover:bg-slate-800 dark:hover:text-rose-400 font-semibold border-l-4 border-transparent'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Layout className={`w-4 h-4 transition-colors ${overviewTab === 'DASHBOARD' ? 'text-rose-600 dark:text-rose-400' : 'text-rose-400 dark:text-rose-550'}`} />
+                      <span>Executive Dashboard</span>
+                    </div>
+                  </button>
+
+                  {/* Chỉ đạo BGH */}
+                  <button 
+                    onClick={() => { setOverviewTab('BOARD_DIRECTIVES'); setIsSidebarOpen(false); }}
+                    className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
+                      overviewTab === 'BOARD_DIRECTIVES' 
+                        ? 'bg-rose-50 dark:bg-rose-950/45 text-rose-700 dark:text-rose-300 font-extrabold border-l-4 border-rose-600 shadow-3xs scale-[1.01]' 
+                        : 'text-slate-600 dark:text-slate-350 hover:bg-rose-50/35 hover:text-rose-700 dark:hover:bg-slate-800 dark:hover:text-rose-400 font-semibold border-l-4 border-transparent'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Megaphone className={`w-4 h-4 transition-colors ${overviewTab === 'BOARD_DIRECTIVES' ? 'text-rose-600 dark:text-rose-400' : 'text-rose-400 dark:text-rose-550'}`} />
+                      <span>Chỉ đạo BGH</span>
+                    </div>
+                    <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider font-mono shrink-0 select-none ${
+                      overviewTab === 'BOARD_DIRECTIVES' ? 'bg-rose-600 text-white' : 'bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300'
+                    }`}>NEW</span>
+                  </button>
+
+                  {/* Báo cáo */}
+                  <button 
+                    onClick={() => { setOverviewTab('ANALYTICS'); setIsSidebarOpen(false); }}
+                    className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
+                      overviewTab === 'ANALYTICS' 
+                        ? 'bg-rose-50 dark:bg-rose-950/45 text-rose-700 dark:text-rose-300 font-extrabold border-l-4 border-rose-600 shadow-3xs scale-[1.01]' 
+                        : 'text-slate-600 dark:text-slate-350 hover:bg-rose-50/35 hover:text-rose-700 dark:hover:bg-slate-800 dark:hover:text-rose-400 font-semibold border-l-4 border-transparent'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <FileSpreadsheet className={`w-4 h-4 transition-colors ${overviewTab === 'ANALYTICS' ? 'text-rose-600 dark:text-rose-400' : 'text-rose-400 dark:text-rose-550'}`} />
+                      <span>Báo cáo &amp; Phân tích</span>
+                    </div>
+                  </button>
+
+                  {/* Rủi ro */}
+                  <button 
+                    onClick={() => { setOverviewTab('RISK_CENTER'); setIsSidebarOpen(false); }}
+                    className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
+                      overviewTab === 'RISK_CENTER' 
+                        ? 'bg-rose-50 dark:bg-rose-950/45 text-rose-700 dark:text-rose-300 font-extrabold border-l-4 border-rose-600 shadow-3xs scale-[1.01]' 
+                        : 'text-slate-600 dark:text-slate-350 hover:bg-rose-50/35 hover:text-rose-700 dark:hover:bg-slate-800 dark:hover:text-rose-400 font-semibold border-l-4 border-transparent'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <AlertCircle className={`w-4 h-4 transition-colors ${overviewTab === 'RISK_CENTER' ? 'text-rose-600 dark:text-rose-400' : 'text-rose-400 dark:text-rose-550'}`} />
+                      <span>Quản trị Rủi ro</span>
+                    </div>
+                  </button>ate-350 hover:bg-rose-50/35 hover:text-rose-750 dark:hover:bg-slate-800 dark:hover:text-rose-400 font-semibold border-l-4 border-transparent'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <FileSpreadsheet className={`w-4 h-4 transition-colors ${overviewTab === 'ANALYTICS' ? 'text-rose-500' : 'text-rose-400 dark:text-rose-550'}`} />
+                      <span>Báo cáo &amp; Phân tích</span>
+                    </div>
+                  </button>
+
+                  {/* Rủi ro */}
+                  <button 
+                    onClick={() => { setOverviewTab('RISK_CENTER'); setIsSidebarOpen(false); }}
+                    className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
+                      overviewTab === 'RISK_CENTER' 
+                        ? 'bg-rose-50 dark:bg-rose-950/45 text-rose-700 dark:text-rose-300 font-extrabold border-l-4 border-rose-600 shadow-3xs scale-[1.01]' 
+                        : 'text-slate-600 dark:text-slate-350 hover:bg-rose-50/35 hover:text-rose-750 dark:hover:bg-slate-800 dark:hover:text-rose-400 font-semibold border-l-4 border-transparent'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <AlertCircle className={`w-4 h-4 transition-colors ${overviewTab === 'RISK_CENTER' ? 'text-rose-500' : 'text-rose-400 dark:text-rose-550'}`} />
+                      <span>Quản trị Rủi ro</span>
+                    </div>
+                  </button>
+                </div>
+              )}
             </div>
-            
-            <div className="flex flex-col gap-1 max-h-72 overflow-y-auto pr-1">
-              {visibleWorkspaces.filter(w => w.id !== 'ALL').map((w) => {
-                const isExpanded = !!expandedBranches[w.id];
-                const activeInThisBranch = currentUser.workspaceId === w.id;
-                
-                // Get users in this workspace
-                const branchUsers = users.filter(u => u.workspaceId === w.id);
 
-                let dotColor = 'bg-blue-500';
-                if (w.id === 'BGH') dotColor = 'bg-amber-500';
-                else if (w.color) {
-                  const match = w.color.match(/from-([a-z]+-\d+)/);
-                  if (match) {
-                    dotColor = `bg-${match[1]}`;
-                  } else {
-                    dotColor = 'bg-indigo-500';
-                  }
-                }
+            {/* GROUP 4: BUSINESS */}
+            <div className="flex flex-col gap-0.5 border-b border-slate-100 dark:border-slate-800 pb-2.5">
+              <button 
+                onClick={() => toggleGroup('business')}
+                className="w-full flex items-center justify-between text-[10px] font-black tracking-wider text-slate-400 dark:text-slate-500 hover:text-emerald-600 dark:hover:text-emerald-400 py-1.5 px-3 uppercase font-mono cursor-pointer transition-colors"
+              >
+                <span className="flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                  <span className={expandedGroups.business ? 'text-emerald-600 font-extrabold' : ''}>4. School Business</span>
+                </span>
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${expandedGroups.business ? 'text-emerald-600' : '-rotate-90'}`} />
+              </button>
+              
+              {expandedGroups.business && (
+                <div className="flex flex-col gap-1 pl-2 ml-2 mt-1 border-l border-emerald-100 dark:border-emerald-900 transition-all duration-300">
+                  {/* Tuyển sinh & CRM */}
+                  <button 
+                    onClick={() => { setOverviewTab('CRM_ADMISSIONS'); setIsSidebarOpen(false); }}
+                    className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
+                      overviewTab === 'CRM_ADMISSIONS' 
+                        ? 'bg-emerald-50 dark:bg-emerald-950/45 text-emerald-700 dark:text-emerald-300 font-extrabold border-l-4 border-emerald-600 shadow-3xs scale-[1.01]' 
+                        : 'text-slate-600 dark:text-slate-350 hover:bg-emerald-50/35 hover:text-emerald-750 dark:hover:bg-slate-800 dark:hover:text-emerald-400 font-semibold border-l-4 border-transparent'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <SlidersHorizontal className={`w-4 h-4 transition-colors ${overviewTab === 'CRM_ADMISSIONS' ? 'text-emerald-600' : 'text-emerald-400 dark:text-emerald-550'}`} />
+                      <span>Tuyển sinh &amp; CRM</span>
+                    </div>
+                  </button>
 
-                return (
-                  <div key={w.id} className="group/branch flex flex-col">
-                    <button
-                      onClick={() => toggleBranch(w.id)}
-                      className={`w-full px-2 py-1.5 flex items-center justify-between text-xs transition-all cursor-pointer text-left font-semibold rounded-lg ${
-                        activeInThisBranch 
-                          ? 'bg-indigo-50/60 text-indigo-700' 
-                          : 'text-slate-600 hover:bg-slate-200/50 hover:text-slate-900'
-                      }`}
-                    >
-                      <div className="flex items-center gap-1.5 truncate">
-                        <span className="text-slate-400 group-hover/branch:text-slate-600 transition-colors">
-                          {isExpanded ? (
-                            <ChevronDown className="w-3 h-3 shrink-0" />
-                          ) : (
-                            <ChevronRight className="w-3 h-3 shrink-0" />
-                          )}
-                        </span>
-                        <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${dotColor}`}></span>
-                        <span className="truncate leading-none">{w.name}</span>
-                      </div>
-                      <span className="text-[9px] font-mono px-1.5 py-0.5 rounded-full bg-slate-200/85 text-slate-600 font-bold shrink-0">
-                        {branchUsers.length}
-                      </span>
-                    </button>
+                  {/* Học sinh 360 */}
+                  <button 
+                    onClick={() => { setOverviewTab('STUDENT_SUCCESS'); setIsSidebarOpen(false); }}
+                    className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
+                      overviewTab === 'STUDENT_SUCCESS' 
+                        ? 'bg-emerald-50 dark:bg-emerald-950/45 text-emerald-700 dark:text-emerald-300 font-extrabold border-l-4 border-emerald-600 shadow-3xs scale-[1.01]' 
+                        : 'text-slate-600 dark:text-slate-350 hover:bg-emerald-50/35 hover:text-emerald-755 dark:hover:bg-slate-800 dark:hover:text-emerald-400 font-semibold border-l-4 border-transparent'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Users className={`w-4 h-4 transition-colors ${overviewTab === 'STUDENT_SUCCESS' ? 'text-emerald-600' : 'text-emerald-400 dark:text-emerald-550'}`} />
+                      <span>Hồ sơ Học sinh 360°</span>
+                    </div>
+                  </button>
 
-                    {isExpanded && (
-                      <div className="pl-3 ml-2.5 border-l border-slate-200/80 my-1 py-0.5 flex flex-col gap-1.5 max-h-56 overflow-y-auto scrollbar-thin">
-                        {branchUsers.map((u) => {
-                          const isUserSelected = currentUser.id === u.id;
-                          return (
-                            <button
-                              key={u.id}
-                              onClick={() => {
-                                setProfileActiveTab('INFO');
-                                setSelectedStaffProfile(u);
-                              }}
-                              className={`group/user w-full px-2 py-1.5 rounded-md flex items-center gap-2 text-left hover:bg-slate-100 transition-all cursor-pointer ${
-                                isUserSelected 
-                                  ? 'bg-indigo-50/70 text-indigo-700 border border-indigo-100 font-semibold shadow-3xs' 
-                                  : 'text-slate-600 border border-transparent'
-                              }`}
-                            >
-                              <div className="relative shrink-0">
-                                <img 
-                                  src={getSafeAvatar(u.avatar, u.name)} 
-                                  alt={u.name} 
-                                  className={`w-5.5 h-5.5 rounded-full object-cover border ${
-                                    isUserSelected ? 'border-indigo-300' : 'border-slate-200'
-                                  }`}
-                                  referrerPolicy="no-referrer"
-                                />
-                                {isUserSelected && (
-                                  <span className="absolute -bottom-0.5 -right-0.5 block h-2 w-2 rounded-full ring-1 ring-white bg-emerald-500">
-                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                  </span>
-                                )}
-                              </div>
-                              <div className="truncate flex-1">
-                                <div className="flex items-center justify-between gap-1">
-                                  <span className={`text-[11px] truncate block leading-tight ${
-                                    isUserSelected ? 'text-indigo-800 font-extrabold' : 'text-slate-700 font-semibold group-hover/user:text-indigo-650'
-                                  }`}>
-                                    {u.name}
-                                  </span>
-                                  {isUserSelected && (
-                                    <span className="text-[7px] uppercase tracking-wider font-extrabold bg-indigo-150 text-indigo-800 px-1 py-0.2 rounded shrink-0">
-                                      BẠN
-                                    </span>
-                                  )}
-                                </div>
-                                <p className="text-[9px] text-slate-401 truncate leading-none mt-0.5 font-medium">
-                                  {u.title}
-                                </p>
-                              </div>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+                  {/* Nhân sự & Giáo viên */}
+                  <button 
+                    onClick={() => { setOverviewTab('TEACHER_HR'); setIsSidebarOpen(false); }}
+                    className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
+                      overviewTab === 'TEACHER_HR' 
+                        ? 'bg-emerald-50 dark:bg-emerald-950/45 text-emerald-700 dark:text-emerald-300 font-extrabold border-l-4 border-emerald-600 shadow-3xs scale-[1.01]' 
+                        : 'text-slate-600 dark:text-slate-350 hover:bg-emerald-50/35 hover:text-emerald-750 dark:hover:bg-slate-800 dark:hover:text-emerald-400 font-semibold border-l-4 border-transparent'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Users className={`w-4 h-4 transition-colors ${overviewTab === 'TEACHER_HR' ? 'text-emerald-600' : 'text-emerald-400 dark:text-emerald-550'}`} />
+                      <span>Nhân sự &amp; Giáo viên</span>
+                    </div>
+                  </button>
+
+                  {/* HRM */}
+                  <button 
+                    onClick={() => { setOverviewTab('HRM'); setIsSidebarOpen(false); }}
+                    className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
+                      overviewTab === 'HRM' 
+                        ? 'bg-emerald-50 dark:bg-emerald-950/45 text-emerald-700 dark:text-emerald-300 font-extrabold border-l-4 border-emerald-600 shadow-3xs scale-[1.01]' 
+                        : 'text-slate-600 dark:text-slate-350 hover:bg-emerald-50/35 hover:text-emerald-755 dark:hover:bg-slate-800 dark:hover:text-emerald-400 font-semibold border-l-4 border-transparent'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <UserCheck className={`w-4 h-4 transition-colors ${overviewTab === 'HRM' ? 'text-emerald-600' : 'text-emerald-400 dark:text-emerald-550'}`} />
+                      <span>Quản trị HRM</span>
+                    </div>
+                    <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider font-mono shrink-0 select-none ${
+                      overviewTab === 'HRM' ? 'bg-emerald-650 text-white' : 'bg-emerald-100 text-emerald-755 dark:bg-emerald-950 dark:text-emerald-300'
+                    }`}>NEW</span>
+                  </button>
+
+                  {/* LMS */}
+                  <button 
+                    onClick={() => { setOverviewTab('LMS'); setIsSidebarOpen(false); }}
+                    className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
+                      overviewTab === 'LMS' 
+                        ? 'bg-emerald-50 dark:bg-emerald-950/45 text-emerald-700 dark:text-emerald-300 font-extrabold border-l-4 border-emerald-600 shadow-3xs scale-[1.01]' 
+                        : 'text-slate-600 dark:text-slate-350 hover:bg-emerald-50/35 hover:text-emerald-750 dark:hover:bg-slate-800 dark:hover:text-emerald-400 font-semibold border-l-4 border-transparent'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Laptop className={`w-4 h-4 transition-colors ${overviewTab === 'LMS' ? 'text-emerald-600' : 'text-emerald-400 dark:text-emerald-550'}`} />
+                      <span>Hệ thống LMS</span>
+                    </div>
+                    <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider font-mono shrink-0 select-none ${
+                      overviewTab === 'LMS' ? 'bg-emerald-650 text-white' : 'bg-emerald-100 text-emerald-755 dark:bg-emerald-950 dark:text-emerald-300'
+                    }`}>NEW</span>
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* GROUP 5: CAMPUS */}
+            <div className="flex flex-col gap-0.5 border-b border-slate-100 dark:border-slate-800 pb-2.5">
+              <button 
+                onClick={() => toggleGroup('campus')}
+                className="w-full flex items-center justify-between text-[10px] font-black tracking-wider text-slate-400 dark:text-slate-500 hover:text-sky-600 dark:hover:text-sky-400 py-1.5 px-3 uppercase font-mono cursor-pointer transition-colors"
+              >
+                <span className="flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-sky-500"></span>
+                  <span className={expandedGroups.campus ? 'text-sky-600 font-extrabold' : ''}>5. Campus Operations</span>
+                </span>
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${expandedGroups.campus ? 'text-sky-600' : '-rotate-90'}`} />
+              </button>
+              
+              {expandedGroups.campus && (
+                <div className="flex flex-col gap-1 pl-2 ml-2 mt-1 border-l border-sky-100 dark:border-sky-900 transition-all duration-300">
+                  {/* Sự kiện */}
+                  <button 
+                    onClick={() => { setOverviewTab('EVENTS'); setIsSidebarOpen(false); }}
+                    className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
+                      overviewTab === 'EVENTS' 
+                        ? 'bg-sky-50 dark:bg-sky-950/45 text-sky-700 dark:text-sky-300 font-extrabold border-l-4 border-sky-600 shadow-3xs scale-[1.01]' 
+                        : 'text-slate-600 dark:text-slate-350 hover:bg-sky-50/35 hover:text-sky-750 dark:hover:bg-slate-800 dark:hover:text-sky-400 font-semibold border-l-4 border-transparent'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Sparkles className={`w-4 h-4 transition-colors ${overviewTab === 'EVENTS' ? 'text-sky-600' : 'text-sky-500/80'}`} />
+                      <span>Quản lý Sự kiện</span>
+                    </div>
+                    <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider font-mono shrink-0 select-none ${
+                      overviewTab === 'EVENTS' ? 'bg-sky-600 text-white' : 'bg-sky-100 text-sky-755 dark:bg-sky-950 dark:text-sky-300'
+                    }`}>NEW</span>
+                  </button>
+
+                  {/* Vận hành Học thuật */}
+                  <button 
+                    onClick={() => { setOverviewTab('ACADEMIC_OPS'); setIsSidebarOpen(false); }}
+                    className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
+                      overviewTab === 'ACADEMIC_OPS' 
+                        ? 'bg-sky-50/80 dark:bg-sky-950/40 text-sky-600 dark:text-sky-400 font-bold border-l-2 border-sky-500 shadow-3xs scale-[1.01]' 
+                        : 'text-slate-600 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-sky-600 dark:hover:text-sky-400 font-semibold border-l-2 border-transparent'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <GraduationCap className={`w-4 h-4 transition-colors ${overviewTab === 'ACADEMIC_OPS' ? 'text-sky-500' : 'text-slate-400'}`} />
+                      <span>Vận hành Học thuật</span>
+                    </div>
+                    <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider font-mono shrink-0 select-none ${
+                      overviewTab === 'ACADEMIC_OPS' ? 'bg-sky-600 text-white' : 'bg-sky-50 text-sky-600 dark:bg-sky-950 dark:text-sky-300'
+                    }`}>NEW</span>
+                  </button>
+
+                  {/* Logistics */}
+                  <button 
+                    onClick={() => { setOverviewTab('LOGISTICS'); setIsSidebarOpen(false); }}
+                    className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
+                      overviewTab === 'LOGISTICS' 
+                        ? 'bg-sky-50/80 dark:bg-sky-950/40 text-sky-600 dark:text-sky-400 font-bold border-l-2 border-sky-500 shadow-3xs scale-[1.01]' 
+                        : 'text-slate-600 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-sky-600 dark:hover:text-sky-400 font-semibold border-l-2 border-transparent'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <School className={`w-4 h-4 transition-colors ${overviewTab === 'LOGISTICS' ? 'text-sky-500' : 'text-slate-400'}`} />
+                      <span>Logistics &amp; CSVC</span>
+                    </div>
+                    <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider font-mono shrink-0 select-none ${
+                      overviewTab === 'LOGISTICS' ? 'bg-sky-600 text-white' : 'bg-sky-50 text-sky-600 dark:bg-sky-950 dark:text-sky-300'
+                    }`}>NEW</span>
+                  </button>
+
+                  {/* Yêu cầu */}
+                  <button 
+                    onClick={() => { setOverviewTab('REQUESTS'); setIsSidebarOpen(false); }}
+                    className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
+                      overviewTab === 'REQUESTS' 
+                        ? 'bg-sky-50/80 dark:bg-sky-950/40 text-sky-600 dark:text-sky-400 font-bold border-l-2 border-sky-500 shadow-3xs scale-[1.01]' 
+                        : 'text-slate-600 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-sky-600 dark:hover:text-sky-400 font-semibold border-l-2 border-transparent'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Briefcase className={`w-4 h-4 transition-colors ${overviewTab === 'REQUESTS' ? 'text-sky-500' : 'text-slate-400'}`} />
+                      <span>Yêu cầu &amp; Dịch vụ</span>
+                    </div>
+                    <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider font-mono shrink-0 select-none ${
+                      overviewTab === 'REQUESTS' ? 'bg-sky-600 text-white' : 'bg-sky-50 text-sky-600 dark:bg-sky-950 dark:text-sky-300'
+                    }`}>NEW</span>
+                  </button>
+
+                  {/* Sheets Sync */}
+                  <button 
+                    onClick={() => { setOverviewTab('GOOGLE_SHEETS'); setIsSidebarOpen(false); }}
+                    className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
+                      overviewTab === 'GOOGLE_SHEETS' 
+                        ? 'bg-sky-50/80 dark:bg-sky-950/40 text-sky-600 dark:text-sky-400 font-bold border-l-2 border-sky-500 shadow-3xs scale-[1.01]' 
+                        : 'text-slate-600 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-sky-600 dark:hover:text-sky-400 font-semibold border-l-2 border-transparent'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <RefreshCw className={`w-4 h-4 transition-colors ${overviewTab === 'GOOGLE_SHEETS' ? 'text-sky-500' : 'text-slate-400'}`} />
+                      <span>Đồng bộ Sheets</span>
+                    </div>
+                    <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider font-mono shrink-0 select-none ${
+                      overviewTab === 'GOOGLE_SHEETS' ? 'bg-sky-600 text-white' : 'bg-sky-50 text-sky-600 dark:bg-sky-950 dark:text-sky-300'
+                    }`}>NEW</span>
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 
@@ -1853,192 +2175,177 @@ export default function App() {
             </div>
           </div>
 
-          {/* STATS OVERVIEW FOR SELECTED WORKSPACE */}
-              {isStatsCollapsed ? (
-                <div className="bg-gradient-to-r from-indigo-500/10 via-indigo-500/5 to-transparent border border-indigo-150/65 rounded-2xl p-4 flex items-center justify-between shadow-3xs animate-fade-in mb-6">
-                  <div className="flex items-center gap-3">
-                    <span className="p-2 bg-indigo-50 text-indigo-700 rounded-xl border border-indigo-100">
-                      <Layers className="w-5 h-5 text-indigo-600 animate-pulse" />
-                    </span>
-                    <div>
-                      <h4 className="text-slate-800 font-bold text-xs">Bảng thống kê phân tích số liệu học thuật đã thu gọn</h4>
-                      <p className="text-[10.5px] text-slate-500">Ẩn bớt để tối ưu hóa không gian hiển thị danh sách nhiệm vụ và văn bản ban bộ.</p>
-                    </div>
-                  </div>
-                  <button 
-                    onClick={() => setIsStatsCollapsed(false)}
-                    className="px-3.5 py-1.5 text-xs font-bold text-indigo-700 bg-white hover:bg-slate-50 border border-indigo-200 rounded-xl shadow-3xs cursor-pointer transition-all flex items-center gap-1.5"
-                  >
-                    <span>Hiện lại chỉ số tổng quan</span>
-                  </button>
-                </div>
-              ) : (
-                <WorkspaceStats 
-                  tasks={workspaceFilteredTasks} 
-                  activeWorkspace={activeWorkspaceMeta} 
-                  onMinimize={() => setIsStatsCollapsed(true)}
-                />
-              )}
+          {/* Redesigned Executive Dashboard View */}
+          {overviewTab === 'DASHBOARD' && (
+            <ExecutiveDashboard
+              tasks={roleFilteredTasks}
+              workspaces={workspaces}
+              users={users}
+              directives={directives}
+              currentUser={currentUser}
+              onViewDetails={setSelectedTaskForDetail}
+              onUpdateStatus={handleUpdateStatus}
+              onSelectWorkspace={(wId) => {
+                setSelectedWorkspace(wId);
+                setOverviewTab('TASKS');
+              }}
+            />
+          )}
 
-              {/* PRODUCTIVITY TREND CHART CARD */}
-              {isChartCollapsed ? (
-                <div className="bg-gradient-to-r from-indigo-500/10 via-indigo-500/5 to-transparent border border-indigo-150/65 rounded-2xl p-4 flex items-center justify-between shadow-3xs animate-fade-in mb-6">
-                  <div className="flex items-center gap-3">
-                    <span className="p-2 bg-indigo-50 text-indigo-700 rounded-xl border border-indigo-100">
-                      <TrendingUp className="w-5 h-5 text-indigo-600 animate-pulse" />
-                    </span>
-                    <div>
-                      <h4 className="text-slate-800 font-bold text-xs">Biểu đồ tải lượng giáo dục & xu hướng hoàn thành đã thu gọn</h4>
-                      <p className="text-[10.5px] text-slate-500">Ẩn bớt biểu đồ phân tích để tăng tốc cuộn lướt và xử lý công vụ.</p>
-                    </div>
-                  </div>
-                  <button 
-                    onClick={() => setIsChartCollapsed(false)}
-                    className="px-3.5 py-1.5 text-xs font-bold text-indigo-700 bg-white hover:bg-slate-50 border border-indigo-200 rounded-xl shadow-3xs cursor-pointer transition-all flex items-center gap-1.5"
-                  >
-                    <span>Hiện lại biểu đồ hiệu suất</span>
-                  </button>
-                </div>
-              ) : (
-                <ProductivityTrendChart 
-                  tasks={workspaceFilteredTasks} 
-                  workspaceName={activeWorkspaceMeta.name} 
-                  onMinimize={() => setIsChartCollapsed(true)}
-                />
-              )}
+          {overviewTab === 'STRATEGY_OKRS' && (
+            <StrategyOkrHub />
+          )}
 
-            {/* OVERVIEW TABS */}
-            <div className="flex flex-wrap items-center gap-2 bg-slate-50 dark:bg-slate-950/40 p-1.5 rounded-2xl border border-slate-200/60 dark:border-slate-800/80 mb-6 mt-6">
-                <button 
-                  onClick={() => setOverviewTab('TASKS')}
-                  className={`px-4 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer ${
-                    overviewTab === 'TASKS' 
-                      ? 'bg-blue-600 text-white shadow-sm shadow-blue-100 scale-[1.01]' 
-                      : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 hover:text-slate-800 dark:hover:text-slate-200 font-bold'
-                  }`}
-                >
-                  <ListTodo className="w-3.5 h-3.5" />
-                  {t('tasks')}
-                </button>
-                <button 
-                  onClick={() => setOverviewTab('INTELLIGENCE')}
-                  className={`px-4 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer ${
-                    overviewTab === 'INTELLIGENCE' 
-                      ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-100 scale-[1.01]' 
-                      : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 hover:text-slate-800 dark:hover:text-slate-200 font-bold'
-                  }`}
-                >
-                  <Brain className="w-3.5 h-3.5" />
-                  {t('intelligence')}
-                </button>
-                <button 
-                  onClick={() => setOverviewTab('LMS')}
-                  className={`px-4 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer ${
-                    overviewTab === 'LMS' 
-                      ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-100 scale-[1.01]' 
-                      : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 hover:text-slate-800 dark:hover:text-slate-200 font-bold'
-                  }`}
-                >
-                  <BookOpen className="w-3.5 h-3.5" />
-                  {t('lms')}
-                </button>
-                <button 
-                  onClick={() => setOverviewTab('ACADEMIC')}
-                  className={`px-4 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer ${
-                    overviewTab === 'ACADEMIC' 
-                      ? 'bg-amber-500 text-white shadow-sm shadow-amber-100 scale-[1.01]' 
-                      : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 hover:text-slate-800 dark:hover:text-slate-200 font-bold'
-                  }`}
-                >
-                  <CalendarIcon className="w-3.5 h-3.5" />
-                  {t('academic')}
-                </button>
-                <button 
-                  onClick={() => setOverviewTab('LOGISTICS')}
-                  className={`px-4 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer ${
-                    overviewTab === 'LOGISTICS' 
-                      ? 'bg-teal-600 text-white shadow-sm shadow-teal-100 scale-[1.01]' 
-                      : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 hover:text-slate-800 dark:hover:text-slate-200 font-bold'
-                  }`}
-                >
-                  <SlidersHorizontal className="w-3.5 h-3.5" />
-                  {t('logistics')}
-                </button>
-                <button 
-                  onClick={() => setOverviewTab('HRM')}
-                  className={`px-4 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer ${
-                    overviewTab === 'HRM' 
-                      ? 'bg-purple-600 text-white shadow-sm shadow-purple-100 scale-[1.01]' 
-                      : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 hover:text-slate-800 dark:hover:text-slate-200 font-bold'
-                  }`}
-                >
-                  <Users className="w-3.5 h-3.5" />
-                  {t('hrm')}
-                </button>
-                <button 
-                  onClick={() => setOverviewTab('REQUESTS')}
-                  className={`px-4 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer ${
-                    overviewTab === 'REQUESTS' 
-                      ? 'bg-rose-600 text-white shadow-sm shadow-rose-100 scale-[1.01]' 
-                      : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 hover:text-slate-800 dark:hover:text-slate-200 font-bold'
-                  }`}
-                >
-                  <FileCheck className="w-3.5 h-3.5" />
-                  {t('requests')}
-                </button>
-             </div>
+          {overviewTab === 'WORKFLOW_APPROVALS' && (
+            <WorkflowBuilder />
+          )}
 
-            {overviewTab === 'INTELLIGENCE' && (
-              <IntelligenceAndOkrHub 
-                currentUser={displayCurrentUser} 
-                tasks={tasks} 
-                onAddTask={handleCreateTask} 
-                users={displayUsers}
-                onSelectStaffProfile={(user) => {
-                  setProfileActiveTab('INFO');
-                  setSelectedStaffProfile(user);
-                }}
-                onAddStaff={() => setIsOnboardingModalOpen(true)}
-              />
-            )}
+          {overviewTab === 'CRM_ADMISSIONS' && (
+            <SchoolCrmHub />
+          )}
 
-            {overviewTab === 'LMS' && (
-              <MisLmsCenter 
-                currentUser={displayCurrentUser}
-                tasks={tasks}
-                onAddTask={handleCreateTask}
-              />
-            )}
+          {overviewTab === 'STUDENT_SUCCESS' && (
+            <StudentSuccessHub />
+          )}
 
-            {overviewTab === 'ACADEMIC' && (
-              <AcademicOperations 
-                currentUser={displayCurrentUser}
-                users={displayUsers}
-              />
-            )}
+          {overviewTab === 'TEACHER_HR' && (
+            <TeacherHrHub 
+              currentUser={currentUser}
+              users={users}
+              onUpdateUsers={saveUsers}
+            />
+          )}
 
-            {overviewTab === 'LOGISTICS' && (
-              <SchoolLogistics 
-                currentUser={displayCurrentUser}
-              />
-            )}
+          {overviewTab === 'RISK_CENTER' && (
+            <RiskManagementCenter />
+          )}
 
-            {overviewTab === 'HRM' && (
-              <HrmCenter 
-                currentUser={displayCurrentUser}
-                users={displayUsers}
-                onUpdateUsers={saveUsers}
-              />
-            )}
+          {overviewTab === 'ANALYTICS' && (
+            <ReportingAnalyticsBuilder />
+          )}
 
-            {overviewTab === 'REQUESTS' && (
-              <SchoolRequests 
-                currentUser={displayCurrentUser}
-              />
-            )}
+          {overviewTab === 'ACADEMIC_OPS' && (
+            <AcademicOperations 
+              currentUser={currentUser} 
+              users={users} 
+            />
+          )}
+
+          {overviewTab === 'LOGISTICS' && (
+            <SchoolLogistics 
+              currentUser={currentUser} 
+            />
+          )}
+
+          {overviewTab === 'REQUESTS' && (
+            <SchoolRequests 
+              currentUser={currentUser} 
+            />
+          )}
+
+          {overviewTab === 'HRM' && (
+            <HrmCenter 
+              currentUser={currentUser} 
+              users={users} 
+              onUpdateUsers={saveUsers} 
+            />
+          )}
+
+          {overviewTab === 'BOARD_DIRECTIVES' && (
+            <BoardDirectivePanel 
+              directives={directives} 
+              currentUser={currentUser} 
+              onPublish={handlePublishDirective} 
+              onUpdateStatus={handleUpdateDirectiveStatus} 
+              onDelete={handleDeleteDirective} 
+            />
+          )}
+
+          {overviewTab === 'LMS' && (
+            <MisLmsCenter 
+              currentUser={currentUser} 
+              tasks={tasks} 
+              onAddTask={handleCreateTask} 
+            />
+          )}
+
+          {overviewTab === 'GOOGLE_SHEETS' && (
+            <GoogleSheetsCenter 
+              tasks={tasks} 
+              onSyncComplete={handleSyncComplete} 
+            />
+          )}
+
+          {overviewTab === 'DOCUMENT' && (
+            <DocumentCenter />
+          )}
+
+          {overviewTab === 'MEETING' && (
+            <MeetingCenter />
+          )}
+
+          {overviewTab === 'KNOWLEDGE' && (
+            <KnowledgeBase />
+          )}
+
+          {overviewTab === 'EVENTS' && (
+            <EventManagement />
+          )}
 
             {overviewTab === 'TASKS' && (
               <>
+                {/* Dynamic Stats & Charts shown only on Tasks view */}
+                {isStatsCollapsed ? (
+                  <div className="bg-gradient-to-r from-indigo-500/10 via-indigo-500/5 to-transparent border border-indigo-150/65 rounded-2xl p-4 flex items-center justify-between shadow-3xs animate-fade-in mb-6">
+                    <div className="flex items-center gap-3">
+                      <span className="p-2 bg-indigo-50 text-indigo-700 rounded-xl border border-indigo-100">
+                        <Layers className="w-5 h-5 text-indigo-600 animate-pulse" />
+                      </span>
+                      <div>
+                        <h4 className="text-slate-800 font-bold text-xs">Bảng thống kê phân tích số liệu học thuật đã thu gọn</h4>
+                        <p className="text-[10.5px] text-slate-500">Ẩn bớt để tối ưu hóa không gian hiển thị danh sách nhiệm vụ và văn bản ban bộ.</p>
+                      </div>
+                    </div>
+                    <button 
+                      onClick={() => setIsStatsCollapsed(false)}
+                      className="px-3.5 py-1.5 text-xs font-bold text-indigo-700 bg-white hover:bg-slate-50 border border-indigo-200 rounded-xl shadow-3xs cursor-pointer transition-all flex items-center gap-1.5"
+                    >
+                      <span>Hiện lại chỉ số tổng quan</span>
+                    </button>
+                  </div>
+                ) : (
+                  <WorkspaceStats 
+                    tasks={workspaceFilteredTasks} 
+                    activeWorkspace={activeWorkspaceMeta} 
+                    onMinimize={() => setIsStatsCollapsed(true)}
+                  />
+                )}
+
+                {isChartCollapsed ? (
+                  <div className="bg-gradient-to-r from-indigo-500/10 via-indigo-500/5 to-transparent border border-indigo-150/65 rounded-2xl p-4 flex items-center justify-between shadow-3xs animate-fade-in mb-6">
+                    <div className="flex items-center gap-3">
+                      <span className="p-2 bg-indigo-50 text-indigo-700 rounded-xl border border-indigo-100">
+                        <TrendingUp className="w-5 h-5 text-indigo-600 animate-pulse" />
+                      </span>
+                      <div>
+                        <h4 className="text-slate-800 font-bold text-xs">Biểu đồ tải lượng giáo dục & xu hướng hoàn thành đã thu gọn</h4>
+                        <p className="text-[10.5px] text-slate-500">Ẩn bớt biểu đồ phân tích để tăng tốc cuộn lướt và xử lý công vụ.</p>
+                      </div>
+                    </div>
+                    <button 
+                      onClick={() => setIsChartCollapsed(false)}
+                      className="px-3.5 py-1.5 text-xs font-bold text-indigo-700 bg-white hover:bg-slate-50 border border-indigo-200 rounded-xl shadow-3xs cursor-pointer transition-all flex items-center gap-1.5"
+                    >
+                      <span>Hiện lại biểu đồ hiệu suất</span>
+                    </button>
+                  </div>
+                ) : (
+                  <ProductivityTrendChart 
+                    tasks={workspaceFilteredTasks} 
+                    workspaceName={activeWorkspaceMeta.name} 
+                    onMinimize={() => setIsChartCollapsed(true)}
+                  />
+                )}
             {/* Quick Workspace Selection Carousel on Mobile */}
             <div className="md:hidden flex flex-col gap-2 bg-indigo-50/20 border border-indigo-100/50 rounded-2xl p-3.5 mb-2.5 shrink-0 animate-fade-in" id="mobile-workspaces-carousel-container">
               <span className="text-[10px] font-bold text-indigo-900 uppercase tracking-wider font-mono flex items-center gap-1.5 mb-1">
@@ -3388,6 +3695,157 @@ export default function App() {
               >
                 Đã hiểu
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isCommandPaletteOpen && (
+        <div className="fixed inset-0 z-[70] flex items-start justify-center bg-slate-950/45 backdrop-blur-sm px-3 pt-20 md:pt-24 print:hidden">
+          <div
+            className="absolute inset-0"
+            onClick={closeCommandPalette}
+            aria-hidden="true"
+          />
+          <div className="relative w-full max-w-2xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-750 dark:bg-slate-900">
+            <div className="flex items-center gap-3 border-b border-slate-100 px-4 py-3 dark:border-slate-800">
+              <Search className="h-5 w-5 shrink-0 text-indigo-600 dark:text-indigo-400" />
+              <input
+                ref={commandInputRef}
+                value={commandQuery}
+                onChange={(e) => setCommandQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    setSearchQuery(commandQuery);
+                    setOverviewTab('TASKS');
+                    closeCommandPalette();
+                  }
+                }}
+                placeholder="Tim nhanh chuc nang, cong viec, nhan su, bo phan..."
+                className="h-11 min-w-0 flex-1 bg-transparent text-sm font-semibold text-slate-900 outline-none placeholder:text-slate-400 dark:text-white"
+              />
+              <button
+                type="button"
+                onClick={closeCommandPalette}
+                className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                title="Dong"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="max-h-[70vh] overflow-y-auto p-3">
+              <div className="mb-3 flex items-center justify-between px-1 text-[11px] font-bold uppercase tracking-wide text-slate-400">
+                <span>Command Palette</span>
+                <span className="rounded-md border border-slate-200 px-1.5 py-0.5 font-mono normal-case text-slate-500 dark:border-slate-700">Esc</span>
+              </div>
+
+              {commandSectionResults.length > 0 && (
+                <div className="mb-4">
+                  <div className="px-1 pb-2 text-[10px] font-black uppercase tracking-wide text-slate-400">Man hinh</div>
+                  <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+                    {commandSectionResults.map(item => {
+                      const Icon = item.icon;
+                      return (
+                        <button
+                          key={item.id}
+                          type="button"
+                          onClick={() => openOverviewSection(item.tab)}
+                          className="flex min-h-16 items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 text-left transition-all hover:border-indigo-200 hover:bg-indigo-50 dark:border-slate-800 dark:bg-slate-850 dark:hover:border-indigo-700 dark:hover:bg-indigo-950/40"
+                        >
+                          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-indigo-600 shadow-3xs dark:bg-slate-900 dark:text-indigo-400">
+                            <Icon className="h-4 w-4" />
+                          </span>
+                          <span className="min-w-0">
+                            <span className="block truncate text-xs font-extrabold text-slate-850 dark:text-white">{item.label}</span>
+                            <span className="block truncate text-[11px] font-medium text-slate-500 dark:text-slate-400">{item.description}</span>
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {commandTaskResults.length > 0 && (
+                <div className="mb-4">
+                  <div className="px-1 pb-2 text-[10px] font-black uppercase tracking-wide text-slate-400">Cong viec</div>
+                  <div className="space-y-1.5">
+                    {commandTaskResults.map(task => (
+                      <button
+                        key={task.id}
+                        type="button"
+                        onClick={() => openTaskFromCommand(task)}
+                        className="flex w-full items-center gap-3 rounded-xl border border-slate-100 px-3 py-2.5 text-left transition-all hover:border-indigo-200 hover:bg-indigo-50 dark:border-slate-800 dark:hover:border-indigo-700 dark:hover:bg-indigo-950/40"
+                      >
+                        <Briefcase className="h-4 w-4 shrink-0 text-slate-400" />
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-xs font-extrabold text-slate-850 dark:text-white">{task.title}</span>
+                          <span className="block truncate text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                            {task.assignedName} · {getStatusLabel(task.status)} · {task.deadline}
+                          </span>
+                        </span>
+                        <ChevronRight className="h-4 w-4 shrink-0 text-slate-300" />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {(commandUserResults.length > 0 || commandWorkspaceResults.length > 0) && (
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  {commandUserResults.length > 0 && (
+                    <div>
+                      <div className="px-1 pb-2 text-[10px] font-black uppercase tracking-wide text-slate-400">Nhan su</div>
+                      <div className="space-y-1.5">
+                        {commandUserResults.map(user => (
+                          <button
+                            key={user.id}
+                            type="button"
+                            onClick={() => openUserFromCommand(user)}
+                            className="flex w-full items-center gap-2.5 rounded-xl border border-slate-100 px-3 py-2 text-left transition-all hover:border-indigo-200 hover:bg-indigo-50 dark:border-slate-800 dark:hover:border-indigo-700 dark:hover:bg-indigo-950/40"
+                          >
+                            <img src={getSafeAvatar(user.avatar, user.name)} alt={user.name} className="h-8 w-8 shrink-0 rounded-lg object-cover" referrerPolicy="no-referrer" />
+                            <span className="min-w-0">
+                              <span className="block truncate text-xs font-extrabold text-slate-850 dark:text-white">{user.name}</span>
+                              <span className="block truncate text-[11px] font-medium text-slate-500 dark:text-slate-400">{user.title}</span>
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {commandWorkspaceResults.length > 0 && (
+                    <div>
+                      <div className="px-1 pb-2 text-[10px] font-black uppercase tracking-wide text-slate-400">Bo phan</div>
+                      <div className="space-y-1.5">
+                        {commandWorkspaceResults.map(workspace => (
+                          <button
+                            key={workspace.id}
+                            type="button"
+                            onClick={() => openWorkspaceFromCommand(workspace.id)}
+                            className="flex w-full items-center gap-2.5 rounded-xl border border-slate-100 px-3 py-2 text-left transition-all hover:border-indigo-200 hover:bg-indigo-50 dark:border-slate-800 dark:hover:border-indigo-700 dark:hover:bg-indigo-950/40"
+                          >
+                            <Layers className="h-4 w-4 shrink-0 text-indigo-500" />
+                            <span className="min-w-0">
+                              <span className="block truncate text-xs font-extrabold text-slate-850 dark:text-white">{workspace.name}</span>
+                              <span className="block truncate text-[11px] font-medium text-slate-500 dark:text-slate-400">{workspace.description}</span>
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {commandSectionResults.length === 0 && commandTaskResults.length === 0 && commandUserResults.length === 0 && commandWorkspaceResults.length === 0 && (
+                <div className="rounded-xl border border-dashed border-slate-200 px-4 py-10 text-center dark:border-slate-700">
+                  <p className="text-sm font-bold text-slate-700 dark:text-slate-200">Khong tim thay ket qua phu hop</p>
+                  <p className="mt-1 text-xs text-slate-400">Nhan Enter de ap dung tu khoa nay vao bo loc cong viec.</p>
+                </div>
+              )}
             </div>
           </div>
         </div>

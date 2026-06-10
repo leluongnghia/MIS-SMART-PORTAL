@@ -84,6 +84,11 @@ input, select, textarea, button {
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* Disable gray tap highlight on mobile browsers for interactive elements */
+.cursor-pointer, button, a, select, input, textarea {
+  -webkit-tap-highlight-color: transparent !important;
+}
+
 /* Premium interactive helpers */
 .hover-scale {
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
@@ -105,6 +110,11 @@ input, select, textarea, button {
   background: rgba(15, 23, 42, 0.45);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
+  /* GPU acceleration settings to prevent transition animation flickering */
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform: translate3d(0, 0, 0);
+  will-change: opacity;
 }
 
 .glass-panel {
@@ -207,41 +217,49 @@ input, select, textarea, button {
    DARK MODE OVERRIDES & PREMIUM COSMETICS
    ============================================================= */
 .dark body {
-  background-color: #0b0f19;
+  background-color: #0B1020;
   color: #f1f5f9;
 }
 
 .dark .glass-panel {
-  background: rgba(20, 26, 46, 0.8);
-  border-color: rgba(255, 255, 255, 0.05);
-  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+  background: rgba(27, 38, 64, 0.85);
+  border-color: rgba(255, 255, 255, 0.04);
+  box-shadow: 0 8px 20px -10px rgba(0, 0, 0, 0.4);
 }
 
 .dark .glass-modal {
-  background: rgba(20, 26, 46, 0.95);
-  border-color: rgba(255, 255, 255, 0.1);
-  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.7);
+  background: rgba(18, 26, 46, 0.96);
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.6);
 }
 
 .dark input:not([type="checkbox"]):not([type="radio"]),
 .dark select,
 .dark textarea {
-  background-color: rgba(15, 23, 42, 0.6) !important;
-  border-color: rgba(255, 255, 255, 0.1) !important;
+  background-color: rgba(11, 16, 32, 0.6) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
   color: #f1f5f9 !important;
 }
 
 .dark input:focus,
 .dark select:focus,
 .dark textarea:focus {
-  border-color: #4f46e5 !important;
-  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2) !important;
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15) !important;
 }
 
 .dark .bg-white {
-  background-color: #141a2e !important;
+  background-color: #1B2640 !important;
   border-color: rgba(255, 255, 255, 0.05) !important;
   color: #f1f5f9 !important;
+}
+
+.dark nav,
+.dark aside,
+.dark .bg-slate-900,
+.dark .bg-slate-900\/95 {
+  background-color: #18233A !important;
+  border-color: rgba(255, 255, 255, 0.05) !important;
 }
 
 .dark .text-slate-900,
@@ -258,14 +276,9 @@ input, select, textarea, button {
 }
 
 .dark .bg-slate-50,
-.dark .bg-slate-100 {
-  background-color: #0f1322 !important;
-}
-
-.dark .border-slate-100,
-.dark .border-slate-200,
-.dark .border-slate-150 {
-  border-color: rgba(255, 255, 255, 0.05) !important;
+.dark .bg-slate-100,
+.dark .bg-slate-950 {
+  background-color: #121A2E !important;
 }
 
 .dark .divide-slate-100 > * + * {
@@ -274,6 +287,10 @@ input, select, textarea, button {
 
 .dark .hover\:bg-slate-50\/50:hover {
   background-color: rgba(255, 255, 255, 0.02) !important;
+}
+
+.dark .hover\:bg-slate-50:hover {
+  background-color: rgba(255, 255, 255, 0.03) !important;
 }
 
 .dark .hover\:bg-slate-50:hover {
