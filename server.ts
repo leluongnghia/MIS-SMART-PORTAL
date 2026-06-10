@@ -3,6 +3,7 @@ import path from 'path';
 import dotenv from 'dotenv';
 import { GoogleGenAI, Type } from '@google/genai';
 import { createServer as createViteServer } from 'vite';
+import nodemailer from 'nodemailer';
 
 // Load environment variables
 dotenv.config();
@@ -247,6 +248,149 @@ Không dùng định dạng quá phức tạp, chỉ cần xuống dòng gọn g
   } catch (error: any) {
     console.error('Gemini error in summarize-daily-tasks:', error);
     res.status(500).json({ status: 'error', error: error.message || 'Error communicating with Gemini' });
+  }
+});
+
+// SMTP configuration for email reminders
+const smtpConfig = {
+  host: process.env.SMTP_HOST || '',
+  port: parseInt(process.env.SMTP_PORT || '587', 10),
+  secure: process.env.SMTP_SECURE === 'true',
+  auth: {
+    user: process.env.SMTP_USER || '',
+    pass: process.env.SMTP_PASS || '',
+  },
+};
+
+// Helper function to send email notification
+async function sendEmailNotification({
+  taskTitle,
+  taskDescription,
+  assigneeName,
+  assigneeEmail,
+  deadline,
+  type
+}: {
+  taskTitle: string;
+  taskDescription: string;
+  assigneeName: string;
+  assigneeEmail: string;
+  deadline: string;
+  type: 'OVERDUE' | 'NEAR_DEADLINE';
+}) {
+  const isOverdue = type === 'OVERDUE';
+  const subject = isOverdue
+    ? `🚨 CẢNH BÁO: Nhiệm vụ "${taskTitle}" ĐÃ QUÁ HẠN!`
+    : `⏰ NHẮC NHỞ: Nhiệm vụ "${taskTitle}" SẮP ĐẾN HẠN CHÓT!`;
+
+  const bannerColor = isOverdue ? '#ef4444' : '#f59e0b';
+  const badgeText = isOverdue ? 'ĐÃ QUÁ HẠN' : 'SẮP ĐẾN HẠN';
+  
+  const receiver = process.env.TEST_RECEIVER_EMAIL || assigneeEmail;
+
+  const htmlContent = `
+    <div style="font-family: 'Be Vietnam Pro', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+      <div style="background-color: ${bannerColor}; color: white; padding: 24px; text-align: center;">
+        <h2 style="margin: 0; font-size: 20px; font-weight: 800; letter-spacing: -0.02em;">MIS SMART PORTAL</h2>
+        <p style="margin: 4px 0 0 0; font-size: 14px; opacity: 0.9;">Hệ thống Cảnh báo & Điều hành Học đường</p>
+      </div>
+      <div style="padding: 24px; background-color: #ffffff; color: #1e293b;">
+        <p style="font-size: 15px; line-height: 1.6; margin-top: 0;">Chào <strong>${assigneeName}</strong>,</p>
+        
+        <p style="font-size: 15px; line-height: 1.6;">Bạn có một nhiệm vụ cần lưu ý trên cổng thông tin điều hành:</p>
+        
+        <div style="background-color: #f8fafc; border-left: 4px solid ${bannerColor}; padding: 16px; margin: 20px 0; border-radius: 0 8px 8px 0;">
+          <div style="margin-bottom: 8px;">
+            <span style="background-color: ${isOverdue ? '#fef2f2' : '#fffbeb'}; color: ${bannerColor}; font-size: 11px; font-weight: 800; padding: 4px 8px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.05em; font-family: monospace;">
+              ${badgeText}
+            </span>
+          </div>
+          <h3 style="margin: 4px 0 8px 0; font-size: 16px; color: #0f172a; font-weight: 700;">${taskTitle}</h3>
+          <p style="margin: 0 0 12px 0; font-size: 14px; color: #475569; line-height: 1.5;">${taskDescription || 'Không có mô tả chi tiết.'}</p>
+          <p style="margin: 0; font-size: 13px; color: #64748b;">
+            <strong>Hạn chót:</strong> <span style="color: #ef4444; font-weight: 600;">${deadline}</span>
+          </p>
+        </div>
+
+        <p style="font-size: 15px; line-height: 1.6;">Vui lòng truy cập cổng thông tin và cập nhật tiến độ công việc hoặc nộp báo cáo chuyên môn kèm minh chứng thực tế đúng hạn.</p>
+        
+        <div style="text-align: center; margin: 32px 0 16px 0;">
+          <a href="${process.env.APP_URL || 'http://localhost:3000'}" style="background-color: #4f46e5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 14px; display: inline-block; box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2);">
+            Đi tới MIS Smart Portal
+          </a>
+        </div>
+      </div>
+      <div style="background-color: #f1f5f9; padding: 16px; text-align: center; font-size: 12px; color: #64748b; border-top: 1px solid #e2e8f0;">
+        <p style="margin: 0;">Email này được gửi tự động từ Hệ thống Quản trị Trường Đa Trí Tuệ MIS.</p>
+        <p style="margin: 4px 0 0 0;">© 2026 Trường Đa Trí Tuệ MIS. All rights reserved.</p>
+      </div>
+    </div>
+  `;
+
+  const mailOptions = {
+    from: process.env.EMAIL_FROM || '"MIS Smart Portal" <noreply@mis.edu.vn>',
+    to: receiver,
+    subject,
+    html: htmlContent,
+  };
+
+  if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+    const transporter = nodemailer.createTransport(smtpConfig);
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`[Email Service] Reminder sent via SMTP to ${receiver}. Message ID: ${info.messageId}`);
+    return { success: true, messageId: info.messageId, provider: 'SMTP' };
+  } else {
+    console.log('------------------------------------------------------------');
+    console.log(`[SMTP MOCK EMAIL ALERT] To: ${receiver}`);
+    console.log(`Subject: ${subject}`);
+    console.log(`Task: ${taskTitle}`);
+    console.log(`Deadline: ${deadline}`);
+    console.log('------------------------------------------------------------');
+
+    try {
+      const testAccount = await nodemailer.createTestAccount();
+      const transporter = nodemailer.createTransport({
+        host: 'smtp.ethereal.email',
+        port: 587,
+        secure: false,
+        auth: {
+          user: testAccount.user,
+          pass: testAccount.pass,
+        },
+      });
+
+      const info = await transporter.sendMail(mailOptions);
+      const previewUrl = nodemailer.getTestMessageUrl(info);
+      console.log(`[Email Service] Preview URL: ${previewUrl}`);
+      return { success: true, previewUrl, provider: 'Ethereal' };
+    } catch (err) {
+      console.warn('[Email Service] Failed to generate Ethereal Email test account, logged only to console.');
+      return { success: true, provider: 'ConsoleLogOnly' };
+    }
+  }
+}
+
+// 5. Send Email Reminder API
+app.post('/api/email/send-reminder', async (req, res) => {
+  const { taskTitle, taskDescription, assigneeName, assigneeEmail, deadline, type } = req.body;
+
+  if (!taskTitle || !assigneeName || !assigneeEmail || !deadline || !type) {
+    return res.status(400).json({ status: 'error', error: 'Missing required task details for email reminder.' });
+  }
+
+  try {
+    const result = await sendEmailNotification({
+      taskTitle,
+      taskDescription,
+      assigneeName,
+      assigneeEmail,
+      deadline,
+      type,
+    });
+    res.json({ status: 'success', ...result });
+  } catch (error: any) {
+    console.error('Email error in send-reminder:', error);
+    res.status(500).json({ status: 'error', error: error.message || 'Error sending email notification' });
   }
 });
 

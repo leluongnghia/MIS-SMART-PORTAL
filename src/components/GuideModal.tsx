@@ -121,7 +121,7 @@ const GuideModal: React.FC<GuideModalProps> = ({ isOpen, onClose }) => {
                     <Users className="w-4 h-4" />
                   </div>
                   <div>
-                    <h4 className="text-xs font-bold text-slate-800">{isEn ? 'Staff Profiles' : 'Hồ Sơ Nhân Sự'}</h4>
+                    <h4 className="text-xs font-bold text-slate-800">{isEn ? 'Staff Profiles' : 'Hồ sơ nhân sự'}</h4>
                     <p className="text-[10px] text-slate-500 mt-0.5 leading-relaxed">{isEn ? 'View task info, KPIs and professional development certifications.' : 'Xem thông tin nhiệm vụ, KPI và chứng chỉ Bồi dưỡng chuyên môn.'}</p>
                   </div>
                 </div>

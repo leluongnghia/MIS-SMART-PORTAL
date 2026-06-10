@@ -1,4 +1,4 @@
-﻿import React, { useMemo } from 'react';
+﻿import React, { useMemo, useState } from 'react';
 import { Task, Workspace, UserProfile, BoardDirective, TaskPriority } from '../types';
 import { 
   AlertTriangle, 
@@ -16,7 +16,8 @@ import {
   Calendar,
   User,
   ArrowRight,
-  Bell
+  Bell,
+  X
 } from 'lucide-react';
 import { 
   ResponsiveContainer, 
@@ -51,6 +52,7 @@ export default function ExecutiveDashboard({
   onUpdateStatus,
   onSelectWorkspace
 }: ExecutiveDashboardProps) {
+  const [selectedDirective, setSelectedDirective] = useState<BoardDirective | null>(null);
 
   // Current Date logic
   const todayStr = useMemo(() => {
@@ -84,7 +86,7 @@ export default function ExecutiveDashboard({
       originalDirective?: BoardDirective;
     }[] = [];
 
-    // Pending approvals (High priority for Ban Giám Hiệu/Managers)
+    // Pending approvals (High priority for Ban Giám hiệu/Managers)
     tasks.filter(t => t.status === 'CHO_DUYET').forEach(t => {
       items.push({
         id: `approve-${t.id}`,
@@ -459,7 +461,7 @@ export default function ExecutiveDashboard({
           <div className="bg-white border border-slate-200 dark:border-slate-800/80 rounded-2xl p-6 shadow-xs flex items-center justify-between transition-[border-color,box-shadow,transform] duration-200 hover:shadow-md hover:scale-[1.01] select-none">
             <div>
               <span className="text-[10px] tracking-widest font-black uppercase text-orange-600 dark:text-orange-400 block font-mono">
-                Tuyển Sinh CRM
+                Tuyển sinh CRM
               </span>
               <span className="text-2xl font-display font-extrabold text-slate-900 dark:text-white mt-1 block">
                 1,280 / 1,500
@@ -477,7 +479,7 @@ export default function ExecutiveDashboard({
           <div className="bg-white border border-slate-200 dark:border-slate-800/80 rounded-2xl p-6 shadow-xs flex items-center justify-between transition-[border-color,box-shadow,transform] duration-200 hover:shadow-md hover:scale-[1.01] select-none">
             <div>
               <span className="text-[10px] tracking-widest font-black uppercase text-sky-600 dark:text-sky-450 block font-mono">
-                Tải Lực Nhân Sự
+                Tải lực nhân sự
               </span>
               <span className="text-4xl font-display font-extrabold text-slate-900 dark:text-white mt-1 block">
                 48
@@ -540,8 +542,7 @@ export default function ExecutiveDashboard({
                       if (item.originalTask) {
                         onViewDetails(item.originalTask);
                       } else if (item.originalDirective) {
-                        // For directives mock viewing or edit
-                        alert(`Chỉ đạo: ${item.originalDirective.title}\n\nNội dung: ${item.originalDirective.content}`);
+                        setSelectedDirective(item.originalDirective);
                       }
                     }}
                     className="shrink-0 px-3 py-1.5 text-[11px] font-bold text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 rounded-lg shadow-3xs cursor-pointer transition-all flex items-center gap-1 active:scale-95"
@@ -829,6 +830,73 @@ export default function ExecutiveDashboard({
         </div>
       </section>
 
+      {selectedDirective && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm">
+          <div
+            className="absolute inset-0"
+            onClick={() => setSelectedDirective(null)}
+            aria-hidden="true"
+          />
+          <div className="relative w-full max-w-2xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900">
+            <div className="flex items-start justify-between gap-4 border-b border-slate-100 p-5 dark:border-slate-800">
+              <div className="min-w-0">
+                <span className="mb-2 inline-flex rounded-lg bg-rose-50 px-2 py-1 text-[10px] font-black uppercase tracking-wide text-rose-700 dark:bg-rose-950/40 dark:text-rose-300">
+                  Chỉ đạo điều hành
+                </span>
+                <h2 className="text-lg font-extrabold text-slate-900 dark:text-white">
+                  {selectedDirective.title}
+                </h2>
+                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                  {selectedDirective.senderName} · {selectedDirective.senderTitle} · {selectedDirective.createdAt}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedDirective(null)}
+                className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                title="Đóng"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="max-h-[65vh] overflow-y-auto p-5">
+              <div className="mb-4 flex flex-wrap gap-2">
+                <span className="rounded-lg border border-rose-100 bg-rose-50 px-2 py-1 text-[11px] font-bold text-rose-700 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-300">
+                  {selectedDirective.category}
+                </span>
+                <span className="rounded-lg border border-amber-100 bg-amber-50 px-2 py-1 text-[11px] font-bold text-amber-700 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-300">
+                  {selectedDirective.urgency}
+                </span>
+              </div>
+              <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-700 dark:text-slate-200">
+                {selectedDirective.content}
+              </p>
+              <div className="mt-5 rounded-xl border border-slate-100 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/40">
+                <h3 className="mb-3 text-xs font-black uppercase tracking-wide text-slate-400">
+                  Tình trạng tiếp nhận
+                </h3>
+                <div className="space-y-2">
+                  {selectedDirective.implementations.map((impl) => (
+                    <div key={impl.userId} className="rounded-lg bg-white p-3 text-xs shadow-3xs dark:bg-slate-900">
+                      <div className="flex items-center justify-between gap-2">
+                        <strong className="text-slate-800 dark:text-white">{impl.userName}</strong>
+                        <span className="rounded bg-indigo-50 px-2 py-0.5 font-bold text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300">
+                          {impl.status}
+                        </span>
+                      </div>
+                      {impl.feedback && (
+                        <p className="mt-2 leading-relaxed text-slate-500 dark:text-slate-400">{impl.feedback}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
+

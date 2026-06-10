@@ -266,7 +266,7 @@ export default function GoogleSheetsCenter({ tasks, onSyncComplete }: GoogleShee
       <div style="font-family: Arial, sans-serif; max-width: 650px; margin: 0 auto; color: #334155; line-height: 1.6; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);">
         <div style="background-color: #107c41; padding: 25px; text-align: center; color: white;">
           <h2 style="margin: 0; text-transform: uppercase; font-size: 18px; letter-spacing: 1px;">Trường Phổ Thông Liên Cấp Đa Trí Tuệ (MIS)</h2>
-          <p style="margin: 5px 0 0; font-size: 13px; opacity: 0.9;">Báo Cáo Giáo Dục & Học Vụ Thường Nhật (Gửi Tự Động Định Kỳ 17:00)</p>
+          <p style="margin: 5px 0 0; font-size: 13px; opacity: 0.9;">Báo cáo giáo dục và học vụ hằng ngày (Gửi tự động định kỳ 17:00)</p>
         </div>
         <div style="padding: 24px; background-color: #ffffff;">
           <p style="margin-top: 0;">Kính gửi <b>Ban giám hiệu & Lãnh đạo Trường Đa Trí Tuệ (MIS)</b>,</p>
@@ -333,7 +333,7 @@ export default function GoogleSheetsCenter({ tasks, onSyncComplete }: GoogleShee
       <div style="font-family: Arial, sans-serif; max-width: 650px; margin: 0 auto; color: #334155; line-height: 1.6; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);">
         <div style="background-color: #4f46e5; padding: 25px; text-align: center; color: white;">
           <h2 style="margin: 0; text-transform: uppercase; font-size: 18px; letter-spacing: 1px;">Trường Phổ Thông Liên Cấp Đa Trí Tuệ (MIS)</h2>
-          <p style="margin: 5px 0 0; font-size: 13px; opacity: 0.9;">Báo Cáo Tổng Hợp Tuần Học Hiệu Toàn Diện (Tự Động 17:00 Thứ Sáu)</p>
+          <p style="margin: 5px 0 0; font-size: 13px; opacity: 0.9;">Báo cáo tổng hợp tuần của nhà trường (Tự động 17:00 thứ Sáu)</p>
         </div>
         <div style="padding: 24px; background-color: #ffffff;">
           <p style="margin-top: 0;">Kính gửi <b>Hội đồng sư phạm & Ban Giám hiệu Trường Đa Trí Tuệ (MIS)</b>,</p>
@@ -382,11 +382,11 @@ export default function GoogleSheetsCenter({ tasks, onSyncComplete }: GoogleShee
       <div style="font-family: Arial, sans-serif; max-width: 650px; margin: 0 auto; color: #334155; line-height: 1.6; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);">
         <div style="background-color: #0369a1; padding: 25px; text-align: center; color: white;">
           <h2 style="margin: 0; text-transform: uppercase; font-size: 18px; letter-spacing: 1px;">Trường Phổ Thông Liên Cấp Đa Trí Tuệ (MIS)</h2>
-          <p style="margin: 5px 0 0; font-size: 13px; opacity: 0.9;">Báo Cáo Tổng Hợp Cả Tháng - Quản Trị Học Vụ Đa Trí Tuệ (07:00 Sáng Ngày Cuối Tháng)</p>
+          <p style="margin: 5px 0 0; font-size: 13px; opacity: 0.9;">Báo cáo tổng hợp tháng - Quản trị học vụ đa trí tuệ (07:00 sáng ngày cuối tháng)</p>
         </div>
         <div style="padding: 24px; background-color: #ffffff;">
           <p style="margin-top: 0;">Kính gửi <b>Chủ tịch Hội đồng Trường & Ban Giám đốc Điều hành Trường Đa Trí Tuệ (MIS)</b>,</p>
-          <p>Hệ thống tự động đồng bộ xin hân hạnh báo cáo toàn bộ hiệu suất học hiệu, chỉ số chất lượng hoạt động của <b>tháng ${currentMonth}</b> nhằm phục vụ hoạch định sư phạm liên cấp:</p>
+          <p>Hệ thống tự động đồng bộ xin hân hạnh báo cáo toàn bộ hiệu suất nhà trường, chỉ số chất lượng hoạt động của <b>tháng ${currentMonth}</b> nhằm phục vụ hoạch định sư phạm liên cấp:</p>
           
           <div style="display: flex; background-color: #f0f9ff; border: 1px solid #bae6fd; border-radius: 10px; padding: 18px; margin: 20px 0; align-items: center; gap: 15px;">
             <div style="font-size: 32px; line-height: 1;">📊</div>
@@ -421,7 +421,7 @@ export default function GoogleSheetsCenter({ tasks, onSyncComplete }: GoogleShee
                 <td style="padding: 10px; font-size: 12px; text-align: right; font-weight: bold; color: #dc2626;">${highPriority} văn bản</td>
               </tr>
               <tr>
-                <td style="padding: 10px; font-size: 12px; font-weight: bold; color: #1e293b; background-color: #f8fafc;">Hiệu quả phối hợp phòng ban toàn học hiệu</td>
+                <td style="padding: 10px; font-size: 12px; font-weight: bold; color: #1e293b; background-color: #f8fafc;">Hiệu quả phối hợp phòng ban toàn nhà trường</td>
                 <td style="padding: 10px; font-size: 12.5px; text-align: right; font-weight: bold; color: #16a34a; background-color: #f8fafc;">${percent}%</td>
               </tr>
             </tbody>
@@ -1419,7 +1419,7 @@ export default function GoogleSheetsCenter({ tasks, onSyncComplete }: GoogleShee
               <div className="flex items-center gap-4">
                 <Mail className="w-4.5 h-4.5 text-indigo-600" />
                 <span className="font-display font-black text-slate-850 text-xs uppercase tracking-wider">
-                  Mẫu Bản Vẽ Thư Điện Tử Doanh Nghiệp (Email Template Preview)
+                  Mẫu thư điện tử doanh nghiệp
                 </span>
                 
                 {/* PREVIEW SELECTION TABS */}
@@ -1431,7 +1431,7 @@ export default function GoogleSheetsCenter({ tasks, onSyncComplete }: GoogleShee
                       previewType === 'DAILY' ? 'bg-white text-emerald-700 shadow-3xs' : 'text-slate-500 hover:text-slate-700'
                     }`}
                   >
-                    Báo Cáo Ngày
+                    Báo cáo ngày
                   </button>
                   <button
                     id="preview-tab-weekly"

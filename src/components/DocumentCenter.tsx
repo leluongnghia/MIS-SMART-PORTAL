@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   FileText,
   Upload,
@@ -41,6 +41,11 @@ interface Document {
   trangThai: DocStatus;
   tags: string[];
   tomTat: string;
+  fileName?: string;
+  fileType?: string;
+  fileSize?: number;
+  fileDataUrl?: string;
+  archivedAt?: string;
 }
 
 type WorkflowStep =
@@ -128,7 +133,7 @@ const MOCK_DOCUMENTS: Document[] = [
     trangThai: "Lưu trữ",
     tags: ["biên bản", "họp BGH", "tháng 5"],
     tomTat:
-      "Ghi nhận nội dung và kết luận cuộc họp Ban Giám Hiệu định kỳ tháng 5/2026.",
+      "Ghi nhận nội dung và kết luận cuộc họp Ban Giám hiệu định kỳ tháng 5/2026.",
   },
   {
     id: "doc-06",
@@ -307,6 +312,28 @@ function formatDate(iso: string) {
   return `${d}/${m}/${y}`;
 }
 
+const DOCUMENT_STORAGE_KEY = "mis_document_center_documents_v1";
+const MAX_LOCAL_FILE_SIZE = 2 * 1024 * 1024;
+
+function formatFileSize(size?: number) {
+  if (!size) return "Không có tệp";
+  if (size < 1024) return `${size} B`;
+  if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
+  return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function downloadBlob(content: BlobPart, fileName: string, type = "text/plain;charset=utf-8") {
+  const blob = new Blob([content], { type });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 function StatCard({
@@ -346,7 +373,16 @@ export default function DocumentCenter() {
     "Tất cả"
   );
   const [searchQuery, setSearchQuery] = useState("");
-  const [documents, setDocuments] = useState<Document[]>(MOCK_DOCUMENTS);
+  const [documents, setDocuments] = useState<Document[]>(() => {
+    try {
+      const saved = localStorage.getItem(DOCUMENT_STORAGE_KEY);
+      return saved ? JSON.parse(saved) : MOCK_DOCUMENTS;
+    } catch {
+      return MOCK_DOCUMENTS;
+    }
+  });
+  const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
+  const [actionMessage, setActionMessage] = useState("");
 
   // ── Tab 2 state ──
   const [formSoHieu, setFormSoHieu] = useState("");
@@ -358,12 +394,26 @@ export default function DocumentCenter() {
   const [formTags, setFormTags] = useState("");
   const [formWorkflow, setFormWorkflow] = useState(false);
   const [dragOver, setDragOver] = useState(false);
-  const [uploadedFile, setUploadedFile] = useState<string | null>(null);
+  const [uploadedFile, setUploadedFile] = useState<{
+    name: string;
+    type: string;
+    size: number;
+    dataUrl: string;
+  } | null>(null);
+  const [formError, setFormError] = useState("");
   const [formSuccess, setFormSuccess] = useState(false);
 
   // ── Tab 4 state ──
   const [archiveYear, setArchiveYear] = useState<string>("Tất cả");
   const [archiveType, setArchiveType] = useState<DocType | "Tất cả">("Tất cả");
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(DOCUMENT_STORAGE_KEY, JSON.stringify(documents));
+    } catch {
+      setActionMessage("Không thể lưu thêm vào trình duyệt vì dung lượng lưu trữ cục bộ đã đầy.");
+    }
+  }, [documents]);
 
   // ─── Derived data ──────────────────────────────────────────────────────────
 
@@ -410,16 +460,88 @@ export default function DocumentCenter() {
 
   // ─── Handlers ─────────────────────────────────────────────────────────────
 
+  function showActionMessage(message: string) {
+    setActionMessage(message);
+    window.setTimeout(() => setActionMessage(""), 2500);
+  }
+
+  function handleView(doc: Document) {
+    setSelectedDocument(doc);
+  }
+
+  function handleDownload(doc: Document) {
+    if (doc.fileDataUrl && doc.fileName) {
+      const link = document.createElement("a");
+      link.href = doc.fileDataUrl;
+      link.download = doc.fileName;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      showActionMessage(`Đang tải ${doc.fileName}`);
+      return;
+    }
+
+    const safeSoHieu = doc.soHieu.replace(/[\\/:*?"<>|]/g, "-");
+    const fallbackContent = [
+      `Số hiệu: ${doc.soHieu}`,
+      `Tiêu đề: ${doc.tieuDe}`,
+      `Loại: ${doc.loai}`,
+      `Ngày ban hành: ${formatDate(doc.ngayBanHanh)}`,
+      `Người ký: ${doc.nguoiKy}`,
+      `Trạng thái: ${doc.trangThai}`,
+      `Tags: ${doc.tags.join(", ") || "Không có"}`,
+      "",
+      "Tóm tắt:",
+      doc.tomTat || "Không có nội dung tóm tắt.",
+    ].join("\n");
+
+    downloadBlob(fallbackContent, `${safeSoHieu}.txt`);
+    showActionMessage(`Đã tạo file tải xuống cho ${doc.soHieu}`);
+  }
+
+  function handleFileSelect(file?: File) {
+    if (!file) return;
+    setFormError("");
+
+    if (file.size > MAX_LOCAL_FILE_SIZE) {
+      setUploadedFile(null);
+      setFormError("Tệp vượt quá giới hạn lưu trữ cục bộ 2MB. Vui lòng chọn tệp nhỏ hơn.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setUploadedFile({
+        name: file.name,
+        type: file.type || "application/octet-stream",
+        size: file.size,
+        dataUrl: String(reader.result),
+      });
+    };
+    reader.onerror = () => {
+      setFormError("Không thể đọc tệp đính kèm. Vui lòng thử lại.");
+    };
+    reader.readAsDataURL(file);
+  }
+
   function handleArchive(id: string) {
     setDocuments((prev) =>
-      prev.map((d) => (d.id === id ? { ...d, trangThai: "Lưu trữ" } : d))
+      prev.map((d) =>
+        d.id === id
+          ? { ...d, trangThai: "Lưu trữ", archivedAt: new Date().toISOString() }
+          : d
+      )
     );
+    showActionMessage("Văn bản đã được chuyển sang kho lưu trữ.");
   }
 
   function handleRestore(id: string) {
     setDocuments((prev) =>
-      prev.map((d) => (d.id === id ? { ...d, trangThai: "Đã ban hành" } : d))
+      prev.map((d) =>
+        d.id === id ? { ...d, trangThai: "Đã ban hành", archivedAt: undefined } : d
+      )
     );
+    showActionMessage("Văn bản đã được khôi phục khỏi kho lưu trữ.");
   }
 
   function handleSubmitUpload(e: React.FormEvent) {
@@ -438,9 +560,14 @@ export default function DocumentCenter() {
         .map((t) => t.trim())
         .filter(Boolean),
       tomTat: formTomTat,
+      fileName: uploadedFile?.name,
+      fileType: uploadedFile?.type,
+      fileSize: uploadedFile?.size,
+      fileDataUrl: uploadedFile?.dataUrl,
     };
     setDocuments((prev) => [newDoc, ...prev]);
     setFormSuccess(true);
+    setActionMessage("Văn bản mới đã được lưu vào kho cục bộ.");
     setFormSoHieu("");
     setFormTieuDe("");
     setFormLoai("Công văn");
@@ -450,6 +577,7 @@ export default function DocumentCenter() {
     setFormTags("");
     setFormWorkflow(false);
     setUploadedFile(null);
+    setFormError("");
     setTimeout(() => setFormSuccess(false), 3000);
   }
 
@@ -493,7 +621,7 @@ export default function DocumentCenter() {
             <div>
               <h1 className="text-3xl font-bold text-white font-display mb-1 flex items-center gap-3">
                 <FolderOpen size={32} className="text-indigo-300" />
-                Hệ Thống Quản Lý Văn Bản
+                Hệ thống quản lý văn bản
               </h1>
               <p className="text-indigo-200 text-sm max-w-xl">
                 Quản lý toàn bộ vòng đời văn bản: soạn thảo, phê duyệt, ban
@@ -532,6 +660,13 @@ export default function DocumentCenter() {
 
       {/* ── Tabs ── */}
       <div className="max-w-7xl mx-auto px-6">
+        {actionMessage && (
+          <div className="mt-4 flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300">
+            <CheckCircle2 size={16} />
+            {actionMessage}
+          </div>
+        )}
+
         <div className="flex gap-1 border-b border-slate-200 dark:border-slate-800 mt-0 bg-white dark:bg-slate-900 px-2 sticky top-0 z-10">
           {tabs.map(({ id, label, icon: Icon }) => (
             <button
@@ -671,11 +806,17 @@ export default function DocumentCenter() {
                           )}
                         </div>
                         <div className="flex flex-col gap-1.5 shrink-0">
-                          <button className="flex items-center gap-1.5 text-xs text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 px-3 py-1.5 rounded-lg transition-colors border border-indigo-200 dark:border-indigo-800">
+                          <button
+                            onClick={() => handleView(doc)}
+                            className="flex items-center gap-1.5 text-xs text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 px-3 py-1.5 rounded-lg transition-colors border border-indigo-200 dark:border-indigo-800"
+                          >
                             <Eye size={13} />
                             Xem
                           </button>
-                          <button className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 px-3 py-1.5 rounded-lg transition-colors border border-emerald-200 dark:border-emerald-800">
+                          <button
+                            onClick={() => handleDownload(doc)}
+                            className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 px-3 py-1.5 rounded-lg transition-colors border border-emerald-200 dark:border-emerald-800"
+                          >
                             <Download size={13} />
                             Tải
                           </button>
@@ -826,7 +967,7 @@ export default function DocumentCenter() {
                         e.preventDefault();
                         setDragOver(false);
                         const file = e.dataTransfer.files[0];
-                        if (file) setUploadedFile(file.name);
+                        handleFileSelect(file);
                       }}
                       className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors cursor-pointer ${
                         dragOver
@@ -838,11 +979,17 @@ export default function DocumentCenter() {
                         <div className="flex items-center justify-center gap-2 text-emerald-600 dark:text-emerald-400">
                           <CheckCircle2 size={18} />
                           <span className="text-sm font-medium">
-                            {uploadedFile}
+                            {uploadedFile.name}
+                            <span className="text-xs text-slate-400">
+                              ({formatFileSize(uploadedFile.size)})
+                            </span>
                           </span>
                           <button
                             type="button"
-                            onClick={() => setUploadedFile(null)}
+                            onClick={() => {
+                              setUploadedFile(null);
+                              setFormError("");
+                            }}
                             className="ml-2 text-slate-400 hover:text-rose-500"
                           >
                             <X size={14} />
@@ -863,17 +1010,22 @@ export default function DocumentCenter() {
                                 className="hidden"
                                 onChange={(e) => {
                                   const file = e.target.files?.[0];
-                                  if (file) setUploadedFile(file.name);
+                                  handleFileSelect(file);
                                 }}
                               />
                             </label>
                           </p>
                           <p className="text-xs text-slate-400 mt-1">
-                            PDF, DOCX, XLSX tối đa 20MB
+                            PDF, DOCX, XLSX tối đa 2MB để lưu cục bộ
                           </p>
                         </div>
                       )}
                     </div>
+                    {formError && (
+                      <p className="mt-2 text-xs font-medium text-rose-600 dark:text-rose-400">
+                        {formError}
+                      </p>
+                    )}
                   </div>
 
                   {/* Workflow checkbox */}
@@ -1135,11 +1287,17 @@ export default function DocumentCenter() {
                           </div>
                         </div>
                         <div className="flex gap-2 shrink-0">
-                          <button className="flex items-center gap-1.5 text-xs text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 px-3 py-1.5 rounded-lg transition-colors border border-indigo-200 dark:border-indigo-800">
+                          <button
+                            onClick={() => handleView(doc)}
+                            className="flex items-center gap-1.5 text-xs text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 px-3 py-1.5 rounded-lg transition-colors border border-indigo-200 dark:border-indigo-800"
+                          >
                             <Eye size={13} />
                             Xem
                           </button>
-                          <button className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 px-3 py-1.5 rounded-lg transition-colors border border-slate-200 dark:border-slate-700">
+                          <button
+                            onClick={() => handleDownload(doc)}
+                            className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 px-3 py-1.5 rounded-lg transition-colors border border-slate-200 dark:border-slate-700"
+                          >
                             <Download size={13} />
                             Tải
                           </button>
@@ -1160,6 +1318,132 @@ export default function DocumentCenter() {
           )}
         </div>
       </div>
+
+      {selectedDocument && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm">
+          <div
+            className="absolute inset-0"
+            onClick={() => setSelectedDocument(null)}
+            aria-hidden="true"
+          />
+          <div className="relative flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900">
+            <div className="flex items-start justify-between gap-4 border-b border-slate-100 p-5 dark:border-slate-800">
+              <div className="min-w-0">
+                <div className="mb-2 flex flex-wrap items-center gap-2">
+                  <span className="rounded bg-indigo-50 px-2 py-0.5 font-mono text-xs font-semibold text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-300">
+                    {selectedDocument.soHieu}
+                  </span>
+                  <span className={`rounded px-2 py-0.5 text-xs font-medium ${TYPE_COLORS[selectedDocument.loai]}`}>
+                    {selectedDocument.loai}
+                  </span>
+                  <span className={`rounded px-2 py-0.5 text-xs font-medium ${STATUS_COLORS[selectedDocument.trangThai]}`}>
+                    {selectedDocument.trangThai}
+                  </span>
+                </div>
+                <h2 className="truncate text-lg font-bold text-slate-900 dark:text-white">
+                  {selectedDocument.tieuDe}
+                </h2>
+                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                  Ban hành {formatDate(selectedDocument.ngayBanHanh)} · Người ký: {selectedDocument.nguoiKy}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedDocument(null)}
+                className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                title="Đóng"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-5">
+              <div className="mb-4 rounded-xl border border-slate-100 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/40">
+                <h3 className="mb-2 text-xs font-black uppercase tracking-wide text-slate-400">
+                  Tóm tắt nội dung
+                </h3>
+                <p className="text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+                  {selectedDocument.tomTat || "Chưa có tóm tắt nội dung."}
+                </p>
+              </div>
+
+              <div className="mb-4 grid grid-cols-1 gap-3 text-sm sm:grid-cols-3">
+                <div className="rounded-xl border border-slate-100 p-3 dark:border-slate-800">
+                  <span className="block text-xs font-medium text-slate-400">Tệp đính kèm</span>
+                  <strong className="mt-1 block truncate text-slate-800 dark:text-slate-100">
+                    {selectedDocument.fileName || "Chưa có file gốc"}
+                  </strong>
+                </div>
+                <div className="rounded-xl border border-slate-100 p-3 dark:border-slate-800">
+                  <span className="block text-xs font-medium text-slate-400">Dung lượng</span>
+                  <strong className="mt-1 block text-slate-800 dark:text-slate-100">
+                    {formatFileSize(selectedDocument.fileSize)}
+                  </strong>
+                </div>
+                <div className="rounded-xl border border-slate-100 p-3 dark:border-slate-800">
+                  <span className="block text-xs font-medium text-slate-400">Lưu trữ</span>
+                  <strong className="mt-1 block text-slate-800 dark:text-slate-100">
+                    {selectedDocument.archivedAt ? "Đã lưu trữ" : "Đang hoạt động"}
+                  </strong>
+                </div>
+              </div>
+
+              {selectedDocument.fileDataUrl ? (
+                <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800">
+                  {selectedDocument.fileType?.startsWith("image/") ? (
+                    <img
+                      src={selectedDocument.fileDataUrl}
+                      alt={selectedDocument.fileName || selectedDocument.tieuDe}
+                      className="max-h-[420px] w-full object-contain bg-slate-100 dark:bg-slate-950"
+                    />
+                  ) : selectedDocument.fileType === "application/pdf" || selectedDocument.fileType?.startsWith("text/") ? (
+                    <iframe
+                      src={selectedDocument.fileDataUrl}
+                      title={selectedDocument.tieuDe}
+                      className="h-[420px] w-full bg-white"
+                    />
+                  ) : (
+                    <div className="p-6 text-center text-sm text-slate-500 dark:text-slate-400">
+                      Trình duyệt không hỗ trợ xem trực tiếp loại tệp này. Vui lòng tải xuống để mở bằng phần mềm phù hợp.
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="rounded-xl border border-dashed border-slate-200 p-6 text-center text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
+                  Văn bản mẫu chưa có file gốc. Nút tải xuống sẽ xuất file thông tin dạng TXT.
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end gap-2 border-t border-slate-100 p-4 dark:border-slate-800">
+              {selectedDocument.trangThai !== "Lưu trữ" && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleArchive(selectedDocument.id);
+                    setSelectedDocument((prev) =>
+                      prev ? { ...prev, trangThai: "Lưu trữ", archivedAt: new Date().toISOString() } : prev
+                    );
+                  }}
+                  className="flex items-center gap-1.5 rounded-xl border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                >
+                  <Archive size={14} />
+                  Lưu trữ
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => handleDownload(selectedDocument)}
+                className="flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-bold text-white hover:bg-indigo-700"
+              >
+                <Download size={14} />
+                Tải xuống
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+

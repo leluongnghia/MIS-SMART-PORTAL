@@ -45,10 +45,22 @@ interface LessonPlan {
   status: 'SO_THAO' | 'CHO_DUYET' | 'DA_DUYET' | 'TU_CHOI';
   submittedAt: string;
   fileName: string;
+  fileType?: string;
+  fileSize?: number;
+  fileDataUrl?: string;
   notes: string;
   feedback?: string;
   reviewedBy?: string;
 }
+
+const MAX_LOCAL_LESSON_FILE_SIZE = 2 * 1024 * 1024;
+
+const formatFileSize = (size?: number) => {
+  if (!size) return '';
+  if (size < 1024) return `${size} B`;
+  if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
+  return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+};
 
 // Dữ liệu thời khóa biểu mẫu
 const INITIAL_TIMETABLE: TimetableSlot[] = [
@@ -122,6 +134,42 @@ export default function AcademicOperations({ currentUser, users }: AcademicOpera
     ];
   });
 
+  const downloadLessonPlan = (plan: LessonPlan) => {
+    if (plan.fileDataUrl && plan.fileName) {
+      const link = document.createElement('a');
+      link.href = plan.fileDataUrl;
+      link.download = plan.fileName;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      return;
+    }
+
+    const safeFileName = (plan.fileName || `${plan.id}.txt`).replace(/[\\/:*?"<>|]/g, '-');
+    const content = [
+      `Tiêu đề: ${plan.title}`,
+      `Môn học: ${plan.subject}`,
+      `Khối: ${plan.grade}`,
+      `Người nộp: ${plan.teacherName}`,
+      `Ngày nộp: ${plan.submittedAt}`,
+      `Trạng thái: ${plan.status}`,
+      '',
+      'Ghi chú phương pháp:',
+      plan.notes || 'Không có ghi chú.',
+      '',
+      plan.feedback ? `Phản hồi kiểm duyệt: ${plan.feedback}` : '',
+    ].join('\n');
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = safeFileName.endsWith('.txt') ? safeFileName : `${safeFileName}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  };
+
   useEffect(() => {
     localStorage.setItem('mis_academic_lesson_plans', JSON.stringify(lessonPlans));
   }, [lessonPlans]);
@@ -134,7 +182,42 @@ export default function AcademicOperations({ currentUser, users }: AcademicOpera
     fileName: '',
     notes: ''
   });
+  const [newPlanFile, setNewPlanFile] = useState<{
+    name: string;
+    type: string;
+    size: number;
+    dataUrl: string;
+  } | null>(null);
+  const [newPlanFileError, setNewPlanFileError] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
+
+  const handleLessonFileSelect = (file?: File) => {
+    setNewPlanFileError('');
+    if (!file) return;
+
+    if (file.size > MAX_LOCAL_LESSON_FILE_SIZE) {
+      setNewPlanFile(null);
+      setNewPlanForm(prev => ({ ...prev, fileName: '' }));
+      setNewPlanFileError(lang === 'vi' ? 'Tệp vượt quá 2MB nên không thể lưu cục bộ.' : 'File exceeds 2MB local storage limit.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setNewPlanFile({
+        name: file.name,
+        type: file.type || 'application/octet-stream',
+        size: file.size,
+        dataUrl: String(reader.result),
+      });
+      setNewPlanForm(prev => ({ ...prev, fileName: file.name }));
+    };
+    reader.onerror = () => {
+      setNewPlanFile(null);
+      setNewPlanFileError(lang === 'vi' ? 'Không thể đọc tệp giáo án. Vui lòng thử lại.' : 'Could not read the lesson plan file.');
+    };
+    reader.readAsDataURL(file);
+  };
 
   // Phê duyệt giáo án (dành cho MANAGER / ADMIN)
   const [reviewFeedbacks, setReviewFeedbacks] = useState<Record<string, string>>({});
@@ -144,7 +227,10 @@ export default function AcademicOperations({ currentUser, users }: AcademicOpera
 
   const handleAddPlan = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newPlanForm.title || !newPlanForm.fileName) return;
+    if (!newPlanForm.title || !newPlanFile) {
+      setNewPlanFileError(lang === 'vi' ? 'Vui lòng chọn tệp giáo án cần tải lên.' : 'Please select a lesson plan file to upload.');
+      return;
+    }
 
     const newPlan: LessonPlan = {
       id: `LP${Date.now().toString().slice(-4)}`,
@@ -155,12 +241,17 @@ export default function AcademicOperations({ currentUser, users }: AcademicOpera
       teacherName: currentUser.name,
       status: 'CHO_DUYET',
       submittedAt: new Date().toISOString().substring(0, 10),
-      fileName: newPlanForm.fileName,
+      fileName: newPlanFile.name,
+      fileType: newPlanFile.type,
+      fileSize: newPlanFile.size,
+      fileDataUrl: newPlanFile.dataUrl,
       notes: newPlanForm.notes
     };
 
     setLessonPlans([newPlan, ...lessonPlans]);
     setNewPlanForm({ title: '', subject: 'Toán', grade: '10', fileName: '', notes: '' });
+    setNewPlanFile(null);
+    setNewPlanFileError('');
     setShowAddForm(false);
   };
 
@@ -197,7 +288,7 @@ export default function AcademicOperations({ currentUser, users }: AcademicOpera
             ACADEMIC OPERATIONS PORTAL
           </span>
           <h1 className="text-2xl md:text-3xl font-display font-black tracking-tight leading-tight">
-            {lang === 'vi' ? 'Quản Lý Học Vụ & Giáo Án Điện Tử' : 'Academics & Lesson Plan Review'}
+            {lang === 'vi' ? 'Quản lý học vụ và giáo án điện tử' : 'Academics & Lesson Plan Review'}
           </h1>
           <p className="text-xs md:text-sm text-blue-100/80 leading-relaxed font-light font-sans mt-2">
             {lang === 'vi'
@@ -315,7 +406,7 @@ export default function AcademicOperations({ currentUser, users }: AcademicOpera
             <div>
               <h3 className="font-display font-black text-slate-900 dark:text-white text-sm flex items-center gap-1.5">
                 <FileText className="text-blue-600 w-4.5 h-4.5" />
-                {lang === 'vi' ? 'Duyệt Giáo Án Điện Tử' : 'Lesson Plan Review'}
+                {lang === 'vi' ? 'Duyệt giáo án điện tử' : 'Lesson Plan Review'}
               </h3>
               <p className="text-[10.5px] text-slate-500">{lang === 'vi' ? 'Ban Giám hiệu và Tổ trưởng duyệt giáo án của giáo viên.' : 'School Board and Department Heads review teacher lesson plans.'}</p>
             </div>
@@ -376,15 +467,37 @@ export default function AcademicOperations({ currentUser, users }: AcademicOpera
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-bold uppercase text-slate-450 block mb-1">{lang === 'vi' ? 'Tên file đính kèm' : 'Attachment Filename'}</label>
+                  <label className="text-[10px] font-bold uppercase text-slate-450 block mb-1">{lang === 'vi' ? 'File giáo án đính kèm' : 'Lesson Plan File'}</label>
                   <input
-                    type="text"
-                    required
-                    placeholder="GiaoAn_Mon_Lop_Ten.pdf / .docx"
-                    value={newPlanForm.fileName}
-                    onChange={(e) => setNewPlanForm({...newPlanForm, fileName: e.target.value})}
-                    className="w-full text-xs p-2 border border-slate-205 dark:border-slate-800 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white dark:bg-slate-900 font-mono"
+                    key={newPlanFile?.name || 'empty-plan-file'}
+                    type="file"
+                    required={!newPlanFile}
+                    accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt"
+                    onChange={(e) => handleLessonFileSelect(e.target.files?.[0])}
+                    className="w-full text-xs p-2 border border-slate-205 dark:border-slate-800 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white dark:bg-slate-900 file:mr-3 file:border-0 file:rounded-md file:bg-blue-50 file:px-2.5 file:py-1 file:text-[10px] file:font-bold file:text-blue-700"
                   />
+                  {newPlanFile && (
+                    <div className="mt-2 flex items-center justify-between gap-2 rounded-lg border border-blue-100 bg-blue-50 px-2.5 py-2 text-[10.5px] dark:border-blue-900/50 dark:bg-blue-950/30">
+                      <span className="truncate font-mono text-slate-700 dark:text-slate-200">
+                        {newPlanFile.name} {formatFileSize(newPlanFile.size) && `(${formatFileSize(newPlanFile.size)})`}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setNewPlanFile(null);
+                          setNewPlanFileError('');
+                          setNewPlanForm(prev => ({ ...prev, fileName: '' }));
+                        }}
+                        className="shrink-0 rounded-md p-1 text-slate-500 hover:bg-white hover:text-rose-600 dark:hover:bg-slate-900"
+                        aria-label={lang === 'vi' ? 'Xóa file đã chọn' : 'Remove selected file'}
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  )}
+                  {newPlanFileError && (
+                    <p className="mt-1.5 text-[10.5px] font-semibold text-rose-600">{newPlanFileError}</p>
+                  )}
                 </div>
 
                 <div>
@@ -401,7 +514,11 @@ export default function AcademicOperations({ currentUser, users }: AcademicOpera
                 <div className="flex gap-2 justify-end">
                   <button
                     type="button"
-                    onClick={() => setShowAddForm(false)}
+                    onClick={() => {
+                      setShowAddForm(false);
+                      setNewPlanFile(null);
+                      setNewPlanFileError('');
+                    }}
                     className="px-3 py-1.5 border border-slate-200 dark:border-slate-800 rounded-lg text-xs font-semibold text-slate-500 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-900"
                   >
                     {lang === 'vi' ? 'Huỷ' : 'Cancel'}
@@ -449,10 +566,12 @@ export default function AcademicOperations({ currentUser, users }: AcademicOpera
                   </div>
 
                   <div className="bg-slate-50 dark:bg-slate-950 p-2.5 rounded-lg border border-slate-100 dark:border-slate-850 flex items-center justify-between gap-3 font-mono text-[10.5px]">
-                    <span className="truncate text-slate-600 dark:text-slate-350 select-all">📁 {plan.fileName}</span>
+                    <span className="truncate text-slate-600 dark:text-slate-350 select-all">
+                      {plan.fileName}{plan.fileSize ? ` (${formatFileSize(plan.fileSize)})` : ''}
+                    </span>
                     <a 
                       href="#" 
-                      onClick={(e) => { e.preventDefault(); alert(lang === 'vi' ? `Đang tải file giáo án: ${plan.fileName}` : `Downloading lesson plan: ${plan.fileName}`); }} 
+                      onClick={(e) => { e.preventDefault(); downloadLessonPlan(plan); }} 
                       className="text-blue-600 hover:text-blue-800 font-bold shrink-0 no-print"
                     >
                       {lang === 'vi' ? 'Tải về' : 'Download'}

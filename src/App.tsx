@@ -104,8 +104,8 @@ import {
 const INITIAL_ANNOUNCEMENTS: Announcement[] = [
   {
     id: 'annce_1',
-    title: 'Họp Giao Ban Đột Xuất: Rà soát hạ tầng thiết bị quạt máy mùa tuyển sinh & thi cử',
-    content: 'Kính gửi các Thầy Cô Tổ trưởng chuyên môn và Phó Hiệu trưởng,\n\nCEO đề nghị chúng ta họp khẩn để thống nhất phương án kiểm định rà soát thiết bị, đảm bảo tối đa điều kiện làm mát tại 40 phòng thi chính thức phục vụ kỳ thi Tốt nghiệp THPT và các sự kiện tuyển sinh khối Tiểu học sắp tới.\n\nYêu cầu các đồng chí:\n1. Báo cáo nhanh tiến độ thực tế sửa chữa lắp đặt thiết bị.\n2. Chuẩn bị tài liệu kinh phí phát sinh nếu có.\n\nKính mời đồng chí dự họp đầy đủ và đúng giờ.',
+    title: 'Họp giao ban đột xuất: Rà soát thiết bị làm mát mùa tuyển sinh và thi cử',
+    content: 'Kính gửi Thầy/Cô Tổ trưởng chuyên môn và Phó Hiệu trưởng,\n\nBan điều hành đề nghị họp khẩn để thống nhất phương án rà soát thiết bị, bảo đảm điều kiện làm mát tại 40 phòng thi chính thức phục vụ kỳ thi tốt nghiệp THPT và các sự kiện tuyển sinh khối Tiểu học sắp tới.\n\nĐề nghị Thầy/Cô:\n1. Báo cáo nhanh tiến độ sửa chữa, lắp đặt thiết bị.\n2. Chuẩn bị tài liệu về kinh phí phát sinh nếu có.\n\nKính mời Thầy/Cô tham dự đầy đủ và đúng giờ.',
     senderName: 'HVL',
     senderTitle: 'Giám đốc Điều hành (CEO)',
     senderAvatar: 'https://images.unsplash.com/photo-1580894732444-8fecef2271ff?w=150&h=150&fit=crop&crop=face',
@@ -132,8 +132,8 @@ const INITIAL_ANNOUNCEMENTS: Announcement[] = [
   },
   {
     id: 'annce_2',
-    title: 'Thông cáo phối hợp kiểm tra hồ sơ học vụ đổi mới phương pháp giảng dạy Ngữ văn mới',
-    content: 'Ban Giám hiệu trân quý ghi nhận tinh thần đổi mới giảng dạy của Tổ Ngữ văn. Đề nghị Tổ trưởng Tổ Ngữ văn phối hợp kiểm tra hồ sơ giáo án mẫu tích hợp công nghệ để phổ biến rộng rãi cho toàn trường trong tuần tới. \n\nTrân trọng.',
+    title: 'Thông báo phối hợp kiểm tra hồ sơ đổi mới phương pháp giảng dạy Ngữ văn',
+    content: 'Ban Giám hiệu ghi nhận tinh thần đổi mới giảng dạy của Tổ Ngữ văn. Đề nghị Tổ trưởng Tổ Ngữ văn phối hợp kiểm tra hồ sơ giáo án mẫu tích hợp công nghệ để phổ biến rộng rãi trong toàn trường trong tuần tới.\n\nTrân trọng.',
     senderName: 'Thầy Chưa Biết Chừng',
     senderTitle: 'Hiệu trưởng (Trưởng ban Giám hiệu)',
     senderAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
@@ -147,8 +147,8 @@ const INITIAL_ANNOUNCEMENTS: Announcement[] = [
 const INITIAL_DIRECTIVES: BoardDirective[] = [
   {
     id: 'directive_1',
-    title: 'Nghị quyết số 08/NQ-HĐ: Định hướng chiến lược đầu tư cơ sở vật chất kỹ thuật & Phòng Lab AI',
-    content: 'Hội đồng Trường nhất trí thông qua đề án cải tạo phòng nghiên cứu Công nghệ số, bổ sung trang thiết bị máy tính cấu hình cao phục vụ các dự án đột phá về Robotics, AI ứng dụng và Đa trí tuệ trong niên khóa mới.\n\nSẽ phân bổ đợt 1 bắt đầu từ 01/07/2026. Giao Ban Giám hiệu và bộ phận Hành chính thiết bị triển khai kết hợp cùng các tổ chuyên môn, lập biểu mẫu giám sát chất lượng.',
+    title: 'Nghị quyết số 08/NQ-HĐ: Định hướng đầu tư cơ sở vật chất và phòng thí nghiệm AI',
+    content: 'Hội đồng Trường nhất trí thông qua đề án cải tạo phòng nghiên cứu Công nghệ số, bổ sung máy tính cấu hình cao để phục vụ các dự án Robotics, AI ứng dụng và giáo dục đa trí tuệ trong niên khóa mới.\n\nĐợt phân bổ đầu tiên bắt đầu từ ngày 01/07/2026. Giao Ban Giám hiệu và bộ phận Hành chính - Thiết bị phối hợp với các tổ chuyên môn triển khai, đồng thời lập biểu mẫu giám sát chất lượng.',
     senderId: 'user_chutich',
     senderName: 'Thầy PGS.TS. Nguyễn Văn Minh',
     senderTitle: 'Chủ tịch Hội đồng Trường',
@@ -162,15 +162,15 @@ const INITIAL_DIRECTIVES: BoardDirective[] = [
         userName: 'Thầy Chưa Biết Chừng',
         userTitle: 'Hiệu trưởng (Trưởng ban Giám hiệu)',
         status: 'DA_TIEP_THU',
-        feedback: 'Ban Giám hiệu đã tiếp nhận ý kiến của Hội đồng trường và bắt đầu lập hội đồng thẩm định ngân sách.',
+        feedback: 'Ban Giám hiệu đã tiếp nhận ý kiến của Hội đồng Trường và bắt đầu thành lập hội đồng thẩm định ngân sách.',
         updatedAt: '2026-05-30 11:15'
       }
     ]
   },
   {
     id: 'directive_2',
-    title: 'Chỉ thị khẩn quyết định triển khai rà soát an toàn vệ sinh an học đường tối cao',
-    content: 'Đề nghị Tổng quản lý Bếp ăn học đường phối hợp chặt chẽ trực tiếp với Phòng Vận hành, tiến hành kiểm liên đới toàn bộ hồ sơ chất lượng nhập thực phẩm, quy trình bảo quản tươi và lưu mẫu thực phẩm trong 24h.\n\nYêu cầu nộp báo cáo kết quả rà soát lên trực tiếp CEO trước ngày 05/06/2026.',
+    title: 'Chỉ thị khẩn: Rà soát an toàn vệ sinh thực phẩm học đường',
+    content: 'Đề nghị Tổng quản lý Bếp ăn học đường phối hợp trực tiếp với Phòng Vận hành để kiểm tra toàn bộ hồ sơ chất lượng thực phẩm đầu vào, quy trình bảo quản và việc lưu mẫu thực phẩm trong 24 giờ.\n\nYêu cầu nộp báo cáo kết quả rà soát cho Ban điều hành trước ngày 05/06/2026.',
     senderId: 'user_ceo',
     senderName: 'HVL',
     senderTitle: 'Giám đốc Điều hành (CEO)',
@@ -528,6 +528,7 @@ export default function App() {
   // Modal control states
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [selectedTaskForDetail, setSelectedTaskForDetail] = useState<Task | null>(null);
+  const [activeStatsTaskType, setActiveStatsTaskType] = useState<'COMPLETED' | 'PENDING' | 'IN_PROGRESS' | 'OVERDUE' | null>(null);
 
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [directives, setDirectives] = useState<BoardDirective[]>([]);
@@ -732,6 +733,86 @@ export default function App() {
       }
     }
   }, [tasks]);
+
+  // Automated Email Reminders for Overdue & Near-Deadline Tasks
+  useEffect(() => {
+    if (!isAuthReady || tasks.length === 0) return;
+
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    const todayStr = `${yyyy}-${mm}-${dd}`;
+
+    // Find the first task that needs a reminder
+    const taskToRemind = tasks.find(task => {
+      if (task.status === 'HOAN_THANH') return false;
+      if (!task.deadline) return false;
+
+      const diffTime = new Date(task.deadline).getTime() - new Date(todayStr).getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      
+      const isOverdue = diffDays < 0;
+      const isNearDeadline = diffDays >= 0 && diffDays <= 2;
+
+      if (isOverdue && !task.overdueReminderSent) {
+        return true;
+      }
+      if (isNearDeadline && !task.nearDeadlineReminderSent) {
+        return true;
+      }
+      return false;
+    });
+
+    if (taskToRemind) {
+      const runReminder = async () => {
+        const diffTime = new Date(taskToRemind.deadline).getTime() - new Date(todayStr).getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        const type = diffDays < 0 ? 'OVERDUE' : 'NEAR_DEADLINE';
+
+        console.log(`[Auto-Reminder] Triggering ${type} email for task: ${taskToRemind.title}`);
+        
+        const userProfile = users.find(u => u.id === taskToRemind.assignedId) || MOCK_USERS.find(u => u.id === taskToRemind.assignedId);
+        const emailAddress = userProfile?.email || `${taskToRemind.assignedId}@mis.edu.vn`;
+
+        try {
+          const res = await fetch('/api/email/send-reminder', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              taskTitle: taskToRemind.title,
+              taskDescription: taskToRemind.description,
+              assigneeName: taskToRemind.assignedName,
+              assigneeEmail: emailAddress,
+              deadline: taskToRemind.deadline,
+              type,
+            }),
+          });
+          
+          if (res.ok) {
+            const data = await res.json();
+            console.log('[Auto-Reminder] Backend response:', data);
+            
+            // Update the task flag in Firestore
+            const updatedTask = {
+              ...taskToRemind,
+              [type === 'OVERDUE' ? 'overdueReminderSent' : 'nearDeadlineReminderSent']: true,
+            };
+            await setDoc(doc(db, 'tasks', taskToRemind.id), updatedTask);
+            console.log(`[Auto-Reminder] Updated task ${taskToRemind.id} reminder flag in Firestore.`);
+          } else {
+            console.error('[Auto-Reminder] Failed to trigger email via backend API.');
+          }
+        } catch (err) {
+          console.error('[Auto-Reminder] Error sending reminder:', err);
+        }
+      };
+
+      runReminder();
+    }
+  }, [isAuthReady, tasks, users]);
 
   const handlePublishAnnouncement = (newData: Omit<Announcement, 'id' | 'createdAt' | 'senderName' | 'senderTitle' | 'senderAvatar' | 'acknowledgedBy'>) => {
     const newAnnce: Announcement = {
@@ -1300,14 +1381,14 @@ export default function App() {
   };
 
   const commandSectionResults = [
-    { id: 'DASHBOARD', label: 'Tong quan dieu hanh', description: 'Dashboard, thong ke, hieu suat', tab: 'DASHBOARD' as const, icon: Layout },
-    { id: 'TASKS', label: 'Quan ly cong viec', description: 'Kanban, lich bieu, danh sach viec', tab: 'TASKS' as const, icon: ListTodo },
-    { id: 'STRATEGY_OKRS', label: 'OKRs chien luoc', description: 'Muc tieu, KPI, ket qua then chot', tab: 'STRATEGY_OKRS' as const, icon: TrendingUp },
-    { id: 'WORKFLOW_APPROVALS', label: 'Phe duyet quy trinh', description: 'Ho so, luong duyet, nhat ky', tab: 'WORKFLOW_APPROVALS' as const, icon: FileCheck },
-    { id: 'CRM_ADMISSIONS', label: 'CRM tuyen sinh', description: 'Phu huynh, hoc sinh, cham soc', tab: 'CRM_ADMISSIONS' as const, icon: Users },
-    { id: 'TEACHER_HR', label: 'Nhan su giao vien', description: 'Danh ba, KPI, nghi phep', tab: 'TEACHER_HR' as const, icon: UserCheck },
-    { id: 'RISK_CENTER', label: 'Quan tri rui ro', description: 'Canh bao, giam sat, xu ly', tab: 'RISK_CENTER' as const, icon: AlertCircle },
-    { id: 'ANALYTICS', label: 'Bao cao phan tich', description: 'Bao cao, bieu do, truy van', tab: 'ANALYTICS' as const, icon: FileSpreadsheet }
+    { id: 'DASHBOARD', label: 'Tổng quan điều hành', description: 'Bảng điều khiển, thống kê, hiệu suất', tab: 'DASHBOARD' as const, icon: Layout },
+    { id: 'TASKS', label: 'Quản lý công việc', description: 'Kanban, lịch biểu, danh sách việc', tab: 'TASKS' as const, icon: ListTodo },
+    { id: 'STRATEGY_OKRS', label: 'OKRs chiến lược', description: 'Mục tiêu, KPI, kết quả then chốt', tab: 'STRATEGY_OKRS' as const, icon: TrendingUp },
+    { id: 'WORKFLOW_APPROVALS', label: 'Phê duyệt quy trình', description: 'Hồ sơ, luồng duyệt, nhật ký', tab: 'WORKFLOW_APPROVALS' as const, icon: FileCheck },
+    { id: 'CRM_ADMISSIONS', label: 'CRM tuyển sinh', description: 'Phụ huynh, học sinh, chăm sóc', tab: 'CRM_ADMISSIONS' as const, icon: Users },
+    { id: 'TEACHER_HR', label: 'Nhân sự giáo viên', description: 'Danh bạ, KPI, nghỉ phép', tab: 'TEACHER_HR' as const, icon: UserCheck },
+    { id: 'RISK_CENTER', label: 'Quản trị rủi ro', description: 'Cảnh báo, giám sát, xử lý', tab: 'RISK_CENTER' as const, icon: AlertCircle },
+    { id: 'ANALYTICS', label: 'Báo cáo phân tích', description: 'Báo cáo, biểu đồ, truy vấn', tab: 'ANALYTICS' as const, icon: FileSpreadsheet }
   ].filter(item => matchesCommandTerm(item.label, item.description)).slice(0, 6);
 
   const commandTaskResults = roleFilteredTasks
@@ -1659,7 +1740,7 @@ export default function App() {
       <div className="flex flex-1 min-h-0 relative">
         
         {/* Sidebar Navigation matching the design HTML */}
-        <aside className={`fixed inset-y-0 left-0 z-40 w-64 bg-white dark:bg-slate-900 text-slate-650 dark:text-slate-300 flex flex-col shrink-0 border-r border-slate-200/80 dark:border-slate-800/80 min-h-full transition-transform duration-300 md:static md:translate-x-0 ${
+        <aside className={`fixed inset-y-0 left-0 z-40 w-64 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 flex flex-col shrink-0 border-r border-slate-200/80 dark:border-slate-800/80 min-h-full transition-transform duration-300 md:static md:translate-x-0 ${
           isSidebarOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'
         }`}>
           {/* Mobile close button inside sidebar */}
@@ -1684,9 +1765,9 @@ export default function App() {
               >
                 <span className="flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
-                  <span className={expandedGroups.strategy ? 'text-rose-650 font-extrabold' : ''}>1. Chiến lược</span>
+                  <span className={expandedGroups.strategy ? 'text-rose-600 dark:text-rose-400 font-extrabold' : ''}>1. Chiến lược</span>
                 </span>
-                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${expandedGroups.strategy ? 'text-rose-650' : '-rotate-90'}`} />
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${expandedGroups.strategy ? 'text-rose-600 dark:text-rose-400' : '-rotate-90'}`} />
               </button>
               
               {expandedGroups.strategy && (
@@ -1765,9 +1846,9 @@ export default function App() {
               >
                 <span className="flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
-                  <span className={expandedGroups.foundation ? 'text-indigo-650 font-extrabold' : ''}>2. Nền tảng</span>
+                  <span className={expandedGroups.foundation ? 'text-indigo-600 dark:text-indigo-400 font-extrabold' : ''}>2. Nền tảng</span>
                 </span>
-                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${expandedGroups.foundation ? 'text-indigo-650' : '-rotate-90'}`} />
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${expandedGroups.foundation ? 'text-indigo-600 dark:text-indigo-400' : '-rotate-90'}`} />
               </button>
               
               {expandedGroups.foundation && (
@@ -1816,9 +1897,9 @@ export default function App() {
               >
                 <span className="flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-violet-500"></span>
-                  <span className={expandedGroups.operation ? 'text-violet-650 font-extrabold' : ''}>3. Vận hành</span>
+                  <span className={expandedGroups.operation ? 'text-violet-600 dark:text-violet-400 font-extrabold' : ''}>3. Vận hành</span>
                 </span>
-                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${expandedGroups.operation ? 'text-violet-655' : '-rotate-90'}`} />
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${expandedGroups.operation ? 'text-violet-600 dark:text-violet-400' : '-rotate-90'}`} />
               </button>
               
               {expandedGroups.operation && (
@@ -1893,13 +1974,13 @@ export default function App() {
             <div className="flex flex-col gap-0.5 border-b border-slate-100 dark:border-slate-800 pb-2.5">
               <button 
                 onClick={() => toggleGroup('business')}
-                className="w-full flex items-center justify-between text-[10px] font-black tracking-wider text-slate-400 dark:text-slate-500 hover:text-emerald-600 dark:hover:text-emerald-400 py-1.5 px-3 uppercase font-mono cursor-pointer transition-colors"
+                className="w-full flex items-center justify-between text-[10px] font-black tracking-wider text-slate-400 dark:text-slate-500 hover:text-emerald-600 dark:text-emerald-400 dark:hover:text-emerald-400 py-1.5 px-3 uppercase font-mono cursor-pointer transition-colors"
               >
                 <span className="flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                  <span className={expandedGroups.business ? 'text-emerald-600 font-extrabold' : ''}>4. Nghiệp vụ Trường học</span>
+                  <span className={expandedGroups.business ? 'text-emerald-600 dark:text-emerald-400 font-extrabold' : ''}>4. Nghiệp vụ Trường học</span>
                 </span>
-                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${expandedGroups.business ? 'text-emerald-600' : '-rotate-90'}`} />
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${expandedGroups.business ? 'text-emerald-600 dark:text-emerald-400' : '-rotate-90'}`} />
               </button>
               
               {expandedGroups.business && (
@@ -1914,7 +1995,7 @@ export default function App() {
                     }`}
                   >
                     <div className="flex items-center gap-2.5">
-                      <SlidersHorizontal className={`w-4 h-4 transition-colors ${overviewTab === 'CRM_ADMISSIONS' ? 'text-emerald-600' : 'text-emerald-400 dark:text-emerald-550'}`} />
+                      <SlidersHorizontal className={`w-4 h-4 transition-colors ${overviewTab === 'CRM_ADMISSIONS' ? 'text-emerald-600 dark:text-emerald-400' : 'text-emerald-400 dark:text-emerald-550'}`} />
                       <span>Tuyển sinh &amp; CRM</span>
                     </div>
                   </button>
@@ -1925,11 +2006,11 @@ export default function App() {
                     className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
                       overviewTab === 'STUDENT_SUCCESS' 
                         ? 'bg-emerald-50 dark:bg-emerald-950/45 text-emerald-700 dark:text-emerald-300 font-extrabold border-l-4 border-emerald-600 shadow-3xs scale-[1.01]' 
-                        : 'text-slate-600 dark:text-slate-350 hover:bg-emerald-50/35 hover:text-emerald-755 dark:hover:bg-slate-800 dark:hover:text-emerald-400 font-semibold border-l-4 border-transparent'
+                        : 'text-slate-600 dark:text-slate-350 hover:bg-emerald-50/35 hover:text-emerald-700 dark:hover:bg-slate-800 dark:hover:text-emerald-400 font-semibold border-l-4 border-transparent'
                     }`}
                   >
                     <div className="flex items-center gap-2.5">
-                      <Users className={`w-4 h-4 transition-colors ${overviewTab === 'STUDENT_SUCCESS' ? 'text-emerald-600' : 'text-emerald-400 dark:text-emerald-550'}`} />
+                      <Users className={`w-4 h-4 transition-colors ${overviewTab === 'STUDENT_SUCCESS' ? 'text-emerald-600 dark:text-emerald-400' : 'text-emerald-400 dark:text-emerald-550'}`} />
                       <span>Hồ sơ Học sinh 360°</span>
                     </div>
                   </button>
@@ -1944,7 +2025,7 @@ export default function App() {
                     }`}
                   >
                     <div className="flex items-center gap-2.5">
-                      <Users className={`w-4 h-4 transition-colors ${overviewTab === 'TEACHER_HR' ? 'text-emerald-600' : 'text-emerald-400 dark:text-emerald-550'}`} />
+                      <Users className={`w-4 h-4 transition-colors ${overviewTab === 'TEACHER_HR' ? 'text-emerald-600 dark:text-emerald-400' : 'text-emerald-400 dark:text-emerald-550'}`} />
                       <span>Nhân sự &amp; Giáo viên</span>
                     </div>
                   </button>
@@ -1955,15 +2036,15 @@ export default function App() {
                     className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
                       overviewTab === 'HRM' 
                         ? 'bg-emerald-50 dark:bg-emerald-950/45 text-emerald-700 dark:text-emerald-300 font-extrabold border-l-4 border-emerald-600 shadow-3xs scale-[1.01]' 
-                        : 'text-slate-600 dark:text-slate-350 hover:bg-emerald-50/35 hover:text-emerald-755 dark:hover:bg-slate-800 dark:hover:text-emerald-400 font-semibold border-l-4 border-transparent'
+                        : 'text-slate-600 dark:text-slate-350 hover:bg-emerald-50/35 hover:text-emerald-700 dark:hover:bg-slate-800 dark:hover:text-emerald-400 font-semibold border-l-4 border-transparent'
                     }`}
                   >
                     <div className="flex items-center gap-2.5">
-                      <UserCheck className={`w-4 h-4 transition-colors ${overviewTab === 'HRM' ? 'text-emerald-600' : 'text-emerald-400 dark:text-emerald-550'}`} />
+                      <UserCheck className={`w-4 h-4 transition-colors ${overviewTab === 'HRM' ? 'text-emerald-600 dark:text-emerald-400' : 'text-emerald-400 dark:text-emerald-550'}`} />
                       <span>Quản trị HRM</span>
                     </div>
                     <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider font-mono shrink-0 select-none ${
-                      overviewTab === 'HRM' ? 'bg-emerald-650 text-white' : 'bg-emerald-100 text-emerald-755 dark:bg-emerald-950 dark:text-emerald-300'
+                      overviewTab === 'HRM' ? 'bg-emerald-600 text-white' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
                     }`}>NEW</span>
                   </button>
 
@@ -1977,11 +2058,11 @@ export default function App() {
                     }`}
                   >
                     <div className="flex items-center gap-2.5">
-                      <Laptop className={`w-4 h-4 transition-colors ${overviewTab === 'LMS' ? 'text-emerald-600' : 'text-emerald-400 dark:text-emerald-550'}`} />
+                      <Laptop className={`w-4 h-4 transition-colors ${overviewTab === 'LMS' ? 'text-emerald-600 dark:text-emerald-400' : 'text-emerald-400 dark:text-emerald-550'}`} />
                       <span>Hệ thống LMS</span>
                     </div>
                     <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider font-mono shrink-0 select-none ${
-                      overviewTab === 'LMS' ? 'bg-emerald-650 text-white' : 'bg-emerald-100 text-emerald-755 dark:bg-emerald-950 dark:text-emerald-300'
+                      overviewTab === 'LMS' ? 'bg-emerald-600 text-white' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
                     }`}>NEW</span>
                   </button>
                 </div>
@@ -1992,13 +2073,13 @@ export default function App() {
             <div className="flex flex-col gap-0.5 border-b border-slate-100 dark:border-slate-800 pb-2.5">
               <button 
                 onClick={() => toggleGroup('campus')}
-                className="w-full flex items-center justify-between text-[10px] font-black tracking-wider text-slate-400 dark:text-slate-500 hover:text-sky-600 dark:hover:text-sky-400 py-1.5 px-3 uppercase font-mono cursor-pointer transition-colors"
+                className="w-full flex items-center justify-between text-[10px] font-black tracking-wider text-slate-400 dark:text-slate-500 hover:text-sky-600 dark:text-sky-400 dark:hover:text-sky-400 py-1.5 px-3 uppercase font-mono cursor-pointer transition-colors"
               >
                 <span className="flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-sky-500"></span>
-                  <span className={expandedGroups.campus ? 'text-sky-600 font-extrabold' : ''}>5. Vận hành Học đường</span>
+                  <span className={expandedGroups.campus ? 'text-sky-600 dark:text-sky-400 font-extrabold' : ''}>5. Vận hành Học đường</span>
                 </span>
-                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${expandedGroups.campus ? 'text-sky-600' : '-rotate-90'}`} />
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${expandedGroups.campus ? 'text-sky-600 dark:text-sky-400' : '-rotate-90'}`} />
               </button>
               
               {expandedGroups.campus && (
@@ -2013,7 +2094,7 @@ export default function App() {
                     }`}
                   >
                     <div className="flex items-center gap-2.5">
-                      <Sparkles className={`w-4 h-4 transition-colors ${overviewTab === 'EVENTS' ? 'text-sky-600' : 'text-sky-500/80'}`} />
+                      <Sparkles className={`w-4 h-4 transition-colors ${overviewTab === 'EVENTS' ? 'text-sky-600 dark:text-sky-400' : 'text-sky-500/80'}`} />
                       <span>Quản lý Sự kiện</span>
                     </div>
                     <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider font-mono shrink-0 select-none ${
@@ -2026,8 +2107,8 @@ export default function App() {
                     onClick={() => { setOverviewTab('ACADEMIC_OPS'); setIsSidebarOpen(false); }}
                     className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
                       overviewTab === 'ACADEMIC_OPS' 
-                        ? 'bg-sky-50/80 dark:bg-sky-950/40 text-sky-600 dark:text-sky-400 font-bold border-l-2 border-sky-500 shadow-3xs scale-[1.01]' 
-                        : 'text-slate-600 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-sky-600 dark:hover:text-sky-400 font-semibold border-l-2 border-transparent'
+                        ? 'bg-sky-50/80 dark:bg-sky-950/40 text-sky-600 dark:text-sky-400 dark:text-sky-400 font-bold border-l-2 border-sky-500 shadow-3xs scale-[1.01]' 
+                        : 'text-slate-600 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-sky-600 dark:text-sky-400 dark:hover:text-sky-400 font-semibold border-l-2 border-transparent'
                     }`}
                   >
                     <div className="flex items-center gap-2.5">
@@ -2035,7 +2116,7 @@ export default function App() {
                       <span>Vận hành Học thuật</span>
                     </div>
                     <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider font-mono shrink-0 select-none ${
-                      overviewTab === 'ACADEMIC_OPS' ? 'bg-sky-600 text-white' : 'bg-sky-50 text-sky-600 dark:bg-sky-950 dark:text-sky-300'
+                      overviewTab === 'ACADEMIC_OPS' ? 'bg-sky-600 text-white' : 'bg-sky-50 text-sky-600 dark:text-sky-400 dark:bg-sky-950 dark:text-sky-300'
                     }`}>NEW</span>
                   </button>
 
@@ -2044,8 +2125,8 @@ export default function App() {
                     onClick={() => { setOverviewTab('LOGISTICS'); setIsSidebarOpen(false); }}
                     className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
                       overviewTab === 'LOGISTICS' 
-                        ? 'bg-sky-50/80 dark:bg-sky-950/40 text-sky-600 dark:text-sky-400 font-bold border-l-2 border-sky-500 shadow-3xs scale-[1.01]' 
-                        : 'text-slate-600 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-sky-600 dark:hover:text-sky-400 font-semibold border-l-2 border-transparent'
+                        ? 'bg-sky-50/80 dark:bg-sky-950/40 text-sky-600 dark:text-sky-400 dark:text-sky-400 font-bold border-l-2 border-sky-500 shadow-3xs scale-[1.01]' 
+                        : 'text-slate-600 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-sky-600 dark:text-sky-400 dark:hover:text-sky-400 font-semibold border-l-2 border-transparent'
                     }`}
                   >
                     <div className="flex items-center gap-2.5">
@@ -2053,7 +2134,7 @@ export default function App() {
                       <span>Logistics &amp; CSVC</span>
                     </div>
                     <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider font-mono shrink-0 select-none ${
-                      overviewTab === 'LOGISTICS' ? 'bg-sky-600 text-white' : 'bg-sky-50 text-sky-600 dark:bg-sky-950 dark:text-sky-300'
+                      overviewTab === 'LOGISTICS' ? 'bg-sky-600 text-white' : 'bg-sky-50 text-sky-600 dark:text-sky-400 dark:bg-sky-950 dark:text-sky-300'
                     }`}>NEW</span>
                   </button>
 
@@ -2062,8 +2143,8 @@ export default function App() {
                     onClick={() => { setOverviewTab('REQUESTS'); setIsSidebarOpen(false); }}
                     className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
                       overviewTab === 'REQUESTS' 
-                        ? 'bg-sky-50/80 dark:bg-sky-950/40 text-sky-600 dark:text-sky-400 font-bold border-l-2 border-sky-500 shadow-3xs scale-[1.01]' 
-                        : 'text-slate-600 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-sky-600 dark:hover:text-sky-400 font-semibold border-l-2 border-transparent'
+                        ? 'bg-sky-50/80 dark:bg-sky-950/40 text-sky-600 dark:text-sky-400 dark:text-sky-400 font-bold border-l-2 border-sky-500 shadow-3xs scale-[1.01]' 
+                        : 'text-slate-600 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-sky-600 dark:text-sky-400 dark:hover:text-sky-400 font-semibold border-l-2 border-transparent'
                     }`}
                   >
                     <div className="flex items-center gap-2.5">
@@ -2071,7 +2152,7 @@ export default function App() {
                       <span>Yêu cầu &amp; Dịch vụ</span>
                     </div>
                     <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider font-mono shrink-0 select-none ${
-                      overviewTab === 'REQUESTS' ? 'bg-sky-600 text-white' : 'bg-sky-50 text-sky-600 dark:bg-sky-950 dark:text-sky-300'
+                      overviewTab === 'REQUESTS' ? 'bg-sky-600 text-white' : 'bg-sky-50 text-sky-600 dark:text-sky-400 dark:bg-sky-950 dark:text-sky-300'
                     }`}>NEW</span>
                   </button>
 
@@ -2080,8 +2161,8 @@ export default function App() {
                     onClick={() => { setOverviewTab('GOOGLE_SHEETS'); setIsSidebarOpen(false); }}
                     className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
                       overviewTab === 'GOOGLE_SHEETS' 
-                        ? 'bg-sky-50/80 dark:bg-sky-950/40 text-sky-600 dark:text-sky-400 font-bold border-l-2 border-sky-500 shadow-3xs scale-[1.01]' 
-                        : 'text-slate-600 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-sky-600 dark:hover:text-sky-400 font-semibold border-l-2 border-transparent'
+                        ? 'bg-sky-50/80 dark:bg-sky-950/40 text-sky-600 dark:text-sky-400 dark:text-sky-400 font-bold border-l-2 border-sky-500 shadow-3xs scale-[1.01]' 
+                        : 'text-slate-600 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-sky-600 dark:text-sky-400 dark:hover:text-sky-400 font-semibold border-l-2 border-transparent'
                     }`}
                   >
                     <div className="flex items-center gap-2.5">
@@ -2089,7 +2170,7 @@ export default function App() {
                       <span>Đồng bộ Sheets</span>
                     </div>
                     <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider font-mono shrink-0 select-none ${
-                      overviewTab === 'GOOGLE_SHEETS' ? 'bg-sky-600 text-white' : 'bg-sky-50 text-sky-600 dark:bg-sky-950 dark:text-sky-300'
+                      overviewTab === 'GOOGLE_SHEETS' ? 'bg-sky-600 text-white' : 'bg-sky-50 text-sky-600 dark:text-sky-400 dark:bg-sky-950 dark:text-sky-300'
                     }`}>NEW</span>
                   </button>
                 </div>
@@ -2318,6 +2399,7 @@ export default function App() {
                     tasks={workspaceFilteredTasks} 
                     activeWorkspace={activeWorkspaceMeta} 
                     onMinimize={() => setIsStatsCollapsed(true)}
+                    onShowTaskList={(type) => setActiveStatsTaskType(type)}
                   />
                 )}
 
@@ -3089,6 +3171,133 @@ export default function App() {
         />
       )}
 
+      {/* Task List Modal Overlay from stats cards */}
+      {activeStatsTaskType && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in" id="stats-task-list-modal-overlay">
+          {/* Backdrop absolute underlay */}
+          <div className="absolute inset-0 cursor-pointer" onClick={() => setActiveStatsTaskType(null)} />
+          <div className="relative bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full max-h-[80vh] overflow-hidden flex flex-col border border-slate-200 dark:border-slate-800 shadow-2xl animate-scale-up z-10">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50">
+              <span className="text-slate-800 dark:text-white font-extrabold text-sm font-sans flex items-center gap-2">
+                <span>
+                  {activeStatsTaskType === 'COMPLETED' && 'Danh sách công việc đã hoàn thành'}
+                  {activeStatsTaskType === 'PENDING' && 'Danh sách công việc đang chờ duyệt'}
+                  {activeStatsTaskType === 'IN_PROGRESS' && 'Danh sách công việc đang tiến hành'}
+                  {activeStatsTaskType === 'OVERDUE' && 'Danh sách công việc trễ hạn'}
+                </span>
+                <span className="text-xs font-mono font-bold bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-2 py-0.5 rounded-full">
+                  {(() => {
+                    const todayStr = new Date().toISOString().split('T')[0];
+                    if (activeStatsTaskType === 'COMPLETED') return workspaceFilteredTasks.filter(t => t.status === 'HOAN_THANH').length;
+                    if (activeStatsTaskType === 'PENDING') return workspaceFilteredTasks.filter(t => t.status === 'CHO_DUYET').length;
+                    if (activeStatsTaskType === 'IN_PROGRESS') return workspaceFilteredTasks.filter(t => t.status === 'DANG_TIEN_HANH' || t.status === 'CHUA_BAT_DA').length;
+                    if (activeStatsTaskType === 'OVERDUE') return workspaceFilteredTasks.filter(t => t.status !== 'HOAN_THANH' && t.deadline < todayStr).length;
+                    return 0;
+                  })()}
+                </span>
+              </span>
+              <button 
+                onClick={() => setActiveStatsTaskType(null)}
+                className="p-1 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-500 rounded-lg cursor-pointer transition-colors"
+              >
+                <X className="w-4.5 h-4.5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="overflow-y-auto p-5 space-y-3 flex-1">
+              {(() => {
+                const todayStr = new Date().toISOString().split('T')[0];
+                const list = (() => {
+                  if (activeStatsTaskType === 'COMPLETED') return workspaceFilteredTasks.filter(t => t.status === 'HOAN_THANH');
+                  if (activeStatsTaskType === 'PENDING') return workspaceFilteredTasks.filter(t => t.status === 'CHO_DUYET');
+                  if (activeStatsTaskType === 'IN_PROGRESS') return workspaceFilteredTasks.filter(t => t.status === 'DANG_TIEN_HANH' || t.status === 'CHUA_BAT_DA');
+                  if (activeStatsTaskType === 'OVERDUE') return workspaceFilteredTasks.filter(t => t.status !== 'HOAN_THANH' && t.deadline < todayStr);
+                  return [];
+                })();
+
+                const getTaskProgress = (task: Task) => {
+                  if (task.checklist && task.checklist.length > 0) {
+                    const done = task.checklist.filter(item => item.done).length;
+                    return Math.round((done / task.checklist.length) * 100);
+                  }
+                  if (task.status === 'HOAN_THANH') return 100;
+                  if (task.status === 'CHO_DUYET') return 85;
+                  if (task.status === 'DANG_TIEN_HANH') return 50;
+                  return 0;
+                };
+
+                if (list.length === 0) {
+                  return (
+                    <div className="text-center py-8 text-slate-450 dark:text-slate-500 text-xs">
+                      Không có công việc nào trong danh mục này.
+                    </div>
+                  );
+                }
+
+                return list.map(task => {
+                  const progress = getTaskProgress(task);
+                  
+                  let progressBg = 'bg-indigo-600';
+                  let progressText = 'text-indigo-600 dark:text-indigo-400';
+                  if (activeStatsTaskType === 'COMPLETED') {
+                    progressBg = 'bg-emerald-500';
+                    progressText = 'text-emerald-600 dark:text-emerald-400';
+                  } else if (activeStatsTaskType === 'OVERDUE') {
+                    progressBg = 'bg-rose-500';
+                    progressText = 'text-rose-600 dark:text-rose-400';
+                  } else if (activeStatsTaskType === 'PENDING') {
+                    progressBg = 'bg-amber-500';
+                    progressText = 'text-amber-600 dark:text-amber-400';
+                  } else if (activeStatsTaskType === 'IN_PROGRESS') {
+                    progressBg = 'bg-sky-500';
+                    progressText = 'text-sky-600 dark:text-sky-400';
+                  }
+
+                  return (
+                    <div 
+                      key={task.id}
+                      onClick={() => {
+                        setSelectedTaskForDetail(task);
+                        setActiveStatsTaskType(null);
+                      }}
+                      className="group border border-slate-150 dark:border-slate-800/80 hover:border-indigo-300 dark:hover:border-indigo-800 rounded-xl p-3.5 flex items-center justify-between cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/35 hover:scale-[1.01] transition-all shadow-3xs"
+                    >
+                      <div className="flex-1 pr-4">
+                        <h4 className="font-bold text-xs text-slate-850 dark:text-slate-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                          {task.title}
+                        </h4>
+                        <div className="text-[10.5px] text-slate-450 dark:text-slate-500 mt-1 font-sans">
+                          Phụ trách: <span className="font-semibold text-slate-600 dark:text-slate-400">{task.assignedName}</span>
+                          {task.deadline && (
+                            <>
+                              <span className="mx-1.5 text-slate-300">|</span>
+                              <span>Hạn chót: <span className="font-semibold text-rose-600 dark:text-rose-400">{task.deadline}</span></span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-end shrink-0 gap-1.5">
+                        <span className={`text-xs font-mono font-bold ${progressText}`}>
+                          {progress}%
+                        </span>
+                        <div className="w-16 bg-slate-100 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden p-0">
+                          <div 
+                            className={`h-1.5 rounded-full transition-all duration-300 ${progressBg}`}
+                            style={{ width: `${progress}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                });
+              })()}
+            </div>
+          </div>
+        </div>
+      )}
+
       {isRbacModalOpen && (
         <RbacSettingsModal
           onClose={() => setIsRbacModalOpen(false)}
@@ -3175,7 +3384,7 @@ export default function App() {
                       <strong className="text-slate-800 text-sm font-bold block mt-0.5">{selectedStaffProfile.name}</strong>
                     </div>
                     <div className="bg-slate-50 p-3 rounded-xl border border-slate-100/60">
-                      <span className="text-slate-400 block font-medium">Mã Số Nhân Sự</span>
+                      <span className="text-slate-400 block font-medium">Mã số nhân sự</span>
                       <strong className="text-slate-850 font-mono text-sm block mt-0.5">{selectedStaffProfile.id.toUpperCase()}</strong>
                     </div>
                     <div className="bg-slate-50 p-3 rounded-xl border border-slate-100/60">
@@ -3199,7 +3408,7 @@ export default function App() {
                       Giả lập Đăng Nhập SSO (Sandbox) 🧪
                     </h4>
                     <p className="text-[11px] text-amber-700 leading-normal mt-1 mb-3 font-normal">
-                      Ban Giám Hiệu và Admin có thể đăng nhập thử vai nhân sự này ngay để trải nghiệm và rà soát các tiến trình nhiệm vụ, OKRs riêng biệt của tổ chuyên môn dưới góc nhìn của họ.
+                      Ban Giám hiệu và quản trị viên có thể đăng nhập thử vai nhân sự này để trải nghiệm và rà soát tiến trình nhiệm vụ, OKRs riêng của tổ chuyên môn dưới góc nhìn của họ.
                     </p>
                     <button
                       type="button"
@@ -3586,7 +3795,7 @@ export default function App() {
               <button 
                 type="button" 
                 onClick={() => setIsOnboardingModalOpen(false)}
-                className="text-slate-400 hover:text-slate-650 cursor-pointer focus:outline-none"
+                className="text-slate-400 hover:text-slate-600 cursor-pointer focus:outline-none"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -3594,7 +3803,7 @@ export default function App() {
 
             <div className="space-y-3.5 text-xs">
               <div className="space-y-1">
-                <label className="text-slate-500 block font-bold">Họ & Tên Nhân Sự mới:</label>
+                <label className="text-slate-500 block font-bold">Họ và tên nhân sự mới:</label>
                 <input 
                   required
                   type="text" 
@@ -3721,14 +3930,14 @@ export default function App() {
                     closeCommandPalette();
                   }
                 }}
-                placeholder="Tim nhanh chuc nang, cong viec, nhan su, bo phan..."
+                placeholder="Tìm nhanh chức năng, công việc, nhân sự, bộ phận..."
                 className="h-11 min-w-0 flex-1 bg-transparent text-sm font-semibold text-slate-900 outline-none placeholder:text-slate-400 dark:text-white"
               />
               <button
                 type="button"
                 onClick={closeCommandPalette}
                 className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-                title="Dong"
+                title="Đóng"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -3736,13 +3945,13 @@ export default function App() {
 
             <div className="max-h-[70vh] overflow-y-auto p-3">
               <div className="mb-3 flex items-center justify-between px-1 text-[11px] font-bold uppercase tracking-wide text-slate-400">
-                <span>Command Palette</span>
+                <span>Tìm kiếm nhanh</span>
                 <span className="rounded-md border border-slate-200 px-1.5 py-0.5 font-mono normal-case text-slate-500 dark:border-slate-700">Esc</span>
               </div>
 
               {commandSectionResults.length > 0 && (
                 <div className="mb-4">
-                  <div className="px-1 pb-2 text-[10px] font-black uppercase tracking-wide text-slate-400">Man hinh</div>
+                  <div className="px-1 pb-2 text-[10px] font-black uppercase tracking-wide text-slate-400">Màn hình</div>
                   <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
                     {commandSectionResults.map(item => {
                       const Icon = item.icon;
@@ -3769,7 +3978,7 @@ export default function App() {
 
               {commandTaskResults.length > 0 && (
                 <div className="mb-4">
-                  <div className="px-1 pb-2 text-[10px] font-black uppercase tracking-wide text-slate-400">Cong viec</div>
+                  <div className="px-1 pb-2 text-[10px] font-black uppercase tracking-wide text-slate-400">Công việc</div>
                   <div className="space-y-1.5">
                     {commandTaskResults.map(task => (
                       <button
@@ -3796,7 +4005,7 @@ export default function App() {
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   {commandUserResults.length > 0 && (
                     <div>
-                      <div className="px-1 pb-2 text-[10px] font-black uppercase tracking-wide text-slate-400">Nhan su</div>
+                      <div className="px-1 pb-2 text-[10px] font-black uppercase tracking-wide text-slate-400">Nhân sự</div>
                       <div className="space-y-1.5">
                         {commandUserResults.map(user => (
                           <button
@@ -3818,7 +4027,7 @@ export default function App() {
 
                   {commandWorkspaceResults.length > 0 && (
                     <div>
-                      <div className="px-1 pb-2 text-[10px] font-black uppercase tracking-wide text-slate-400">Bo phan</div>
+                      <div className="px-1 pb-2 text-[10px] font-black uppercase tracking-wide text-slate-400">Bộ phận</div>
                       <div className="space-y-1.5">
                         {commandWorkspaceResults.map(workspace => (
                           <button
@@ -3842,8 +4051,8 @@ export default function App() {
 
               {commandSectionResults.length === 0 && commandTaskResults.length === 0 && commandUserResults.length === 0 && commandWorkspaceResults.length === 0 && (
                 <div className="rounded-xl border border-dashed border-slate-200 px-4 py-10 text-center dark:border-slate-700">
-                  <p className="text-sm font-bold text-slate-700 dark:text-slate-200">Khong tim thay ket qua phu hop</p>
-                  <p className="mt-1 text-xs text-slate-400">Nhan Enter de ap dung tu khoa nay vao bo loc cong viec.</p>
+                  <p className="text-sm font-bold text-slate-700 dark:text-slate-200">Không tìm thấy kết quả phù hợp</p>
+                  <p className="mt-1 text-xs text-slate-400">Nhấn Enter để áp dụng từ khóa này vào bộ lọc công việc.</p>
                 </div>
               )}
             </div>

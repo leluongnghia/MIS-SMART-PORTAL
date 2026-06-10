@@ -46,7 +46,7 @@ export const WORKSPACES: Workspace[] = [
   {
     id: 'DICH_VU_HOC_DUONG',
     name: 'Phòng Dịch vụ & Vận hành Học đường',
-    description: 'Dịch vụ đưa đón học sinh (School Bus), bán trú canteen dinh dưỡng, y tế và an ninh',
+    description: 'Dịch vụ xe đưa đón học sinh, bếp ăn bán trú, y tế và an ninh',
     color: 'from-sky-500 to-indigo-600',
     iconName: 'Bus'
   },
@@ -59,14 +59,14 @@ export const WORKSPACES: Workspace[] = [
   },
   {
     id: 'VAN',
-    name: 'Tổ Chuyên môn Ngữ Văn',
-    description: 'Giảng dạy Ngữ Văn, các chuyên đề văn học nghệ thuật xã hội, nghiên cứu văn hóa',
+    name: 'Tổ Chuyên môn Ngữ văn',
+    description: 'Giảng dạy Ngữ văn, các chuyên đề văn học nghệ thuật xã hội, nghiên cứu văn hóa',
     color: 'from-emerald-600 to-teal-700',
     iconName: 'BookOpen'
   },
   {
     id: 'HANH_CHINH',
-    name: 'Tổ Văn phòng & Kế toán - Tài chính',
+    name: 'Tổ Ngữ văn phòng & Kế toán - Tài chính',
     description: 'Quản lý thu chi học phí, thủ quỹ ngân sách, hồ sơ cán bộ, pháp chế và thủ tục hành chính',
     color: 'from-rose-600 to-pink-700',
     iconName: 'ClipboardList'
@@ -76,6 +76,7 @@ export const WORKSPACES: Workspace[] = [
 export const MOCK_USERS: UserProfile[] = [
   {
     id: 'user_chutich',
+    email: 'chutich@mis.edu.vn',
     name: 'Thầy PGS.TS. Nguyễn Văn Minh',
     role: 'ADMIN',
     roleName: 'Ban Giám hiệu & Hội đồng',
@@ -85,6 +86,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_ceo',
+    email: 'ceo@mis.edu.vn',
     name: 'HVL',
     role: 'ADMIN',
     roleName: 'Ban Giám hiệu & Hội đồng',
@@ -94,6 +96,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_triet',
+    email: 'triet@mis.edu.vn',
     name: 'Thầy Chưa Biết Chừng',
     role: 'ADMIN',
     roleName: 'Ban Giám hiệu',
@@ -103,6 +106,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_tuan',
+    email: 'tuan@mis.edu.vn',
     name: 'Thầy Ngô Anh Tuấn',
     role: 'ADMIN',
     roleName: 'Ban Giám hiệu',
@@ -112,6 +116,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_nam_anh',
+    email: 'nam_anh@mis.edu.vn',
     name: 'Thầy Dương Nam Anh',
     role: 'ADMIN',
     roleName: 'Ban Giám hiệu',
@@ -121,6 +126,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_nhan',
+    email: 'nhan@mis.edu.vn',
     name: 'Cô Lê Thị Thanh Nhàn',
     role: 'MANAGER',
     roleName: 'Tổ trưởng Chuyên môn',
@@ -130,24 +136,27 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_dat',
+    email: 'dat@mis.edu.vn',
     name: 'Thầy Vũ Tiến Đạt',
     role: 'MANAGER',
     roleName: 'Tổ trưởng Chuyên môn',
-    title: 'Tổ trưởng Tổ Ngữ Văn',
+    title: 'Tổ trưởng Tổ Ngữ văn',
     avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face',
     workspaceId: 'VAN'
   },
   {
     id: 'user_binh_mgr',
+    email: 'binh_mgr@mis.edu.vn',
     name: 'Cô Hoàng Trúc Liên',
     role: 'MANAGER',
     roleName: 'Tổ trưởng Chức năng',
-    title: 'Tổ trưởng Tổ Văn phòng - Hành chính',
+    title: 'Tổ trưởng Tổ Ngữ văn phòng - Hành chính',
     avatar: 'https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?w=150&h=150&fit=crop&crop=face',
     workspaceId: 'HANH_CHINH'
   },
   {
     id: 'user_nam',
+    email: 'nam@mis.edu.vn',
     name: 'Thầy Trần Hoàng Nam',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -157,15 +166,17 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_nhung',
+    email: 'nhung@mis.edu.vn',
     name: 'Cô Phạm Hồng Nhung',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
-    title: 'Giáo viên Tổ Ngữ Văn',
+    title: 'Giáo viên Tổ Ngữ văn',
     avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&h=150&fit=crop&crop=face',
     workspaceId: 'VAN'
   },
   {
     id: 'user_kha',
+    email: 'kha@mis.edu.vn',
     name: 'Thầy Nguyễn Văn Kha',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -175,6 +186,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_lan',
+    email: 'lan@mis.edu.vn',
     name: 'Cô Nguyễn Thanh Lan',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -184,6 +196,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_phong',
+    email: 'phong@mis.edu.vn',
     name: 'Thầy Bùi Hải Phong',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -193,15 +206,17 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_quyen',
+    email: 'quyen@mis.edu.vn',
     name: 'Cô Đỗ Thục Quyên',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
-    title: 'Giáo viên Tổ Ngữ Văn',
+    title: 'Giáo viên Tổ Ngữ văn',
     avatar: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=150&h=150&fit=crop&crop=face',
     workspaceId: 'VAN'
   },
   {
     id: 'user_binh',
+    email: 'binh@mis.edu.vn',
     name: 'Thầy Phạm Thanh Bình',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -211,6 +226,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_dung',
+    email: 'dung@mis.edu.vn',
     name: 'Cô Mai Phương Dũng',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -220,6 +236,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_minh',
+    email: 'minh@mis.edu.vn',
     name: 'Thầy Lê Quang Minh',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -229,6 +246,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_hoa',
+    email: 'hoa@mis.edu.vn',
     name: 'Cô Trịnh Thúy Hoa',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -238,6 +256,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_khanh',
+    email: 'khanh@mis.edu.vn',
     name: 'Thầy Nguyễn Quốc Khánh',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -247,6 +266,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_ngoc',
+    email: 'ngoc@mis.edu.vn',
     name: 'Cô Lâm Nhã Ngọc',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -256,6 +276,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_van_anh',
+    email: 'van_anh@mis.edu.vn',
     name: 'Cô Trần Vân Anh',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -265,6 +286,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_long',
+    email: 'long@mis.edu.vn',
     name: 'Thầy Hoàng Thăng Long',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -275,6 +297,7 @@ export const MOCK_USERS: UserProfile[] = [
   // -- BỔ SUNG THÀNH VIÊN TỔ TOÁN - TIN (12 giáo viên) --
   {
     id: 'user_toan_thai',
+    email: 'toan_thai@mis.edu.vn',
     name: 'Thầy Lê Quốc Thái',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -284,6 +307,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_toan_thao',
+    email: 'toan_thao@mis.edu.vn',
     name: 'Cô Vũ Thu Thảo',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -293,6 +317,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_toan_dang',
+    email: 'toan_dang@mis.edu.vn',
     name: 'Thầy Phan Hải Đăng',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -302,6 +327,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_toan_linh',
+    email: 'toan_linh@mis.edu.vn',
     name: 'Cô Đặng Khánh Linh',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -311,6 +337,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_toan_quan',
+    email: 'toan_quan@mis.edu.vn',
     name: 'Thầy Trịnh Minh Quân',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -320,6 +347,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_toan_trang',
+    email: 'toan_trang@mis.edu.vn',
     name: 'Cô Phạm Kiều Trang',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -329,6 +357,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_toan_hoang',
+    email: 'toan_hoang@mis.edu.vn',
     name: 'Thầy Nguyễn Văn Hoàng',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -338,6 +367,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_toan_yen',
+    email: 'toan_yen@mis.edu.vn',
     name: 'Cô Đỗ Hoàng Yến',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -347,6 +377,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_toan_dao',
+    email: 'toan_dao@mis.edu.vn',
     name: 'Thầy Bùi Quang Đạo',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -356,6 +387,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_toan_chi',
+    email: 'toan_chi@mis.edu.vn',
     name: 'Cô Nguyễn Quỳnh Chi',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -365,6 +397,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_toan_long',
+    email: 'toan_long@mis.edu.vn',
     name: 'Thầy Lâm Hoàng Long',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -374,6 +407,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_toan_ngan',
+    email: 'toan_ngan@mis.edu.vn',
     name: 'Cô Phan Kim Ngân',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -385,6 +419,7 @@ export const MOCK_USERS: UserProfile[] = [
   // -- BỔ SUNG THÀNH VIÊN TỔ NGỮ VĂN (12 giáo viên) --
   {
     id: 'user_van_mai',
+    email: 'van_mai@mis.edu.vn',
     name: 'Cô Nguyễn Tuyết Mai',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -394,6 +429,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_van_bao',
+    email: 'van_bao@mis.edu.vn',
     name: 'Thầy Đinh Gia Bảo',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -403,6 +439,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_van_vi',
+    email: 'van_vi@mis.edu.vn',
     name: 'Cô Huỳnh Thúy Vi',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -412,6 +449,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_van_bich',
+    email: 'van_bich@mis.edu.vn',
     name: 'Cô Lưu Ngọc Bích',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -421,6 +459,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_van_ky',
+    email: 'van_ky@mis.edu.vn',
     name: 'Thầy Trương Vĩnh Kỳ',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -430,6 +469,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_van_my',
+    email: 'van_my@mis.edu.vn',
     name: 'Cô Hoàng Diễm My',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -439,6 +479,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_van_huong',
+    email: 'van_huong@mis.edu.vn',
     name: 'Cô Ngô Vũ Quỳnh Hương',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -448,6 +489,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_van_khanh_mr',
+    email: 'van_khanh_mr@mis.edu.vn',
     name: 'Thầy Mai Quốc Khánh',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -457,6 +499,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_van_an',
+    email: 'van_an@mis.edu.vn',
     name: 'Cô Kiều Khánh An',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -466,6 +509,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_van_hung',
+    email: 'van_hung@mis.edu.vn',
     name: 'Thầy Vương Chí Hùng',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -475,6 +519,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_van_vandang',
+    email: 'van_vandang@mis.edu.vn',
     name: 'Cô Đặng Thanh Vân',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -484,6 +529,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_van_duy',
+    email: 'van_duy@mis.edu.vn',
     name: 'Thầy Trần Đình Duy',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -495,6 +541,7 @@ export const MOCK_USERS: UserProfile[] = [
   // -- BỔ SUNG CHUYÊN VIÊN TỔ HÀNH CHÍNH (12 chuyên viên) --
   {
     id: 'user_hc_ha',
+    email: 'hc_ha@mis.edu.vn',
     name: 'Thầy Triệu Quang Hà',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -504,6 +551,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_hc_dung',
+    email: 'hc_dung@mis.edu.vn',
     name: 'Cô Tống Phương Dung',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -513,6 +561,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_hc_thuan',
+    email: 'hc_thuan@mis.edu.vn',
     name: 'Thầy Lâm Vĩnh Thuận',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -522,6 +571,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_hc_hanh',
+    email: 'hc_hanh@mis.edu.vn',
     name: 'Cô Lương Mỹ Hạnh',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -531,6 +581,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_hc_son',
+    email: 'hc_son@mis.edu.vn',
     name: 'Thầy Cao Thanh Sơn',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -540,6 +591,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_hc_vy',
+    email: 'hc_vy@mis.edu.vn',
     name: 'Cô Dương Ái Vy',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -549,6 +601,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_hc_sanh',
+    email: 'hc_sanh@mis.edu.vn',
     name: 'Thầy Nguyễn Thạch Sanh',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -558,6 +611,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_hc_nga',
+    email: 'hc_nga@mis.edu.vn',
     name: 'Cô Kiều Nguyệt Nga',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -567,6 +621,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_hc_thanh',
+    email: 'hc_thanh@mis.edu.vn',
     name: 'Thầy Lương Thế Thành',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -576,6 +631,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_hc_linh',
+    email: 'hc_linh@mis.edu.vn',
     name: 'Cô Tạ Ngọc Linh',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -585,6 +641,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_hc_thang',
+    email: 'hc_thang@mis.edu.vn',
     name: 'Thầy Vương Toàn Thắng',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -594,6 +651,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_hc_huong',
+    email: 'hc_huong@mis.edu.vn',
     name: 'Cô Phan Thu Hương',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -604,6 +662,7 @@ export const MOCK_USERS: UserProfile[] = [
   // -- BỘ PHẬN 1: PHÒNG TUYỂN SINH & TRUYỀN THÔNG (TUYEN_SINH_PR) --
   {
     id: 'user_pr_mgr',
+    email: 'pr_mgr@mis.edu.vn',
     name: 'Cô Vũ Khánh Chi',
     role: 'MANAGER',
     roleName: 'Tổ trưởng Chức năng',
@@ -613,6 +672,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_pr_ts1',
+    email: 'pr_ts1@mis.edu.vn',
     name: 'Cô Mai Phương Thảo',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -622,6 +682,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_pr_mkt',
+    email: 'pr_mkt@mis.edu.vn',
     name: 'Thầy Nguyễn Tiến Đạt',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -632,6 +693,7 @@ export const MOCK_USERS: UserProfile[] = [
   // -- BỘ PHẬN 2: BAN CHƯƠNG TRÌNH QUỐC TẾ (QUOC_TE) --
   {
     id: 'user_qt_mgr',
+    email: 'qt_mgr@mis.edu.vn',
     name: 'Thầy David Miller',
     role: 'MANAGER',
     roleName: 'Tổ trưởng Chuyên môn',
@@ -641,6 +703,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_qt_staff1',
+    email: 'qt_staff1@mis.edu.vn',
     name: 'Cô Trần Thanh Vân',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -650,6 +713,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_qt_staff2',
+    email: 'qt_staff2@mis.edu.vn',
     name: 'Thầy Jack Harrison',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -660,6 +724,7 @@ export const MOCK_USERS: UserProfile[] = [
   // -- BỘ PHẬN 3: PHÒNG KHẢO THÍ & ĐBCL (KHAO_THI) --
   {
     id: 'user_kt_mgr',
+    email: 'kt_mgr@mis.edu.vn',
     name: 'Cô Đỗ Thùy Trang',
     role: 'MANAGER',
     roleName: 'Tổ trưởng Chức năng',
@@ -669,6 +734,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_kt_staff1',
+    email: 'kt_staff1@mis.edu.vn',
     name: 'Thầy Lưu Nhật Nam',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -678,6 +744,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_kt_staff2',
+    email: 'kt_staff2@mis.edu.vn',
     name: 'Cô Bùi Hà My',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -688,6 +755,7 @@ export const MOCK_USERS: UserProfile[] = [
   // -- BỘ PHẬN 4: TỔ CÔNG TÁC HỌC SINH & THAM VẤN (CTHS_TAM_LY) --
   {
     id: 'user_tl_mgr',
+    email: 'tl_mgr@mis.edu.vn',
     name: 'Thầy Nguyễn Hoàng Hải',
     role: 'MANAGER',
     roleName: 'Tổ trưởng Chức năng',
@@ -697,6 +765,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_tl_staff1',
+    email: 'tl_staff1@mis.edu.vn',
     name: 'Cô Nguyễn Minh Thư',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -706,6 +775,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_tl_staff2',
+    email: 'tl_staff2@mis.edu.vn',
     name: 'Cô Lê Quỳnh Chi',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -716,6 +786,7 @@ export const MOCK_USERS: UserProfile[] = [
   // -- BỘ PHẬN 5: PHÒNG DỊCH VỤ & VẬN HÀNH HỌC ĐƯỜNG (DICH_VU_HOC_DUONG) --
   {
     id: 'user_dv_mgr',
+    email: 'dv_mgr@mis.edu.vn',
     name: 'Thầy Phạm Thế Anh',
     role: 'MANAGER',
     roleName: 'Tổ trưởng Chức năng',
@@ -725,6 +796,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_dv_bus',
+    email: 'dv_bus@mis.edu.vn',
     name: 'Thầy Trương Quốc Bảo',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -734,15 +806,17 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_dv_chef',
+    email: 'dv_chef@mis.edu.vn',
     name: 'Cô Hoàng Kim Oanh',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
-    title: 'Chuyên gia Dinh dưỡng & Tổng quản lý Canteen / Bếp ăn học đường',
+    title: 'Chuyên gia Dinh dưỡng & Tổng quản lý bếp ăn học đường',
     avatar: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=150&h=150&fit=crop&crop=face',
     workspaceId: 'DICH_VU_HOC_DUONG'
   },
   {
     id: 'user_dv_nurse',
+    email: 'dv_nurse@mis.edu.vn',
     name: 'Cô Ngô Khánh Linh',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -1188,7 +1262,7 @@ export const INITIAL_TASKS: Task[] = [
     workspaceId: 'VAN',
     assignedId: 'user_nhung',
     assignedName: 'Cô Phạm Hồng Nhung',
-    assignedRole: 'Giáo viên Tổ Ngữ Văn',
+    assignedRole: 'Giáo viên Tổ Ngữ văn',
     priority: 'TRUNG_BINH',
     status: 'DANG_TIEN_HANH',
     deadline: '2026-06-10',
@@ -1198,7 +1272,7 @@ export const INITIAL_TASKS: Task[] = [
       {
         id: 'c1_t7',
         userName: 'Thầy Vũ Tiến Đạt',
-        userTitle: 'Tổ trưởng Tổ Văn',
+        userTitle: 'Tổ trưởng Tổ Ngữ văn',
         content: 'Cô Nhung có thể mời thêm đại diện Ban Giám hiệu cùng dự giờ đánh giá tiết dạy mẫu này nhé.',
         createdAt: '2026-05-29 10:11'
       }
@@ -1207,7 +1281,7 @@ export const INITIAL_TASKS: Task[] = [
       {
         id: 'h1_t7',
         userName: 'Thầy Vũ Tiến Đạt',
-        userTitle: 'Tổ trưởng Tổ Văn',
+        userTitle: 'Tổ trưởng Tổ Ngữ văn',
         action: 'Đã giao kế hoạch giảng soạn chuyên đề',
         createdAt: '2026-05-28 14:00'
       }
@@ -1231,7 +1305,7 @@ export const INITIAL_TASKS: Task[] = [
         id: 'c1_t8',
         userName: 'Cô Vũ Khánh Chi',
         userTitle: 'Trưởng phòng Tuyển sinh & PR',
-        content: 'Cần lưu ý chuẩn bị trước bộ form đăng ký lớp học trải nghiệm trực tuyến để phụ huynh quét mã QR nhanh tại sảnh.',
+        content: 'Cần chuẩn bị trước biểu mẫu đăng ký lớp học trải nghiệm trực tuyến để phụ huynh quét mã QR nhanh tại sảnh.',
         createdAt: '2026-05-29 15:30'
       }
     ],
@@ -1296,8 +1370,8 @@ export const INITIAL_TASKS: Task[] = [
   },
   {
     id: 'task_11',
-    title: 'Kết hợp tham vấn tâm lý và xử lý hỗ trợ tình huống khủng hoảng nề nếp bán trú ở khối 10',
-    description: 'Tiến hành gặp gỡ, trao đổi hướng nghiệp và tư vấn khuyên bảo học viên gặp rào cản tâm lý. Lập lộ trình nâng cao tính kỷ luật tự giác nội trú.',
+    title: 'Tham vấn tâm lý và hỗ trợ xử lý tình huống nề nếp bán trú khối 10',
+    description: 'Tiến hành gặp gỡ, tham vấn và hỗ trợ học sinh gặp khó khăn tâm lý. Lập lộ trình rèn luyện nề nếp và tính tự giác trong khu bán trú.',
     workspaceId: 'CTHS_TAM_LY',
     assignedId: 'user_tl_staff1',
     assignedName: 'Cô Nguyễn Minh Thư',
@@ -1333,7 +1407,7 @@ export const INITIAL_TASKS: Task[] = [
     workspaceId: 'DICH_VU_HOC_DUONG',
     assignedId: 'user_dv_chef',
     assignedName: 'Cô Hoàng Kim Oanh',
-    assignedRole: 'Tổng quản lý Canteen / Bếp ăn học đường',
+    assignedRole: 'Tổng quản lý bếp ăn học đường',
     priority: 'CAO',
     status: 'DANG_TIEN_HANH',
     deadline: '2026-06-03',
@@ -1399,7 +1473,7 @@ export const INITIAL_TASKS: Task[] = [
   {
     id: 'task_demo_minh_2',
     title: 'Thanh tra đột xuất công tác an toàn thiết bị phòng thi tốt nghiệp THPT',
-    description: 'Báo cáo nghiệm thu kết quả chuẩn bị cơ sở vật chất phòng máy lạnh thi tốt nghiệp THPT và phương án phân luồng đón trả học sinh an toàn.',
+    description: 'Báo cáo nghiệm thu công tác chuẩn bị cơ sở vật chất phòng thi tốt nghiệp THPT và phương án phân luồng đón trả học sinh an toàn.',
     workspaceId: 'DICH_VU_HOC_DUONG',
     assignedId: 'user_dv_mgr',
     assignedName: 'Thầy Phạm Thế Anh',
@@ -1409,13 +1483,13 @@ export const INITIAL_TASKS: Task[] = [
     deadline: '2026-06-02',
     tag: 'Kiểm tra',
     createdBy: 'Thầy PGS.TS. Nguyễn Văn Minh',
-    reportEvidence: 'Kính gửi Ban Giám hiệu, Phòng Vận hành đã phối hợp kiểm tra kỹ thuật 45 phòng máy thi chính thức. Đã giải quyết thay thế 3 tủ quạt gió và 5 điều hòa hỏng, bố trí phân lối đi khép kín bảo đảm an toàn nề nếp thi học vụ (Minh chứng đính kèm học vụ: https://images.unsplash.com/photo-1497366216548-37526070297c?w=600).',
+    reportEvidence: 'Kính gửi Ban Giám hiệu, Phòng Vận hành đã phối hợp kiểm tra kỹ thuật 45 phòng máy thi chính thức. Đã thay thế 3 quạt thông gió và 5 điều hòa hỏng, đồng thời bố trí lối đi khép kín để bảo đảm an toàn trong kỳ thi (Minh chứng đính kèm: https://images.unsplash.com/photo-1497366216548-37526070297c?w=600).',
     comments: [
       {
         id: 'cd3',
         userName: 'Thầy Phạm Thế Anh',
         userTitle: 'Trưởng phòng Vận hành',
-        content: 'Kính gửi Thầy Chủ tịch, chúng em đã đính kèm ảnh minh chứng thực tế thi công tại cơ sở BGH phê chuẩn ạ.',
+        content: 'Kính gửi Thầy Chủ tịch, chúng em đã đính kèm ảnh minh chứng thực tế để Ban Giám hiệu phê duyệt.',
         createdAt: '2026-05-31 09:15'
       }
     ],
@@ -1424,14 +1498,14 @@ export const INITIAL_TASKS: Task[] = [
         id: 'hd3',
         userName: 'Thầy PGS.TS. Nguyễn Văn Minh',
         userTitle: 'Chủ tịch Hội đồng Trường',
-        action: 'Đã trực tiếp ban hành chỉ chỉ đạo tối khẩn',
+        action: 'Đã trực tiếp ban hành chỉ đạo khẩn',
         createdAt: '2026-05-30 08:30'
       },
       {
         id: 'hd4',
         userName: 'Thầy Phạm Thế Anh',
         userTitle: 'Trưởng phòng Vận hành',
-        action: 'Đã nộp báo cáo chứa thuộc tính bằng chứng thực tế tại cơ sở phòng ban',
+        action: 'Đã nộp báo cáo kèm minh chứng thực tế tại cơ sở',
         createdAt: '2026-05-31 09:15'
       }
     ]
@@ -1439,11 +1513,11 @@ export const INITIAL_TASKS: Task[] = [
   {
     id: 'task_13',
     title: 'Quyết toán tài chính Quý I năm học & Nộp báo cáo kiểm toán nội bộ',
-    description: 'Thực hiện đối chiếu sổ sách, công nợ học phí sinh viên và báo cáo chi tiết ngân sách thu chi cho CEO cùng Chủ tịch Hội đồng Trường.',
+    description: 'Thực hiện đối chiếu sổ sách, công nợ học phí học sinh và báo cáo chi tiết ngân sách thu chi cho Ban điều hành cùng Chủ tịch Hội đồng Trường.',
     workspaceId: 'HANH_CHINH',
     assignedId: 'user_hc_accountant',
     assignedName: 'Cô Lê Thị Kim Oanh',
-    assignedRole: 'Kế toán trưởng học hiệu MIS',
+    assignedRole: 'Kế toán trưởng MIS',
     priority: 'CAO',
     status: 'CHUA_BAT_DA',
     deadline: '2026-06-10',
@@ -1539,7 +1613,7 @@ export const INITIAL_TASKS: Task[] = [
     workspaceId: 'VAN',
     assignedId: 'user_van_teacher',
     assignedName: 'Thầy Trần Hữu Nghĩa',
-    assignedRole: 'Giáo viên Tổ Ngữ Văn',
+    assignedRole: 'Giáo viên Tổ Ngữ văn',
     priority: 'THAP',
     status: 'CHUA_BAT_DA',
     deadline: '2026-06-20',
@@ -1567,7 +1641,7 @@ export const INITIAL_TASKS: Task[] = [
   {
     id: 'task_19',
     title: 'Phê duyệt chiến lược chuyển đổi số toàn diện hệ thống MIS Smart School',
-    description: 'Nghiên cứu, thông qua dự án trang bị màn hình tương tác thông minh cho 100% phòng học học hiệu và tích hợp hệ thống phần mềm quản lý học vụ hiện đại.',
+    description: 'Nghiên cứu, thông qua dự án trang bị màn hình tương tác thông minh cho 100% phòng học của nhà trường và tích hợp hệ thống phần mềm quản lý học vụ hiện đại.',
     workspaceId: 'BGH',
     assignedId: 'user_chutich',
     assignedName: 'Thầy PGS.TS. Nguyễn Văn Minh',
@@ -1583,7 +1657,7 @@ export const INITIAL_TASKS: Task[] = [
   {
     id: 'task_20',
     title: 'Bảo trì hệ thống phòng máy tính thực nghiệm Robotics & Trí tuệ Nhân tạo',
-    description: 'Kiểm tra phần cứng các bộ kit Arduino, Raspberry Pi, và cài đặt lại hệ điều hành hỗ trợ lập trình Scratch, Python cho khối CLB Công nghệ sinh chuyên sâu.',
+    description: 'Kiểm tra phần cứng các bộ kit Arduino, Raspberry Pi, và cài đặt lại hệ điều hành hỗ trợ lập trình Scratch, Python cho khối CLB Công nghệ thông tin chuyên sâu.',
     workspaceId: 'TOAN_TIN',
     assignedId: 'user_cs_teacher',
     assignedName: 'Cô Hoàng Khánh Linh',
@@ -1613,7 +1687,7 @@ export const INITIAL_TASKS: Task[] = [
   },
   {
     id: 'task_21',
-    title: 'Đánh giá xếp hạng và ký phụ lục giao thông xe School Bus đưa đón 2026',
+    title: 'Đánh giá xếp hạng và ký phụ lục vận hành xe buýt trường học năm 2026',
     description: 'Làm việc với đối tác vận tải rà soát camera giám sát hành trình xe, thiết bị cảnh báo bỏ quên trẻ trên xe và tinh chỉnh luồng đưa đón tránh ùn tắc đầu giờ.',
     workspaceId: 'DICH_VU_HOC_DUONG',
     assignedId: 'user_dv_mgr',
@@ -1773,7 +1847,7 @@ export const INITIAL_TASKS: Task[] = [
   },
   {
     id: 'task_31',
-    title: 'Hội thảo Đổi mới Sinh hoạt chuyên môn Tổ Văn đợt II',
+    title: 'Hội thảo Đổi mới Sinh hoạt chuyên môn Tổ Ngữ văn đợt II',
     description: 'Lập báo cáo tóm tắt phân tích kết quả ứng dụng sơ đồ tư duy phân tích kết cấu truyện ngắn Việt Nam hiện đại.',
     workspaceId: 'VAN',
     assignedId: 'user_van_vi',
@@ -1790,7 +1864,7 @@ export const INITIAL_TASKS: Task[] = [
   {
     id: 'task_32',
     title: 'Triển khai tuần lễ thuyết trình đọc thảo luận Văn học nước ngoài',
-    description: 'Lên lịch trình theo dõi báo cáo của các nhóm, định chuẩn tiêu chí chấm điểm thuyết trình tiếng việt mượt mà của học sinh khối 11.',
+    description: 'Lên lịch trình theo dõi báo cáo của các nhóm, định chuẩn tiêu chí chấm điểm thuyết trình tiếng Việt mượt mà của học sinh khối 11.',
     workspaceId: 'VAN',
     assignedId: 'user_van_bich',
     assignedName: 'Cô Lưu Ngọc Bích',
@@ -1838,8 +1912,8 @@ export const INITIAL_TASKS: Task[] = [
   },
   {
     id: 'task_35',
-    title: 'Tổng kê văn phòng phẩm phòng ban nội học vụ năm học mới',
-    description: 'Phát phiếu tổng hợp nhu cầu giấy thi, sổ điểm danh, mực in văn phòng, thiết kế công thức phân chia hợp lý theo nhân số các phòng ban.',
+    title: 'Tổng hợp nhu cầu văn phòng phẩm cho năm học mới',
+    description: 'Phát phiếu tổng hợp nhu cầu giấy thi, sổ điểm danh, mực in văn phòng, xây dựng phương án phân bổ hợp lý theo nhân sự từng phòng ban.',
     workspaceId: 'HANH_CHINH',
     assignedId: 'user_hc_thuan',
     assignedName: 'Thầy Lâm Vĩnh Thuận',
@@ -1855,7 +1929,7 @@ export const INITIAL_TASKS: Task[] = [
   {
     id: 'task_36',
     title: 'Giải ngân hoàn thuế cho giáo viên đi tập huấn nước ngoài',
-    description: 'Thực hiện kết chuyển chứng từ kế toán học viện, xác minh tính phù hợp thuế thu nhập cá nhân đúng pháp luật Việt Nam.',
+    description: 'Thực hiện kết chuyển chứng từ kế toán nhà trường, xác minh tính phù hợp thuế thu nhập cá nhân đúng pháp luật Việt Nam.',
     workspaceId: 'HANH_CHINH',
     assignedId: 'user_hc_hanh',
     assignedName: 'Cô Lương Mỹ Hạnh',
@@ -1871,7 +1945,7 @@ export const INITIAL_TASKS: Task[] = [
   {
     id: 'task_37',
     title: 'Thiết kế chiến dịch truyền thông đa kênh tuyển sinh bổ sung hè',
-    description: 'Lên outline thiết kế hình ảnh, setup quảng cáo Facebook và Google rà quét phụ huynh quan tâm chương trình học hè MIS Smart Summer.',
+    description: 'Lập kế hoạch thiết kế hình ảnh, thiết lập quảng cáo Facebook và Google để tiếp cận phụ huynh quan tâm chương trình học hè MIS Smart Summer.',
     workspaceId: 'TUYEN_SINH_PR',
     assignedId: 'user_pr_mkt',
     assignedName: 'Thầy Nguyễn Tiến Đạt',
@@ -1886,8 +1960,8 @@ export const INITIAL_TASKS: Task[] = [
   },
   {
     id: 'task_38',
-    title: 'Tuyển dịch câu hỏi ôn tập chứng chỉ chuyên gia giáo viên quốc tế',
-    description: 'Hỗ trợ dịch thuật tài liệu kiểm chuẩn chuyên môn Cambridge, thiết lập hệ thống chấm điểm tự động trên Google Sheets trải nghiệm.',
+    title: 'Biên dịch câu hỏi ôn tập chứng chỉ giáo viên quốc tế',
+    description: 'Hỗ trợ dịch thuật tài liệu kiểm chuẩn chuyên môn Cambridge, thiết lập hệ thống chấm điểm tự động trên Google Sheets.',
     workspaceId: 'QUOC_TE',
     assignedId: 'user_qt_staff2',
     assignedName: 'Thầy Jack Harrison',
@@ -1919,7 +1993,7 @@ export const INITIAL_TASKS: Task[] = [
   {
     id: 'task_40',
     title: 'Nâng cấp nội quy kỷ luật tích cực ký túc xá bán trú',
-    description: 'Xây dựng thang bảo hiểm thi đua ký túc, tăng cường các chuyên đề chia sẻ lối sống tự lập văn minh cho học sinh nội trú.',
+    description: 'Xây dựng thang điểm thi đua ký túc xá, tăng cường các chuyên đề chia sẻ lối sống tự lập văn minh cho học sinh nội trú.',
     workspaceId: 'CTHS_TAM_LY',
     assignedId: 'user_tl_staff2',
     assignedName: 'Cô Lê Quỳnh Chi',
@@ -1934,8 +2008,8 @@ export const INITIAL_TASKS: Task[] = [
   },
   {
     id: 'task_41',
-    title: 'Lập bản đồ lộ trình di chuyển tối quan ưu xe Bus năm học 2026/27',
-    description: 'Tinh chỉnh 15 tuyến xe đưa đón điểm dừng đón ngõ hẹp, phân chia giờ khởi hành tối ưu tránh trễ học sinh và giảm thiểu chi phí xăng dầu.',
+    title: 'Lập bản đồ lộ trình xe buýt trường học năm học 2026/27',
+    description: 'Tinh chỉnh 15 tuyến xe đưa đón, bổ sung điểm dừng tại các ngõ hẹp, phân chia giờ khởi hành tối ưu tránh trễ học sinh và giảm thiểu chi phí xăng dầu.',
     workspaceId: 'DICH_VU_HOC_DUONG',
     assignedId: 'user_dv_bus',
     assignedName: 'Thầy Trương Quốc Bảo',
@@ -1968,7 +2042,7 @@ export const INITIAL_TASKS: Task[] = [
   {
     id: 'task_43',
     title: 'Học tập nghiên cứu đề án giáo án bồi dưỡng Toán tuyển sinh Olympic trẻ',
-    description: 'Tổng hợp tài liệu đại số cao cấp định hướng giải tích trực tiếp của các trường chuyên cả nước cho thế hệ mầm học sinh khối 10.',
+    description: 'Tổng hợp tài liệu đại số và giải tích nâng cao từ các trường chuyên trên cả nước cho học sinh mũi nhọn khối 10.',
     workspaceId: 'TOAN_TIN',
     assignedId: 'user_toan_trang',
     assignedName: 'Cô Phạm Kiều Trang',
@@ -1983,8 +2057,8 @@ export const INITIAL_TASKS: Task[] = [
   },
   {
     id: 'task_44',
-    title: 'Tổng thiết kế bài giảng Chuyên đề Tài chính cá nhân cho học sinh THPT',
-    description: 'Thiết kế giáo án tích hợp kỹ năng quản lý ngân sách cá nhân, đầu tư cơ bản mộc mạc áp dụng lý luận số học thực tế vào việc chi tiêu.',
+    title: 'Thiết kế bài giảng chuyên đề Tài chính cá nhân cho học sinh THPT',
+    description: 'Thiết kế giáo án tích hợp kỹ năng quản lý ngân sách cá nhân, đầu tư cơ bản và vận dụng kiến thức toán học vào quản lý chi tiêu.',
     workspaceId: 'TOAN_TIN',
     assignedId: 'user_toan_hoang',
     assignedName: 'Thầy Nguyễn Văn Hoàng',
@@ -2015,8 +2089,8 @@ export const INITIAL_TASKS: Task[] = [
   },
   {
     id: 'task_46',
-    title: 'Thiết lập ngân đề toán tuyển sinh khối 10 hệ chất lượng cao',
-    description: 'Thiết kế cấu trúc đề thi đa trí tuệ rà đánh giá tư duy tối ưu hình học trực quan, giới hạn thời gian thực nghiệm chặt chẽ.',
+    title: 'Thiết lập ngân hàng đề Toán tuyển sinh khối 10 hệ chất lượng cao',
+    description: 'Thiết kế cấu trúc đề thi đa trí tuệ đánh giá tư duy hình học trực quan, giới hạn thời gian thực nghiệm chặt chẽ.',
     workspaceId: 'TOAN_TIN',
     assignedId: 'user_toan_dao',
     assignedName: 'Thầy Bùi Quang Đạo',
@@ -2031,7 +2105,7 @@ export const INITIAL_TASKS: Task[] = [
   },
   {
     id: 'task_47',
-    title: 'Rà soát tổng kết thi nộp bài viết thư quốc tế UPU toàn học đường',
+    title: 'Tổng kết cuộc thi viết thư quốc tế UPU cấp trường',
     description: 'Tập hợp các bài viết xuất sắc gửi cục bưu điện quốc gia, chấm điểm sơ khảo khen thưởng thi đua cấp trường cho học sinh đạt giải.',
     workspaceId: 'VAN',
     assignedId: 'user_van_my',
@@ -2047,8 +2121,8 @@ export const INITIAL_TASKS: Task[] = [
   },
   {
     id: 'task_48',
-    title: 'Tổ nghiên cứu tài liệu biên khảo chất lượng bộ sách giáo khoa mới',
-    description: 'So sánh cấu trúc phân môn tổ chức bài học mượt mà môn Ngữ văn bồi trợ giữa các nhà xuất bản sách giáo dục uy tín.',
+    title: 'Nghiên cứu tài liệu tham khảo cho bộ sách giáo khoa mới',
+    description: 'So sánh cấu trúc phân môn tổ chức bài học môn Ngữ văn bổ trợ giữa các nhà xuất bản sách giáo dục uy tín.',
     workspaceId: 'VAN',
     assignedId: 'user_van_huong',
     assignedName: 'Cô Ngô Vũ Quỳnh Hương',
@@ -2063,8 +2137,8 @@ export const INITIAL_TASKS: Task[] = [
   },
   {
     id: 'task_49',
-    title: 'Bảo trì sửa chữa hệ thống bộ phát trạm Wifi phục vụ học đường',
-    description: 'Kiểm tra hoạt động đo lường băng thông mạng sảnh chờ BGH và phòng thiết bị số Tổ văn phòng bảo đảm an toàn kết nối thi trực tuyến.',
+    title: 'Bảo trì sửa chữa hệ thống bộ phát Wi-Fi phục vụ học đường',
+    description: 'Kiểm tra hoạt động đo lường băng thông mạng tại sảnh chờ Ban Giám hiệu và phòng thiết bị số Tổ văn phòng bảo đảm an toàn kết nối thi trực tuyến.',
     workspaceId: 'HANH_CHINH',
     assignedId: 'user_hc_son',
     assignedName: 'Thầy Cao Thanh Sơn',
@@ -2079,8 +2153,8 @@ export const INITIAL_TASKS: Task[] = [
   },
   {
     id: 'task_50',
-    title: 'Số hoá bảo bảo tồn đầu mục sách khoa học giáo dục quý',
-    description: 'Scan số lưu tài liệu sư phạm lịch sử phục vụ tham chiếu khảo cứu của giáo viên môn học hiệu năng cao chất lượng.',
+    title: 'Số hóa và bảo tồn đầu mục sách khoa học giáo dục quý',
+    description: 'Số hóa và lưu trữ tài liệu sư phạm lịch sử để phục vụ giáo viên nghiên cứu, giảng dạy chất lượng cao.',
     workspaceId: 'HANH_CHINH',
     assignedId: 'user_hc_vy',
     assignedName: 'Cô Dương Ái Vy',
@@ -2094,4 +2168,3 @@ export const INITIAL_TASKS: Task[] = [
     history: []
   }
 ];
-

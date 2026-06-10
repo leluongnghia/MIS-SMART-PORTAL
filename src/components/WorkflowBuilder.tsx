@@ -104,7 +104,7 @@ const WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
       { id: 'n1', role: 'Nhân viên', type: 'start', slaHours: 0, description: 'Điền form đề xuất mua sắm' },
       { id: 'n2', role: 'Trưởng bộ phận', type: 'approval', slaHours: 24, description: 'Duyệt nhu cầu thiết bị' },
       { id: 'n3', role: 'Kế toán kiểm tra', type: 'approval', slaHours: 24, description: 'Kiểm tra ngân sách & báo giá' },
-      { id: 'n4', role: 'Ban Giám Hiệu', type: 'approval', slaHours: 24, description: 'Phê duyệt & ban hành quyết định' },
+      { id: 'n4', role: 'Ban Giám hiệu', type: 'approval', slaHours: 24, description: 'Phê duyệt và ban hành quyết định' },
       { id: 'n5', role: 'Hoàn tất', type: 'end', slaHours: 0, description: 'Chuyển phòng tài vụ thực hiện' },
     ]
   },
@@ -117,7 +117,7 @@ const WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
     nodes: [
       { id: 'n1', role: 'Trưởng bộ phận', type: 'start', slaHours: 0, description: 'Điền form đề xuất tuyển dụng' },
       { id: 'n2', role: 'Nhân sự', type: 'approval', slaHours: 48, description: 'Thẩm định JD & điều kiện tuyển' },
-      { id: 'n3', role: 'Ban Giám Hiệu', type: 'approval', slaHours: 48, description: 'Phê duyệt biên chế & ngân sách lương' },
+      { id: 'n3', role: 'Ban Giám hiệu', type: 'approval', slaHours: 48, description: 'Phê duyệt biên chế và ngân sách lương' },
       { id: 'n4', role: 'Hoàn tất', type: 'end', slaHours: 0, description: 'Mở hồ sơ tuyển dụng chính thức' },
     ]
   }
@@ -151,7 +151,7 @@ const INITIAL_REQUESTS: ApprovalRequest[] = [
     steps: [
       { role: 'Trưởng bộ phận', user: 'Cô Lê Thị Thanh Nhàn', status: 'APPROVED', slaHours: 24, timestamp: epochToDisplay(Date.now() - 1000 * 3600 * 48) },
       { role: 'Kế toán kiểm tra', user: 'Thầy Phạm Thanh Bình', status: 'APPROVED', slaHours: 24, timestamp: epochToDisplay(Date.now() - 1000 * 3600 * 30) },
-      { role: 'Ban Giám Hiệu', user: 'Thầy Chưa Biết Chứng', status: 'APPROVED', slaHours: 24, timestamp: epochToDisplay(Date.now() - 1000 * 3600 * 8) },
+      { role: 'Ban Giám hiệu', user: 'Thầy Chưa Biết Chứng', status: 'APPROVED', slaHours: 24, timestamp: epochToDisplay(Date.now() - 1000 * 3600 * 8) },
       { role: 'Hoàn tất', user: 'Hệ thống', status: 'APPROVED', slaHours: 0, timestamp: epochToDisplay(Date.now() - 1000 * 3600 * 7) },
     ]
   },
@@ -165,8 +165,8 @@ const INITIAL_REQUESTS: ApprovalRequest[] = [
     submittedAt: Date.now() - 1000 * 3600 * 54, // quá SLA 48h
     urgency: 'critical',
     steps: [
-      { role: 'Nhân sự', user: 'Cô Vũ Khánh Chi', status: 'ESCALATED', slaHours: 48, timestamp: epochToDisplay(Date.now() - 1000 * 3600 * 50), note: 'Quá hạn SLA – tự động leo thang lên Ban Giám Hiệu' },
-      { role: 'Ban Giám Hiệu', user: 'Thầy Chưa Biết Chứng', status: 'PENDING', slaHours: 48 },
+      { role: 'Nhân sự', user: 'Cô Vũ Khánh Chi', status: 'ESCALATED', slaHours: 48, timestamp: epochToDisplay(Date.now() - 1000 * 3600 * 50), note: 'Quá hạn SLA - tự động chuyển lên Ban Giám hiệu' },
+      { role: 'Ban Giám hiệu', user: 'Thầy Chưa Biết Chứng', status: 'PENDING', slaHours: 48 },
       { role: 'Hoàn tất', user: 'Hệ thống', status: 'WAITING', slaHours: 0 },
     ]
   }
@@ -553,7 +553,7 @@ export default function WorkflowBuilder() {
               MODULE 05 — Operations &amp; Workflow
             </span>
             <h2 className="text-xl md:text-2xl font-display font-black leading-tight">
-              Quy Trình &amp; Hệ Thống Phê Duyệt Tự Động
+              Quy trình và hệ thống phê duyệt tự động
             </h2>
             <p className="text-xs text-slate-400 max-w-2xl font-light leading-relaxed">
               No-Code Workflow Builder · Dynamic Form · Approval Matrix · SLA Tracking · Reminder · Escalation · Audit Trail
@@ -582,7 +582,7 @@ export default function WorkflowBuilder() {
         {([
           { key: 'TEMPLATES', label: 'Biểu Mẫu & Gửi Yêu Cầu', icon: <FileText className="w-4 h-4" /> },
           { key: 'BUILDER', label: 'No-Code Workflow Builder', icon: <Sparkles className="w-4 h-4 text-amber-400" /> },
-          { key: 'LOGS', label: 'Nhật Ký & Phê Duyệt', icon: <Activity className="w-4 h-4" /> },
+          { key: 'LOGS', label: 'Nhật ký và phê duyệt', icon: <Activity className="w-4 h-4" /> },
         ] as const).map(tab => (
           <button
             key={tab.key}
@@ -608,7 +608,7 @@ export default function WorkflowBuilder() {
           {/* Left — Template Selector */}
           <div className="lg:col-span-4 space-y-3">
             <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest font-mono px-1">
-              Chọn Quy Trình Đề Xuất
+              Chọn quy trình đề xuất
             </h3>
             {WORKFLOW_TEMPLATES.map(tpl => {
               const colorMap: Record<string, string> = {
@@ -784,7 +784,7 @@ export default function WorkflowBuilder() {
               <div className="flex justify-end pt-1">
                 <button type="submit" className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white rounded-xl text-xs font-bold flex items-center gap-2 cursor-pointer transition-all shadow-sm">
                   <Send className="w-3.5 h-3.5" />
-                  Gửi Đề Xuất Phê Duyệt
+                  Gửi đề xuất phê duyệt
                 </button>
               </div>
             </form>

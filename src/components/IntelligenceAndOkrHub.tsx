@@ -62,9 +62,9 @@ import {
 } from 'recharts';
 
 const DEPT_COLORS = [
-  { solid: '#4f46e5', light: '#a5b4fc', name: 'Ban Giám Hiệu' }, // Indigo
+  { solid: '#4f46e5', light: '#a5b4fc', name: 'Ban Giám hiệu' }, // Indigo
   { solid: '#0284c7', light: '#7dd3fc', name: 'Toán - Tin' },   // Sky
-  { solid: '#db2777', light: '#f9a8d4', name: 'Ngữ Văn' },     // Pink
+  { solid: '#db2777', light: '#f9a8d4', name: 'Ngữ văn' },     // Pink
   { solid: '#b91c1c', light: '#fca5a5', name: 'Khảo thí' },    // Red
   { solid: '#7c3aed', light: '#c4b5fd', name: 'Phòng Quốc Tế' }, // Violet
   { solid: '#ea580c', light: '#fdba74', name: 'Tuyển sinh & PR' }, // Orange
@@ -100,15 +100,15 @@ export default function IntelligenceAndOkrHub({
 
   // Quantitative calculations for departments & academic performance representation
   const DEPARTMENTS_DATA = [
-    { id: 'BGH', name: lang === 'vi' ? 'Ban Giám hiệu & Hội đồng Trường' : 'Board & Council', shortName: lang === 'vi' ? 'Ban Giám Hiệu' : 'School Board', coreMI: 'interpersonal', desc: lang === 'vi' ? 'Học thuật vĩ mô, chiến lược, kiểm định' : 'Macro academic, strategy, accreditation' },
+    { id: 'BGH', name: lang === 'vi' ? 'Ban Giám hiệu & Hội đồng Trường' : 'Board & Council', shortName: lang === 'vi' ? 'Ban Giám hiệu' : 'School Board', coreMI: 'interpersonal', desc: lang === 'vi' ? 'Học thuật vĩ mô, chiến lược, kiểm định' : 'Macro academic, strategy, accreditation' },
     { id: 'TOAN_TIN', name: lang === 'vi' ? 'Tổ Chuyên môn Toán - Tin' : 'Math & IT Department', shortName: lang === 'vi' ? 'Toán - Tin' : 'Math & IT', coreMI: 'logical', desc: lang === 'vi' ? 'Toán học lý thuyết & bồi dưỡng STEM' : 'Theoretical math & STEM coaching' },
-    { id: 'VAN', name: lang === 'vi' ? 'Tổ Chuyên môn Ngữ Văn' : 'Literature Department', shortName: lang === 'vi' ? 'Ngữ Văn' : 'Literature', coreMI: 'linguistic', desc: lang === 'vi' ? 'Ngữ văn kịch nghệ, biểu soạn đổi mới' : 'Theatrical literature, innovative syllabus' },
+    { id: 'VAN', name: lang === 'vi' ? 'Tổ Chuyên môn Ngữ văn' : 'Literature Department', shortName: lang === 'vi' ? 'Ngữ văn' : 'Literature', coreMI: 'linguistic', desc: lang === 'vi' ? 'Ngữ văn kịch nghệ, biểu soạn đổi mới' : 'Theatrical literature, innovative syllabus' },
     { id: 'KHAO_THI', name: lang === 'vi' ? 'Phòng Khảo thí & ĐBCL' : 'Testing & Quality Assurance', shortName: lang === 'vi' ? 'Khảo thí' : 'Testing & QA', coreMI: 'logical', desc: lang === 'vi' ? 'Kiểm định chất lượng bộ đề khảo bồi' : 'Quality audit of question bank' },
     { id: 'QUOC_TE', name: lang === 'vi' ? 'Ban Chương trình Quốc tế' : 'International Programs Division', shortName: lang === 'vi' ? 'Phòng Quốc Tế' : 'Int\'l Programs', coreMI: 'linguistic', desc: lang === 'vi' ? 'Cambridge, IELTS/SAT song ngữ chuẩn' : 'Cambridge, bilingual IELTS/SAT' },
     { id: 'TUYEN_SINH_PR', name: lang === 'vi' ? 'Phòng Tuyển sinh & Truyền thông' : 'Admissions & PR Department', shortName: lang === 'vi' ? 'Tuyển sinh & PR' : 'Admissions & PR', coreMI: 'interpersonal', desc: lang === 'vi' ? 'Open Day, School Tour gia tăng chỉ tiêu' : 'Open Day, School Tour enrollment' },
     { id: 'CTHS_TAM_LY', name: lang === 'vi' ? 'Tổ Công tác Học sinh & Tham vấn' : 'Student Affairs & Counseling', shortName: lang === 'vi' ? 'Tâm lý & CTHS' : 'Student Affairs', coreMI: 'intrapersonal', desc: lang === 'vi' ? 'Nề nếp bán trú, tư vấn trật tự kỷ luật' : 'Boarding rules, counseling & discipline' },
-    { id: 'HANH_CHINH', name: lang === 'vi' ? 'Tổ Văn phòng & Kế toán - Tài chính' : 'Administration & Finance Department', shortName: lang === 'vi' ? 'Hành chính' : 'Admin & Finance', coreMI: 'logical', desc: lang === 'vi' ? 'Hồ sơ pháp chế cán bộ, kinh phí tài vụ' : 'Legal staff files, budgeting & finance' },
-    { id: 'DICH_VU_HOC_DUONG', name: lang === 'vi' ? 'Phòng Dịch vụ & Vận hành Học đường' : 'School Services & Operations', shortName: lang === 'vi' ? 'Dịch vụ Học đường' : 'School Services', coreMI: 'naturalist', desc: lang === 'vi' ? 'Canteen lưu mẫu thực phẩm, School Bus' : 'Canteen safety checks, School Bus' }
+    { id: 'HANH_CHINH', name: lang === 'vi' ? 'Tổ Ngữ văn phòng & Kế toán - Tài chính' : 'Administration & Finance Department', shortName: lang === 'vi' ? 'Hành chính' : 'Admin & Finance', coreMI: 'logical', desc: lang === 'vi' ? 'Hồ sơ pháp chế cán bộ, kinh phí tài vụ' : 'Legal staff files, budgeting & finance' },
+    { id: 'DICH_VU_HOC_DUONG', name: lang === 'vi' ? 'Phòng Dịch vụ & Vận hành Học đường' : 'School Services & Operations', shortName: lang === 'vi' ? 'Dịch vụ Học đường' : 'School Services', coreMI: 'naturalist', desc: lang === 'vi' ? 'Canteen lưu mẫu thực phẩm, xe buýt trường học' : 'Canteen safety checks, xe buýt trường học' }
   ];
 
   const computedDepts = DEPARTMENTS_DATA.map(dept => {
@@ -247,7 +247,7 @@ export default function IntelligenceAndOkrHub({
           title: t.title,
           assignedName: t.assignedName,
           assignedRole: t.assignedRole,
-          workspaceName: t.workspaceId === 'TOAN_TIN' ? 'Tổ Toán Tin' : t.workspaceId === 'VAN' ? 'Tổ Ngữ Văn' : t.workspaceId === 'BGH' ? 'Ban Giám hiệu' : 'Phòng Hành chính',
+          workspaceName: t.workspaceId === 'TOAN_TIN' ? 'Tổ Toán - Tin' : t.workspaceId === 'VAN' ? 'Tổ Ngữ văn' : t.workspaceId === 'BGH' ? 'Ban Giám hiệu' : 'Phòng Hành chính',
           evidence: t.reportEvidence || 'Chưa cung cấp văn bản cụ thể',
           priority: t.priority
         }));
@@ -295,7 +295,7 @@ export default function IntelligenceAndOkrHub({
         }));
 
       if (activeTasks.length === 0) {
-        setWarningOutput("### ✅ Hệ thống vận hành tối ưu\nTất cả công tác và chỉ đạo đều đã hoàn tất tối cao! Không có nghẽn học vụ và trễ hạn nào.");
+        setWarningOutput("### ✅ Hệ thống vận hành tối ưu\nTất cả công tác và chỉ đạo đều đã hoàn tất. Không có điểm nghẽn học vụ hoặc nhiệm vụ trễ hạn.");
         setIsScanningWarnings(false);
         return;
       }
@@ -330,7 +330,7 @@ export default function IntelligenceAndOkrHub({
       const workspacesData = [
         { id: 'BGH', name: 'Ban Giám hiệu' },
         { id: 'TOAN_TIN', name: 'Tổ Toán - Tin học' },
-        { id: 'VAN', name: 'Tổ Ngữ Văn' },
+        { id: 'VAN', name: 'Tổ Ngữ văn' },
         { id: 'HANH_CHINH', name: 'Khối Hành chính - Văn phòng' }
       ];
 
@@ -414,7 +414,7 @@ export default function IntelligenceAndOkrHub({
           }`}
         >
           <BarChart3 className="w-4 h-4 text-amber-500" />
-          <span>Báo Cáo Đa Trí Tuệ & Học Thuật</span>
+          <span>Báo cáo Đa Trí Tuệ & Học Thuật</span>
         </button>
 
         <button
@@ -426,7 +426,7 @@ export default function IntelligenceAndOkrHub({
           }`}
         >
           <Brain className="w-4 h-4" />
-          <span>Hồ Sơ Đa Trí Tuệ (MI)</span>
+          <span>Hồ sơ Đa Trí Tuệ (MI)</span>
         </button>
 
         <button
@@ -450,7 +450,7 @@ export default function IntelligenceAndOkrHub({
           }`}
         >
           <Sparkles className="w-4 h-4 text-amber-550 animate-pulse" />
-          <span>Trợ Lý AI Vận Hành (Gemini)</span>
+          <span>Trợ Lý AI Vận hành (Gemini)</span>
         </button>
       </div>
 
@@ -540,7 +540,7 @@ export default function IntelligenceAndOkrHub({
                   className="px-4 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-3xs cursor-pointer transition-all flex items-center gap-1.5"
                 >
                   <Download className="w-3.5 h-3.5" />
-                  Xuất PDF Học Vụ
+                  Xuất PDF Học vụ
                 </button>
               </div>
             </div>
@@ -1073,8 +1073,8 @@ export default function IntelligenceAndOkrHub({
                 <tbody className="divide-y divide-slate-100">
                   {MOCK_DEPARTMENT_OKRS.map(o => translateOKR(o, lang)).map(okr => {
                     const workspaceName = okr.departmentId === 'BGH' ? (lang === 'vi' ? 'Ban Giám hiệu' : 'School Board')
-                      : okr.departmentId === 'TOAN_TIN' ? (lang === 'vi' ? 'Tổ Toán Tin' : 'Math & IT Dept')
-                      : okr.departmentId === 'VAN' ? (lang === 'vi' ? 'Tổ Ngữ Văn' : 'Literature Dept')
+                      : okr.departmentId === 'TOAN_TIN' ? (lang === 'vi' ? 'Tổ Toán - Tin' : 'Math & IT Dept')
+                      : okr.departmentId === 'VAN' ? (lang === 'vi' ? 'Tổ Ngữ văn' : 'Literature Dept')
                       : okr.departmentId === 'HANH_CHINH' ? (lang === 'vi' ? 'Khối Hành chính' : 'Admin Division')
                       : okr.departmentId === 'TUYEN_SINH_PR' ? (lang === 'vi' ? 'Tổ Tuyển sinh' : 'Admissions Dept')
                       : okr.departmentId === 'QUOC_TE' ? (lang === 'vi' ? 'Tổ Quốc tế' : 'Int\'l Dept')
@@ -1218,7 +1218,7 @@ export default function IntelligenceAndOkrHub({
                         </div>
                         <div>
                           <span className="text-slate-550 block">Phòng ban chỉ định:</span>
-                          <strong>🏢 {parsedTaskDraft.workspaceId === 'TOAN_TIN' ? 'Tổ Toán Tin' : parsedTaskDraft.workspaceId === 'VAN' ? 'Tổ Ngữ Văn' : parsedTaskDraft.workspaceId}</strong>
+                          <strong>🏢 {parsedTaskDraft.workspaceId === 'TOAN_TIN' ? 'Tổ Toán - Tin' : parsedTaskDraft.workspaceId === 'VAN' ? 'Tổ Ngữ văn' : parsedTaskDraft.workspaceId}</strong>
                         </div>
                       </div>
 
@@ -1285,7 +1285,7 @@ export default function IntelligenceAndOkrHub({
                       </div>
                       <div>
                         <strong className="block font-bold text-slate-805 mb-0.5">Tóm tắt Báo cáo Minh chứng</strong>
-                        <span className="text-[10px] text-slate-500 font-normal">Tổng hợp nhanh minh chứng thực tế phục vụ BGH phê chuẩn tối cao.</span>
+                        <span className="text-[10px] text-slate-500 font-normal">Tổng hợp nhanh minh chứng thực tế phục vụ Ban Giám hiệu phê duyệt.</span>
                       </div>
                     </button>
 

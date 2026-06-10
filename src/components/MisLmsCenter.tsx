@@ -132,7 +132,7 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
       try { return JSON.parse(saved); } catch (e) { console.error(e); }
     }
     return [
-      { id: 'LD001', name: 'Nguyễn Minh Quân', parentName: 'Nguyễn Văn Hải', phone: '0912345678', grade: 'Lớp 10', source: 'Facebook Ads', consultant: 'Cô Thanh Nhàn', status: 'NEW', notes: 'Phụ huynh quan tâm chương trình học bổng Toán Tin học.' },
+      { id: 'LD001', name: 'Nguyễn Minh Quân', parentName: 'Nguyễn Văn Hải', phone: '0912345678', grade: 'Lớp 10', source: 'Facebook Ads', consultant: 'Cô Thanh Nhàn', status: 'NEW', notes: 'Phụ huynh quan tâm chương trình học bổng Toán - Tin học.' },
       { id: 'LD002', name: 'Trần Mỹ Lệ', parentName: 'Lê Thị Thu Trà', phone: '0987654321', grade: 'Lớp 11', source: 'Web Form', consultant: 'Thầy Đức Nam', status: 'CONSULTED', notes: 'Đã tư vấn lộ trình IELTS và học thuật Ngữ văn.' },
       { id: 'LD003', name: 'Phạm Hồng Thái', parentName: 'Phạm Hồng Sơn', phone: '0945678912', grade: 'Lớp 12', source: 'Giới thiệu', consultant: 'Thầy Quốc Đạt', status: 'ENROLLED', notes: 'Đã nộp hồ sơ nhập học, đã thanh toán học phí đợt 1.' },
       { id: 'LD004', name: 'Hoàng Thùy Dương', parentName: 'Hoàng Văn Thắng', phone: '0932112233', grade: 'Lớp 10', source: 'Google Search', consultant: 'Cô Minh Tuyết', status: 'LOST', notes: 'Không liên lạc được sau 3 cuộc gọi.' }
@@ -285,6 +285,50 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
   }, [certStudents]);
 
   const [activeCert, setActiveCert] = useState<any>(null);
+
+  const downloadCertificate = (cert: any) => {
+    const html = `<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <title>${cert.certCode || 'MIS-CERT'} - ${cert.name}</title>
+  <style>
+    body { font-family: Georgia, 'Times New Roman', serif; padding: 48px; color: #1f2937; }
+    .cert { border: 10px solid #78350f; border-radius: 24px; padding: 48px; text-align: center; }
+    .eyebrow { letter-spacing: 0.2em; font-size: 12px; color: #92400e; font-weight: 800; text-transform: uppercase; }
+    h1 { margin: 20px 0 8px; font-size: 34px; color: #451a03; }
+    h2 { margin: 0 0 24px; font-size: 24px; }
+    p { font-size: 16px; line-height: 1.7; }
+    .footer { display: flex; justify-content: space-between; gap: 24px; margin-top: 42px; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <div class="cert">
+    <div class="eyebrow">Giấy chứng nhận Đa Trí Tuệ MIS</div>
+    <h1>${cert.name}</h1>
+    <h2>${cert.courseName}</h2>
+    <p>Đã hoàn thành xuất sắc học phần chuyên sâu, đạt điểm khóa ${cert.grade}/10 và được hệ thống MIS LMS xác thực.</p>
+    <div class="footer">
+      <div>Số chứng nhận: <strong>${cert.certCode || 'Đang cập nhật'}</strong></div>
+      <div><strong>Chủ tịch Hội đồng MIS Hà Nội</strong><br/>[Đã đóng dấu điện tử]</div>
+    </div>
+  </div>
+</body>
+</html>`;
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${cert.certCode || cert.id || 'MIS-CERT'}.html`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  };
+
+  const printSelectedInvoice = () => {
+    window.print();
+  };
 
   // Security variables
   const [disableMainDownload, setDisableMainDownload] = useState(true);
@@ -956,7 +1000,7 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
                               className="w-full bg-white border border-slate-200 rounded px-2 py-1 text-xs text-slate-800"
                             >
                               <option value="Toán">Toán Học</option>
-                              <option value="Văn">Ngữ Văn</option>
+                              <option value="Văn">Ngữ văn</option>
                               <option value="Lý">Vật Lý</option>
                               <option value="Hóa">Hóa Học</option>
                               <option value="Anh">Tiếng Anh</option>
@@ -1619,7 +1663,7 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
                       <div className="flex justify-between items-center text-[10px]">
                         <span className="text-slate-450">✓ Hệ thống hóa đơn điện tử tự động kết nối chi cục thuế.</span>
                         <button 
-                          onClick={() => alert("Đang kết nối máy in để xuất văn bản chuyên trách...")}
+                          onClick={printSelectedInvoice}
                           className="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded font-bold flex items-center gap-1 cursor-pointer"
                         >
                           <Printer className="w-3 h-3" />
@@ -1649,7 +1693,7 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
 
                     <div className="p-3 bg-slate-50 border rounded-xl">
                       <span className="text-[10px] text-slate-400 block font-bold uppercase">Xếp hạng Chi nhánh MIS</span>
-                      <strong className="text-sm text-indigo-700 font-bold block mt-1">🥇 Tổ Toán Tin (Đầu bảng)</strong>
+                      <strong className="text-sm text-indigo-700 font-bold block mt-1">🥇 Tổ Toán - Tin (Đầu bảng)</strong>
                       <span className="text-[9.5px] text-slate-450 block mt-0.5">Học phí thu khớp: 840 triệu</span>
                     </div>
 
@@ -1816,7 +1860,7 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
                         </div>
 
                         <button
-                          onClick={() => alert("Đang xử lý tải xuống bản cứng chất lượng cao PDF...")}
+                          onClick={() => downloadCertificate(activeCert)}
                           className="w-full py-2 bg-amber-900 hover:bg-amber-950 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
                         >
                           <Download className="w-4 h-4" />

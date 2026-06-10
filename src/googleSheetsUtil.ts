@@ -456,11 +456,11 @@ function autoSendDailyReportEmail() {
   var htmlBody = "<div style='font-family: Arial, sans-serif; max-width: 650px; margin: 0 auto; color: #334155; line-height: 1.6; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;'>" +
     "<div style='background-color: #4f46e5; padding: 25px; text-align: center; color: white;'>" +
       "<h2 style='margin: 0; text-transform: uppercase; font-size: 18px; tracking: 1.5px;'>Trường Phổ Thông Liên Cấp Đa Trí Tuệ (MIS)</h2>" +
-      "<p style='margin: 5px 0 0; font-size: 12px; opacity: 0.9;'>Báo Cáo Tiến Độ Giáo Dục & Học Vụ Thường Nhật (Tự Động 17:00)</p>" +
+      "<p style='margin: 5px 0 0; font-size: 12px; opacity: 0.9;'>Báo cáo tiến độ giáo dục và học vụ hằng ngày (Tự động 17:00)</p>" +
     "</div>" +
     "<div style='padding: 24px; bg: #ffffff;'>" +
       "<p style='margin-top: 0;'>Kính gửi <b>Ban lãnh đạo Trường Đa Trí Tuệ (MIS)</b>,</p>" +
-      "<p>Hệ thống tự động đồng bộ kết quả học hiệu hân hạnh báo cáo số liệu tổng hợp tiến trình thực hiện chỉ đạo chuyên môn tính đến <b>17 giờ, ngày " + dateStr + "</b>:</p>" +
+      "<p>Hệ thống tự động đồng bộ kết quả nhà trường và tổng hợp tiến trình thực hiện chỉ đạo chuyên môn tính đến <b>17 giờ, ngày " + dateStr + "</b>:</p>" +
       
       "<div style='display: flex; gap: 10px; margin: 20px 0; text-align: center; justify-content: space-around; background-color: #f8fafc; padding: 15px; border-radius: 8px;'>" +
         "<div><span style='display: block; font-size: 20px; font-weight: bold; color: #4f46e5;'>" + totalTasks + "</span><span style='font-size: 10px; color: #64748b;'>Tổng đầu việc</span></div>" +
@@ -470,7 +470,7 @@ function autoSendDailyReportEmail() {
       "</div>" +
       
       "<ul>" +
-        "<li><b>Tỉ lệ hoàn tất học hiệu đạt:</b> <span style='color: #16a34a; font-weight: bold;'>" + percent + "%</span></li>" +
+        "<li><b>Tỉ lệ hoàn tất nhà trường đạt:</b> <span style='color: #16a34a; font-weight: bold;'>" + percent + "%</span></li>" +
         "<li><b>Số lượng công việc khẩn, mức độ ưu tiên cao:</b> <span style='color: #dc2626; font-weight: bold;'>" + highPriorityTasks + " việc</span></li>" +
       "</ul>" +
       
@@ -566,4 +566,3 @@ export const sendReportEmailViaAppsScript = async (
     return { success: false, message: data.message || 'Gửi báo cáo thất bại qua Apps Script.' };
   }
 };
-

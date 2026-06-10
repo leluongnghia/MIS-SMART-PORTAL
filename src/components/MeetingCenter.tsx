@@ -70,11 +70,11 @@ interface ActionItem {
 // ─── MOCK DATA ───────────────────────────────────────────────────────────────
 
 const DEPARTMENTS = [
-  'Ban Giám Hiệu',
-  'Phòng Đào Tạo',
+  'Ban Giám hiệu',
+  'Phòng Đào tạo',
   'Phòng Hành Chính',
   'Tổ Toán',
-  'Tổ Văn',
+  'Tổ Ngữ văn',
   'Tổ Anh',
   'Tổ Lý',
   'Tổ Hóa',
@@ -87,7 +87,7 @@ const DEPARTMENTS = [
 const initialMeetings: Meeting[] = [
   {
     id: 'MTG001',
-    title: 'Họp Ban Giám Hiệu Tháng 6/2026',
+    title: 'Họp Ban Giám hiệu Tháng 6/2026',
     type: 'BGH',
     date: '2026-06-13',
     startTime: '08:00',
@@ -95,7 +95,7 @@ const initialMeetings: Meeting[] = [
     room: 'Phòng họp BGH - Tầng 3',
     isOnline: false,
     chair: 'Thầy Nguyễn Văn An',
-    attendees: ['Ban Giám Hiệu', 'Phòng Đào Tạo', 'Phòng Hành Chính', 'Phòng Tài Chính'],
+    attendees: ['Ban Giám hiệu', 'Phòng Đào tạo', 'Phòng Hành Chính', 'Phòng Tài Chính'],
     agenda: [
       'Đánh giá kết quả học tập Học kỳ II',
       'Kế hoạch tổ chức thi học kỳ',
@@ -115,7 +115,7 @@ const initialMeetings: Meeting[] = [
     room: 'Phòng họp 2.01',
     isOnline: false,
     chair: 'Cô Trần Thị Bình',
-    attendees: ['Tổ Toán', 'Phòng Đào Tạo'],
+    attendees: ['Tổ Toán', 'Phòng Đào tạo'],
     agenda: [
       'Rà soát đề cương ôn tập',
       'Thống nhất ma trận đề thi học kỳ',
@@ -126,7 +126,7 @@ const initialMeetings: Meeting[] = [
   },
   {
     id: 'MTG003',
-    title: 'Họp Hội Đồng Sư Phạm Toàn Trường',
+    title: 'Họp Hội đồng Sư Phạm Toàn Trường',
     type: 'Toàn trường',
     date: '2026-06-05',
     startTime: '07:30',
@@ -134,7 +134,7 @@ const initialMeetings: Meeting[] = [
     room: 'Hội trường lớn – Tầng 1',
     isOnline: false,
     chair: 'Thầy Nguyễn Văn An',
-    attendees: ['Ban Giám Hiệu', 'Phòng Đào Tạo', 'Tổ Toán', 'Tổ Văn', 'Tổ Anh', 'Tổ Lý', 'Tổ Hóa'],
+    attendees: ['Ban Giám hiệu', 'Phòng Đào tạo', 'Tổ Toán', 'Tổ Ngữ văn', 'Tổ Anh', 'Tổ Lý', 'Tổ Hóa'],
     agenda: [
       'Tổng kết học kỳ I năm học 2025-2026',
       'Triển khai kế hoạch học kỳ II',
@@ -145,7 +145,7 @@ const initialMeetings: Meeting[] = [
   },
   {
     id: 'MTG004',
-    title: 'Họp Phòng Đào Tạo – Cập Nhật Chương Trình',
+    title: 'Họp Phòng Đào tạo – Cập Nhật Chương Trình',
     type: 'Phòng ban',
     date: '2026-06-03',
     startTime: '09:00',
@@ -153,7 +153,7 @@ const initialMeetings: Meeting[] = [
     room: 'Online – MS Teams',
     isOnline: true,
     chair: 'Cô Lê Thị Hương',
-    attendees: ['Phòng Đào Tạo', 'Tổ Toán', 'Tổ Văn', 'Tổ Anh'],
+    attendees: ['Phòng Đào tạo', 'Tổ Toán', 'Tổ Ngữ văn', 'Tổ Anh'],
     agenda: [
       'Cập nhật chương trình GDPT 2018',
       'Kế hoạch bồi dưỡng giáo viên',
@@ -164,7 +164,7 @@ const initialMeetings: Meeting[] = [
   },
   {
     id: 'MTG005',
-    title: 'Họp Tổ Văn – Kế Hoạch Viết Văn Sáng Tạo',
+    title: 'Họp Tổ Ngữ văn – Kế Hoạch Viết Văn Sáng Tạo',
     type: 'Chuyên môn',
     date: '2026-05-28',
     startTime: '14:00',
@@ -172,7 +172,7 @@ const initialMeetings: Meeting[] = [
     room: 'Phòng họp 1.02',
     isOnline: false,
     chair: 'Thầy Phạm Minh Tuấn',
-    attendees: ['Tổ Văn'],
+    attendees: ['Tổ Ngữ văn'],
     agenda: ['Xây dựng chủ đề viết sáng tạo', 'Phân công hướng dẫn học sinh', 'Tiêu chí chấm điểm'],
     status: 'Đã kết thúc',
     hasMinutes: true,
@@ -187,7 +187,7 @@ const initialMeetings: Meeting[] = [
     room: 'Phòng họp BGH - Tầng 3',
     isOnline: false,
     chair: 'Thầy Nguyễn Văn An',
-    attendees: ['Ban Giám Hiệu', 'Phòng Hành Chính', 'Phòng Tài Chính'],
+    attendees: ['Ban Giám hiệu', 'Phòng Hành Chính', 'Phòng Tài Chính'],
     agenda: ['Xét danh hiệu thi đua', 'Phân bổ kinh phí khen thưởng', 'Lên danh sách đề nghị'],
     status: 'Đã kết thúc',
     hasMinutes: false,
@@ -199,7 +199,7 @@ const initialMinutes: Minutes[] = [
     id: 'MIN001',
     meetingId: 'MTG003',
     content:
-      'Cuộc họp Hội Đồng Sư Phạm toàn trường diễn ra vào ngày 05/06/2026 tại Hội trường lớn. Thầy Hiệu trưởng Nguyễn Văn An chủ trì. Tham dự đầy đủ 87/92 cán bộ giáo viên nhân viên.\n\nThầy Hiệu trưởng báo cáo tổng kết kết quả học kỳ I: tỷ lệ học sinh hoàn thành đạt 97,2%, tỷ lệ giỏi tăng 3,1% so với cùng kỳ. Biểu dương 12 tập thể và 38 cá nhân xuất sắc.\n\nPhòng Đào Tạo triển khai kế hoạch học kỳ II với các điểm nhấn: tăng cường ôn luyện thi THPT, kiểm tra chéo giữa các tổ chuyên môn, áp dụng đánh giá năng lực theo GDPT 2018.',
+      'Cuộc họp Hội đồng Sư Phạm toàn trường diễn ra vào ngày 05/06/2026 tại Hội trường lớn. Thầy Hiệu trưởng Nguyễn Văn An chủ trì. Tham dự đầy đủ 87/92 cán bộ giáo viên nhân viên.\n\nThầy Hiệu trưởng báo cáo tổng kết kết quả học kỳ I: tỷ lệ học sinh hoàn thành đạt 97,2%, tỷ lệ giỏi tăng 3,1% so với cùng kỳ. Biểu dương 12 tập thể và 38 cá nhân xuất sắc.\n\nPhòng Đào tạo triển khai kế hoạch học kỳ II với các điểm nhấn: tăng cường ôn luyện thi THPT, kiểm tra chéo giữa các tổ chuyên môn, áp dụng đánh giá năng lực theo GDPT 2018.',
     conclusions: [
       'Hoàn thành lịch thi học kỳ II trước ngày 15/06/2026',
       'Các tổ chuyên môn nộp đề cương ôn tập trước 20/06/2026',
@@ -213,7 +213,7 @@ const initialMinutes: Minutes[] = [
     id: 'MIN002',
     meetingId: 'MTG004',
     content:
-      'Cuộc họp Phòng Đào Tạo diễn ra trực tuyến qua MS Teams vào ngày 03/06/2026. Cô Lê Thị Hương – Trưởng Phòng Đào Tạo chủ trì. Tham dự đầy đủ 18 thành viên.\n\nNội dung chính: Rà soát và cập nhật tiến độ thực hiện Chương trình GDPT 2018 theo từng khối lớp. Các tổ trưởng báo cáo tiến độ: Toán 95%, Văn 92%, Anh 88%. Cần đẩy nhanh tiến độ tổ Anh trong tháng 6.\n\nKế hoạch bồi dưỡng giáo viên: đề xuất tổ chức 2 đợt tập huấn vào tháng 7 và tháng 8 năm 2026.',
+      'Cuộc họp Phòng Đào tạo diễn ra trực tuyến qua MS Teams vào ngày 03/06/2026. Cô Lê Thị Hương – Trưởng Phòng Đào tạo chủ trì. Tham dự đầy đủ 18 thành viên.\n\nNội dung chính: Rà soát và cập nhật tiến độ thực hiện Chương trình GDPT 2018 theo từng khối lớp. Các tổ trưởng báo cáo tiến độ: Toán 95%, Văn 92%, Anh 88%. Cần đẩy nhanh tiến độ tổ Anh trong tháng 6.\n\nKế hoạch bồi dưỡng giáo viên: đề xuất tổ chức 2 đợt tập huấn vào tháng 7 và tháng 8 năm 2026.',
     conclusions: [
       'Tổ Anh tăng tốc hoàn thành 100% chương trình trước 30/06/2026',
       'Lên kế hoạch tập huấn giáo viên tháng 7: mỗi tổ cử ít nhất 2 đại diện',
@@ -226,7 +226,7 @@ const initialMinutes: Minutes[] = [
     id: 'MIN003',
     meetingId: 'MTG005',
     content:
-      'Cuộc họp Tổ Văn diễn ra ngày 28/05/2026 tại Phòng họp 1.02. Thầy Phạm Minh Tuấn chủ trì. Tất cả 9 thành viên tổ Văn tham dự.\n\nThảo luận về kế hoạch tổ chức Ngày hội Viết Văn Sáng Tạo cho học sinh khối 10, 11, 12 dự kiến vào tháng 9/2026. Thống nhất chủ đề năm nay: "Quê hương trong trái tim tôi".\n\nPhân công: mỗi giáo viên phụ trách hướng dẫn 2-3 nhóm học sinh. Thang điểm chấm gồm 5 tiêu chí: Ý tưởng, Cảm xúc, Ngôn ngữ, Cấu trúc, Trình bày.',
+      'Cuộc họp Tổ Ngữ văn diễn ra ngày 28/05/2026 tại Phòng họp 1.02. Thầy Phạm Minh Tuấn chủ trì. Tất cả 9 thành viên tổ Văn tham dự.\n\nThảo luận về kế hoạch tổ chức Ngày hội Viết Văn Sáng Tạo cho học sinh khối 10, 11, 12 dự kiến vào tháng 9/2026. Thống nhất chủ đề năm nay: "Quê hương trong trái tim tôi".\n\nPhân công: mỗi giáo viên phụ trách hướng dẫn 2-3 nhóm học sinh. Thang điểm chấm gồm 5 tiêu chí: Ý tưởng, Cảm xúc, Ngôn ngữ, Cấu trúc, Trình bày.',
     conclusions: [
       'Công bố kế hoạch Ngày hội Viết Văn cho học sinh trước 05/06/2026',
       'Hoàn thiện tiêu chí chấm điểm và gửi cho ban giám khảo trước 15/06/2026',
@@ -241,7 +241,7 @@ const initialActions: ActionItem[] = [
   {
     id: 'ACT001',
     meetingId: 'MTG003',
-    meetingTitle: 'Họp Hội Đồng Sư Phạm Toàn Trường',
+    meetingTitle: 'Họp Hội đồng Sư Phạm Toàn Trường',
     task: 'Hoàn thành lịch thi học kỳ II và gửi toàn trường',
     assignee: 'Cô Lê Thị Hương',
     deadline: '2026-06-15',
@@ -251,7 +251,7 @@ const initialActions: ActionItem[] = [
   {
     id: 'ACT002',
     meetingId: 'MTG003',
-    meetingTitle: 'Họp Hội Đồng Sư Phạm Toàn Trường',
+    meetingTitle: 'Họp Hội đồng Sư Phạm Toàn Trường',
     task: 'Các tổ chuyên môn nộp đề cương ôn tập',
     assignee: 'Thầy Phạm Minh Tuấn',
     deadline: '2026-06-20',
@@ -261,7 +261,7 @@ const initialActions: ActionItem[] = [
   {
     id: 'ACT003',
     meetingId: 'MTG003',
-    meetingTitle: 'Họp Hội Đồng Sư Phạm Toàn Trường',
+    meetingTitle: 'Họp Hội đồng Sư Phạm Toàn Trường',
     task: 'Phòng Hành Chính chuẩn bị cơ sở vật chất phòng thi',
     assignee: 'Thầy Trần Văn Đức',
     deadline: '2026-07-01',
@@ -271,7 +271,7 @@ const initialActions: ActionItem[] = [
   {
     id: 'ACT004',
     meetingId: 'MTG004',
-    meetingTitle: 'Họp Phòng Đào Tạo – Cập Nhật Chương Trình',
+    meetingTitle: 'Họp Phòng Đào tạo – Cập Nhật Chương Trình',
     task: 'Tổ Anh hoàn thành 100% chương trình GDPT 2018',
     assignee: 'Cô Nguyễn Thu Hà',
     deadline: '2026-06-30',
@@ -281,7 +281,7 @@ const initialActions: ActionItem[] = [
   {
     id: 'ACT005',
     meetingId: 'MTG004',
-    meetingTitle: 'Họp Phòng Đào Tạo – Cập Nhật Chương Trình',
+    meetingTitle: 'Họp Phòng Đào tạo – Cập Nhật Chương Trình',
     task: 'Chuẩn bị báo cáo tiến độ GDPT 2018 gửi Sở GD&ĐT',
     assignee: 'Cô Lê Thị Hương',
     deadline: '2026-07-10',
@@ -291,7 +291,7 @@ const initialActions: ActionItem[] = [
   {
     id: 'ACT006',
     meetingId: 'MTG005',
-    meetingTitle: 'Họp Tổ Văn – Kế Hoạch Viết Văn Sáng Tạo',
+    meetingTitle: 'Họp Tổ Ngữ văn – Kế Hoạch Viết Văn Sáng Tạo',
     task: 'Công bố kế hoạch Ngày hội Viết Văn cho học sinh',
     assignee: 'Thầy Phạm Minh Tuấn',
     deadline: '2026-06-05',
@@ -301,7 +301,7 @@ const initialActions: ActionItem[] = [
   {
     id: 'ACT007',
     meetingId: 'MTG005',
-    meetingTitle: 'Họp Tổ Văn – Kế Hoạch Viết Văn Sáng Tạo',
+    meetingTitle: 'Họp Tổ Ngữ văn – Kế Hoạch Viết Văn Sáng Tạo',
     task: 'Hoàn thiện tiêu chí chấm điểm gửi ban giám khảo',
     assignee: 'Cô Nguyễn Thu Hà',
     deadline: '2026-06-15',
@@ -644,7 +644,7 @@ export default function MeetingCenter() {
             <span className="text-white/60 text-sm">MIS SMART PORTAL 2.0</span>
           </div>
           <h1 className="text-2xl md:text-3xl font-display font-bold text-white mb-1">
-            Trung Tâm Quản Lý Cuộc Họp
+            Trung tâm Quản lý Cuộc Họp
           </h1>
           <p className="text-indigo-200 text-sm md:text-base">
             Lên lịch, biên bản và theo dõi action items từ tất cả các cuộc họp nhà trường
@@ -804,7 +804,7 @@ export default function MeetingCenter() {
                   required
                   value={form.title}
                   onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))}
-                  placeholder="VD: Họp Ban Giám Hiệu Tháng 7/2026"
+                  placeholder="VD: Họp Ban Giám hiệu Tháng 7/2026"
                   className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
@@ -1368,7 +1368,7 @@ export default function MeetingCenter() {
           {/* Legend */}
           <div className="flex items-center gap-2 pt-2 text-xs text-slate-400 dark:text-slate-500">
             <Building2 className="w-3.5 h-3.5" />
-            <span>Nút "Tạo Task" sẽ liên kết tới Module Quản Lý Công Việc</span>
+            <span>Nút "Tạo công việc" sẽ liên kết tới phân hệ Quản lý công việc</span>
           </div>
         </div>
       )}

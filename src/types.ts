@@ -38,6 +38,7 @@ export interface UserProfile {
   cpdHours?: number;
   cpdLog?: { id: string; title: string; hours: number; date: string }[];
   kpiLocked?: boolean;
+  email?: string;
 }
 
 export type TaskPriority = 'CAO' | 'TRUNG_BINH' | 'THAP';
@@ -85,6 +86,8 @@ export interface Task {
   rejectionReason?: string; // Reject feedback from supervisor
   linkedOkrId?: string;
   checklist?: ChecklistItem[];
+  nearDeadlineReminderSent?: boolean;
+  overdueReminderSent?: boolean;
 }
 
 export interface Workspace {

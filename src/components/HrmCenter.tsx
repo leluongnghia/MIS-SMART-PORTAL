@@ -222,7 +222,7 @@ export default function HrmCenter({ currentUser, users, onUpdateUsers }: HrmCent
             HUMAN RESOURCE MANAGEMENT
           </span>
           <h1 className="text-2xl md:text-3xl font-display font-black tracking-tight leading-tight">
-            {lang === 'vi' ? 'Cổng Nhân Sự, Nghỉ Phép & Dạy Thay' : 'HRM, Leaves & Substitutions'}
+            {lang === 'vi' ? 'Cổng nhân sự, nghỉ phép và dạy thay' : 'HRM, Leaves & Substitutions'}
           </h1>
           <p className="text-xs md:text-sm text-violet-100/80 leading-relaxed font-light">
             {lang === 'vi' ? 'Cổng quản trị thông tin nhân sự hỗ trợ nộp đơn xin nghỉ phép trực tuyến, tự động quét thời khóa biểu gợi ý giáo viên thay thế trong Tổ chuyên môn và cập nhật chứng chỉ sư phạm liên tục.' : 'HR administration portal supporting online leave applications, automatically scanning timetables to suggest departmental replacements, and updating certifications.'}
@@ -421,7 +421,7 @@ export default function HrmCenter({ currentUser, users, onUpdateUsers }: HrmCent
             <div>
               <h3 className="font-display font-black text-slate-900 dark:text-white text-sm flex items-center gap-1.5">
                 <Award className="text-violet-655 w-4.5 h-4.5" />
-                {lang === 'vi' ? 'Bằng cấp & Chứng chỉ Giáo Viên' : 'Teacher Certifications'}
+                {lang === 'vi' ? 'Bằng cấp và chứng chỉ giáo viên' : 'Teacher Certifications'}
               </h3>
               <p className="text-[10.5px] text-slate-500">{lang === 'vi' ? 'Xem và cập nhật bằng cấp khoa học sư phạm của cán bộ.' : 'View and update academic credentials and certifications of staff.'}</p>
             </div>

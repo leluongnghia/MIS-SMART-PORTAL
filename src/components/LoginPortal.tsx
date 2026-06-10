@@ -356,7 +356,7 @@ export default function LoginPortal({ onLoginSuccess, initialUser }: LoginPortal
                         {user.title}
                       </p>
                       <p className="text-[9px] text-slate-500 font-mono mt-0.5">
-                        {user.role === 'ADMIN' ? 'Ban Giám Hiệu' : user.role === 'MANAGER' ? 'Trưởng bộ phận' : 'Thành viên'}
+                        {user.role === 'ADMIN' ? 'Ban Giám hiệu' : user.role === 'MANAGER' ? 'Trưởng bộ phận' : 'Thành viên'}
                       </p>
                     </div>
 
@@ -375,7 +375,7 @@ export default function LoginPortal({ onLoginSuccess, initialUser }: LoginPortal
             <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
             <div>
               <p className="font-bold text-slate-350 font-sans">Độ tin cậy được thiết lập đồng bộ đám mây:</p>
-              <p className="font-medium text-slate-450 mt-0.5">Hệ thống áp dụng chính sách cấp quyền theo phân tách nhiệm vụ (RBAC). Cán bộ giảng dạy hoặc Trưởng bộ phận sau khi đăng nhập chỉ có quyền chỉnh sửa, báo cáo các nhiệm vụ được giao tương ứng trong khi BGH giữ thẩm quyền phê duyệt phê duyệt tối cao định tính.</p>
+              <p className="font-medium text-slate-450 mt-0.5">Hệ thống áp dụng chính sách cấp quyền theo phân tách nhiệm vụ (RBAC). Cán bộ giảng dạy hoặc trưởng bộ phận sau khi đăng nhập chỉ có quyền chỉnh sửa, báo cáo các nhiệm vụ được giao tương ứng, trong khi Ban Giám hiệu giữ thẩm quyền phê duyệt cuối cùng.</p>
             </div>
           </div>
 

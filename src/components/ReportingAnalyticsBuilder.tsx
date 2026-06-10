@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Target, Sparkles, FileText, Download, Printer, Settings, Plus, Check } from 'lucide-react';
+import { exportToCsv } from '../utils/exportUtils';
 
 interface Widget {
   id: string;
@@ -28,7 +29,13 @@ export default function ReportingAnalyticsBuilder() {
     if (format === 'PDF') {
       window.print();
     } else {
-      setExportSuccess('🎉 Đang khởi tạo xuất Excel học vụ... Tệp tin "MIS_Smart_Report_2.0.xlsx" đã được chuẩn bị tải về trình duyệt.');
+      const visibleWidgets = widgets.filter(w => w.visible);
+      exportToCsv(
+        'MIS_Smart_Report_2.0.csv',
+        ['Tên widget', 'Chủ đề', 'Nội dung'],
+        visibleWidgets.map(w => [w.name, w.category, w.content])
+      );
+      setExportSuccess('Đã tải file MIS_Smart_Report_2.0.csv về trình duyệt.');
       setTimeout(() => setExportSuccess(''), 5000);
     }
   };
@@ -43,9 +50,9 @@ export default function ReportingAnalyticsBuilder() {
             <Settings className="w-3.5 h-3.5 text-indigo-400" />
             Report Builder
           </span>
-          <h2 className="text-xl md:text-2xl font-display font-black leading-tight">Thiết Lập Báo Cáo Điều Hành Tự Chọn</h2>
+          <h2 className="text-xl md:text-2xl font-display font-black leading-tight">Thiết lập báo cáo điều hành tùy chọn</h2>
           <p className="text-xs text-slate-350 max-w-3xl font-light leading-relaxed">
-            Tùy biến bảng thông tin (Dashboard Builder), kích hoạt các widget dữ liệu theo yêu cầu cá nhân và trích xuất báo cáo học vụ bản cứng.
+            Tùy biến bảng thông tin (trình tạo bảng điều khiển), kích hoạt các widget dữ liệu theo yêu cầu cá nhân và trích xuất báo cáo học vụ bản cứng.
           </p>
         </div>
       </div>
@@ -86,7 +93,7 @@ export default function ReportingAnalyticsBuilder() {
         <div className="lg:col-span-8 space-y-5">
           <div className="flex items-center justify-between flex-wrap gap-2">
             <h3 className="font-display font-extrabold text-slate-900 dark:text-white text-sm">
-              Khung Báo Cáo Điều Hành Bản Xem Trước (Preview Canvas)
+              Khung xem trước báo cáo điều hành
             </h3>
 
             <div className="flex items-center gap-2">
@@ -113,11 +120,11 @@ export default function ReportingAnalyticsBuilder() {
             </div>
           )}
 
-          {/* Preview Canvas */}
+          {/* khung xem trước */}
           <div className="bg-white border border-slate-200 dark:border-slate-800/80 p-6 rounded-2xl shadow-xs space-y-5 print-full-width">
             <div className="text-center border-b border-slate-100 pb-4">
               <h2 className="text-base font-display font-extrabold text-slate-900 dark:text-white uppercase tracking-wide">
-                Báo Cáo Điều Hành Tổng Hợp Học Đường
+                Báo cáo điều hành tổng hợp học đường
               </h2>
               <span className="text-[10px] text-slate-400 font-mono">MIS Smart Portal 2.0 • Trường Liên cấp Đa Trí Tuệ</span>
             </div>

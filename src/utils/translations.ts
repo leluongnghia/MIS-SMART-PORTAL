@@ -4,10 +4,10 @@ export const translations = {
     tasks: "Nhiệm vụ & Chỉ đạo",
     intelligence: "Đa Trí Tuệ & OKRs",
     lms: "MIS LMS Portal",
-    academic: "Học Vụ & Giáo Án",
-    logistics: "Vận Hành & Thiết Bị",
-    hrm: "Nhân Sự & Phép",
-    requests: "Đề Xuất & Phê Duyệt",
+    academic: "Học vụ và giáo án",
+    logistics: "Vận hành và thiết bị",
+    hrm: "Nhân sự và nghỉ phép",
+    requests: "Đề xuất và phê duyệt",
     
     // Sidebar
     overview: "Tổng quan",
@@ -51,22 +51,22 @@ export const translations = {
     completed: "Hoàn thành",
     
     // Academic Operations
-    academicHeader: "Học Vụ & Giáo Án Điện Tử",
+    academicHeader: "Học vụ và giáo án điện tử",
     academicDesc: "Theo dõi thời khóa biểu cá nhân, nộp giáo án trực tuyến và quản lý quy trình phê duyệt tài liệu giảng dạy.",
     timetable: "Thời khóa biểu giảng dạy",
-    lessonPlanApproval: "Phê duyệt giáo án học thuật",
+    lessonPlanApproval: "Phê duyệt giáo án",
     submitPlan: "Nộp giáo án mới",
     planTitle: "Tên bài dạy / Giáo án",
-    gradeSubject: "Khối & Môn học",
+    gradeSubject: "Khối và môn học",
     fileLink: "Liên kết tài liệu",
     approver: "Người thẩm định",
     notes: "Nội dung phản hồi",
     
     // School Logistics
-    logisticsHeader: "Vận Hành & Thiết Bị Học Đường",
+    logisticsHeader: "Vận hành và thiết bị học đường",
     logisticsDesc: "Phân hệ hậu cần hỗ trợ giáo viên đăng ký phòng chức năng và báo hỏng thiết bị trực tiếp tới tổ Hành chính.",
     roomBooking: "Đặt lịch phòng chức năng",
-    maintenance: "Báo hỏng & Sửa chữa thiết bị",
+    maintenance: "Báo hỏng và sửa chữa thiết bị",
     bookRoom: "Đăng ký phòng học",
     reportIssue: "Khai báo sự cố",
     roomName: "Chọn phòng học",
@@ -75,24 +75,24 @@ export const translations = {
     purpose: "Mục đích sử dụng",
     
     // HRM Center
-    hrmHeader: "Cổng Nhân Sự & Phép Giáo Viên",
+    hrmHeader: "Cổng nhân sự và nghỉ phép giáo viên",
     hrmDesc: "Quản lý nghỉ phép trực tuyến, tự động đối chiếu TKB tìm giáo viên dạy thế và quản lý hồ sơ chứng chỉ chuyên môn.",
     leaveRequest: "Đăng ký nghỉ phép",
     substituteTeacher: "Đề xuất dạy thế tự động",
-    certifications: "Bằng cấp & Chứng chỉ",
+    certifications: "Bằng cấp và chứng chỉ",
     applyLeave: "Nộp đơn xin nghỉ",
     leaveDate: "Ngày xin nghỉ",
     leaveSlot: "Tiết nghỉ giảng dạy",
     subTeacherSuggest: "Giáo viên rảnh tiết cùng tổ (Gợi ý dạy thay)",
     
     // School Requests
-    requestsHeader: "Cổng Đề Xuất & Phê Duyệt Học Đường",
+    requestsHeader: "Cổng đề xuất và phê duyệt học đường",
     requestsDesc: "Số hóa quy trình duyệt mua sắm học cụ, tổ chức sự kiện ngoại khóa và đề xuất tạm ứng kinh phí.",
     newRequest: "Tạo đề xuất mới",
     reqTitle: "Tiêu đề đề xuất",
     reqType: "Loại đề xuất",
     reqAmount: "Kinh phí dự trù",
-    reqDescription: "Lý do & Phương án thực hiện",
+    reqDescription: "Lý do và phương án thực hiện",
     reqApprover: "Cấp phê duyệt"
   },
   en: {
@@ -206,8 +206,8 @@ export function translateWorkspace(w: any, lang: 'vi' | 'en'): any {
     'Tổ Công tác Học sinh & Tham vấn': 'Student Affairs',
     'Phòng Dịch vụ & Vận hành Học đường': 'School Services',
     'Tổ Chuyên môn Toán - Tin': 'Math & IT',
-    'Tổ Chuyên môn Ngữ Văn': 'Literature',
-    'Tổ Văn phòng & Kế toán - Tài chính': 'Admin & Finance'
+    'Tổ Chuyên môn Ngữ văn': 'Literature',
+    'Tổ Ngữ văn phòng & Kế toán - Tài chính': 'Admin & Finance'
   };
   const descs: Record<string, string> = {
     'Tổng quan công việc toàn trường': 'Overview of school-wide operations',
@@ -216,9 +216,9 @@ export function translateWorkspace(w: any, lang: 'vi' | 'en'): any {
     'Bản quyền giáo trình quốc tế, quản lý giáo viên nước ngoài và điều phối giao lưu song ngữ': 'International curricula, foreign teachers & bilingual coordination',
     'Rà soát kiểm tra đánh giá, cơ sở dữ liệu học vụ, khảo sát và kiểm định định kỳ': 'Assessments review, academic databases & quality assurance',
     'Nề nếp bán trú, hoạt động ngoại khóa CLB, kỷ luật tích cực và tham vấn tâm lý học đường': 'Boarding discipline, clubs, active discipline & counseling',
-    'Dịch vụ đưa đón học sinh (School Bus), bán trú canteen dinh dưỡng, y tế và an ninh': 'School Bus management, canteen nutrition, medical & security',
+    'Dịch vụ xe đưa đón học sinh, bếp ăn bán trú, y tế và an ninh': 'xe buýt trường học management, canteen nutrition, medical & security',
     'Giảng dạy Toán - Tin chương trình Việt Nam, bổ trợ ôn tập học sinh giỏi': 'Math & IT teaching, gifted students coaching',
-    'Giảng dạy Ngữ Văn, các chuyên đề văn học nghệ thuật xã hội, nghiên cứu văn hóa': 'Literature teaching, literary seminars & cultural research',
+    'Giảng dạy Ngữ văn, các chuyên đề văn học nghệ thuật xã hội, nghiên cứu văn hóa': 'Literature teaching, literary seminars & cultural research',
     'Quản lý thu chi học phí, thủ quỹ ngân sách, hồ sơ cán bộ, pháp chế và thủ tục hành chính': 'Tuition management, budgeting, staff records & admin legalities'
   };
   return {
@@ -237,10 +237,10 @@ export function translateUser(u: any, lang: 'vi' | 'en'): any {
     'Phó Hiệu trưởng cơ sở vật chất': 'Vice Principal (Facilities)',
     'Phó Hiệu trưởng chuyên môn': 'Vice Principal (Academics)',
     'Tổ trưởng Tổ Toán - Tin học': 'Math & IT Department Head',
-    'Tổ trưởng Tổ Ngữ Văn': 'Literature Department Head',
-    'Tổ trưởng Tổ Văn phòng - Hành chính': 'Administration Head',
+    'Tổ trưởng Tổ Ngữ văn': 'Literature Department Head',
+    'Tổ trưởng Tổ Ngữ văn phòng - Hành chính': 'Administration Head',
     'Giáo viên Tổ Toán - Tin học': 'Math & IT Teacher',
-    'Giáo viên Tổ Ngữ Văn': 'Literature Teacher',
+    'Giáo viên Tổ Ngữ văn': 'Literature Teacher',
     'Cán bộ Hành chính thiết bị': 'Facilities Officer',
     'Giáo viên Toán - Đại số': 'Math & Algebra Teacher',
     'Giáo viên Tin học ứng dụng': 'Applied IT Teacher',
@@ -274,7 +274,7 @@ export function translateTitle(title: string, lang: 'vi' | 'en'): string {
     'Hiệu trưởng': 'Principal',
     'Phó Hiệu trưởng': 'Vice Principal',
     'Tổ trưởng Tổ Toán - Tin': 'Math & IT Head',
-    'Tổ trưởng Tổ Ngữ Văn': 'Literature Head',
+    'Tổ trưởng Tổ Ngữ văn': 'Literature Head',
     'Giáo viên Toán': 'Mathematics Teacher',
     'Giáo viên Văn': 'Literature Teacher',
     'Giáo viên Tin học': 'IT Teacher',
@@ -652,8 +652,8 @@ export function translateRequest(r: any, lang: 'vi' | 'en'): any {
   const deptTranslations: Record<string, string> = {
     'Tổ Tin Học': 'IT Department',
     'Tổ Ngoại Ngữ': 'Foreign Language Department',
-    'Tổ Ngữ Văn': 'Literature Department',
-    'Khối Học Vụ': 'Academic Division'
+    'Tổ Ngữ văn': 'Literature Department',
+    'Khối học vụ': 'Academic Division'
   };
   const feedbackTranslations: Record<string, string> = {
     'Đồng ý duyệt cấp kinh phí. Giao bộ phận Thiết bị tiến hành mua sắm bàn giao trước ngày 10/06.': 'Budget approved. Procurement department to complete purchasing and hand over by June 10.',

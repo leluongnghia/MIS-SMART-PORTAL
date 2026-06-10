@@ -97,7 +97,7 @@ export default function SchoolRequests({ currentUser }: SchoolRequestsProps) {
         title: 'Lắp thêm quạt treo tường cho phòng học 401',
         type: 'CO_SO_VAT_CHAT',
         senderName: 'Cô Hoàng Thị Mai',
-        department: 'Khối Học Vụ',
+        department: 'Khối học vụ',
         description: 'Phòng học 401 hiện chỉ có 4 quạt trần hoạt động yếu, học sinh ngồi góc lớp rất nóng trong thời tiết nắng nóng cao điểm. Đề xuất lắp thêm 2 quạt treo tường công suất lớn ở hai góc phòng học.',
         approverRole: 'BGH',
         status: 'TU_CHOI',
@@ -137,7 +137,7 @@ export default function SchoolRequests({ currentUser }: SchoolRequestsProps) {
       title: newReq.title,
       type: newReq.type,
       senderName: currentUser.name,
-      department: currentUser.role === 'ADMIN' ? 'Ban Giám Hiệu' : 'Tổ Chuyên Môn',
+      department: currentUser.role === 'ADMIN' ? 'Ban Giám hiệu' : 'Tổ chuyên môn',
       amount: newReq.amount ? Number(newReq.amount) : undefined,
       description: newReq.description,
       approverRole: newReq.approverRole,
@@ -208,7 +208,7 @@ export default function SchoolRequests({ currentUser }: SchoolRequestsProps) {
             REQUEST &amp; APPROVAL PORTAL
           </span>
           <h1 className="text-2xl md:text-3xl font-display font-black tracking-tight leading-tight">
-            {lang === 'vi' ? 'Cổng Đề Xuất & Phê Duyệt Học Đường' : 'Requests & Approvals Hub'}
+            {lang === 'vi' ? 'Cổng đề xuất và phê duyệt học đường' : 'Requests & Approvals Hub'}
           </h1>
           <p className="text-xs md:text-sm text-indigo-100/80 leading-relaxed font-light">
             {lang === 'vi' ? 'Số hóa quy trình duyệt mua sắm học cụ, tổ chức sự kiện ngoại khóa và đề xuất tạm ứng kinh phí.' : 'Digitizing approvals for school supplies purchasing, extracurricular events, and budget cash advances.'}
@@ -354,7 +354,7 @@ export default function SchoolRequests({ currentUser }: SchoolRequestsProps) {
                   onChange={(e: any) => setNewReq({ ...newReq, approverRole: e.target.value })}
                   className="w-full text-xs p-2.5 border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-350 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                 >
-                  <option value="BGH">{lang === 'vi' ? 'Ban Giám Hiệu (BGH)' : 'School Board (BGH)'}</option>
+                  <option value="BGH">{lang === 'vi' ? 'Ban Giám hiệu (BGH)' : 'School Board (BGH)'}</option>
                   <option value="TO_TRUONG">{lang === 'vi' ? 'Tổ trưởng bộ môn' : 'Department Head'}</option>
                   <option value="KE_TOAN">{lang === 'vi' ? 'Phòng Kế toán (Tài chính)' : 'Accounting Department'}</option>
                 </select>
@@ -410,7 +410,7 @@ export default function SchoolRequests({ currentUser }: SchoolRequestsProps) {
                 : 'bg-amber-50 border-amber-200 text-amber-705 dark:bg-amber-950/40 dark:border-amber-900/30 animate-pulse';
 
               const roleLabels = {
-                BGH: lang === 'vi' ? 'Ban Giám Hiệu' : 'School Board',
+                BGH: lang === 'vi' ? 'Ban Giám hiệu' : 'School Board',
                 TO_TRUONG: lang === 'vi' ? 'Tổ trưởng chuyên môn' : 'Department Head',
                 KE_TOAN: lang === 'vi' ? 'Phòng Kế toán' : 'Accounting Dept'
               };

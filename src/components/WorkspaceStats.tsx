@@ -10,16 +10,18 @@ import {
   Percent,
   TrendingUp,
   Award,
-  EyeOff
+  EyeOff,
+  X
 } from 'lucide-react';
 
 interface WorkspaceStatsProps {
   tasks: Task[];
   activeWorkspace: Workspace;
   onMinimize?: () => void;
+  onShowTaskList?: (type: 'COMPLETED' | 'PENDING' | 'IN_PROGRESS' | 'OVERDUE') => void;
 }
 
-export default function WorkspaceStats({ tasks, activeWorkspace, onMinimize }: WorkspaceStatsProps) {
+export default function WorkspaceStats({ tasks, activeWorkspace, onMinimize, onShowTaskList }: WorkspaceStatsProps) {
   const totalTasks = tasks.length;
   const completedTasks = tasks.filter(t => t.status === 'HOAN_THANH').length;
   const pendingTasks = tasks.filter(t => t.status === 'CHO_DUYET').length;
@@ -30,32 +32,7 @@ export default function WorkspaceStats({ tasks, activeWorkspace, onMinimize }: W
   
   // Calculate overdue tasks
   const todayStr = new Date().toISOString().split('T')[0];
-  const overdueTasks = tasks.filter(t => t.status !== 'HOAN_THANH' && t.deadline < todayStr).length;
-
-  // 1. Gather all unique intelligences from active tasks
-  const miCounts: Record<string, { count: number; icon: string; bg: string; color: string; description: string }> = {
-    'Trí tuệ Logic - Toán': { count: 0, icon: '📐', bg: 'bg-indigo-50 text-indigo-700 border-indigo-200', color: 'bg-indigo-500', description: 'Tư duy logic, giải quyết vấn đề bằng số liệu khoa học, quy trình & thuật toán.' },
-    'Trí tuệ Ngôn ngữ': { count: 0, icon: '📝', bg: 'bg-emerald-50 text-emerald-700 border-emerald-200', color: 'bg-emerald-500', description: 'Giao tiếp văn bản, viết lách sáng thơ ca nghệ thuật, thuyết trình & thuyết lý.' },
-    'Trí tuệ Không gian': { count: 0, icon: '🎨', bg: 'bg-purple-50 text-purple-700 border-purple-200', color: 'bg-purple-500', description: 'Trực quan hóa thiết kế thẩm mỹ trường học, mô hình hóa sơ đồ, Robotics & đồ họa.' },
-    'Trí tuệ Vận động': { count: 0, icon: '🏃‍♂️', bg: 'bg-orange-50 text-orange-700 border-orange-200', color: 'bg-orange-550', description: 'Thể chất nhạy bén, phối hợp thể chất khéo léo, dã ngoại, thực hành dã dẻo dai.' },
-    'Trí tuệ Âm nhạc': { count: 0, icon: '🎵', bg: 'bg-pink-50 text-pink-700 border-pink-200', color: 'bg-pink-500', description: 'Nhịp điệu hòa âm, văn nghệ học vụ, cảm thụ giai điệu & nhạc cụ biểu diễn.' },
-    'Trí tuệ Giao tiếp': { count: 0, icon: '🤝', bg: 'bg-blue-50 text-blue-700 border-blue-200', color: 'bg-blue-500', description: 'Cộng tác làm việc nhóm, nắm bắt tâm sinh lý phụ huynh học sinh & truyền thông đối ngoại.' },
-    'Trí tuệ Nội tâm': { count: 0, icon: '🧠', bg: 'bg-teal-50 text-teal-700 border-teal-200', color: 'bg-teal-500', description: 'Thấu hiểu cảm xúc ưu khuyết điểm của bản thân, phản tư kỷ luật tự giác nội học vụ.' },
-    'Trí tuệ Tự nhiên': { count: 0, icon: '🌿', bg: 'bg-green-50 text-green-700 border-green-200', color: 'bg-green-500', description: 'Ý thức sinh thái cảnh quan xanh học đường, nuôi trồng thực vật sành sỏi thực nghiệm.' }
-  };
-
-  // Populate counts
-  tasks.forEach(t => {
-    const list = getTaskIntelligences(t);
-    list.forEach(intel => {
-      if (miCounts[intel.name]) {
-        miCounts[intel.name].count += 1;
-      }
-    });
-  });
-
-  // Calculate maximum count to scale progress bars relatively
-  const maxCount = Math.max(...Object.values(miCounts).map(v => v.count), 1);
+  const overdueTasks = tasks.filter(t => t.status !== 'HOAN_THANH' && t.deadline && t.deadline < todayStr).length;
 
   return (
     <div id="workspace-stats-outer" className="space-y-6 mb-6 animate-fade-in">
@@ -117,6 +94,7 @@ export default function WorkspaceStats({ tasks, activeWorkspace, onMinimize }: W
         {/* Metric 1: Đã Hoàn Thành */}
         <div 
           id="stat-box-completed"
+          onClick={() => onShowTaskList && onShowTaskList('COMPLETED')}
           className="bg-emerald-55/15 hover:bg-emerald-55/30 border border-emerald-200/90 hover:border-emerald-400 rounded-2xl p-5 flex flex-col justify-between hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 cursor-pointer text-slate-900"
         >
           <div className="flex items-center justify-between">
@@ -134,6 +112,7 @@ export default function WorkspaceStats({ tasks, activeWorkspace, onMinimize }: W
         {/* Metric 2: Chờ Phê Duyệt */}
         <div 
           id="stat-box-pending"
+          onClick={() => onShowTaskList && onShowTaskList('PENDING')}
           className={`border rounded-2xl p-5 flex flex-col justify-between hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 cursor-pointer ${
             pendingTasks > 0 
               ? 'border-amber-400 bg-amber-50/40 hover:bg-amber-50/65 text-slate-905' 
@@ -161,6 +140,7 @@ export default function WorkspaceStats({ tasks, activeWorkspace, onMinimize }: W
         {/* Metric 3: Đang Thực Hiện */}
         <div 
           id="stat-box-inprogress"
+          onClick={() => onShowTaskList && onShowTaskList('IN_PROGRESS')}
           className="bg-sky-55/15 hover:bg-sky-55/30 border border-sky-200/90 hover:border-indigo-400 rounded-2xl p-5 flex flex-col justify-between hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 cursor-pointer text-slate-900"
         >
           <div className="flex items-center justify-between">
@@ -178,6 +158,7 @@ export default function WorkspaceStats({ tasks, activeWorkspace, onMinimize }: W
         {/* Metric 4: Trễ Hạn */}
         <div 
           id="stat-box-overdue"
+          onClick={() => onShowTaskList && onShowTaskList('OVERDUE')}
           className={`border rounded-2xl p-5 flex flex-col justify-between hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 cursor-pointer ${
             overdueTasks > 0 
               ? 'border-rose-400 bg-rose-50/40 hover:bg-rose-50/65 text-slate-905' 
@@ -204,6 +185,7 @@ export default function WorkspaceStats({ tasks, activeWorkspace, onMinimize }: W
           </div>
         </div>
       </div>
+
     </div>
   );
 }

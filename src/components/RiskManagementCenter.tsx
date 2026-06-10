@@ -90,7 +90,7 @@ export default function RiskManagementCenter() {
             <ShieldAlert className="w-3.5 h-3.5 text-indigo-400" />
             Risk &amp; Auditing
           </span>
-          <h2 className="text-xl md:text-2xl font-display font-black leading-tight">Trung Tâm Quản Trị Rủi Ro Học Đường</h2>
+          <h2 className="text-xl md:text-2xl font-display font-black leading-tight">Trung tâm quản trị rủi ro học đường</h2>
           <p className="text-xs text-slate-350 max-w-3xl font-light leading-relaxed">
             Giám sát rủi ro đa chiều: trễ hạn dự án, tuyển sinh dưới chỉ tiêu, quá tải nhân sự và ùn ứ công việc để kịp thời can thiệp điều hành.
           </p>

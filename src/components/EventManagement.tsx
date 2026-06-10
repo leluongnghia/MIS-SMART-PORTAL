@@ -75,7 +75,7 @@ const initialEvents: EventItem[] = [
       { id: 't1', name: 'Thiết kế ấn phẩm truyền thông & Standee', assignee: 'Nguyễn Thị Mai', completed: true },
       { id: 't2', name: 'Gửi thư mời và SMS cho phụ huynh đăng ký', assignee: 'Trần Văn Đức', completed: true },
       { id: 't3', name: 'Setup các gian hàng trải nghiệm câu lạc bộ', assignee: 'Lê Quang Hải', completed: false },
-      { id: 't4', name: 'Chuẩn bị tea-break và quà lưu niệm', assignee: 'Phạm Minh Tuấn', completed: false },
+      { id: 't4', name: 'Chuẩn bị tiệc trà nhẹ và quà lưu niệm', assignee: 'Phạm Minh Tuấn', completed: false },
       { id: 't5', name: 'Phân công học sinh tình nguyện viên hỗ trợ', assignee: 'Cô Lê Thị Hương', completed: true },
     ],
   },
@@ -95,7 +95,7 @@ const initialEvents: EventItem[] = [
       { id: 't11', name: 'Duyệt danh sách sản phẩm STEM trưng bày', assignee: 'Cô Trần Thị Bình', completed: true },
       { id: 't12', name: 'Mua sắm nguyên vật liệu lắp đặt kỹ thuật', assignee: 'Nguyễn Thị Mai', completed: false },
       { id: 't13', name: 'Liên hệ ban giám khảo bên ngoài', assignee: 'Thầy Nguyễn Văn An', completed: false },
-      { id: 't14', name: 'Setup hệ thống âm thanh, ánh sáng gian trưng bày', assignee: 'Phòng CNTT', completed: false },
+      { id: 't14', name: 'Thiết lập hệ thống âm thanh, ánh sáng gian trưng bày', assignee: 'Phòng CNTT', completed: false },
     ],
   },
   {
@@ -112,8 +112,8 @@ const initialEvents: EventItem[] = [
     progress: 90,
     checklist: [
       { id: 't21', name: 'Hoàn thiện slide thuyết trình của diễn giả', assignee: 'Cô Lê Thị Hương', completed: true },
-      { id: 't22', name: 'Test máy chiếu, hệ thống mic và đường truyền internet', assignee: 'Phòng CNTT', completed: true },
-      { id: 't23', name: 'In tài liệu hướng dẫn và check-in list', assignee: 'Lê Quang Hải', completed: true },
+      { id: 't22', name: 'Kiểm tra máy chiếu, hệ thống mic và đường truyền internet', assignee: 'Phòng CNTT', completed: true },
+      { id: 't23', name: 'In tài liệu hướng dẫn và danh sách điểm danh', assignee: 'Lê Quang Hải', completed: true },
       { id: 't24', name: 'Chuẩn bị nước uống, hoa tươi tặng diễn giả', assignee: 'Nguyễn Thị Mai', completed: false },
     ],
   },
@@ -418,7 +418,7 @@ export default function EventManagement() {
               <span className="text-white/60 text-sm">MIS SMART PORTAL 2.0</span>
             </div>
             <h1 className="text-2xl md:text-3xl font-display font-extrabold text-white mb-1">
-              Trung Tâm Quản Lý Sự Kiện
+              Trung tâm quản lý sự kiện
             </h1>
             <p className="text-indigo-200 text-sm md:text-base max-w-xl font-light">
               Lập kế hoạch, quản lý ngân sách, xây dựng checklist chuẩn bị và điều hành các sự kiện lớn nhỏ trong nhà trường.
@@ -466,7 +466,7 @@ export default function EventManagement() {
               </>
             ) : (
               <>
-                <Activity className="w-4 h-4" /> Dashboard Điều Hành
+                <Activity className="w-4 h-4" /> Bảng điều khiển điều hành
               </>
             )}
           </button>

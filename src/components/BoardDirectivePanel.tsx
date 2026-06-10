@@ -98,10 +98,10 @@ export default function BoardDirectivePanel({
               <span className="text-[10.5px] text-slate-400 font-mono font-medium">• CHỦ TỊCH & CEO</span>
             </div>
             <h2 className="font-display font-bold text-[15px] text-slate-900 tracking-tight">
-              Định Hướng Chiến Lược & Chỉ Thị Bản Bộ
+              Định Hướng Chiến Lược
             </h2>
             <p className="text-[11.5px] text-slate-500 mt-0.5">
-              Quyết nghị định hướng đào tạo sư phạm, tuyển sinh và điều động nhân sự từ Thầy Chủ tịch và CEO
+              Quyết nghị định hướng đào tạo sư phạm, tuyển sinh và điều động nhân sự từ Chủ tịch và CEO
             </p>
           </div>
         </div>
@@ -493,7 +493,7 @@ export default function BoardDirectivePanel({
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
-                        if (confirm('Bạn chắc chắn có quyền thu hồi chỉ đạo tối cao này?')) {
+                        if (confirm('Bạn chắc chắn muốn thu hồi chỉ đạo này?')) {
                           onDelete(d.id);
                         }
                       }}

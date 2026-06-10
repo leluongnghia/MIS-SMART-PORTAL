@@ -203,7 +203,7 @@ export default function RbacSettingsModal({ onClose, config, onSaveConfig }: Rba
               <div className="flex items-center gap-2.5">
                 <Shield className={`w-4 h-4 ${activeTab === 'ADMIN' ? 'text-amber-400' : 'text-slate-500'}`} />
                 <div>
-                  <h4 className="text-xs font-bold leading-none">Ban Giám Hiệu</h4>
+                  <h4 className="text-xs font-bold leading-none">Ban Giám hiệu</h4>
                   <span className={`text-[8px] mt-1 font-mono block ${activeTab === 'ADMIN' ? 'text-slate-300' : 'text-slate-500'}`}>ADMIN ROLE</span>
                 </div>
               </div>
@@ -258,7 +258,7 @@ export default function RbacSettingsModal({ onClose, config, onSaveConfig }: Rba
 
             <div className="pt-4 border-t border-slate-200 text-[10px] text-slate-400 leading-relaxed gap-1.5 flex flex-col bg-amber-50/40 p-3 rounded-lg border">
               <span className="font-bold text-amber-900">Mách nhỏ:</span>
-              <span>Ban Giám Hiệu thường có toàn quyền để kiểm tra toàn trường, còn Giáo viên thường được thiết lập quyền nộp báo cáo và cập nhật tiến độ công việc riêng.</span>
+              <span>Ban Giám hiệu thường có toàn quyền để kiểm tra toàn trường, còn giáo viên thường được thiết lập quyền nộp báo cáo và cập nhật tiến độ công việc riêng.</span>
             </div>
           </div>
 
@@ -269,7 +269,7 @@ export default function RbacSettingsModal({ onClose, config, onSaveConfig }: Rba
                 <span className="text-[10px] uppercase font-bold text-indigo-500 tracking-wider block font-mono">Bảng chi tiết quyền hạn</span>
                 <h3 className="text-sm font-bold text-slate-800">
                   Phân quyền cho nhóm: <span className="underline decoration-indigo-500">{
-                    activeTab === 'ADMIN' ? 'Ban Giám Hiệu (ADMIN)' : activeTab === 'MANAGER' ? 'Tổ trưởng / Trưởng bộ phận (MANAGER)' : 'Cán bộ / Giáo viên / Nhân viên (STAFF)'
+                    activeTab === 'ADMIN' ? 'Ban Giám hiệu (ADMIN)' : activeTab === 'MANAGER' ? 'Tổ trưởng / Trưởng bộ phận (MANAGER)' : 'Cán bộ / Giáo viên / Nhân viên (STAFF)'
                   }</span>
                 </h3>
               </div>

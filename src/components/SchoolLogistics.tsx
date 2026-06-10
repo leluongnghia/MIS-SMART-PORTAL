@@ -215,7 +215,7 @@ export default function SchoolLogistics({ currentUser }: SchoolLogisticsProps) {
             FACILITIES &amp; LOGISTICS CENTER
           </span>
           <h1 className="text-2xl md:text-3xl font-display font-black tracking-tight leading-tight">
-            {lang === 'vi' ? 'Vận Hành & Thiết Bị Học Đường' : 'Facilities & Logistics Center'}
+            {lang === 'vi' ? 'Vận hành và thiết bị học đường' : 'Facilities & Logistics Center'}
           </h1>
           <p className="text-xs md:text-sm text-teal-100/80 leading-relaxed font-light">
             {lang === 'vi' ? 'Phân hệ hậu cần hỗ trợ giáo viên đăng ký phòng chức năng và báo hỏng thiết bị trực tiếp tới tổ Hành chính.' : 'Logistics module assisting teachers in booking laboratory/functional rooms and reporting equipment issues.'}

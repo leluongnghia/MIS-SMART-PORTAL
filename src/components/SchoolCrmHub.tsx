@@ -197,7 +197,7 @@ export default function SchoolCrmHub() {
             <Megaphone className="w-3.5 h-3.5 text-indigo-400" />
             Admissions CRM
           </span>
-          <h2 className="text-xl md:text-2xl font-display font-black leading-tight">Quy Trình & Dữ Liệu Tuyển Sinh Tích Hợp</h2>
+          <h2 className="text-xl md:text-2xl font-display font-black leading-tight">Quy trình và dữ liệu tuyển sinh tích hợp</h2>
           <p className="text-xs text-slate-350 max-w-3xl font-light leading-relaxed">
             Theo dõi phễu chuyển đổi tuyển sinh từ đầu vào quảng cáo đến tư vấn phụ huynh, đặt lịch tham quan trường và hoàn tất thủ tục nhập học.
           </p>
@@ -234,7 +234,7 @@ export default function SchoolCrmHub() {
       {/* Main Admissions Pipeline Board */}
       <div className="space-y-4">
         <div className="flex items-center justify-between flex-wrap gap-2">
-          <h3 className="font-display font-extrabold text-slate-900 dark:text-white text-sm">Admissions Pipeline (Phễu Tuyển Sinh)</h3>
+          <h3 className="font-display font-extrabold text-slate-900 dark:text-white text-sm">Phễu tuyển sinh</h3>
           <button
             onClick={() => setShowAddLead(!showAddLead)}
             className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"

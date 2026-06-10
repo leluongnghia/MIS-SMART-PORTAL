@@ -80,7 +80,7 @@ export default function TeacherHrHub({ currentUser, users, onUpdateUsers }: Teac
             <Users className="w-3.5 h-3.5 text-indigo-400" />
             Human Resources Management
           </span>
-          <h2 className="text-xl md:text-2xl font-display font-black leading-tight">Quản Trị Nhân Sự & Phát Triển Năng Lực Giáo Viên</h2>
+          <h2 className="text-xl md:text-2xl font-display font-black leading-tight">Quản trị nhân sự và phát triển năng lực giáo viên</h2>
           <p className="text-xs text-slate-350 max-w-3xl font-light leading-relaxed">
             Xem cơ cấu tổ chức nhà trường, điều phối điều chuyển nhân sự phòng ban, theo dõi chuyên cần nghỉ phép và bảng xếp hạng KPIs giảng dạy.
           </p>
