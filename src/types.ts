@@ -38,7 +38,20 @@ export interface UserProfile {
   cpdHours?: number;
   cpdLog?: { id: string; title: string; hours: number; date: string }[];
   kpiLocked?: boolean;
+  employeeCode?: string;
   email?: string;
+  personalEmail?: string;
+  phone?: string;
+  address?: string;
+  dateOfBirth?: string;
+  gender?: 'Nam' | 'Nữ' | 'Khác';
+  startDate?: string;
+  contractType?: string;
+  qualification?: string;
+  specialization?: string;
+  emergencyContact?: string;
+  nationalId?: string;
+  insuranceCode?: string;
   parentEmail?: string;
   studentCode?: string;
 }

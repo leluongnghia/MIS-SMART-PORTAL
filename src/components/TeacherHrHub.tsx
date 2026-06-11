@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { UserProfile } from '../types';
-import { Target, Users, Sparkles, Award, ShieldAlert, Check, X, ArrowRightLeft, Clock, Calendar } from 'lucide-react';
+import { Target, Users, Sparkles, Award, ShieldAlert, Check, X, ArrowRightLeft, Clock, Calendar, Mail, Briefcase, BookOpen, Lock, Phone, MapPin, IdCard, UserCheck } from 'lucide-react';
 
 interface TeacherHrHubProps {
   currentUser: UserProfile;
@@ -28,6 +28,7 @@ export default function TeacherHrHub({ currentUser, users, onUpdateUsers }: Teac
 
   // Transfer state
   const [selectedStaffId, setSelectedStaffId] = useState<string>('');
+  const [selectedProfileUser, setSelectedProfileUser] = useState<UserProfile | null>(null);
   const [targetWorkspaceId, setTargetWorkspaceId] = useState<string>('TOAN_TIN');
   const [transferSuccess, setTransferSuccess] = useState('');
 
@@ -69,6 +70,71 @@ export default function TeacherHrHub({ currentUser, users, onUpdateUsers }: Teac
       .sort((a, b) => (b.cpdHours || 0) - (a.cpdHours || 0))
       .slice(0, 4);
   }, [users]);
+
+  const getWorkspaceName = (workspaceId: string) => {
+    const workspaceNames: Record<string, string> = {
+      BGH: 'Ban Giám hiệu & Hội đồng Trường',
+      TUYEN_SINH_PR: 'Phòng Tuyển sinh & Truyền thông',
+      QUOC_TE: 'Ban Chương trình Quốc tế',
+      KHAO_THI: 'Phòng Khảo thí & ĐBCL',
+      CTHS_TAM_LY: 'Tổ Công tác Học sinh & Tham vấn',
+      DICH_VU_HOC_DUONG: 'Phòng Dịch vụ & Vận hành Học đường',
+      TOAN_TIN: 'Tổ Chuyên môn Toán - Tin học',
+      VAN: 'Tổ Chuyên môn Ngữ văn',
+      NGOAI_NGU: 'Tổ Chuyên môn Ngoại ngữ',
+      KHTN: 'Tổ Chuyên môn Khoa học Tự nhiên',
+      LS_DL: 'Tổ Chuyên môn Lịch sử - Địa lí',
+      GDCD_KTPL: 'Tổ GDCD & Giáo dục Kinh tế - Pháp luật',
+      NT_TC_QPAN: 'Tổ Nghệ thuật - Thể chất - QP-AN',
+      CN_TRAI_NGHIEM: 'Tổ Công nghệ & Hoạt động trải nghiệm',
+      HANH_CHINH: 'Tổ Văn phòng & Kế toán - Tài chính',
+    };
+    return workspaceNames[workspaceId] || workspaceId;
+  };
+
+  const getProfileKpi = (user: UserProfile) => {
+    return Math.min(99, 82 + ((user.cpdHours || 8) % 18));
+  };
+
+  const getPersonnelDetails = (user: UserProfile) => {
+    const seed = Array.from(user.id).reduce((sum, char) => sum + char.charCodeAt(0), 0);
+    const normalizedId = user.id.replace(/[^a-zA-Z0-9]/g, '').toLowerCase() || `ns${seed}`;
+    const addressAreas = [
+      'Cau Giay, Ha Noi',
+      'Nam Tu Liem, Ha Noi',
+      'Thanh Xuan, Ha Noi',
+      'Ha Dong, Ha Noi',
+      'Hoang Mai, Ha Noi',
+      'Long Bien, Ha Noi',
+      'Bac Tu Liem, Ha Noi',
+      'Dong Da, Ha Noi'
+    ];
+    const startYears = [2018, 2019, 2020, 2021, 2022, 2023];
+    const month = String((seed % 9) + 1).padStart(2, '0');
+    const day = String((seed % 20) + 5).padStart(2, '0');
+    const roleTitle = `${user.roleName} - ${user.title}`;
+    const isTeacher = /giao vien|to truong|teacher/i.test(roleTitle.normalize('NFD').replace(/[\u0300-\u036f]/g, ''));
+    const isManager = user.role === 'ADMIN' || user.role === 'MANAGER';
+
+    return {
+      employeeCode: user.employeeCode || `MIS-HR-${String(seed).padStart(4, '0')}`,
+      email: user.email || `${normalizedId}@mis.edu.vn`,
+      personalEmail: user.personalEmail || `${normalizedId}.personal@gmail.com`,
+      phone: user.phone || `09${String(10000000 + (seed * 7919) % 90000000).padStart(8, '0')}`,
+      address: user.address || `So ${(seed % 88) + 10}, ngo ${(seed % 45) + 1}, ${addressAreas[seed % addressAreas.length]}`,
+      dateOfBirth: user.dateOfBirth || `${1978 + (seed % 20)}-${month}-${day}`,
+      gender: user.gender || (seed % 3 === 0 ? 'Nam' : 'Nữ'),
+      startDate: user.startDate || `${startYears[seed % startYears.length]}-08-${String((seed % 15) + 1).padStart(2, '0')}`,
+      contractType: user.contractType || (isManager ? 'Hợp đồng quản lý toàn thời gian' : 'Hợp đồng lao động toàn thời gian'),
+      qualification: user.qualification || (isManager ? 'Thạc sĩ Quản trị giáo dục' : isTeacher ? 'Cử nhân/Thạc sĩ Sư phạm' : 'Cử nhân chuyên ngành phù hợp'),
+      specialization: user.specialization || user.title,
+      emergencyContact: user.emergencyContact || `Nguoi than - 08${String(10000000 + (seed * 3571) % 90000000).padStart(8, '0')}`,
+      nationalId: user.nationalId || `0${String(10000000000 + (seed * 15485863) % 90000000000).padStart(11, '0')}`,
+      insuranceCode: user.insuranceCode || `BHXH-${String(seed * 97).padStart(6, '0')}`
+    };
+  };
+
+  const selectedProfileDetails = selectedProfileUser ? getPersonnelDetails(selectedProfileUser) : null;
 
   return (
     <div className="space-y-6">
@@ -335,8 +401,16 @@ export default function TeacherHrHub({ currentUser, users, onUpdateUsers }: Teac
               </h3>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[480px] overflow-y-auto pr-1">
-                {users.map(user => (
-                  <div key={user.id} className="p-4 border border-slate-100 rounded-xl bg-slate-50/50 flex items-start gap-3.5 hover:border-slate-200 transition-all select-none">
+                {users.map(user => {
+                  const details = getPersonnelDetails(user);
+
+                  return (
+                  <button
+                    key={user.id}
+                    type="button"
+                    onClick={() => setSelectedProfileUser(user)}
+                    className="p-4 border border-slate-100 rounded-xl bg-slate-50/50 flex items-start gap-3.5 hover:border-indigo-250 hover:bg-white hover:shadow-3xs transition-all select-none text-left cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                  >
                     <img
                       src={user.avatar}
                       alt={user.name}
@@ -345,7 +419,21 @@ export default function TeacherHrHub({ currentUser, users, onUpdateUsers }: Teac
                     <div className="flex-1 min-w-0">
                       <h4 className="text-xs font-bold text-slate-800 truncate">{user.name}</h4>
                       <span className="text-[9.5px] text-slate-400 block font-mono">{user.title}</span>
-                      <span className="text-[9.5px] text-indigo-600 block font-semibold mt-1">Đơn vị: {user.workspaceId}</span>
+                      <span className="text-[9.5px] text-indigo-600 block font-semibold mt-1">Đơn vị: {getWorkspaceName(user.workspaceId)}</span>
+                      <div className="mt-2 space-y-1 text-[9.5px] font-semibold text-slate-500">
+                        <span className="flex items-center gap-1.5 min-w-0">
+                          <Mail className="h-3 w-3 shrink-0 text-slate-400" />
+                          <span className="truncate">{details.email}</span>
+                        </span>
+                        <span className="flex items-center gap-1.5">
+                          <Phone className="h-3 w-3 shrink-0 text-slate-400" />
+                          {details.phone}
+                        </span>
+                        <span className="flex items-start gap-1.5">
+                          <MapPin className="mt-0.5 h-3 w-3 shrink-0 text-slate-400" />
+                          <span className="line-clamp-2">{details.address}</span>
+                        </span>
+                      </div>
                       {user.badges && user.badges.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-1.5">
                           {user.badges.slice(0, 1).map((b, idx) => (
@@ -355,9 +443,14 @@ export default function TeacherHrHub({ currentUser, users, onUpdateUsers }: Teac
                           ))}
                         </div>
                       )}
+                      <span className="mt-2 inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-wider text-indigo-600">
+                        Xem hồ sơ đầy đủ
+                        <span aria-hidden="true">→</span>
+                      </span>
                     </div>
-                  </div>
-                ))}
+                  </button>
+                  );
+                })}
               </div>
             </div>
 
@@ -479,7 +572,12 @@ export default function TeacherHrHub({ currentUser, users, onUpdateUsers }: Teac
 
               <div className="space-y-3.5">
                 {topTeachers.map(teacher => (
-                  <div key={teacher.id} className="flex items-center gap-3">
+                  <button
+                    key={teacher.id}
+                    type="button"
+                    onClick={() => setSelectedProfileUser(teacher)}
+                    className="w-full flex items-center gap-3 rounded-xl p-2 text-left hover:bg-slate-50 hover:ring-1 hover:ring-indigo-100 transition-all cursor-pointer"
+                  >
                     <img
                       src={teacher.avatar}
                       alt={teacher.name}
@@ -492,7 +590,7 @@ export default function TeacherHrHub({ currentUser, users, onUpdateUsers }: Teac
                     <span className="text-xs font-mono font-bold text-indigo-600 shrink-0">
                       ★ KPI {90 + ((teacher.cpdHours || 0) % 10)}%
                     </span>
-                  </div>
+                  </button>
                 ))}
               </div>
             </div>
@@ -550,6 +648,181 @@ export default function TeacherHrHub({ currentUser, users, onUpdateUsers }: Teac
         )}
 
       </div>
+
+      {selectedProfileUser && selectedProfileDetails && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-sm animate-fade-in">
+          <div className="w-full max-w-5xl max-h-[92vh] overflow-y-auto rounded-3xl bg-white shadow-2xl border border-slate-200">
+            <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-slate-200 bg-white/95 px-5 py-4 backdrop-blur">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-wider text-indigo-600">Hồ sơ nhân sự đầy đủ</p>
+                <h3 className="text-base font-display font-black text-slate-900">{selectedProfileUser.name}</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedProfileUser(null)}
+                className="rounded-xl border border-slate-200 p-2 text-slate-500 hover:bg-slate-50 hover:text-rose-600 cursor-pointer"
+                aria-label="Đóng hồ sơ nhân sự"
+              >
+                <X className="w-4.5 h-4.5" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 p-5">
+              <aside className="lg:col-span-4 space-y-4">
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5 text-center">
+                  <img
+                    src={selectedProfileUser.avatar}
+                    alt={selectedProfileUser.name}
+                    className="mx-auto h-24 w-24 rounded-3xl object-cover border-4 border-white shadow-md"
+                  />
+                  <h4 className="mt-3 text-lg font-black text-slate-900">{selectedProfileUser.name}</h4>
+                  <p className="mt-1 text-xs font-semibold text-slate-600">{selectedProfileUser.title}</p>
+                  <span className="mt-3 inline-flex rounded-full bg-indigo-600 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-white">
+                    {selectedProfileUser.roleName}
+                  </span>
+                </div>
+
+                <div className="rounded-2xl border border-slate-200 p-4 space-y-3 text-xs">
+                  <ProfileLine icon={IdCard} label="Mã nhân sự" value={selectedProfileDetails.employeeCode} />
+                  <ProfileLine icon={Mail} label="Email trường" value={selectedProfileDetails.email} />
+                  <ProfileLine icon={Mail} label="Email cá nhân" value={selectedProfileDetails.personalEmail} />
+                  <ProfileLine icon={Phone} label="Số điện thoại" value={selectedProfileDetails.phone} />
+                  <ProfileLine icon={MapPin} label="Địa chỉ nhà" value={selectedProfileDetails.address} />
+                  <ProfileLine icon={Briefcase} label="Bộ phận" value={getWorkspaceName(selectedProfileUser.workspaceId)} />
+                  <ProfileLine icon={ShieldAlert} label="Vai trò hệ thống" value={selectedProfileUser.role} />
+                  <ProfileLine icon={Lock} label="Trạng thái KPI" value={selectedProfileUser.kpiLocked ? 'Đã khóa kỳ đánh giá' : 'Đang mở đánh giá'} />
+                </div>
+
+                <div className="rounded-2xl border border-slate-200 p-4 space-y-3 text-xs">
+                  <p className="text-[10px] font-black uppercase tracking-wider text-slate-500">Thông tin cá nhân &amp; hành chính</p>
+                  <ProfileLine icon={UserCheck} label="Giới tính" value={selectedProfileDetails.gender} />
+                  <ProfileLine icon={Calendar} label="Ngày sinh" value={selectedProfileDetails.dateOfBirth} />
+                  <ProfileLine icon={Calendar} label="Ngày vào trường" value={selectedProfileDetails.startDate} />
+                  <ProfileLine icon={Briefcase} label="Loại hợp đồng" value={selectedProfileDetails.contractType} />
+                  <ProfileLine icon={BookOpen} label="Trình độ" value={selectedProfileDetails.qualification} />
+                  <ProfileLine icon={Target} label="Chuyên môn" value={selectedProfileDetails.specialization} />
+                  <ProfileLine icon={Phone} label="Liên hệ khẩn cấp" value={selectedProfileDetails.emergencyContact} />
+                </div>
+
+                <div className="rounded-2xl border border-slate-200 p-4">
+                  <p className="text-[10px] font-black uppercase tracking-wider text-slate-500">Huy hiệu / ghi nhận</p>
+                  <div className="mt-3 flex flex-wrap gap-1.5">
+                    {(selectedProfileUser.badges || ['Chưa có huy hiệu ghi nhận']).map((badge, idx) => (
+                      <span key={idx} className="rounded-full bg-indigo-50 border border-indigo-100 px-2.5 py-1 text-[10px] font-bold text-indigo-700">
+                        {badge}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </aside>
+
+              <section className="lg:col-span-8 space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <ProfileMetric label="KPI tháng" value={`${getProfileKpi(selectedProfileUser)}%`} note="Tổng hợp từ tiến độ, CPD và hồ sơ công việc" />
+                  <ProfileMetric label="Giờ CPD" value={`${selectedProfileUser.cpdHours || 0}`} note="Bồi dưỡng chuyên môn đã ghi nhận" />
+                  <ProfileMetric label="Mã nhân sự" value={selectedProfileDetails.employeeCode} note="Định danh nội bộ trên hệ thống" />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="rounded-2xl border border-slate-200 bg-white p-4 space-y-3 text-xs">
+                    <p className="text-[10px] font-black uppercase tracking-wider text-slate-500">Thông tin định danh</p>
+                    <ProfileLine icon={IdCard} label="CCCD/CMND" value={selectedProfileDetails.nationalId} />
+                    <ProfileLine icon={ShieldAlert} label="Mã BHXH" value={selectedProfileDetails.insuranceCode} />
+                  </div>
+                  <div className="rounded-2xl border border-slate-200 bg-white p-4 space-y-3 text-xs">
+                    <p className="text-[10px] font-black uppercase tracking-wider text-slate-500">Liên hệ công việc</p>
+                    <ProfileLine icon={Phone} label="Điện thoại" value={selectedProfileDetails.phone} />
+                    <ProfileLine icon={Mail} label="Email" value={selectedProfileDetails.email} />
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-slate-200 p-4">
+                  <div className="mb-3 flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-indigo-600" />
+                    <h4 className="text-xs font-black uppercase tracking-wider text-slate-900">Hồ sơ năng lực đa trí tuệ</h4>
+                  </div>
+                  {selectedProfileUser.miProfile ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {Object.entries(selectedProfileUser.miProfile).map(([key, value]) => (
+                        <div key={key} className="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2">
+                          <div className="flex items-center justify-between text-[10px] font-bold">
+                            <span className="capitalize text-slate-600">{key}</span>
+                            <span className="text-indigo-700">{value}/100</span>
+                          </div>
+                          <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-slate-200">
+                            <div className="h-full rounded-full bg-indigo-600" style={{ width: `${value}%` }} />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-slate-500">Chưa có dữ liệu hồ sơ năng lực đa trí tuệ cho nhân sự này.</p>
+                  )}
+                </div>
+
+                <div className="rounded-2xl border border-slate-200 p-4">
+                  <div className="mb-3 flex items-center gap-2">
+                    <BookOpen className="w-4 h-4 text-indigo-600" />
+                    <h4 className="text-xs font-black uppercase tracking-wider text-slate-900">Lịch sử bồi dưỡng chuyên môn</h4>
+                  </div>
+                  <div className="overflow-hidden rounded-xl border border-slate-200">
+                    <table className="w-full text-xs">
+                      <thead className="bg-slate-50 text-slate-500">
+                        <tr>
+                          <th className="text-left px-3 py-2">Ngày</th>
+                          <th className="text-left px-3 py-2">Nội dung</th>
+                          <th className="text-center px-3 py-2">Số giờ</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {(selectedProfileUser.cpdLog || []).map(item => (
+                          <tr key={item.id}>
+                            <td className="px-3 py-2 font-mono text-slate-500">{item.date}</td>
+                            <td className="px-3 py-2 font-semibold text-slate-700">{item.title}</td>
+                            <td className="px-3 py-2 text-center font-black text-indigo-700">{item.hours}</td>
+                          </tr>
+                        ))}
+                        {(!selectedProfileUser.cpdLog || selectedProfileUser.cpdLog.length === 0) && (
+                          <tr>
+                            <td colSpan={3} className="px-3 py-8 text-center text-slate-400">Chưa ghi nhận khóa bồi dưỡng chuyên môn.</td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-xs leading-relaxed text-slate-600">
+                  <strong className="block text-slate-900 mb-1">Ghi chú hồ sơ:</strong>
+                  Hồ sơ này tổng hợp dữ liệu đang có trong danh bạ nhân sự, phân quyền, CPD, KPI và hồ sơ năng lực. Khi tích hợp thêm bảng lương, lịch dạy và đánh giá tiết học, khu vực này có thể mở rộng thành hồ sơ nhân sự hoàn chỉnh theo từng năm học.
+                </div>
+              </section>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ProfileLine({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string }) {
+  return (
+    <div className="flex items-start gap-2.5">
+      <Icon className="mt-0.5 h-4 w-4 shrink-0 text-indigo-600" />
+      <div className="min-w-0">
+        <p className="text-[9px] font-black uppercase tracking-wider text-slate-400">{label}</p>
+        <p className="mt-0.5 break-words font-bold text-slate-800">{value}</p>
+      </div>
+    </div>
+  );
+}
+
+function ProfileMetric({ label, value, note }: { label: string; value: string; note: string }) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-3xs">
+      <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">{label}</p>
+      <strong className="mt-1 block text-lg font-black text-slate-900">{value}</strong>
+      <p className="mt-1 text-[10px] leading-relaxed text-slate-500">{note}</p>
     </div>
   );
 }
