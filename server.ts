@@ -260,7 +260,19 @@ const smtpConfig = {
     user: process.env.SMTP_USER || '',
     pass: process.env.SMTP_PASS || '',
   },
+  connectionTimeout: 10000,
+  greetingTimeout: 10000,
+  socketTimeout: 15000,
 };
+
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number, label: string): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) => {
+      setTimeout(() => reject(new Error(`${label} timed out after ${timeoutMs}ms`)), timeoutMs);
+    }),
+  ]);
+}
 
 // Helper function to send email notification
 async function sendEmailNotification({
@@ -348,7 +360,7 @@ async function sendEmailNotification({
     console.log('------------------------------------------------------------');
 
     try {
-      const testAccount = await nodemailer.createTestAccount();
+      const testAccount = await withTimeout(nodemailer.createTestAccount(), 8000, 'Ethereal test account creation');
       const transporter = nodemailer.createTransport({
         host: 'smtp.ethereal.email',
         port: 587,
@@ -357,9 +369,12 @@ async function sendEmailNotification({
           user: testAccount.user,
           pass: testAccount.pass,
         },
+        connectionTimeout: 10000,
+        greetingTimeout: 10000,
+        socketTimeout: 15000,
       });
 
-      const info = await transporter.sendMail(mailOptions);
+      const info = await withTimeout(transporter.sendMail(mailOptions), 15000, 'Ethereal reminder email send');
       const previewUrl = nodemailer.getTestMessageUrl(info);
       console.log(`[Email Service] Preview URL: ${previewUrl}`);
       return { success: true, previewUrl, provider: 'Ethereal' };
@@ -622,21 +637,33 @@ app.post('/api/email/send-admissions-result', async (req, res) => {
       console.log(`Student: ${studentName} | Score: ${testScore} | Scholarship: ${scholarshipInfo}`);
       console.log('------------------------------------------------------------');
 
-      const testAccount = await nodemailer.createTestAccount();
-      const transporter = nodemailer.createTransport({
-        host: 'smtp.ethereal.email',
-        port: 587,
-        secure: false,
-        auth: {
-          user: testAccount.user,
-          pass: testAccount.pass,
-        },
-      });
+      try {
+        const testAccount = await withTimeout(nodemailer.createTestAccount(), 8000, 'Ethereal test account creation');
+        const transporter = nodemailer.createTransport({
+          host: 'smtp.ethereal.email',
+          port: 587,
+          secure: false,
+          auth: {
+            user: testAccount.user,
+            pass: testAccount.pass,
+          },
+          connectionTimeout: 10000,
+          greetingTimeout: 10000,
+          socketTimeout: 15000,
+        });
 
-      const info = await transporter.sendMail(mailOptions);
-      const previewUrl = nodemailer.getTestMessageUrl(info);
-      console.log(`[Email Service] Admissions Preview URL: ${previewUrl}`);
-      res.json({ status: 'success', provider: 'Ethereal', previewUrl });
+        const info = await withTimeout(transporter.sendMail(mailOptions), 15000, 'Ethereal admissions email send');
+        const previewUrl = nodemailer.getTestMessageUrl(info);
+        console.log(`[Email Service] Admissions Preview URL: ${previewUrl}`);
+        res.json({ status: 'success', provider: 'Ethereal', previewUrl });
+      } catch (err: any) {
+        console.warn(`[Email Service] Admissions test email fallback: ${err?.message || err}`);
+        res.json({
+          status: 'success',
+          provider: 'ConsoleLogOnly',
+          warning: 'SMTP is not configured and Ethereal test email is unavailable; message was logged on the server only.',
+        });
+      }
     }
   } catch (error: any) {
     console.error('Email error in send-admissions-result:', error);
