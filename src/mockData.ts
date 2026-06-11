@@ -1075,6 +1075,9 @@ export function getTaskIntelligences(task: Task): MITarget[] {
 export const INITIAL_TASKS: Task[] = [
   {
     id: 'task_1',
+    projectId: 'PROJECT_ACADEMIC',
+    projectName: 'Dự án học vụ',
+    startDate: '2026-05-27',
     title: 'Biên soạn đề cương ôn tập Học kỳ II môn Toán khối 10',
     description: 'Xây dựng ngân hàng câu hỏi, ma trận đề và đáp án chi tiết bám sát chương trình GDPT mới 2018 kiểm tra cuối học kỳ II.',
     workspaceId: 'TOAN_TIN',
@@ -1121,6 +1124,10 @@ export const INITIAL_TASKS: Task[] = [
   },
   {
     id: 'task_2',
+    projectId: 'PROJECT_ACADEMIC',
+    projectName: 'Dự án học vụ',
+    parentTaskId: 'task_1',
+    startDate: '2026-05-28',
     title: 'Hoàn thiện và gửi báo cáo tổng kết thi đua dạy tốt đợt 26/03',
     description: 'Tổng hợp số tiết thao giảng có xếp loại Giỏi, tập hợp danh sách giáo viên có giờ học tốt, đề xuất khen thưởng gửi Ban Giám hiệu.',
     workspaceId: 'TOAN_TIN',
@@ -1153,6 +1160,9 @@ export const INITIAL_TASKS: Task[] = [
   },
   {
     id: 'task_3',
+    projectId: 'PROJECT_EVENTS',
+    projectName: 'Dự án sự kiện',
+    startDate: '2026-05-29',
     title: 'Chuẩn bị kế hoạch tổ chức Lễ Tổng kết và Tri ân khối 12',
     description: 'Lên chương trình chi tiết, phân công chuẩn bị phông màn, âm thanh ánh sáng, bố trí chỗ ngồi giáo viên, đại biểu phụ huynh và học sinh toàn trường.',
     workspaceId: 'BGH',

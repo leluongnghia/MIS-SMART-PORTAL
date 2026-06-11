@@ -370,6 +370,151 @@ async function sendEmailNotification({
   }
 }
 
+type ReminderType = 'OVERDUE' | 'NEAR_DEADLINE';
+
+type ReminderTask = {
+  id: string;
+  title: string;
+  description?: string;
+  assignedId: string;
+  assignedName: string;
+  deadline: string;
+  status: string;
+  nearDeadlineReminderSent?: boolean;
+  overdueReminderSent?: boolean;
+  lastNearDeadlineReminderDate?: string;
+  lastOverdueReminderDate?: string;
+};
+
+type ReminderUser = {
+  id: string;
+  email?: string;
+};
+
+type ReminderCandidate = {
+  task: ReminderTask;
+  type: ReminderType;
+  assigneeEmail: string;
+};
+
+type RegisteredReminderSource = {
+  tasks: ReminderTask[];
+  users: ReminderUser[];
+  nearDeadlineDays: number;
+  registeredAt: number;
+};
+
+let registeredReminderSource: RegisteredReminderSource | null = null;
+const reminderRunMemory = new Set<string>();
+
+function getLocalDateString(date = new Date()) {
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const dd = String(date.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+function daysUntilDeadline(deadline: string, todayStr: string) {
+  const deadlineTime = new Date(`${deadline}T00:00:00`).getTime();
+  const todayTime = new Date(`${todayStr}T00:00:00`).getTime();
+  return Math.ceil((deadlineTime - todayTime) / (1000 * 60 * 60 * 24));
+}
+
+function findReminderCandidates(
+  tasks: ReminderTask[],
+  users: ReminderUser[],
+  nearDeadlineDays: number,
+  todayStr = getLocalDateString()
+): ReminderCandidate[] {
+  return tasks
+    .filter(task => task && task.id && task.status !== 'HOAN_THANH' && task.deadline)
+    .map(task => {
+      const diffDays = daysUntilDeadline(task.deadline, todayStr);
+      const type: ReminderType | null = diffDays < 0
+        ? 'OVERDUE'
+        : diffDays <= nearDeadlineDays
+          ? 'NEAR_DEADLINE'
+          : null;
+
+      if (!type) return null;
+
+      const lastReminderDate = type === 'OVERDUE'
+        ? task.lastOverdueReminderDate
+        : task.lastNearDeadlineReminderDate;
+
+      const legacySent = type === 'OVERDUE'
+        ? task.overdueReminderSent
+        : task.nearDeadlineReminderSent;
+
+      if (lastReminderDate === todayStr) return null;
+      if (legacySent && !lastReminderDate) return null;
+
+      const dedupeKey = `${todayStr}:${type}:${task.id}`;
+      if (reminderRunMemory.has(dedupeKey)) return null;
+
+      const user = users.find(u => u.id === task.assignedId);
+      const assigneeEmail = user?.email || `${task.assignedId}@mis.edu.vn`;
+      return { task, type, assigneeEmail };
+    })
+    .filter((candidate): candidate is ReminderCandidate => Boolean(candidate));
+}
+
+async function sendDeadlineReminderBatch({
+  tasks,
+  users,
+  nearDeadlineDays = 2,
+  markMemory = true,
+}: {
+  tasks: ReminderTask[];
+  users: ReminderUser[];
+  nearDeadlineDays?: number;
+  markMemory?: boolean;
+}) {
+  const todayStr = getLocalDateString();
+  const candidates = findReminderCandidates(tasks, users, nearDeadlineDays, todayStr);
+  const sent: Array<{ taskId: string; type: ReminderType; reminderDate: string; provider?: string; previewUrl?: string }> = [];
+  const failed: Array<{ taskId: string; type: ReminderType; error: string }> = [];
+
+  for (const candidate of candidates) {
+    try {
+      const result = await sendEmailNotification({
+        taskTitle: candidate.task.title,
+        taskDescription: candidate.task.description || '',
+        assigneeName: candidate.task.assignedName,
+        assigneeEmail: candidate.assigneeEmail,
+        deadline: candidate.task.deadline,
+        type: candidate.type,
+      });
+
+      if (markMemory) {
+        reminderRunMemory.add(`${todayStr}:${candidate.type}:${candidate.task.id}`);
+      }
+
+      sent.push({
+        taskId: candidate.task.id,
+        type: candidate.type,
+        reminderDate: todayStr,
+        provider: result.provider,
+        previewUrl: typeof result.previewUrl === 'string' ? result.previewUrl : undefined,
+      });
+    } catch (error: any) {
+      failed.push({
+        taskId: candidate.task.id,
+        type: candidate.type,
+        error: error?.message || String(error),
+      });
+    }
+  }
+
+  return {
+    todayStr,
+    scanned: tasks.length,
+    candidates: candidates.length,
+    sent,
+    failed,
+  };
+}
+
 // 5. Send Email Reminder API
 app.post('/api/email/send-reminder', async (req, res) => {
   const { taskTitle, taskDescription, assigneeName, assigneeEmail, deadline, type } = req.body;
@@ -393,6 +538,53 @@ app.post('/api/email/send-reminder', async (req, res) => {
     res.status(500).json({ status: 'error', error: error.message || 'Error sending email notification' });
   }
 });
+
+// 6. Batch deadline reminder API
+app.post('/api/email/run-deadline-reminders', async (req, res) => {
+  const { tasks, users, nearDeadlineDays = 2, registerSource = true } = req.body;
+
+  if (!Array.isArray(tasks) || !Array.isArray(users)) {
+    return res.status(400).json({ status: 'error', error: 'tasks and users arrays are required.' });
+  }
+
+  try {
+    if (registerSource) {
+      registeredReminderSource = {
+        tasks,
+        users,
+        nearDeadlineDays,
+        registeredAt: Date.now(),
+      };
+    }
+
+    const result = await sendDeadlineReminderBatch({
+      tasks,
+      users,
+      nearDeadlineDays,
+    });
+
+    res.json({ status: 'success', ...result });
+  } catch (error: any) {
+    console.error('Email error in run-deadline-reminders:', error);
+    res.status(500).json({ status: 'error', error: error.message || 'Error running deadline reminders' });
+  }
+});
+
+setInterval(() => {
+  if (!registeredReminderSource) return;
+
+  sendDeadlineReminderBatch({
+    tasks: registeredReminderSource.tasks,
+    users: registeredReminderSource.users,
+    nearDeadlineDays: registeredReminderSource.nearDeadlineDays,
+  }).then(result => {
+    if (result.sent.length > 0 || result.failed.length > 0) {
+      console.log('[Email Service] Scheduled reminder run result:', result);
+    }
+  }).catch(error => {
+    console.error('[Email Service] Scheduled reminder run failed:', error);
+  });
+}, 1000 * 60 * 60 * 6);
 
 // Vite server / Static build setup
 async function startServer() {

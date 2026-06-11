@@ -71,6 +71,10 @@ export interface Task {
   id: string;
   title: string;
   description: string;
+  projectId?: string;
+  projectName?: string;
+  parentTaskId?: string;
+  startDate?: string;
   workspaceId: string; // "BGH" | "TOAN_TIN" | "VAN" | "HANH_CHINH"
   assignedId: string; // User ID
   assignedName: string;
@@ -88,6 +92,18 @@ export interface Task {
   checklist?: ChecklistItem[];
   nearDeadlineReminderSent?: boolean;
   overdueReminderSent?: boolean;
+  lastNearDeadlineReminderDate?: string;
+  lastOverdueReminderDate?: string;
+}
+
+export interface Project {
+  id: string;
+  name: string;
+  ownerWorkspaceId: string;
+  description?: string;
+  startDate: string;
+  endDate: string;
+  status: 'PLANNING' | 'ACTIVE' | 'PAUSED' | 'DONE';
 }
 
 export interface Workspace {

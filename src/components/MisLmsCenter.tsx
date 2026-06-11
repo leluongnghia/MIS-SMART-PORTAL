@@ -43,6 +43,54 @@ interface MisLmsCenterProps {
   onAddTask: (taskData: Omit<Task, 'id' | 'comments' | 'history'>) => void;
 }
 
+interface LmsStudent {
+  id: string;
+  name: string;
+  className: string;
+  parentName: string;
+  parentEmail: string;
+}
+
+interface ReviewAssignment {
+  id: string;
+  title: string;
+  subject: string;
+  className: string;
+  teacher: string;
+  deadline: string;
+  durationMinutes: number;
+  questionIds: number[];
+  status: 'DRAFT' | 'PUBLISHED' | 'CLOSED';
+}
+
+interface ReviewSubmission {
+  id: string;
+  assignmentId: string;
+  studentId: string;
+  studentName: string;
+  submittedAt: string;
+  score: number;
+  correctCount: number;
+  totalQuestions: number;
+}
+
+interface QuizQuestionOption {
+  label: string;
+  text: string;
+}
+
+interface QuizQuestion {
+  id: number;
+  q: string;
+  options: QuizQuestionOption[];
+  correct: string;
+  subject?: string;
+  grade?: string;
+  topic?: string;
+  difficulty?: 'NB' | 'TH' | 'VD';
+  explanation?: string;
+}
+
 // Multilingual translations dictionary
 const TRANSLATIONS = {
   VI: {
@@ -93,6 +141,12 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
   const [lang, setLang] = useState<'VI' | 'EN'>('VI');
   const [activeTab, setActiveTab] = useState<'ADMISSION' | 'OPERATIONS' | 'FINANCIALS' | 'SECURITY_UX'>('ADMISSION');
   const t = TRANSLATIONS[lang];
+  const lmsStudents: LmsStudent[] = [
+    { id: 'std1', name: 'Nguyễn Minh Quân', className: 'Lớp 10A1', parentName: 'Nguyễn Văn Hải', parentEmail: 'hai.nguyen@parent.mis.edu.vn' },
+    { id: 'std2', name: 'Trần Mỹ Lệ', className: 'Lớp 11A2', parentName: 'Lê Thị Thu Trà', parentEmail: 'tra.le@parent.mis.edu.vn' },
+    { id: 'std3', name: 'Phạm Hồng Thái', className: 'Lớp 12A1', parentName: 'Phạm Hồng Sơn', parentEmail: 'son.pham@parent.mis.edu.vn' },
+    { id: 'std4', name: 'Hoàng Thùy Dương', className: 'Lớp 10A1', parentName: 'Hoàng Văn Thắng', parentEmail: 'thang.hoang@parent.mis.edu.vn' },
+  ];
 
   // Helper to export Leads list to CSV
   const handleExportLeadsCsv = () => {
@@ -193,7 +247,7 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
   const [zoomActiveId, setZoomActiveId] = useState<string | null>(null);
 
   // MCQ questions state (Persistent)
-  const [quizQuestions, setQuizQuestions] = useState<any[]>(() => {
+  const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>(() => {
     const saved = localStorage.getItem('mis_lms_quiz_questions');
     if (saved) {
       try { return JSON.parse(saved); } catch (e) { console.error(e); }
@@ -207,7 +261,12 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
           { label: 'B', text: "Là giá trị trung bình nhân của các hàm số" },
           { label: 'C', text: "Bằng đạo hàm giới hạn cấp 1" }
         ],
-        correct: 'A'
+        correct: 'A',
+        subject: 'Toán',
+        grade: 'Lớp 10',
+        topic: 'Tích phân',
+        difficulty: 'TH',
+        explanation: 'Tích phân xác định thường được diễn giải bằng diện tích đại số dưới đồ thị hàm số.'
       },
       {
         id: 2,
@@ -217,7 +276,27 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
           { label: 'B', text: "Jean Piaget" },
           { label: 'C', text: "Albert Einstein" }
         ],
-        correct: 'A'
+        correct: 'A',
+        subject: 'Kỹ năng',
+        grade: 'Lớp 10',
+        topic: 'Đa trí tuệ',
+        difficulty: 'NB',
+        explanation: 'Howard Gardner là tác giả học thuyết Multiple Intelligences.'
+      },
+      {
+        id: 3,
+        q: "Trong bài đọc hiểu, bước nào giúp học sinh xác định luận điểm chính nhanh nhất?",
+        options: [
+          { label: 'A', text: "Đọc nhan đề, câu chủ đề và từ khóa lặp lại" },
+          { label: 'B', text: "Chép lại toàn bộ văn bản" },
+          { label: 'C', text: "Chỉ đọc đoạn cuối cùng" }
+        ],
+        correct: 'A',
+        subject: 'Ngữ văn',
+        grade: 'Lớp 11',
+        topic: 'Đọc hiểu',
+        difficulty: 'TH',
+        explanation: 'Nhan đề, câu chủ đề và từ khóa lặp lại thường thể hiện trục ý chính của văn bản.'
       }
     ];
   });
@@ -227,11 +306,84 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
   }, [quizQuestions]);
 
   const [showAddMcqForm, setShowAddMcqForm] = useState(false);
-  const [newMcqData, setNewMcqData] = useState({ q: '', A: '', B: '', C: '', correct: 'A' });
+  const [newMcqData, setNewMcqData] = useState({
+    q: '',
+    A: '',
+    B: '',
+    C: '',
+    correct: 'A',
+    subject: 'Toán',
+    grade: 'Lớp 10',
+    topic: '',
+    difficulty: 'NB' as 'NB' | 'TH' | 'VD',
+    explanation: '',
+  });
 
   // MCQ Quiz state
   const [userQuizAnswers, setUserQuizAnswers] = useState<Record<number, string>>({});
   const [quizScore, setQuizScore] = useState<number | null>(null);
+
+  const [reviewAssignments, setReviewAssignments] = useState<ReviewAssignment[]>(() => {
+    const saved = localStorage.getItem('mis_lms_review_assignments');
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) { console.error(e); }
+    }
+    return [
+      {
+        id: 'RV001',
+        title: 'Ôn tập Toán 10 - Tích phân và tư duy logic',
+        subject: 'Toán',
+        className: 'Lớp 10A1',
+        teacher: currentUser.name,
+        deadline: '2026-06-20',
+        durationMinutes: 35,
+        questionIds: [1, 2],
+        status: 'PUBLISHED',
+      },
+      {
+        id: 'RV002',
+        title: 'Ôn tập Ngữ văn 11 - Đọc hiểu nghị luận',
+        subject: 'Ngữ văn',
+        className: 'Lớp 11A2',
+        teacher: currentUser.name,
+        deadline: '2026-06-18',
+        durationMinutes: 25,
+        questionIds: [2, 3],
+        status: 'PUBLISHED',
+      },
+    ];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('mis_lms_review_assignments', JSON.stringify(reviewAssignments));
+  }, [reviewAssignments]);
+
+  const [reviewSubmissions, setReviewSubmissions] = useState<ReviewSubmission[]>(() => {
+    const saved = localStorage.getItem('mis_lms_review_submissions');
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) { console.error(e); }
+    }
+    return [
+      { id: 'SUB001', assignmentId: 'RV001', studentId: 'std1', studentName: 'Nguyễn Minh Quân', submittedAt: '2026-06-11 08:20', score: 100, correctCount: 2, totalQuestions: 2 },
+      { id: 'SUB002', assignmentId: 'RV001', studentId: 'std4', studentName: 'Hoàng Thùy Dương', submittedAt: '2026-06-11 09:05', score: 50, correctCount: 1, totalQuestions: 2 },
+      { id: 'SUB003', assignmentId: 'RV002', studentId: 'std2', studentName: 'Trần Mỹ Lệ', submittedAt: '2026-06-11 10:15', score: 100, correctCount: 2, totalQuestions: 2 },
+    ];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('mis_lms_review_submissions', JSON.stringify(reviewSubmissions));
+  }, [reviewSubmissions]);
+
+  const [showCreateReviewForm, setShowCreateReviewForm] = useState(false);
+  const [activeReviewId, setActiveReviewId] = useState('RV001');
+  const [newReviewData, setNewReviewData] = useState({
+    title: '',
+    subject: 'Toán',
+    className: 'Lớp 10A1',
+    deadline: '2026-06-20',
+    durationMinutes: 30,
+    selectedQuestionIds: [] as number[],
+  });
 
   // Mathematical equation editor state
   const [equationCode, setEquationCode] = useState<string>('f(x) = \\int_{a}^{b} \\frac{x^2 + \\sin(x)}{\\sqrt{3y}} dx');
@@ -422,6 +574,110 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
     });
     const finalScore = quizQuestions.length > 0 ? Math.round((correctCount / quizQuestions.length) * 100) : 0;
     setQuizScore(finalScore);
+  };
+
+  const activeReview = reviewAssignments.find(item => item.id === activeReviewId) || reviewAssignments[0];
+  const activeReviewQuestions = activeReview
+    ? quizQuestions.filter(question => activeReview.questionIds.includes(question.id))
+    : [];
+  const activeReviewStudents = activeReview
+    ? lmsStudents.filter(student => student.className === activeReview.className)
+    : [];
+  const activeReviewSubmissions = activeReview
+    ? reviewSubmissions.filter(submission => submission.assignmentId === activeReview.id)
+    : [];
+  const completionRate = activeReviewStudents.length > 0
+    ? Math.round((activeReviewSubmissions.length / activeReviewStudents.length) * 100)
+    : 0;
+  const averageScore = activeReviewSubmissions.length > 0
+    ? Math.round(activeReviewSubmissions.reduce((sum, item) => sum + item.score, 0) / activeReviewSubmissions.length)
+    : 0;
+  const topicSummary = activeReviewQuestions.reduce<Record<string, number>>((acc, question) => {
+    const topic = question.topic || 'Chưa phân loại';
+    acc[topic] = (acc[topic] || 0) + 1;
+    return acc;
+  }, {});
+
+  const handleCreateReviewAssignment = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newReviewData.title.trim() || newReviewData.selectedQuestionIds.length === 0) return;
+
+    const nextNumber = reviewAssignments.length + 1;
+    const assignment: ReviewAssignment = {
+      id: `RV${String(nextNumber).padStart(3, '0')}`,
+      title: newReviewData.title.trim(),
+      subject: newReviewData.subject,
+      className: newReviewData.className,
+      teacher: currentUser.name,
+      deadline: newReviewData.deadline,
+      durationMinutes: Number(newReviewData.durationMinutes) || 30,
+      questionIds: newReviewData.selectedQuestionIds,
+      status: 'PUBLISHED',
+    };
+
+    setReviewAssignments(prev => [assignment, ...prev]);
+    setActiveReviewId(assignment.id);
+    setNewReviewData({
+      title: '',
+      subject: 'Toán',
+      className: 'Lớp 10A1',
+      deadline: '2026-06-20',
+      durationMinutes: 30,
+      selectedQuestionIds: [],
+    });
+    setShowCreateReviewForm(false);
+  };
+
+  const toggleReviewQuestion = (questionId: number) => {
+    setNewReviewData(prev => ({
+      ...prev,
+      selectedQuestionIds: prev.selectedQuestionIds.includes(questionId)
+        ? prev.selectedQuestionIds.filter(id => id !== questionId)
+        : [...prev.selectedQuestionIds, questionId],
+    }));
+  };
+
+  const handleSimulateSubmission = (student: LmsStudent) => {
+    if (!activeReview || activeReviewQuestions.length === 0) return;
+    const alreadySubmitted = reviewSubmissions.some(
+      submission => submission.assignmentId === activeReview.id && submission.studentId === student.id
+    );
+    if (alreadySubmitted) return;
+
+    const seed = student.id.charCodeAt(student.id.length - 1) + activeReview.id.charCodeAt(activeReview.id.length - 1);
+    const totalQuestions = activeReviewQuestions.length;
+    const correctCount = Math.max(1, Math.min(totalQuestions, seed % (totalQuestions + 1)));
+    const submission: ReviewSubmission = {
+      id: `SUB${Date.now()}`,
+      assignmentId: activeReview.id,
+      studentId: student.id,
+      studentName: student.name,
+      submittedAt: new Date().toLocaleString('vi-VN', { hour12: false }),
+      score: Math.round((correctCount / totalQuestions) * 100),
+      correctCount,
+      totalQuestions,
+    };
+
+    setReviewSubmissions(prev => [submission, ...prev]);
+  };
+
+  const handleExportReviewReport = () => {
+    if (!activeReview) return;
+    const headers = ['Bài ôn tập', 'Học sinh', 'Lớp', 'Trạng thái', 'Điểm', 'Số câu đúng', 'Thời gian nộp', 'Email phụ huynh'];
+    const rows = activeReviewStudents.map(student => {
+      const submission = activeReviewSubmissions.find(item => item.studentId === student.id);
+      return [
+        activeReview.title,
+        student.name,
+        student.className,
+        submission ? 'Đã nộp' : 'Chưa nộp',
+        submission?.score ?? '',
+        submission ? `${submission.correctCount}/${submission.totalQuestions}` : '',
+        submission?.submittedAt ?? '',
+        student.parentEmail,
+      ];
+    });
+    exportToCsv(`Bao_cao_on_tap_${activeReview.id}.csv`, headers, rows);
   };
 
   // Formula generation display
@@ -937,6 +1193,257 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
               
               {/* E-Learning, Scheduled Class hours & Attendance Tracker */}
               <div className="xl:col-span-7 space-y-6">
+                <div className="bg-white rounded-2xl border border-slate-200 shadow-3xs p-5 space-y-4">
+                  <div className="border-b border-slate-100 pb-3 flex justify-between items-start gap-3 flex-wrap">
+                    <div>
+                      <h3 className="font-display font-black text-slate-900 text-sm flex items-center gap-1.5">
+                        <BookOpenCheck className="text-emerald-600 w-4.5 h-4.5" />
+                        Trung tâm Ôn tập trực tuyến
+                      </h3>
+                      <p className="text-[10.5px] text-slate-500">
+                        Giao bài ôn tập theo lớp, tự chấm trắc nghiệm, theo dõi học sinh chưa nộp và xuất báo cáo gửi giáo viên/phụ huynh.
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={handleExportReviewReport}
+                        className="px-2.5 py-1 text-[10.5px] font-bold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg shadow-3xs transition-all cursor-pointer flex items-center gap-1.5"
+                      >
+                        <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
+                        Xuất báo cáo
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowCreateReviewForm(prev => !prev)}
+                        className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white text-[10.5px] font-bold rounded-lg flex items-center gap-1 shadow-3xs cursor-pointer"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        {showCreateReviewForm ? 'Đóng' : 'Tạo bài ôn tập'}
+                      </button>
+                    </div>
+                  </div>
+
+                  {showCreateReviewForm && (
+                    <form onSubmit={handleCreateReviewAssignment} className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-[10px] font-bold uppercase text-slate-500 block mb-1">Tên bài ôn tập</label>
+                          <input
+                            required
+                            value={newReviewData.title}
+                            onChange={(e) => setNewReviewData({ ...newReviewData, title: e.target.value })}
+                            placeholder="Ví dụ: Ôn tập Toán 10 - Hàm số bậc hai"
+                            className="w-full text-xs border border-slate-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="text-[10px] font-bold uppercase text-slate-500 block mb-1">Môn học</label>
+                            <select
+                              value={newReviewData.subject}
+                              onChange={(e) => setNewReviewData({ ...newReviewData, subject: e.target.value })}
+                              className="w-full text-xs border border-slate-200 rounded-lg px-3 py-2 bg-white"
+                            >
+                              <option>Toán</option>
+                              <option>Ngữ văn</option>
+                              <option>Tiếng Anh</option>
+                              <option>Vật lý</option>
+                              <option>Hóa học</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-bold uppercase text-slate-500 block mb-1">Lớp</label>
+                            <select
+                              value={newReviewData.className}
+                              onChange={(e) => setNewReviewData({ ...newReviewData, className: e.target.value })}
+                              className="w-full text-xs border border-slate-200 rounded-lg px-3 py-2 bg-white"
+                            >
+                              <option>Lớp 10A1</option>
+                              <option>Lớp 11A2</option>
+                              <option>Lớp 12A1</option>
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-[10px] font-bold uppercase text-slate-500 block mb-1">Deadline</label>
+                          <input
+                            type="date"
+                            value={newReviewData.deadline}
+                            onChange={(e) => setNewReviewData({ ...newReviewData, deadline: e.target.value })}
+                            className="w-full text-xs border border-slate-200 rounded-lg px-3 py-2 bg-white"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold uppercase text-slate-500 block mb-1">Thời gian làm bài</label>
+                          <input
+                            type="number"
+                            min={5}
+                            value={newReviewData.durationMinutes}
+                            onChange={(e) => setNewReviewData({ ...newReviewData, durationMinutes: Number(e.target.value) })}
+                            className="w-full text-xs border border-slate-200 rounded-lg px-3 py-2 bg-white"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="text-[10px] font-bold uppercase text-slate-500 block mb-2">Chọn câu hỏi từ ngân hàng</label>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-44 overflow-y-auto pr-1">
+                          {quizQuestions.map(question => {
+                            const selected = newReviewData.selectedQuestionIds.includes(question.id);
+                            return (
+                              <button
+                                key={question.id}
+                                type="button"
+                                onClick={() => toggleReviewQuestion(question.id)}
+                                className={`text-left p-2 rounded-lg border text-[11px] transition-all ${
+                                  selected
+                                    ? 'bg-emerald-50 border-emerald-300 text-emerald-900'
+                                    : 'bg-white border-slate-200 text-slate-650 hover:bg-slate-50'
+                                }`}
+                              >
+                                <span className="block font-bold line-clamp-1">{question.q}</span>
+                                <span className="text-[9.5px] text-slate-400">{question.subject || 'Chưa phân môn'} · {question.topic || 'Chưa phân loại'} · {question.difficulty || 'NB'}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      <div className="flex justify-end gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setShowCreateReviewForm(false)}
+                          className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-200 text-slate-700 hover:bg-slate-300"
+                        >
+                          Hủy
+                        </button>
+                        <button
+                          type="submit"
+                          className="px-3 py-1.5 text-xs font-bold rounded-lg bg-emerald-600 text-white hover:bg-emerald-700"
+                        >
+                          Giao bài
+                        </button>
+                      </div>
+                    </form>
+                  )}
+
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                    <div className="lg:col-span-1 space-y-2">
+                      {reviewAssignments.map(assignment => {
+                        const isActive = assignment.id === activeReview?.id;
+                        const submissionCount = reviewSubmissions.filter(item => item.assignmentId === assignment.id).length;
+                        return (
+                          <button
+                            key={assignment.id}
+                            type="button"
+                            onClick={() => setActiveReviewId(assignment.id)}
+                            className={`w-full text-left p-3 rounded-xl border transition-all ${
+                              isActive ? 'border-emerald-500 bg-emerald-50 shadow-3xs' : 'border-slate-200 bg-slate-50/60 hover:bg-white'
+                            }`}
+                          >
+                            <span className="block text-xs font-black text-slate-850 line-clamp-2">{assignment.title}</span>
+                            <span className="mt-1 block text-[10px] text-slate-500">{assignment.className} · {assignment.subject} · hạn {assignment.deadline}</span>
+                            <span className="mt-2 inline-flex text-[9px] font-bold rounded-full bg-white border border-slate-200 px-2 py-0.5 text-slate-600">
+                              {submissionCount} bài đã nộp
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    <div className="lg:col-span-2 rounded-xl border border-slate-200 bg-slate-50/40 p-4 space-y-4">
+                      {activeReview && (
+                        <>
+                          <div className="flex items-start justify-between gap-3 flex-wrap">
+                            <div>
+                              <h4 className="text-sm font-black text-slate-900">{activeReview.title}</h4>
+                              <p className="text-[10.5px] text-slate-500">
+                                {activeReview.className} · {activeReview.subject} · {activeReview.durationMinutes} phút · {activeReviewQuestions.length} câu hỏi
+                              </p>
+                            </div>
+                            <span className={`text-[9px] px-2 py-0.5 rounded-full font-black ${
+                              activeReview.status === 'PUBLISHED' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-700'
+                            }`}>
+                              {activeReview.status === 'PUBLISHED' ? 'Đang giao' : activeReview.status}
+                            </span>
+                          </div>
+
+                          <div className="grid grid-cols-3 gap-3">
+                            <div className="rounded-xl bg-white border border-slate-200 p-3">
+                              <span className="text-[9px] uppercase font-bold text-slate-400">Hoàn thành</span>
+                              <strong className="block text-xl text-emerald-700">{completionRate}%</strong>
+                            </div>
+                            <div className="rounded-xl bg-white border border-slate-200 p-3">
+                              <span className="text-[9px] uppercase font-bold text-slate-400">Điểm TB</span>
+                              <strong className="block text-xl text-indigo-700">{averageScore}</strong>
+                            </div>
+                            <div className="rounded-xl bg-white border border-slate-200 p-3">
+                              <span className="text-[9px] uppercase font-bold text-slate-400">Chưa nộp</span>
+                              <strong className="block text-xl text-rose-700">{Math.max(activeReviewStudents.length - activeReviewSubmissions.length, 0)}</strong>
+                            </div>
+                          </div>
+
+                          <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+                            <table className="w-full text-xs">
+                              <thead className="bg-slate-50 text-slate-500">
+                                <tr>
+                                  <th className="text-left px-3 py-2">Học sinh</th>
+                                  <th className="text-left px-3 py-2">Phụ huynh</th>
+                                  <th className="text-center px-3 py-2">Trạng thái</th>
+                                  <th className="text-center px-3 py-2">Điểm</th>
+                                  <th className="text-right px-3 py-2">Thao tác</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-slate-100">
+                                {activeReviewStudents.map(student => {
+                                  const submission = activeReviewSubmissions.find(item => item.studentId === student.id);
+                                  return (
+                                    <tr key={student.id}>
+                                      <td className="px-3 py-2 font-bold text-slate-800">{student.name}</td>
+                                      <td className="px-3 py-2 text-slate-500">{student.parentName}</td>
+                                      <td className="px-3 py-2 text-center">
+                                        <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold ${submission ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-700'}`}>
+                                          {submission ? 'Đã nộp' : 'Chưa nộp'}
+                                        </span>
+                                      </td>
+                                      <td className="px-3 py-2 text-center font-mono font-bold text-slate-700">
+                                        {submission ? `${submission.score}/100` : '-'}
+                                      </td>
+                                      <td className="px-3 py-2 text-right">
+                                        {submission ? (
+                                          <span className="text-[10px] text-slate-400">{submission.submittedAt}</span>
+                                        ) : (
+                                          <button
+                                            type="button"
+                                            onClick={() => handleSimulateSubmission(student)}
+                                            className="px-2 py-1 rounded-lg text-[10px] font-bold bg-indigo-600 text-white hover:bg-indigo-700"
+                                          >
+                                            Ghi nhận nộp
+                                          </button>
+                                        )}
+                                      </td>
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+
+                          <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-[10.5px] text-amber-900">
+                            <strong className="block mb-1">Phân tích năng lực:</strong>
+                            {Object.keys(topicSummary).length > 0
+                              ? `Bài này đang kiểm tra các chủ đề: ${Object.entries(topicSummary).map(([topic, count]) => `${topic} (${count} câu)`).join(', ')}. Hệ thống nên nhắc phụ huynh/học sinh chưa nộp trước deadline và gợi ý ôn lại các chủ đề điểm thấp.`
+                              : 'Chưa có câu hỏi để phân tích.'}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
                 
                 {/* Visual classrooms list */}
                 <div className="bg-white rounded-2xl border border-slate-200 shadow-3xs p-5 space-y-4">
@@ -1292,10 +1799,26 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
                             { label: 'B', text: newMcqData.B },
                             { label: 'C', text: newMcqData.C }
                           ],
-                          correct: newMcqData.correct
+                          correct: newMcqData.correct,
+                          subject: newMcqData.subject,
+                          grade: newMcqData.grade,
+                          topic: newMcqData.topic || 'Chưa phân loại',
+                          difficulty: newMcqData.difficulty,
+                          explanation: newMcqData.explanation
                         };
                         setQuizQuestions([...quizQuestions, newQ]);
-                        setNewMcqData({ q: '', A: '', B: '', C: '', correct: 'A' });
+                        setNewMcqData({
+                          q: '',
+                          A: '',
+                          B: '',
+                          C: '',
+                          correct: 'A',
+                          subject: 'Toán',
+                          grade: 'Lớp 10',
+                          topic: '',
+                          difficulty: 'NB',
+                          explanation: '',
+                        });
                         setShowAddMcqForm(false);
                       }}
                       className="bg-slate-50 p-4 rounded-xl border border-slate-200 mt-2 space-y-3 font-sans"
@@ -1311,6 +1834,69 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
                           className="w-full bg-white border border-slate-200 rounded px-2.5 py-1.5 text-xs text-slate-800"
                           required
                         />
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold text-slate-450">Môn học</label>
+                          <select
+                            value={newMcqData.subject}
+                            onChange={(e) => setNewMcqData({...newMcqData, subject: e.target.value})}
+                            className="w-full bg-white border border-slate-200 rounded px-2 py-1 text-xs text-slate-800"
+                          >
+                            <option>Toán</option>
+                            <option>Ngữ văn</option>
+                            <option>Tiếng Anh</option>
+                            <option>Vật lý</option>
+                            <option>Hóa học</option>
+                            <option>Kỹ năng</option>
+                          </select>
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold text-slate-450">Khối lớp</label>
+                          <select
+                            value={newMcqData.grade}
+                            onChange={(e) => setNewMcqData({...newMcqData, grade: e.target.value})}
+                            className="w-full bg-white border border-slate-200 rounded px-2 py-1 text-xs text-slate-800"
+                          >
+                            <option>Lớp 10</option>
+                            <option>Lớp 11</option>
+                            <option>Lớp 12</option>
+                          </select>
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold text-slate-450">Mức độ</label>
+                          <select
+                            value={newMcqData.difficulty}
+                            onChange={(e) => setNewMcqData({...newMcqData, difficulty: e.target.value as 'NB' | 'TH' | 'VD'})}
+                            className="w-full bg-white border border-slate-200 rounded px-2 py-1 text-xs text-slate-800"
+                          >
+                            <option value="NB">Nhận biết</option>
+                            <option value="TH">Thông hiểu</option>
+                            <option value="VD">Vận dụng</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold text-slate-450">Chủ đề</label>
+                          <input
+                            type="text"
+                            placeholder="Ví dụ: Đọc hiểu, Hàm số, Từ vựng..."
+                            value={newMcqData.topic}
+                            onChange={(e) => setNewMcqData({...newMcqData, topic: e.target.value})}
+                            className="w-full bg-white border border-slate-200 rounded px-2 py-1 text-xs text-slate-800"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold text-slate-450">Lời giải ngắn</label>
+                          <input
+                            type="text"
+                            placeholder="Giải thích đáp án để học sinh xem lại"
+                            value={newMcqData.explanation}
+                            onChange={(e) => setNewMcqData({...newMcqData, explanation: e.target.value})}
+                            className="w-full bg-white border border-slate-200 rounded px-2 py-1 text-xs text-slate-800"
+                          />
+                        </div>
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                         <div className="space-y-1">
@@ -1385,6 +1971,12 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
                         <span className="text-[9.5px] uppercase font-bold bg-indigo-50 border text-indigo-700 px-1.5 py-0.5 rounded">
                           Câu hỏi {q.id}
                         </span>
+                        <div className="flex flex-wrap gap-1">
+                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-white border border-slate-200 text-slate-500">{q.subject || 'Chưa phân môn'}</span>
+                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-white border border-slate-200 text-slate-500">{q.grade || 'Chưa khối'}</span>
+                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-white border border-slate-200 text-slate-500">{q.topic || 'Chưa chủ đề'}</span>
+                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-50 border border-emerald-200 text-emerald-700">{q.difficulty || 'NB'}</span>
+                        </div>
                         <p className="text-xs font-semibold text-slate-800 leading-relaxed font-sans">{q.q}</p>
                         
                         <div className="space-y-1.5">

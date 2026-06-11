@@ -19,6 +19,7 @@ import WorkspaceStats from './components/WorkspaceStats';
 import ProductivityTrendChart from './components/ProductivityTrendChart';
 import ExecutiveDashboard from './components/ExecutiveDashboard';
 import TaskCalendar from './components/TaskCalendar';
+import ProjectGanttView from './components/ProjectGanttView';
 import TaskModal from './components/TaskModal';
 import TaskDetailsModal from './components/TaskDetailsModal';
 import GoogleSheetsCenter from './components/GoogleSheetsCenter';
@@ -98,7 +99,8 @@ import {
   Building2,
   ClipboardList,
   Volume2,
-  FolderOpen
+  FolderOpen,
+  Milestone
 } from 'lucide-react';
 
 const INITIAL_ANNOUNCEMENTS: Announcement[] = [
@@ -444,7 +446,7 @@ export default function App() {
   const [isGuideModalOpen, setIsGuideModalOpen] = useState(false);
   const [mobileActiveColumn, setMobileActiveColumn] = useState<TaskStatus>('DANG_TIEN_HANH');
 
-  const handleSelectViewOnMobile = (view: 'KANBAN' | 'CALENDAR' | 'LIST') => {
+  const handleSelectViewOnMobile = (view: 'KANBAN' | 'CALENDAR' | 'LIST' | 'GANTT') => {
     setActiveView(view);
     setOverviewTab('TASKS');
     setIsSidebarOpen(false);
@@ -459,7 +461,7 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [commandQuery, setCommandQuery] = useState('');
-  const [activeView, setActiveView] = useState<'KANBAN' | 'CALENDAR' | 'LIST'>('KANBAN');
+  const [activeView, setActiveView] = useState<'KANBAN' | 'CALENDAR' | 'LIST' | 'GANTT'>('KANBAN');
   const [overviewTab, setOverviewTab] = useState<'DASHBOARD' | 'STRATEGY_OKRS' | 'TASKS' | 'WORKFLOW_APPROVALS' | 'CRM_ADMISSIONS' | 'STUDENT_SUCCESS' | 'TEACHER_HR' | 'RISK_CENTER' | 'ANALYTICS' | 'BOARD_DIRECTIVES' | 'ACADEMIC_OPS' | 'LOGISTICS' | 'REQUESTS' | 'HRM' | 'LMS' | 'GOOGLE_SHEETS' | 'DOCUMENT' | 'MEETING' | 'KNOWLEDGE' | 'EVENTS'>('DASHBOARD');
   const [priorityFilter, setPriorityFilter] = useState<string>('ALL');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
@@ -738,80 +740,53 @@ export default function App() {
   useEffect(() => {
     if (!isAuthReady || tasks.length === 0) return;
 
-    const today = new Date();
-    const yyyy = today.getFullYear();
-    const mm = String(today.getMonth() + 1).padStart(2, '0');
-    const dd = String(today.getDate()).padStart(2, '0');
-    const todayStr = `${yyyy}-${mm}-${dd}`;
+    let cancelled = false;
 
-    // Find the first task that needs a reminder
-    const taskToRemind = tasks.find(task => {
-      if (task.status === 'HOAN_THANH') return false;
-      if (!task.deadline) return false;
+    const runReminderBatch = async () => {
+      try {
+        const res = await fetch('/api/email/run-deadline-reminders', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            tasks,
+            users: [...MOCK_USERS, ...users],
+            nearDeadlineDays: 2,
+            registerSource: true,
+          }),
+        });
 
-      const diffTime = new Date(task.deadline).getTime() - new Date(todayStr).getTime();
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      
-      const isOverdue = diffDays < 0;
-      const isNearDeadline = diffDays >= 0 && diffDays <= 2;
-
-      if (isOverdue && !task.overdueReminderSent) {
-        return true;
-      }
-      if (isNearDeadline && !task.nearDeadlineReminderSent) {
-        return true;
-      }
-      return false;
-    });
-
-    if (taskToRemind) {
-      const runReminder = async () => {
-        const diffTime = new Date(taskToRemind.deadline).getTime() - new Date(todayStr).getTime();
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        const type = diffDays < 0 ? 'OVERDUE' : 'NEAR_DEADLINE';
-
-        console.log(`[Auto-Reminder] Triggering ${type} email for task: ${taskToRemind.title}`);
-        
-        const userProfile = users.find(u => u.id === taskToRemind.assignedId) || MOCK_USERS.find(u => u.id === taskToRemind.assignedId);
-        const emailAddress = userProfile?.email || `${taskToRemind.assignedId}@mis.edu.vn`;
-
-        try {
-          const res = await fetch('/api/email/send-reminder', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              taskTitle: taskToRemind.title,
-              taskDescription: taskToRemind.description,
-              assigneeName: taskToRemind.assignedName,
-              assigneeEmail: emailAddress,
-              deadline: taskToRemind.deadline,
-              type,
-            }),
-          });
-          
-          if (res.ok) {
-            const data = await res.json();
-            console.log('[Auto-Reminder] Backend response:', data);
-            
-            // Update the task flag in Firestore
-            const updatedTask = {
-              ...taskToRemind,
-              [type === 'OVERDUE' ? 'overdueReminderSent' : 'nearDeadlineReminderSent']: true,
-            };
-            await setDoc(doc(db, 'tasks', taskToRemind.id), updatedTask);
-            console.log(`[Auto-Reminder] Updated task ${taskToRemind.id} reminder flag in Firestore.`);
-          } else {
-            console.error('[Auto-Reminder] Failed to trigger email via backend API.');
-          }
-        } catch (err) {
-          console.error('[Auto-Reminder] Error sending reminder:', err);
+        if (!res.ok) {
+          console.error('[Auto-Reminder] Failed to run deadline reminder batch.');
+          return;
         }
-      };
 
-      runReminder();
-    }
+        const data = await res.json();
+        if (cancelled || !Array.isArray(data.sent) || data.sent.length === 0) return;
+
+        await Promise.all(data.sent.map(async (item: { taskId: string; type: 'OVERDUE' | 'NEAR_DEADLINE'; reminderDate: string }) => {
+          const task = tasks.find(t => t.id === item.taskId);
+          if (!task) return;
+
+          await setDoc(doc(db, 'tasks', task.id), {
+            ...task,
+            [item.type === 'OVERDUE' ? 'overdueReminderSent' : 'nearDeadlineReminderSent']: true,
+            [item.type === 'OVERDUE' ? 'lastOverdueReminderDate' : 'lastNearDeadlineReminderDate']: item.reminderDate,
+          });
+        }));
+
+        console.log(`[Auto-Reminder] Updated ${data.sent.length} reminder flag(s) in Firestore.`);
+      } catch (err) {
+        console.error('[Auto-Reminder] Error running reminder batch:', err);
+      }
+    };
+
+    runReminderBatch();
+
+    return () => {
+      cancelled = true;
+    };
   }, [isAuthReady, tasks, users]);
 
   const handlePublishAnnouncement = (newData: Omit<Announcement, 'id' | 'createdAt' | 'senderName' | 'senderTitle' | 'senderAvatar' | 'acknowledgedBy'>) => {
@@ -2608,6 +2583,18 @@ export default function App() {
                 </button>
 
                 <button
+                  id="btn-switch-gantt"
+                  onClick={() => setActiveView('GANTT')}
+                  className={`flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+                    activeView === 'GANTT'
+                      ? 'bg-white text-indigo-700 shadow-xs font-bold'
+                      : 'text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  <Milestone className="w-3.5 h-3.5" />
+                  <span>Gantt</span>
+                </button>
+                <button
                   id="btn-switch-list"
                   onClick={() => setActiveView('LIST')}
                   className={`flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
@@ -2924,6 +2911,16 @@ export default function App() {
             </div>
           )}
 
+          {finalFilteredTasks.length > 0 && activeView === 'GANTT' && (
+            <div id="view-gantt-board" className="animate-fade-in">
+              <ProjectGanttView
+                tasks={finalFilteredTasks}
+                workspaces={visibleWorkspaces}
+                onViewDetails={setSelectedTaskForDetail}
+              />
+            </div>
+          )}
+
           {finalFilteredTasks.length > 0 && activeView === 'LIST' && (
             <div id="view-spreadsheet-list" className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
               <div className="overflow-x-auto">
@@ -3145,6 +3142,7 @@ export default function App() {
           onSave={handleCreateTask}
           currentUser={displayCurrentUser}
           workspaces={workspaces}
+          allTasks={tasks}
         />
       )}
 

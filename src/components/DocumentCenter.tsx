@@ -45,6 +45,7 @@ interface Document {
   fileType?: string;
   fileSize?: number;
   fileDataUrl?: string;
+  folderPath?: string;
   archivedAt?: string;
 }
 
@@ -313,6 +314,16 @@ function formatDate(iso: string) {
 }
 
 const DOCUMENT_STORAGE_KEY = "mis_document_center_documents_v1";
+const DOCUMENT_FOLDERS = [
+  "Học vụ / Kế hoạch năm học",
+  "Học vụ / Giáo án và chuyên môn",
+  "Hành chính / Công văn",
+  "Hành chính / Quyết định",
+  "Nhân sự / Hồ sơ giáo viên",
+  "Tuyển sinh / Truyền thông",
+  "Vận hành / Cơ sở vật chất",
+  "Lưu trữ / Văn bản cũ",
+];
 const MAX_LOCAL_FILE_SIZE = 2 * 1024 * 1024;
 
 function formatFileSize(size?: number) {
@@ -372,6 +383,7 @@ export default function DocumentCenter() {
   const [filterStatus, setFilterStatus] = useState<DocStatus | "Tất cả">(
     "Tất cả"
   );
+  const [folderFilter, setFolderFilter] = useState("Tất cả");
   const [searchQuery, setSearchQuery] = useState("");
   const [documents, setDocuments] = useState<Document[]>(() => {
     try {
@@ -392,6 +404,7 @@ export default function DocumentCenter() {
   const [formNguoiKy, setFormNguoiKy] = useState("");
   const [formTomTat, setFormTomTat] = useState("");
   const [formTags, setFormTags] = useState("");
+  const [formFolder, setFormFolder] = useState(DOCUMENT_FOLDERS[0]);
   const [formWorkflow, setFormWorkflow] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<{
@@ -423,6 +436,8 @@ export default function DocumentCenter() {
       if (filterType !== "ALL" && doc.loai !== filterType) return false;
       if (filterStatus !== "Tất cả" && doc.trangThai !== filterStatus)
         return false;
+      if (folderFilter !== "Tất cả" && (doc.folderPath || DOCUMENT_FOLDERS[0]) !== folderFilter)
+        return false;
       if (
         searchQuery &&
         !doc.tieuDe.toLowerCase().includes(searchQuery.toLowerCase()) &&
@@ -431,7 +446,7 @@ export default function DocumentCenter() {
         return false;
       return true;
     });
-  }, [documents, filterType, filterStatus, searchQuery]);
+  }, [documents, filterType, filterStatus, folderFilter, searchQuery]);
 
   const archivedDocs = useMemo(() => {
     return documents.filter((doc) => {
@@ -564,6 +579,7 @@ export default function DocumentCenter() {
       fileType: uploadedFile?.type,
       fileSize: uploadedFile?.size,
       fileDataUrl: uploadedFile?.dataUrl,
+      folderPath: formFolder,
     };
     setDocuments((prev) => [newDoc, ...prev]);
     setFormSuccess(true);
@@ -575,6 +591,7 @@ export default function DocumentCenter() {
     setFormNguoiKy("");
     setFormTomTat("");
     setFormTags("");
+    setFormFolder(DOCUMENT_FOLDERS[0]);
     setFormWorkflow(false);
     setUploadedFile(null);
     setFormError("");
@@ -745,6 +762,17 @@ export default function DocumentCenter() {
                       <option key={s}>{s}</option>
                     ))}
                   </select>
+
+                  <select
+                    value={folderFilter}
+                    onChange={(e) => setFolderFilter(e.target.value)}
+                    className="min-w-[220px] text-sm border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  >
+                    <option>Tất cả</option>
+                    {DOCUMENT_FOLDERS.map((folder) => (
+                      <option key={folder}>{folder}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
@@ -788,6 +816,10 @@ export default function DocumentCenter() {
                             <span className="flex items-center gap-1">
                               <Clock size={12} />
                               {formatDate(doc.ngayBanHanh)}
+                            </span>
+                            <span className="flex min-w-0 items-center gap-1">
+                              <FolderOpen size={12} />
+                              <span className="truncate">{doc.folderPath || DOCUMENT_FOLDERS[0]}</span>
                             </span>
                             <span>{doc.nguoiKy}</span>
                           </div>
@@ -919,6 +951,21 @@ export default function DocumentCenter() {
                         className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-lg bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                       />
                     </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
+                      Thư mục lưu trữ
+                    </label>
+                    <select
+                      value={formFolder}
+                      onChange={(e) => setFormFolder(e.target.value)}
+                      className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-lg bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    >
+                      {DOCUMENT_FOLDERS.map((folder) => (
+                        <option key={folder}>{folder}</option>
+                      ))}
+                    </select>
                   </div>
 
                   <div>
@@ -1058,6 +1105,7 @@ export default function DocumentCenter() {
                         setFormNguoiKy("");
                         setFormTomTat("");
                         setFormTags("");
+                        setFormFolder(DOCUMENT_FOLDERS[0]);
                         setUploadedFile(null);
                       }}
                       className="px-5 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 text-sm rounded-xl transition-colors"
@@ -1283,6 +1331,10 @@ export default function DocumentCenter() {
                               <Clock size={11} />
                               {formatDate(doc.ngayBanHanh)}
                             </span>
+                            <span className="flex min-w-0 items-center gap-1">
+                              <FolderOpen size={11} />
+                              <span className="truncate">{doc.folderPath || DOCUMENT_FOLDERS[0]}</span>
+                            </span>
                             <span>{doc.nguoiKy}</span>
                           </div>
                         </div>
@@ -1367,7 +1419,7 @@ export default function DocumentCenter() {
                 </p>
               </div>
 
-              <div className="mb-4 grid grid-cols-1 gap-3 text-sm sm:grid-cols-3">
+              <div className="mb-4 grid grid-cols-1 gap-3 text-sm sm:grid-cols-4">
                 <div className="rounded-xl border border-slate-100 p-3 dark:border-slate-800">
                   <span className="block text-xs font-medium text-slate-400">Tệp đính kèm</span>
                   <strong className="mt-1 block truncate text-slate-800 dark:text-slate-100">
@@ -1378,6 +1430,12 @@ export default function DocumentCenter() {
                   <span className="block text-xs font-medium text-slate-400">Dung lượng</span>
                   <strong className="mt-1 block text-slate-800 dark:text-slate-100">
                     {formatFileSize(selectedDocument.fileSize)}
+                  </strong>
+                </div>
+                <div className="rounded-xl border border-slate-100 p-3 dark:border-slate-800">
+                  <span className="block text-xs font-medium text-slate-400">Thư mục</span>
+                  <strong className="mt-1 block truncate text-slate-800 dark:text-slate-100">
+                    {selectedDocument.folderPath || DOCUMENT_FOLDERS[0]}
                   </strong>
                 </div>
                 <div className="rounded-xl border border-slate-100 p-3 dark:border-slate-800">

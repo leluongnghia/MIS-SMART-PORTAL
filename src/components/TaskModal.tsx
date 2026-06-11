@@ -9,14 +9,19 @@ interface TaskModalProps {
   onSave: (taskData: Omit<Task, 'id' | 'comments' | 'history'>) => void;
   currentUser: UserProfile;
   workspaces: Workspace[];
+  allTasks?: Task[];
 }
 
-export default function TaskModal({ onClose, onSave, currentUser, workspaces }: TaskModalProps) {
+export default function TaskModal({ onClose, onSave, currentUser, workspaces, allTasks = [] }: TaskModalProps) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [projectId, setProjectId] = useState('GENERAL');
+  const [projectName, setProjectName] = useState('Công việc thường');
+  const [parentTaskId, setParentTaskId] = useState('');
   const [workspaceId, setWorkspaceId] = useState('TOAN_TIN');
   const [assignedId, setAssignedId] = useState('user_nam');
   const [priority, setPriority] = useState<TaskPriority>('TRUNG_BINH');
+  const [startDate, setStartDate] = useState(new Date().toISOString().slice(0, 10));
   const [deadline, setDeadline] = useState('2026-06-15');
   const [tag, setTag] = useState('Chuyên môn');
   const [linkedOkrId, setLinkedOkrId] = useState('');
@@ -26,6 +31,10 @@ export default function TaskModal({ onClose, onSave, currentUser, workspaces }: 
     id: '',
     title,
     description,
+    projectId,
+    projectName,
+    parentTaskId: parentTaskId || undefined,
+    startDate,
     workspaceId,
     assignedId: '',
     assignedName: '',
@@ -60,6 +69,7 @@ export default function TaskModal({ onClose, onSave, currentUser, workspaces }: 
   };
 
   const eligibleAssignees = getEligibleAssignees();
+  const parentTaskOptions = allTasks.filter(task => task.workspaceId === workspaceId && task.status !== 'HOAN_THANH');
 
   // Filter OKRs linked to the selected department
   const eligibleOkrs = MOCK_DEPARTMENT_OKRS.filter(o => o.departmentId === workspaceId);
@@ -93,6 +103,7 @@ export default function TaskModal({ onClose, onSave, currentUser, workspaces }: 
   // Handle workspace change to automatically auto-assign a user from that department
   const handleWorkspaceChange = (wId: string) => {
     setWorkspaceId(wId);
+    setParentTaskId('');
     
     // Auto reset OKR and assign top user
     const okrs = MOCK_DEPARTMENT_OKRS.filter(o => o.departmentId === wId);
@@ -116,6 +127,10 @@ export default function TaskModal({ onClose, onSave, currentUser, workspaces }: 
     onSave({
       title,
       description,
+      projectId,
+      projectName,
+      parentTaskId: parentTaskId || undefined,
+      startDate,
       workspaceId,
       assignedId,
       assignedName: assignedUser.name,
@@ -189,6 +204,50 @@ export default function TaskModal({ onClose, onSave, currentUser, workspaces }: 
               className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all font-sans resize-none"
               required
             />
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 rounded-xl border border-slate-200 bg-slate-50/70 p-3 sm:grid-cols-3">
+            <div>
+              <label className="block text-[10px] font-bold uppercase tracking-wide text-slate-500 mb-1">Dự án</label>
+              <select
+                value={projectId}
+                onChange={(e) => {
+                  setProjectId(e.target.value);
+                  setProjectName(e.target.options[e.target.selectedIndex].text);
+                }}
+                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+              >
+                <option value="GENERAL">Công việc thường</option>
+                <option value="PROJECT_ACADEMIC">Dự án học vụ</option>
+                <option value="PROJECT_OPERATIONS">Dự án vận hành</option>
+                <option value="PROJECT_ADMISSIONS">Dự án tuyển sinh</option>
+                <option value="PROJECT_DIGITAL">Dự án chuyển đổi số</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-[10px] font-bold uppercase tracking-wide text-slate-500 mb-1">Công việc cha</label>
+              <select
+                value={parentTaskId}
+                onChange={(e) => setParentTaskId(e.target.value)}
+                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+              >
+                <option value="">Không có</option>
+                {parentTaskOptions.map(task => (
+                  <option key={task.id} value={task.id}>{task.title}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-[10px] font-bold uppercase tracking-wide text-slate-500 mb-1">Ngày bắt đầu</label>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white font-mono"
+              />
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
