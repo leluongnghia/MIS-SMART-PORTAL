@@ -1775,7 +1775,7 @@ export default function App() {
                   >
                     <div className="flex items-center gap-2.5">
                       <Layout className={`w-4 h-4 transition-colors ${overviewTab === 'DASHBOARD' ? 'text-rose-600 dark:text-rose-400' : 'text-rose-400 dark:text-rose-550'}`} />
-                      <span>Executive Dashboard</span>
+                      <span>Bảng điều khiển Điều hành</span>
                     </div>
                   </button>
 
