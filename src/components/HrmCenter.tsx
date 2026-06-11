@@ -15,7 +15,12 @@ import {
   FileText, 
   CheckCircle2, 
   UserX,
-  Sparkles
+  Sparkles,
+  Mail,
+  Phone,
+  MapPin,
+  IdCard,
+  Briefcase
 } from 'lucide-react';
 import { UserProfile } from '../types';
 
@@ -209,6 +214,30 @@ export default function HrmCenter({ currentUser, users, onUpdateUsers }: HrmCent
     u.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
     (u.roleName && u.roleName.toLowerCase().includes(searchQuery.toLowerCase()))
   );
+
+  const getPersonnelDetails = (user: UserProfile) => {
+    const seed = Array.from(user.id).reduce((sum, char) => sum + char.charCodeAt(0), 0);
+    const normalizedId = user.id.replace(/[^a-zA-Z0-9]/g, '').toLowerCase() || `ns${seed}`;
+    const addressAreas = [
+      'Cầu Giấy, Hà Nội',
+      'Nam Từ Liêm, Hà Nội',
+      'Thanh Xuân, Hà Nội',
+      'Hà Đông, Hà Nội',
+      'Hoàng Mai, Hà Nội',
+      'Long Biên, Hà Nội',
+      'Bắc Từ Liêm, Hà Nội',
+      'Đống Đa, Hà Nội'
+    ];
+
+    return {
+      employeeCode: user.employeeCode || `MIS-HR-${String(seed).padStart(4, '0')}`,
+      email: user.email || `${normalizedId}@mis.edu.vn`,
+      phone: user.phone || `09${String(10000000 + (seed * 7919) % 90000000).padStart(8, '0')}`,
+      address: user.address || `Số ${(seed % 88) + 10}, ngõ ${(seed % 45) + 1}, ${addressAreas[seed % addressAreas.length]}`,
+      contractType: user.contractType || (user.role === 'ADMIN' || user.role === 'MANAGER' ? 'Hợp đồng quản lý toàn thời gian' : 'Hợp đồng lao động toàn thời gian'),
+      qualification: user.qualification || (user.role === 'STAFF' ? 'Cử nhân/Thạc sĩ Sư phạm' : 'Cử nhân/Thạc sĩ chuyên ngành phù hợp')
+    };
+  };
 
   return (
     <div className="w-full space-y-6 animate-fade-in" id="hrm-center-root">
@@ -500,6 +529,8 @@ export default function HrmCenter({ currentUser, users, onUpdateUsers }: HrmCent
           {/* List Staff Profiles */}
           <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1">
             {filteredStaff.map(s => translateUser(s, lang)).map(staff => {
+              const details = getPersonnelDetails(staff);
+
               return (
                 <div key={staff.id} className="p-4 border border-slate-200 dark:border-slate-850 rounded-2xl bg-white dark:bg-slate-900/40 space-y-2 flex flex-col">
                   <div className="flex items-center gap-3">
@@ -511,6 +542,33 @@ export default function HrmCenter({ currentUser, users, onUpdateUsers }: HrmCent
                     <div>
                       <h4 className="font-bold text-slate-900 dark:text-white text-xs">{staff.name}</h4>
                       <span className="text-[10px] text-slate-400 font-medium block mt-0.5">{staff.roleName} - {staff.title}</span>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/40 p-3 text-[10.5px] font-semibold text-slate-600 dark:text-slate-300">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <IdCard className="h-3.5 w-3.5 shrink-0 text-violet-500" />
+                      <span className="truncate">{details.employeeCode}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <Mail className="h-3.5 w-3.5 shrink-0 text-violet-500" />
+                      <span className="truncate">{details.email}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <Phone className="h-3.5 w-3.5 shrink-0 text-violet-500" />
+                      <span>{details.phone}</span>
+                    </div>
+                    <div className="flex items-start gap-1.5 min-w-0">
+                      <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-violet-500" />
+                      <span className="line-clamp-2">{details.address}</span>
+                    </div>
+                    <div className="flex items-start gap-1.5 min-w-0">
+                      <Briefcase className="mt-0.5 h-3.5 w-3.5 shrink-0 text-violet-500" />
+                      <span>{details.contractType}</span>
+                    </div>
+                    <div className="flex items-start gap-1.5 min-w-0">
+                      <Award className="mt-0.5 h-3.5 w-3.5 shrink-0 text-violet-500" />
+                      <span>{details.qualification}</span>
                     </div>
                   </div>
 
