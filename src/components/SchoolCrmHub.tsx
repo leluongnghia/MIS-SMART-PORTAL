@@ -1571,15 +1571,15 @@ export default function SchoolCrmHub() {
         </div>
       )}
 
-        {/* Kanban Board - Horizontal Scrollable Flex Layout */}
-        <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin select-none">
+        {/* Kanban Board - Responsive Grid Layout (Fits screen on desktop) */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pb-4 select-none">
           {stages.map(col => {
             const colLeads = leads.filter(l => l.stage === col.key);
 
             return (
               <div
                 key={col.key}
-                className={`p-4 rounded-2xl border ${col.bg} flex flex-col min-h-[480px] w-72 shrink-0 transition-all duration-300`}
+                className={`p-4 rounded-2xl border ${col.bg} flex flex-col min-h-[480px] w-full transition-all duration-300`}
               >
                 {/* Column header */}
                 <div className="flex items-center justify-between pb-3 border-b border-slate-250/40 dark:border-slate-800/40 mb-3">
