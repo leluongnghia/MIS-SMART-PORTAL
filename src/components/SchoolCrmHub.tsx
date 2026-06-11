@@ -340,6 +340,187 @@ export default function SchoolCrmHub() {
     document.body.removeChild(link);
   };
 
+  const buildCrmReportRows = () => {
+    return leads.map(l => {
+      const docStatus = getDocumentStatus(l);
+      const totalDiscount = (l.tuitionDiscount || 0) + (l.scholarshipDiscount || 0) + (l.phaseEnrollmentDiscount || 0) + (l.otherDiscount || 0);
+      const testSchedule = l.testDate ? `${l.testDate} ${l.testTime || ''}`.trim() : 'Chưa xếp lịch';
+      return {
+        id: l.id,
+        studentName: l.studentName,
+        parentName: l.parentName,
+        phone: l.phone,
+        email: l.email || 'Chưa cung cấp',
+        stage: stages.find(s => s.key === l.stage)?.label || l.stage,
+        source: l.source,
+        testScore: l.testScore || 'Chưa có',
+        scholarshipInfo: l.scholarshipInfo || 'Không',
+        hocBa: l.docChecklist?.hocBa ? 'Đã nộp' : 'Chưa nộp',
+        khaiSinh: l.docChecklist?.khaiSinh ? 'Đã nộp' : 'Chưa nộp',
+        anh3x4: l.docChecklist?.anh3x4 ? 'Đã nộp' : 'Chưa nộp',
+        docStatus: docStatus.label,
+        baseTuitionFee: l.baseTuitionFee || 0,
+        tuitionDiscount: l.tuitionDiscount || 0,
+        scholarshipDiscount: l.scholarshipDiscount || 0,
+        phaseEnrollmentDiscount: l.phaseEnrollmentDiscount || 0,
+        advancedFee: l.advancedFee || 0,
+        otherDiscount: l.otherDiscount || 0,
+        totalDiscount,
+        testSchedule,
+        notes: l.notes || '',
+      };
+    });
+  };
+
+  const escapeHtml = (value: string | number) => String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+
+  const downloadReportFile = (content: string, fileName: string, type: string) => {
+    const blob = new Blob(['\uFEFF', content], { type });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleExportExcel = () => {
+    const rows = buildCrmReportRows();
+    const reportDate = new Date().toLocaleDateString('vi-VN');
+    const fileDate = new Date().toISOString().split('T')[0];
+    const columns = [
+      ['id', 'Mã lead'],
+      ['studentName', 'Học sinh'],
+      ['parentName', 'Phụ huynh'],
+      ['phone', 'Số điện thoại'],
+      ['email', 'Email'],
+      ['stage', 'Trạng thái tuyển sinh'],
+      ['source', 'Nguồn'],
+      ['testScore', 'Điểm test'],
+      ['scholarshipInfo', 'Học bổng'],
+      ['hocBa', 'Học bạ gốc'],
+      ['khaiSinh', 'Khai sinh'],
+      ['anh3x4', 'Ảnh 3x4'],
+      ['docStatus', 'Tình trạng hồ sơ'],
+      ['baseTuitionFee', 'Học phí gốc'],
+      ['tuitionDiscount', 'Ưu đãi học phí'],
+      ['scholarshipDiscount', 'Ưu đãi học bổng'],
+      ['phaseEnrollmentDiscount', 'Ưu đãi đóng sớm'],
+      ['advancedFee', 'Phí bổ trợ'],
+      ['otherDiscount', 'Ưu đãi khác'],
+      ['totalDiscount', 'Tổng ưu đãi'],
+      ['testSchedule', 'Lịch test'],
+      ['notes', 'Ghi chú tư vấn'],
+    ] as const;
+
+    const html = `
+      <html>
+        <head>
+          <meta charset="UTF-8" />
+          <style>
+            body { font-family: Arial, sans-serif; color: #0f172a; }
+            h1 { font-size: 20px; margin: 0 0 6px; }
+            .meta { color: #475569; margin: 0 0 16px; }
+            table { border-collapse: collapse; width: 100%; }
+            th { background: #1e293b; color: #ffffff; font-weight: 700; text-align: left; }
+            th, td { border: 1px solid #cbd5e1; padding: 8px; vertical-align: top; font-size: 12px; }
+            td.money { mso-number-format:"#,##0"; text-align: right; }
+            .summary td { font-weight: 700; background: #f8fafc; }
+          </style>
+        </head>
+        <body>
+          <h1>BÁO CÁO TUYỂN SINH CRM - MIS SMART PORTAL</h1>
+          <p class="meta">Ngày xuất báo cáo: ${escapeHtml(reportDate)} | Tổng số lead: ${rows.length} | Đã nhập học: ${enrolledCount} | Đã giữ chỗ: ${reservedCount}</p>
+          <table>
+            <thead>
+              <tr>${columns.map(([, label]) => `<th>${escapeHtml(label)}</th>`).join('')}</tr>
+            </thead>
+            <tbody>
+              ${rows.map(row => `
+                <tr>
+                  ${columns.map(([key]) => {
+                    const isMoney = ['baseTuitionFee', 'tuitionDiscount', 'scholarshipDiscount', 'phaseEnrollmentDiscount', 'advancedFee', 'otherDiscount', 'totalDiscount'].includes(key);
+                    return `<td class="${isMoney ? 'money' : ''}">${escapeHtml(row[key])}</td>`;
+                  }).join('')}
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </body>
+      </html>
+    `;
+
+    downloadReportFile(html, `BaoCao_Tuyensinh_CRM_${fileDate}.xls`, 'application/vnd.ms-excel;charset=utf-8');
+  };
+
+  const handleExportWord = () => {
+    const rows = buildCrmReportRows();
+    const reportDate = new Date().toLocaleDateString('vi-VN');
+    const fileDate = new Date().toISOString().split('T')[0];
+    const stageSummary = stages
+      .map(stage => ({ label: stage.label, count: leads.filter(l => l.stage === stage.key).length }))
+      .filter(item => item.count > 0);
+
+    const html = `
+      <html>
+        <head>
+          <meta charset="UTF-8" />
+          <style>
+            body { font-family: Arial, sans-serif; color: #111827; line-height: 1.45; }
+            h1 { text-align: center; font-size: 22px; margin-bottom: 4px; }
+            h2 { font-size: 16px; margin-top: 22px; border-bottom: 1px solid #cbd5e1; padding-bottom: 6px; }
+            .meta { text-align: center; color: #475569; margin-bottom: 18px; }
+            .summary { display: table; width: 100%; margin: 12px 0 18px; }
+            .summary div { display: table-cell; border: 1px solid #cbd5e1; padding: 10px; background: #f8fafc; font-weight: 700; }
+            table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+            th { background: #1e293b; color: white; text-align: left; }
+            th, td { border: 1px solid #cbd5e1; padding: 7px; font-size: 11px; vertical-align: top; }
+            .lead-card { border: 1px solid #cbd5e1; padding: 10px 12px; margin: 8px 0; border-radius: 6px; }
+            .lead-card strong { color: #1e40af; }
+          </style>
+        </head>
+        <body>
+          <h1>BÁO CÁO TUYỂN SINH CRM</h1>
+          <p class="meta">MIS Smart Portal | Ngày xuất báo cáo: ${escapeHtml(reportDate)}</p>
+
+          <div class="summary">
+            <div>Tổng lead: ${rows.length}</div>
+            <div>Đã test: ${testedCount}</div>
+            <div>Đã giữ chỗ: ${reservedCount}</div>
+            <div>Đã nhập học: ${enrolledCount}</div>
+          </div>
+
+          <h2>1. Tổng hợp theo trạng thái</h2>
+          <table>
+            <thead><tr><th>Trạng thái</th><th>Số lượng</th></tr></thead>
+            <tbody>
+              ${stageSummary.map(item => `<tr><td>${escapeHtml(item.label)}</td><td>${item.count}</td></tr>`).join('')}
+            </tbody>
+          </table>
+
+          <h2>2. Danh sách hồ sơ cần theo dõi</h2>
+          ${rows.map(row => `
+            <div class="lead-card">
+              <p><strong>${escapeHtml(row.studentName)}</strong> - ${escapeHtml(row.stage)}</p>
+              <p>Phụ huynh: ${escapeHtml(row.parentName)} | SĐT: ${escapeHtml(row.phone)} | Email: ${escapeHtml(row.email)}</p>
+              <p>Điểm test: ${escapeHtml(row.testScore)} | Học bổng: ${escapeHtml(row.scholarshipInfo)} | Hồ sơ: ${escapeHtml(row.docStatus)}</p>
+              <p>Lịch test: ${escapeHtml(row.testSchedule)}</p>
+              <p>Ghi chú: ${escapeHtml(row.notes)}</p>
+            </div>
+          `).join('')}
+        </body>
+      </html>
+    `;
+
+    downloadReportFile(html, `BaoCao_Tuyensinh_CRM_${fileDate}.doc`, 'application/msword;charset=utf-8');
+  };
+
   // Excel copy-paste TSV parser
   const handleParseImportText = (text: string) => {
     if (!text.trim()) {
@@ -880,12 +1061,21 @@ export default function SchoolCrmHub() {
           
           <div className="flex items-center gap-2">
             <button
-              onClick={handleExportCsv}
-              className="px-3 py-1.5 border border-slate-250 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/60 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer text-slate-700 dark:text-slate-200"
-              title="Xuất báo cáo tuyển sinh ra file Excel CSV"
+              onClick={handleExportExcel}
+              className="px-3 py-1.5 border border-emerald-200 dark:border-emerald-900 bg-emerald-50/60 hover:bg-emerald-100 dark:bg-emerald-950/20 dark:hover:bg-emerald-950/40 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer text-emerald-700 dark:text-emerald-300"
+              title="Xuất báo cáo tuyển sinh ra file Excel có định dạng"
             >
               <Download className="w-3.5 h-3.5" />
-              <span>Xuất báo cáo</span>
+              <span>Xuất Excel</span>
+            </button>
+
+            <button
+              onClick={handleExportWord}
+              className="px-3 py-1.5 border border-blue-200 dark:border-blue-900 bg-blue-50/60 hover:bg-blue-100 dark:bg-blue-950/20 dark:hover:bg-blue-950/40 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer text-blue-700 dark:text-blue-300"
+              title="Xuất báo cáo tuyển sinh dạng Word tổng hợp"
+            >
+              <FileText className="w-3.5 h-3.5" />
+              <span>Xuất Word</span>
             </button>
 
             <button
