@@ -25,11 +25,84 @@ interface LoginPortalProps {
   initialUser: UserProfile;
 }
 
+const QUICK_STUDENT_PARENTS = [
+  {
+    student: {
+      id: 'student_gen_1',
+      name: 'Nguyễn Minh Quân',
+      role: 'STUDENT' as const,
+      roleName: 'Học sinh',
+      title: 'Học sinh lớp 10A1',
+      avatar: 'https://xsgames.co/randomusers/assets/avatars/male/1.jpg',
+      workspaceId: 'STUDENT',
+      studentCode: 'MIS-10A1-001'
+    },
+    parent: {
+      id: 'parent_gen_1',
+      name: 'Nguyễn Văn Hải',
+      role: 'PARENT' as const,
+      roleName: 'Phụ huynh',
+      title: 'Phụ huynh HS Nguyễn Minh Quân',
+      avatar: 'https://xsgames.co/randomusers/assets/avatars/male/2.jpg',
+      workspaceId: 'PARENT',
+      parentEmail: 'parent.1@parent.mis.edu.vn'
+    }
+  },
+  {
+    student: {
+      id: 'student_gen_2',
+      name: 'Trần Mỹ Lệ',
+      role: 'STUDENT' as const,
+      roleName: 'Học sinh',
+      title: 'Học sinh lớp 11A2',
+      avatar: 'https://xsgames.co/randomusers/assets/avatars/female/2.jpg',
+      workspaceId: 'STUDENT',
+      studentCode: 'MIS-11A2-002'
+    },
+    parent: {
+      id: 'parent_gen_2',
+      name: 'Lê Thị Thu Trà',
+      role: 'PARENT' as const,
+      roleName: 'Phụ huynh',
+      title: 'Phụ huynh HS Trần Mỹ Lệ',
+      avatar: 'https://xsgames.co/randomusers/assets/avatars/female/3.jpg',
+      workspaceId: 'PARENT',
+      parentEmail: 'parent.2@parent.mis.edu.vn'
+    }
+  },
+  {
+    student: {
+      id: 'student_gen_3',
+      name: 'Phạm Hồng Thái',
+      role: 'STUDENT' as const,
+      roleName: 'Học sinh',
+      title: 'Học sinh lớp 12A1',
+      avatar: 'https://xsgames.co/randomusers/assets/avatars/male/3.jpg',
+      workspaceId: 'STUDENT',
+      studentCode: 'MIS-12A1-003'
+    },
+    parent: {
+      id: 'parent_gen_3',
+      name: 'Phạm Hồng Sơn',
+      role: 'PARENT' as const,
+      roleName: 'Phụ huynh',
+      title: 'Phụ huynh HS Phạm Hồng Thái',
+      avatar: 'https://xsgames.co/randomusers/assets/avatars/male/4.jpg',
+      workspaceId: 'PARENT',
+      parentEmail: 'parent.3@parent.mis.edu.vn'
+    }
+  }
+];
+
 export default function LoginPortal({ onLoginSuccess, initialUser }: LoginPortalProps) {
   const [selectedUser, setSelectedUser] = useState<UserProfile>(initialUser);
+  const [portalMode, setPortalMode] = useState<'STAFF' | 'STUDENT_PARENT'>('STAFF');
+  const [searchStudentQuery, setSearchStudentQuery] = useState('');
   
   // Derive simple email for mock users
   const getSimulatedEmail = (user: UserProfile) => {
+    if (user.role === 'PARENT') return user.parentEmail || '';
+    if (user.role === 'STUDENT') return `${user.studentCode?.toLowerCase()}@student.mis.edu.vn`;
     const cleanName = user.name
       .toLowerCase()
       .normalize('NFD')
@@ -295,87 +368,201 @@ export default function LoginPortal({ onLoginSuccess, initialUser }: LoginPortal
         </div>
 
         {/* Right Side: Directory Selection (Select User directly to login) */}
-        <div className="flex-1 p-8 bg-slate-950/40 flex flex-col justify-between">
+        <div className="w-full md:w-auto flex-1 p-8 bg-slate-950/40 flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-[10.5px] font-bold text-emerald-400 uppercase tracking-widest font-mono flex items-center gap-1.5">
-                <Users className="w-4 h-4 text-emerald-500" />
-                Danh bạ cán bộ trường (Click để chọn nhanh)
-              </span>
-              <span className="px-2 py-0.5 bg-slate-900 border border-slate-800 text-slate-400 text-[8.5px] font-mono rounded font-bold uppercase">
-                {MOCK_USERS.length} Nhân sự
-              </span>
+            {/* Top Mode Selector Tabs */}
+            <div className="flex border-b border-slate-800 mb-5 select-none">
+              <button
+                type="button"
+                onClick={() => setPortalMode('STAFF')}
+                className={`flex-1 pb-2.5 text-center text-xs font-bold border-b-2 transition-all ${
+                  portalMode === 'STAFF' ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-slate-500 hover:text-slate-300'
+                }`}
+              >
+                💼 Cán bộ / Giáo viên
+              </button>
+              <button
+                type="button"
+                onClick={() => setPortalMode('STUDENT_PARENT')}
+                className={`flex-1 pb-2.5 text-center text-xs font-bold border-b-2 transition-all ${
+                  portalMode === 'STUDENT_PARENT' ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-slate-500 hover:text-slate-300'
+                }`}
+              >
+                👪 Phụ huynh / Học sinh
+              </button>
             </div>
 
-            {/* Department filters tabs */}
-            <div className="flex flex-wrap gap-1.5 mb-5 select-none">
-              {activeWorkspaces.map(w => (
-                <button
-                  key={w.id}
-                  onClick={() => setActiveTab(w.id)}
-                  className={`px-3 py-1.5 rounded-lg text-[10px] font-bold font-sans transition-all cursor-pointer border ${
-                    activeTab === w.id
-                      ? 'bg-indigo-600 border-indigo-700 text-white shadow-sm font-semibold'
-                      : 'border-slate-800/80 hover:bg-slate-900 text-slate-400 hover:text-slate-200'
-                  }`}
-                >
-                  {w.id === 'BGH' ? '👑 BGH' : w.name.split(' & ')[0].split(' - ')[0].replace('Tổ Chuyên môn ', 'Tổ ')}
-                </button>
-              ))}
-            </div>
+            {portalMode === 'STAFF' ? (
+              <>
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-[10.5px] font-bold text-emerald-400 uppercase tracking-widest font-mono flex items-center gap-1.5">
+                    <Users className="w-4 h-4 text-emerald-500" />
+                    Danh bạ cán bộ trường (Chọn nhanh)
+                  </span>
+                  <span className="px-2 py-0.5 bg-slate-900 border border-slate-800 text-slate-400 text-[8.5px] font-mono rounded font-bold uppercase">
+                    {MOCK_USERS.length} Cán bộ
+                  </span>
+                </div>
 
-            {/* User card list */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[340px] overflow-y-auto pr-1">
-              {MOCK_USERS.filter(u => u.workspaceId === activeTab || (activeTab === 'BGH' && u.role === 'ADMIN')).map(user => {
-                const isSelected = selectedUser.id === user.id;
-                return (
-                  <div
-                    key={user.id}
-                    onClick={() => handleSelectUserCard(user)}
-                    className={`p-3 rounded-xl border transition-all cursor-pointer flex items-center gap-3 relative ${
-                      isSelected
-                        ? 'bg-indigo-950/40 border-indigo-500 shadow-sm shadow-indigo-500/5'
-                        : 'bg-slate-900/40 border-slate-850 hover:bg-slate-900/80 hover:border-slate-800'
-                    }`}
-                  >
-                    <img
-                      src={getSafeAvatar(user.avatar, user.name)}
-                      alt={user.name}
-                      referrerPolicy="no-referrer"
-                      className={`w-9 h-9 rounded-full object-cover shrink-0 border ${
-                        isSelected ? 'border-indigo-400' : 'border-slate-750'
+                {/* Department filters tabs */}
+                <div className="flex flex-wrap gap-1.5 mb-5 select-none">
+                  {activeWorkspaces.map(w => (
+                    <button
+                      key={w.id}
+                      type="button"
+                      onClick={() => setActiveTab(w.id)}
+                      className={`px-3 py-1.5 rounded-lg text-[10px] font-bold font-sans transition-all cursor-pointer border ${
+                        activeTab === w.id
+                          ? 'bg-indigo-600 border-indigo-700 text-white shadow-sm font-semibold'
+                          : 'border-slate-800/80 hover:bg-slate-900 text-slate-400 hover:text-slate-200'
                       }`}
-                    />
-                    <div className="min-w-0 pr-6">
-                      <p className={`text-[11px] font-bold truncate leading-tight ${
-                        isSelected ? 'text-indigo-200' : 'text-slate-200'
-                      }`}>
-                        {user.name}
-                      </p>
-                      <p className="text-[10px] text-slate-450 truncate leading-relaxed mt-0.5">
-                        {user.title}
-                      </p>
-                      <p className="text-[9px] text-slate-500 font-mono mt-0.5">
-                        {user.role === 'ADMIN' ? 'Ban Giám hiệu' : user.role === 'MANAGER' ? 'Trưởng bộ phận' : 'Thành viên'}
-                      </p>
-                    </div>
+                    >
+                      {w.id === 'BGH' ? '👑 BGH' : w.name.split(' & ')[0].split(' - ')[0].replace('Tổ Chuyên môn ', 'Tổ ')}
+                    </button>
+                  ))}
+                </div>
 
-                    {isSelected && (
-                      <div className="absolute right-2.5 top-1/2 -translate-y-1/2">
-                        <CheckCircle className="w-4 h-4 text-indigo-400" />
+                {/* User card list */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[340px] overflow-y-auto pr-1">
+                  {MOCK_USERS.filter(u => u.workspaceId === activeTab || (activeTab === 'BGH' && u.role === 'ADMIN')).map(user => {
+                    const isSelected = selectedUser.id === user.id;
+                    return (
+                      <div
+                        key={user.id}
+                        onClick={() => handleSelectUserCard(user)}
+                        className={`p-3 rounded-xl border transition-all cursor-pointer flex items-center gap-3 relative ${
+                          isSelected
+                            ? 'bg-indigo-950/40 border-indigo-500 shadow-sm shadow-indigo-500/5'
+                            : 'bg-slate-900/40 border-slate-850 hover:bg-slate-900/80 hover:border-slate-800'
+                        }`}
+                      >
+                        <img
+                          src={getSafeAvatar(user.avatar, user.name)}
+                          alt={user.name}
+                          referrerPolicy="no-referrer"
+                          className={`w-9 h-9 rounded-full object-cover shrink-0 border ${
+                            isSelected ? 'border-indigo-400' : 'border-slate-750'
+                          }`}
+                        />
+                        <div className="min-w-0 pr-6">
+                          <p className={`text-[11px] font-bold truncate leading-tight ${
+                            isSelected ? 'text-indigo-200' : 'text-slate-200'
+                          }`}>
+                            {user.name}
+                          </p>
+                          <p className="text-[10px] text-slate-450 truncate leading-relaxed mt-0.5">
+                            {user.title}
+                          </p>
+                          <p className="text-[9px] text-slate-500 font-mono mt-0.5">
+                            {user.role === 'ADMIN' ? 'Ban Giám hiệu' : user.role === 'MANAGER' ? 'Trưởng bộ phận' : 'Thành viên'}
+                          </p>
+                        </div>
+
+                        {isSelected && (
+                          <div className="absolute right-2.5 top-1/2 -translate-y-1/2">
+                            <CheckCircle className="w-4 h-4 text-indigo-400" />
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+                    );
+                  })}
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-[10.5px] font-bold text-indigo-400 uppercase tracking-widest font-mono flex items-center gap-1.5">
+                    <School className="w-4 h-4 text-indigo-500" />
+                    Cổng học sinh & phụ huynh liên cấp
+                  </span>
+                  <span className="px-2 py-0.5 bg-slate-900 border border-slate-800 text-slate-400 text-[8.5px] font-mono rounded font-bold uppercase">
+                    SSO Active
+                  </span>
+                </div>
+
+                <div className="mb-4">
+                  <input
+                    type="text"
+                    value={searchStudentQuery}
+                    onChange={(e) => setSearchStudentQuery(e.target.value)}
+                    placeholder="Tìm tên hoặc lớp (ví dụ: Quân, 10A1)..."
+                    className="w-full bg-slate-900 border border-slate-800 text-slate-200 placeholder-slate-500 rounded-xl py-2 px-3 text-xs font-semibold focus:outline-none"
+                  />
+                </div>
+
+                {/* Student / Parent selector grid */}
+                <div className="space-y-4 max-h-[340px] overflow-y-auto pr-1">
+                  {QUICK_STUDENT_PARENTS.filter(item => 
+                    item.student.name.toLowerCase().includes(searchStudentQuery.toLowerCase()) ||
+                    item.student.title.toLowerCase().includes(searchStudentQuery.toLowerCase())
+                  ).map(item => {
+                    const isStudentSelected = selectedUser.id === item.student.id;
+                    const isParentSelected = selectedUser.id === item.parent.id;
+                    return (
+                      <div key={item.student.id} className="p-3 bg-slate-900/20 border border-slate-850 rounded-2xl space-y-2.5">
+                        <span className="text-[9.5px] font-mono font-bold text-slate-500 uppercase tracking-wider block border-b border-slate-850 pb-1">
+                          Hồ sơ: {item.student.name} ({item.student.studentCode})
+                        </span>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {/* Student Card */}
+                          <div
+                            onClick={() => handleSelectUserCard(item.student)}
+                            className={`p-2.5 rounded-xl border transition-all cursor-pointer flex items-center gap-2 relative ${
+                              isStudentSelected
+                                ? 'bg-indigo-950/40 border-indigo-500 shadow-sm'
+                                : 'bg-slate-900/40 border-slate-850 hover:bg-slate-900/80'
+                            }`}
+                          >
+                            <img
+                              src={item.student.avatar}
+                              alt={item.student.name}
+                              className="w-7 h-7 rounded-full object-cover shrink-0"
+                            />
+                            <div className="min-w-0 pr-5">
+                              <p className="text-[10px] font-bold text-slate-200 truncate">{item.student.name}</p>
+                              <span className="text-[8px] text-slate-450 block font-mono">Vai trò: Học sinh</span>
+                            </div>
+                            {isStudentSelected && (
+                              <CheckCircle className="w-3.5 h-3.5 text-indigo-400 absolute right-2 top-1/2 -translate-y-1/2" />
+                            )}
+                          </div>
+
+                          {/* Parent Card */}
+                          <div
+                            onClick={() => handleSelectUserCard(item.parent)}
+                            className={`p-2.5 rounded-xl border transition-all cursor-pointer flex items-center gap-2 relative ${
+                              isParentSelected
+                                ? 'bg-indigo-950/40 border-indigo-500 shadow-sm'
+                                : 'bg-slate-900/40 border-slate-850 hover:bg-slate-900/80'
+                            }`}
+                          >
+                            <img
+                              src={item.parent.avatar}
+                              alt={item.parent.name}
+                              className="w-7 h-7 rounded-full object-cover shrink-0"
+                            />
+                            <div className="min-w-0 pr-5">
+                              <p className="text-[10px] font-bold text-slate-200 truncate">{item.parent.name}</p>
+                              <span className="text-[8px] text-slate-450 block font-mono">Vai trò: Phụ huynh</span>
+                            </div>
+                            {isParentSelected && (
+                              <CheckCircle className="w-3.5 h-3.5 text-indigo-400 absolute right-2 top-1/2 -translate-y-1/2" />
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            )}
           </div>
 
           <div className="mt-6 pt-4 border-t border-slate-900 text-slate-500 text-[10px] leading-relaxed flex items-start gap-2 select-none">
             <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
             <div>
               <p className="font-bold text-slate-350 font-sans">Độ tin cậy được thiết lập đồng bộ đám mây:</p>
-              <p className="font-medium text-slate-450 mt-0.5">Hệ thống áp dụng chính sách cấp quyền theo phân tách nhiệm vụ (RBAC). Cán bộ giảng dạy hoặc trưởng bộ phận sau khi đăng nhập chỉ có quyền chỉnh sửa, báo cáo các nhiệm vụ được giao tương ứng, trong khi Ban Giám hiệu giữ thẩm quyền phê duyệt cuối cùng.</p>
+              <p className="font-medium text-slate-450 mt-0.5">Hệ thống áp dụng chính sách cấp quyền theo phân tách nhiệm vụ (RBAC). Phụ huynh và học sinh sau khi đăng nhập chỉ có quyền xem thông tin điểm số, chuyên cần và học phí cá nhân của chính mình.</p>
             </div>
           </div>
 

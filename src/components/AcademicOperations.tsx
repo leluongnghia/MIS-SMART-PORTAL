@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { translateLessonPlan, translateSubject, translateTitle } from '../utils/translations';
 import { 
@@ -23,6 +23,7 @@ import { UserProfile, Task } from '../types';
 interface AcademicOperationsProps {
   currentUser: UserProfile;
   users: UserProfile[];
+  onNavigateTab?: (tab: string) => void;
 }
 
 interface TimetableSlot {
@@ -93,10 +94,114 @@ const INITIAL_TIMETABLE: TimetableSlot[] = [
   { id: 'N6', day: 5, period: 4, subject: 'Cơ sở dữ liệu', className: '12A2', room: 'Phòng máy 1', teacherId: 'user_nam' }
 ];
 
-export default function AcademicOperations({ currentUser, users }: AcademicOperationsProps) {
+export default function AcademicOperations({ currentUser, users, onNavigateTab }: AcademicOperationsProps) {
   const { lang, t } = useLanguage();
   const [selectedTeacherId, setSelectedTeacherId] = useState<string>(currentUser.id);
-  const [timetable, setTimetable] = useState<TimetableSlot[]>(INITIAL_TIMETABLE);
+  
+  // Master Timetable states
+  const [activeSubTab, setActiveSubTab] = useState<'MY_SCHEDULE' | 'MASTER_TIMETABLE'>('MY_SCHEDULE');
+  const [filterType, setFilterType] = useState<'CLASS' | 'TEACHER' | 'ROOM'>('CLASS');
+  const [filterClass, setFilterClass] = useState('10A1');
+  const [filterTeacherId, setFilterTeacherId] = useState(currentUser.id);
+  const [filterRoom, setFilterRoom] = useState('P.302');
+
+  const [timetable, setTimetable] = useState<TimetableSlot[]>(() => {
+    const saved = localStorage.getItem('mis_timetable_slots_v3');
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) {}
+    }
+    return INITIAL_TIMETABLE;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('mis_timetable_slots_v3', JSON.stringify(timetable));
+  }, [timetable]);
+
+  // Form states for adding slot
+  const [newSlotDay, setNewSlotDay] = useState(2);
+  const [newSlotPeriod, setNewSlotPeriod] = useState(1);
+  const [newSlotSubject, setNewSlotSubject] = useState('Toán học nâng cao');
+  const [newSlotClass, setNewSlotClass] = useState('10A1');
+  const [newSlotRoom, setNewSlotRoom] = useState('P.302');
+  const [newSlotTeacherId, setNewSlotTeacherId] = useState(currentUser.id);
+  const [conflictError, setConflictError] = useState<string | null>(null);
+  const [showAddSlotForm, setShowAddSlotForm] = useState(false);
+
+  // Derive unique classes and rooms for filters
+  const classesList = useMemo(() => {
+    const list = new Set(timetable.map(t => t.className));
+    return Array.from(list).sort();
+  }, [timetable]);
+
+  const roomsList = useMemo(() => {
+    const list = new Set(timetable.map(t => t.room));
+    return Array.from(list).sort();
+  }, [timetable]);
+
+  const handleAddScheduleSlot = (e: React.FormEvent) => {
+    e.preventDefault();
+    setConflictError(null);
+
+    const teacher = users.find(u => u.id === newSlotTeacherId);
+    const teacherName = teacher ? teacher.name : 'Giáo viên';
+
+    // 1. Check teacher conflict
+    const teacherConflict = timetable.find(slot => 
+      slot.day === newSlotDay && 
+      slot.period === newSlotPeriod && 
+      slot.teacherId === newSlotTeacherId
+    );
+    if (teacherConflict) {
+      setConflictError('Trùng lịch: Giáo viên ' + teacherName + ' đang dạy lớp ' + teacherConflict.className + ' tại phòng ' + teacherConflict.room + ' vào Tiết ' + newSlotPeriod + ' Thứ ' + newSlotDay + '.');
+      return;
+    }
+
+    // 2. Check room conflict
+    const roomConflict = timetable.find(slot => 
+      slot.day === newSlotDay && 
+      slot.period === newSlotPeriod && 
+      slot.room === newSlotRoom
+    );
+    if (roomConflict) {
+      setConflictError('Trùng lịch: Phòng ' + newSlotRoom + ' đã được sử dụng bởi lớp ' + roomConflict.className + ' cho môn ' + roomConflict.subject + ' vào Tiết ' + newSlotPeriod + ' Thứ ' + newSlotDay + '.');
+      return;
+    }
+
+    // 3. Check class conflict
+    const classConflict = timetable.find(slot => 
+      slot.day === newSlotDay && 
+      slot.period === newSlotPeriod && 
+      slot.className === newSlotClass
+    );
+    if (classConflict) {
+      setConflictError('Trùng lịch: Lớp ' + newSlotClass + ' đã có lịch học môn ' + classConflict.subject + ' vào Tiết ' + newSlotPeriod + ' Thứ ' + newSlotDay + '.');
+      return;
+    }
+
+    const newSlot: TimetableSlot = {
+      id: 'TKB_' + Date.now(),
+      day: newSlotDay,
+      period: newSlotPeriod,
+      subject: newSlotSubject,
+      className: newSlotClass,
+      room: newSlotRoom,
+      teacherId: newSlotTeacherId
+    };
+
+    setTimetable([...timetable, newSlot]);
+    setShowAddSlotForm(false);
+    alert('Thêm tiết học vào thời khóa biểu tổng thành công!');
+  };
+
+  const getMasterSlot = (day: number, period: number) => {
+    if (filterType === 'CLASS') {
+      return timetable.find(t => t.day === day && t.period === period && t.className === filterClass);
+    }
+    if (filterType === 'TEACHER') {
+      return timetable.find(t => t.day === day && t.period === period && t.teacherId === filterTeacherId);
+    }
+    return timetable.find(t => t.day === day && t.period === period && t.room === filterRoom);
+  };
   
   // Quản lý Giáo án (Lesson Plans)
   const [lessonPlans, setLessonPlans] = useState<LessonPlan[]>(() => {

@@ -1,4 +1,4 @@
-import { Task, Workspace, UserProfile } from './types';
+import { Task, Workspace, UserProfile, InventoryItem, BorrowLog, TimetableSlot } from './types';
 
 export const WORKSPACES: Workspace[] = [
   {
@@ -13,12 +13,12 @@ export const WORKSPACES: Workspace[] = [
     name: 'Ban Giám hiệu & Hội đồng Trường',
     description: 'Chỉ đạo điều hành vĩ mô, phê chuẩn chiến lược và chính sách học thuật',
     color: 'from-amber-600 to-amber-800',
-    iconName: 'ShieldAlert'
+    iconName: 'ShieldCheck'
   },
   {
     id: 'TUYEN_SINH_PR',
     name: 'Phòng Tuyển sinh & Truyền thông',
-    description: 'Tư vấn tuyển sinh, chăm sóc phụ huynh, truyền thống thương hiệu và đối ngoại',
+    description: 'Tư vấn tuyển sinh, chăm sóc phụ huynh, truyền thông thương hiệu và đối ngoại',
     color: 'from-orange-500 to-amber-600',
     iconName: 'Megaphone'
   },
@@ -34,12 +34,12 @@ export const WORKSPACES: Workspace[] = [
     name: 'Phòng Khảo thí & ĐBCL',
     description: 'Rà soát kiểm tra đánh giá, cơ sở dữ liệu học vụ, khảo sát và kiểm định định kỳ',
     color: 'from-cyan-600 to-blue-700',
-    iconName: 'BarChart3'
+    iconName: 'Award'
   },
   {
     id: 'CTHS_TAM_LY',
     name: 'Tổ Công tác Học sinh & Tham vấn',
-    description: 'Nề nếp bán trú, hoạt động ngoại khóa CLB, kỷ luật tích cực và tham vấn tâm lý học đường',
+    description: 'Nề nếp bán trú, hoạt động ngoại khóa CLB, kỷ luật tích cực và tâm lý học đường',
     color: 'from-emerald-500 to-green-600',
     iconName: 'Heart'
   },
@@ -52,21 +52,63 @@ export const WORKSPACES: Workspace[] = [
   },
   {
     id: 'TOAN_TIN',
-    name: 'Tổ Chuyên môn Toán - Tin',
-    description: 'Giảng dạy Toán - Tin chương trình Việt Nam, bổ trợ ôn tập học sinh giỏi',
+    name: 'Tổ Chuyên môn Toán - Tin học',
+    description: 'Giảng dạy Toán học, Tin học theo Chương trình GDPT 2018',
     color: 'from-blue-600 to-indigo-700',
     iconName: 'Calculator'
   },
   {
     id: 'VAN',
     name: 'Tổ Chuyên môn Ngữ văn',
-    description: 'Giảng dạy Ngữ văn, các chuyên đề văn học nghệ thuật xã hội, nghiên cứu văn hóa',
+    description: 'Giảng dạy Ngữ văn, văn học và truyền thông văn hóa nghệ thuật',
     color: 'from-emerald-600 to-teal-700',
     iconName: 'BookOpen'
   },
   {
+    id: 'NGOAI_NGU',
+    name: 'Tổ Chuyên môn Ngoại ngữ',
+    description: 'Giảng dạy Tiếng Anh, Tiếng Pháp, Tiếng Đức và giao tiếp hội nhập quốc tế',
+    color: 'from-purple-600 to-indigo-700',
+    iconName: 'Languages'
+  },
+  {
+    id: 'KHTN',
+    name: 'Tổ Chuyên môn Khoa học Tự nhiên',
+    description: 'Giảng dạy môn Khoa học tự nhiên liên cấp (Vật lí, Hóa học, Sinh học)',
+    color: 'from-teal-600 to-cyan-700',
+    iconName: 'Compass'
+  },
+  {
+    id: 'LS_DL',
+    name: 'Tổ Chuyên môn Lịch sử - Địa lí',
+    description: 'Giảng dạy môn Lịch sử, Địa lí và Giáo dục địa phương',
+    color: 'from-amber-600 to-yellow-700',
+    iconName: 'Compass'
+  },
+  {
+    id: 'GDCD_KTPL',
+    name: 'Tổ GDCD & Giáo dục Kinh tế - Pháp luật',
+    description: 'Giảng dạy Giáo dục công dân, Giáo dục Kinh tế & Pháp luật',
+    color: 'from-orange-600 to-red-700',
+    iconName: 'ShieldCheck'
+  },
+  {
+    id: 'NT_TC_QPAN',
+    name: 'Tổ Nghệ thuật - Thể chất - QP-AN',
+    description: 'Giảng dạy Giáo dục thể chất, GDQP-AN, Âm nhạc và Mĩ thuật',
+    color: 'from-rose-500 to-red-600',
+    iconName: 'Music'
+  },
+  {
+    id: 'CN_TRAI_NGHIEM',
+    name: 'Tổ Công nghệ & Hoạt động trải nghiệm',
+    description: 'Giảng dạy môn Công nghệ, Thiết kế kĩ thuật, Hoạt động trải nghiệm hướng nghiệp',
+    color: 'from-lime-650 to-green-700',
+    iconName: 'Laptop'
+  },
+  {
     id: 'HANH_CHINH',
-    name: 'Tổ Ngữ văn phòng & Kế toán - Tài chính',
+    name: 'Tổ Văn phòng & Kế toán - Tài chính',
     description: 'Quản lý thu chi học phí, thủ quỹ ngân sách, hồ sơ cán bộ, pháp chế và thủ tục hành chính',
     color: 'from-rose-600 to-pink-700',
     iconName: 'ClipboardList'
@@ -2177,4 +2219,35 @@ export const INITIAL_TASKS: Task[] = [
     comments: [],
     history: []
   }
+];
+
+export const MOCK_INVENTORY_ITEMS: InventoryItem[] = [
+  { id: 'item_1', code: 'SGK-TOAN-10-001', name: 'Sách giáo khoa Toán 10 (Chân trời sáng tạo)', category: 'SACH', location: 'Thư viện Tầng 2 - Kệ A1', quantity: 50, status: 'SAN_SANG', condition: 'MOI' },
+  { id: 'item_2', code: 'SGK-VAN-11-002', name: 'Sách giáo khoa Ngữ văn 11 (Kết nối tri thức)', category: 'SACH', location: 'Thư viện Tầng 2 - Kệ B3', quantity: 35, status: 'SAN_SANG', condition: 'BINH_THUONG' },
+  { id: 'item_3', code: 'MC-EPSON-302', name: 'Máy chiếu Epson EH-TW7000', category: 'THIET_BI', location: 'Phòng học 302', quantity: 1, status: 'SAN_SANG', condition: 'BINH_THUONG' },
+  { id: 'item_4', code: 'LT-DELL-LAB1-01', name: 'Laptop Dell Vostro 3520 (Lab AI)', category: 'THIET_BI', location: 'Phòng Lab AI 1', quantity: 24, status: 'DANG_CHO_MUON', condition: 'MOI' },
+  { id: 'item_5', code: 'SGK-ENG-12-005', name: 'Sách giáo khoa Tiếng Anh 12 (Global Success)', category: 'SACH', location: 'Thư viện Tầng 2 - Kệ C2', quantity: 12, status: 'SAN_SANG', condition: 'CU' },
+  { id: 'item_6', code: 'TV-SONY-405', name: 'Tivi Sony 4K 65 inch', category: 'THIET_BI', location: 'Phòng học 405', quantity: 1, status: 'BAO_HONG', condition: 'HONG' }
+];
+
+export const MOCK_BORROW_LOGS: BorrowLog[] = [
+  { id: 'br_1', itemCode: 'LT-DELL-LAB1-01', itemName: 'Laptop Dell Vostro 3520 (Lab AI)', category: 'THIET_BI', borrowerName: 'Thầy Trần Hoàng Nam', borrowerRole: 'TEACHER', borrowDate: '2026-06-08', dueDate: '2026-06-15', status: 'DANG_MUON' },
+  { id: 'br_2', itemCode: 'SGK-TOAN-10-001', itemName: 'Sách giáo khoa Toán 10 (Chân trời sáng tạo)', category: 'SACH', borrowerName: 'Nguyễn Minh Quân', borrowerRole: 'STUDENT', borrowDate: '2026-06-05', dueDate: '2026-06-12', returnDate: '2026-06-10', status: 'DA_TRA' },
+  { id: 'br_3', itemCode: 'SGK-VAN-11-002', itemName: 'Sách giáo khoa Ngữ văn 11 (Kết nối tri thức)', category: 'SACH', borrowerName: 'Trần Mỹ Lệ', borrowerRole: 'STUDENT', borrowDate: '2026-05-20', dueDate: '2026-05-27', status: 'QUA_HAN' }
+];
+
+export const MOCK_MASTER_TIMETABLE: TimetableSlot[] = [
+  // Thứ 2
+  { id: 'TKB_1', day: 2, period: 1, subject: 'Toán học nâng cao', className: '10A1', room: 'P.302', teacherId: 'user_nhan' },
+  { id: 'TKB_2', day: 2, period: 2, subject: 'Toán học nâng cao', className: '10A1', room: 'P.302', teacherId: 'user_nhan' },
+  { id: 'TKB_3', day: 2, period: 3, subject: 'Ngữ văn chuyên đề', className: '11A2', room: 'P.105', teacherId: 'user_dat' },
+  { id: 'TKB_4', day: 2, period: 4, subject: 'Ngữ văn chuyên đề', className: '11A2', room: 'P.105', teacherId: 'user_dat' },
+  { id: 'TKB_5', day: 2, period: 5, subject: 'Khoa học máy tính', className: '10A1', room: 'Lab AI 1', teacherId: 'user_nam' },
+  { id: 'TKB_6', day: 2, period: 6, subject: 'Khoa học máy tính', className: '10A1', room: 'Lab AI 1', teacherId: 'user_nam' },
+
+  // Thứ 3
+  { id: 'TKB_7', day: 3, period: 1, subject: 'Văn học VN hiện đại', className: '12A1', room: 'P.401', teacherId: 'user_dat' },
+  { id: 'TKB_8', day: 3, period: 2, subject: 'Văn học VN hiện đại', className: '12A1', room: 'P.401', teacherId: 'user_dat' },
+  { id: 'TKB_9', day: 3, period: 3, subject: 'Giải tích 12', className: '12A2', room: 'P.405', teacherId: 'user_nhan' },
+  { id: 'TKB_10', day: 3, period: 4, subject: 'Giải tích 12', className: '12A2', room: 'P.405', teacherId: 'user_nhan' }
 ];

@@ -36,6 +36,7 @@ import AcademicOperations from './components/AcademicOperations';
 import SchoolLogistics from './components/SchoolLogistics';
 import SchoolRequests from './components/SchoolRequests';
 import HrmCenter from './components/HrmCenter';
+import ParentStudentPortal from './components/ParentStudentPortal';
 import BoardDirectivePanel from './components/BoardDirectivePanel';
 import IntelligenceAndOkrHub from './components/IntelligenceAndOkrHub';
 import MisLmsCenter from './components/MisLmsCenter';
@@ -462,7 +463,7 @@ export default function App() {
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [commandQuery, setCommandQuery] = useState('');
   const [activeView, setActiveView] = useState<'KANBAN' | 'CALENDAR' | 'LIST' | 'GANTT'>('KANBAN');
-  const [overviewTab, setOverviewTab] = useState<'DASHBOARD' | 'STRATEGY_OKRS' | 'TASKS' | 'WORKFLOW_APPROVALS' | 'CRM_ADMISSIONS' | 'STUDENT_SUCCESS' | 'TEACHER_HR' | 'RISK_CENTER' | 'ANALYTICS' | 'BOARD_DIRECTIVES' | 'ACADEMIC_OPS' | 'LOGISTICS' | 'REQUESTS' | 'HRM' | 'LMS' | 'GOOGLE_SHEETS' | 'DOCUMENT' | 'MEETING' | 'KNOWLEDGE' | 'EVENTS'>('DASHBOARD');
+  const [overviewTab, setOverviewTab] = useState<'DASHBOARD' | 'STRATEGY_OKRS' | 'TASKS' | 'WORKFLOW_APPROVALS' | 'CRM_ADMISSIONS' | 'STUDENT_SUCCESS' | 'PARENT_PORTAL' | 'TEACHER_HR' | 'RISK_CENTER' | 'ANALYTICS' | 'BOARD_DIRECTIVES' | 'ACADEMIC_OPS' | 'LOGISTICS' | 'REQUESTS' | 'HRM' | 'LMS' | 'GOOGLE_SHEETS' | 'DOCUMENT' | 'MEETING' | 'KNOWLEDGE' | 'EVENTS'>('DASHBOARD');
   const [priorityFilter, setPriorityFilter] = useState<string>('ALL');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [tagFilter, setTagFilter] = useState<string>('ALL');
@@ -1361,6 +1362,9 @@ export default function App() {
     { id: 'STRATEGY_OKRS', label: 'OKRs chiến lược', description: 'Mục tiêu, KPI, kết quả then chốt', tab: 'STRATEGY_OKRS' as const, icon: TrendingUp },
     { id: 'WORKFLOW_APPROVALS', label: 'Phê duyệt quy trình', description: 'Hồ sơ, luồng duyệt, nhật ký', tab: 'WORKFLOW_APPROVALS' as const, icon: FileCheck },
     { id: 'CRM_ADMISSIONS', label: 'CRM tuyển sinh', description: 'Phụ huynh, học sinh, chăm sóc', tab: 'CRM_ADMISSIONS' as const, icon: Users },
+    { id: 'PARENT_PORTAL', label: 'Cổng PHHS/Học sinh', description: 'Điểm, chuyên cần, học phí, thời khóa biểu, thư viện', tab: 'PARENT_PORTAL' as const, icon: Smartphone },
+    { id: 'ACADEMIC_OPS', label: 'Thời khóa biểu tổng', description: 'Lịch dạy tuần, giáo án, phân công giáo viên', tab: 'ACADEMIC_OPS' as const, icon: CalendarDays },
+    { id: 'LOGISTICS', label: 'Thư viện & Thiết bị', description: 'Sách, thiết bị, mượn trả, kiểm kê', tab: 'LOGISTICS' as const, icon: BookOpen },
     { id: 'TEACHER_HR', label: 'Nhân sự giáo viên', description: 'Danh bạ, KPI, nghỉ phép', tab: 'TEACHER_HR' as const, icon: UserCheck },
     { id: 'RISK_CENTER', label: 'Quản trị rủi ro', description: 'Cảnh báo, giám sát, xử lý', tab: 'RISK_CENTER' as const, icon: AlertCircle },
     { id: 'ANALYTICS', label: 'Báo cáo phân tích', description: 'Báo cáo, biểu đồ, truy vấn', tab: 'ANALYTICS' as const, icon: FileSpreadsheet }
@@ -1396,6 +1400,19 @@ export default function App() {
           } else {
             setSelectedWorkspace('ALL');
           }
+        }}
+      />
+    );
+  }
+
+  if (currentUser && (currentUser.role === 'PARENT' || currentUser.role === 'STUDENT')) {
+    return (
+      <ParentStudentPortal 
+        currentUser={currentUser} 
+        onLogout={() => {
+          setIsLoggedIn(false);
+          localStorage.removeItem('mis_edutask_logged_in');
+          localStorage.removeItem('mis_edutask_logged_in_user_id');
         }}
       />
     );
@@ -1990,6 +2007,24 @@ export default function App() {
                     </div>
                   </button>
 
+                  {/* Cổng PHHS / Học sinh */}
+                  <button
+                    onClick={() => { setOverviewTab('PARENT_PORTAL'); setIsSidebarOpen(false); }}
+                    className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
+                      overviewTab === 'PARENT_PORTAL'
+                        ? 'bg-emerald-50 dark:bg-emerald-950/45 text-emerald-700 dark:text-emerald-300 font-extrabold border-l-4 border-emerald-600 shadow-3xs scale-[1.01]'
+                        : 'text-slate-600 dark:text-slate-350 hover:bg-emerald-50/35 hover:text-emerald-700 dark:hover:bg-slate-800 dark:hover:text-emerald-400 font-semibold border-l-4 border-transparent'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Smartphone className={`w-4 h-4 transition-colors ${overviewTab === 'PARENT_PORTAL' ? 'text-emerald-600 dark:text-emerald-400' : 'text-emerald-400 dark:text-emerald-550'}`} />
+                      <span>Cổng PHHS / Học sinh</span>
+                    </div>
+                    <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider font-mono shrink-0 select-none ${
+                      overviewTab === 'PARENT_PORTAL' ? 'bg-emerald-600 text-white' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
+                    }`}>NEW</span>
+                  </button>
+
                   {/* Nhân sự & Giáo viên */}
                   <button 
                     onClick={() => { setOverviewTab('TEACHER_HR'); setIsSidebarOpen(false); }}
@@ -2088,7 +2123,7 @@ export default function App() {
                   >
                     <div className="flex items-center gap-2.5">
                       <GraduationCap className={`w-4 h-4 transition-colors ${overviewTab === 'ACADEMIC_OPS' ? 'text-sky-500' : 'text-slate-400'}`} />
-                      <span>Vận hành Học thuật</span>
+                      <span>Thời khóa biểu tổng &amp; Giáo án</span>
                     </div>
                     <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider font-mono shrink-0 select-none ${
                       overviewTab === 'ACADEMIC_OPS' ? 'bg-sky-600 text-white' : 'bg-sky-50 text-sky-600 dark:text-sky-400 dark:bg-sky-950 dark:text-sky-300'
@@ -2105,8 +2140,8 @@ export default function App() {
                     }`}
                   >
                     <div className="flex items-center gap-2.5">
-                      <School className={`w-4 h-4 transition-colors ${overviewTab === 'LOGISTICS' ? 'text-sky-500' : 'text-slate-400'}`} />
-                      <span>Logistics &amp; CSVC</span>
+                      <BookOpen className={`w-4 h-4 transition-colors ${overviewTab === 'LOGISTICS' ? 'text-sky-500' : 'text-slate-400'}`} />
+                      <span>Thư viện &amp; Thiết bị</span>
                     </div>
                     <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider font-mono shrink-0 select-none ${
                       overviewTab === 'LOGISTICS' ? 'bg-sky-600 text-white' : 'bg-sky-50 text-sky-600 dark:text-sky-400 dark:bg-sky-950 dark:text-sky-300'
@@ -2261,7 +2296,24 @@ export default function App() {
           )}
 
           {overviewTab === 'STUDENT_SUCCESS' && (
-            <StudentSuccessHub />
+            <StudentSuccessHub currentUser={currentUser} />
+          )}
+
+          {overviewTab === 'PARENT_PORTAL' && (
+            <ParentStudentPortal
+              currentUser={
+                currentUser.role === 'PARENT' || currentUser.role === 'STUDENT'
+                  ? currentUser
+                  : {
+                      ...currentUser,
+                      role: 'PARENT' as Role,
+                      roleName: 'Phụ huynh học sinh',
+                      title: 'Tài khoản xem thử cổng PHHS',
+                      parentEmail: 'parent.1@parent.mis.edu.vn',
+                    }
+              }
+              onLogout={() => setOverviewTab('DASHBOARD')}
+            />
           )}
 
           {overviewTab === 'TEACHER_HR' && (
@@ -2284,6 +2336,7 @@ export default function App() {
             <AcademicOperations 
               currentUser={currentUser} 
               users={users} 
+              onNavigateTab={(tab) => setOverviewTab(tab)}
             />
           )}
 

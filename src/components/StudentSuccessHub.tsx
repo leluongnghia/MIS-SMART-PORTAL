@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
 import {
   AlertTriangle,
   Award,
@@ -14,8 +14,15 @@ import {
   ShieldCheck,
   User,
   Users,
+  Lock,
+  FileText,
+  FileDown,
+  FileUp,
+  Activity
 } from 'lucide-react';
 import { exportToCsv } from '../utils/exportUtils';
+import { UserProfile, AcademicYearRecord, HealthIncident, VaccinationRecord, SisAuditLog } from '../types';
+import { getGradeLevelFromClassName, getSubjectsForClassName } from '../utils/vietnameseCurriculum';
 
 type ConductLevel = 'Tốt' | 'Khá' | 'Trung bình';
 type AttendanceStatus = 'PRESENT' | 'LATE' | 'ABSENT' | 'EXCUSED';
@@ -40,6 +47,12 @@ interface StudentRecord {
   awards: string[];
   disciplineLogs: string[];
   transferHistory?: TransferRecord[];
+  academicHistory?: AcademicYearRecord[];
+  healthInsurance?: string;
+  allergies?: string[];
+  conditions?: string[];
+  healthIncidents?: HealthIncident[];
+  vaccinations?: VaccinationRecord[];
 }
 
 interface TransferRecord {
@@ -101,11 +114,12 @@ const generateMockData = () => {
   const attendanceList: AttendanceEntry[] = [];
   
   let studentCount = 1;
-  const subjects = ['Toán', 'Ngữ văn', 'Tiếng Anh', 'Vật lý', 'Hóa học', 'Tin học'];
-  
   for (let grade = 1; grade <= 12; grade++) {
     for (let c = 1; c <= 3; c++) {
       const className = `${grade}A${c}`;
+      const classSubjects = getSubjectsForClassName(className)
+        .filter(subject => subject.type !== 'Hoạt động giáo dục')
+        .map(subject => subject.name);
       
       for (let s = 1; s <= 30; s++) {
         const gender = (studentCount % 2 === 0) ? 'Nữ' : 'Nam';
@@ -140,11 +154,24 @@ const generateMockData = () => {
           extracurriculars: studentCount % 5 === 0 ? ['CLB Âm nhạc', 'CLB Bóng rổ'] : [],
           awards: studentCount % 12 === 0 ? ['Học sinh giỏi cấp trường'] : [],
           disciplineLogs: studentCount % 15 === 0 ? ['Đi học muộn nhiều lần'] : [],
+          healthInsurance: `DN${Math.floor(1000000000 + Math.random() * 9000000000)}`,
+          allergies: studentCount % 10 === 0 ? ['Hải sản'] : studentCount % 18 === 0 ? ['Đậu phộng'] : [],
+          conditions: studentCount % 15 === 0 ? ['Tim bẩm sinh'] : studentCount % 22 === 0 ? ['Hen suyễn'] : [],
+          healthIncidents: studentCount % 15 === 0 ? [
+            { id: `inc_${studentCount}`, date: '2026-05-15', symptoms: 'Đau đầu, sốt nhẹ', treatment: 'Nghỉ ngơi tại phòng y tế, uống Paracetamol', nurseName: 'Cô Mai Phương Dũng', status: 'DA_XU_LY' }
+          ] : [],
+          vaccinations: [
+            { id: `vac_${studentCount}_1`, vaccineName: 'Uốn ván', date: '2025-10-12', dose: 'Mũi 1' },
+            { id: `vac_${studentCount}_2`, vaccineName: 'Cúm mùa', date: '2026-01-20', dose: 'Mũi 1' }
+          ],
+          academicHistory: [
+            { id: `hist_${studentCount}_1`, schoolYear: '2024-2025', className: `${grade - 1 > 0 ? grade - 1 : 1}A${c}`, gpa: Number((6.5 + Math.random() * 3).toFixed(1)), conduct: 'Tốt', teacherName: 'Cô Nguyễn Thanh Lan' }
+          ]
         });
         
         // Generate 2 random grades for this student
-        const sub1 = subjects[studentCount % subjects.length];
-        const sub2 = subjects[(studentCount + 1) % subjects.length];
+        const sub1 = classSubjects[studentCount % classSubjects.length] || 'Toán';
+        const sub2 = classSubjects[(studentCount + 1) % classSubjects.length] || 'Ngữ văn';
         
         const randGrade = (min: number, max: number) => Number((min + Math.random() * (max - min)).toFixed(1));
         
@@ -243,18 +270,82 @@ function statusColor(status: AttendanceStatus) {
   return 'bg-sky-100 text-sky-700 border-sky-200';
 }
 
-export default function StudentSuccessHub() {
+export default function StudentSuccessHub({ currentUser }: { currentUser: UserProfile }) {
   const [students, setStudents] = useState<StudentRecord[]>(() => readStored(STUDENT_STORAGE_KEY, initialStudents));
   const [grades, setGrades] = useState<GradeEntry[]>(() => readStored(GRADE_STORAGE_KEY, initialGrades));
   const [attendance, setAttendance] = useState<AttendanceEntry[]>(() => readStored(ATTENDANCE_STORAGE_KEY, initialAttendance));
   const [notices, setNotices] = useState<ParentNotice[]>(() => readStored(NOTICE_STORAGE_KEY, []));
+  const [auditLogs, setAuditLogs] = useState<SisAuditLog[]>(() => readStored('mis_sis_audit_logs_v3', []));
   const [searchQuery, setSearchQuery] = useState('');
   const [classFilter, setClassFilter] = useState('Tất cả');
   const [selectedStudentId, setSelectedStudentId] = useState('student_gen_1');
-  const [profileTab, setProfileTab] = useState<'PROFILE' | 'HISTORY' | 'ATTENDANCE' | 'GRADEBOOK' | 'PARENT'>('PROFILE');
+  const [profileTab, setProfileTab] = useState<'PROFILE' | 'HISTORY' | 'ATTENDANCE' | 'GRADEBOOK' | 'PARENT' | 'SECURITY'>('PROFILE');
   const [newStudentName, setNewStudentName] = useState('');
   const [newGrade, setNewGrade] = useState({ subject: 'Toán', oral: 8, fifteenMinute: 8, midterm: 8, final: 8 });
   const [newDisciplineText, setNewDisciplineText] = useState('');
+
+  // Academic History form states
+  const [newHistYear, setNewHistYear] = useState('2025-2026');
+  const [newHistClass, setNewHistClass] = useState('9A1');
+  const [newHistGpa, setNewHistGpa] = useState(8.0);
+  const [newHistConduct, setNewHistConduct] = useState<'Tốt' | 'Khá' | 'Trung bình'>('Tốt');
+  const [newHistTeacher, setNewHistTeacher] = useState('Cô Lê Thị Thanh Nhàn');
+
+  // Health editing states
+  const [editingHealth, setEditingHealth] = useState(false);
+  const [healthInsuranceVal, setHealthInsuranceVal] = useState('');
+  const [allergiesVal, setAllergiesVal] = useState('');
+  const [conditionsVal, setConditionsVal] = useState('');
+  const [healthNoteVal, setHealthNoteVal] = useState('');
+
+  // Health Incident form states
+  const [newIncDate, setNewIncDate] = useState(() => new Date().toISOString().substring(0, 10));
+  const [newIncSymptoms, setNewIncSymptoms] = useState('');
+  const [newIncTreatment, setNewIncTreatment] = useState('');
+  const [newIncStatus, setNewIncStatus] = useState<'DA_XU_LY' | 'THEO_DOI'>('DA_XU_LY');
+
+  // Vaccine form states
+  const [newVacName, setNewVacName] = useState('');
+  const [newVacDate, setNewVacDate] = useState(() => new Date().toISOString().substring(0, 10));
+  const [newVacDose, setNewVacDose] = useState('Mũi 1');
+
+  const handleAddVaccine = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedStudent || !newVacName.trim()) return;
+    const isNurse = currentUser.workspaceId === 'HANH_CHINH' && currentUser.title.includes('Y tế');
+    const canEdit = currentUser.role === 'ADMIN' || isNurse;
+    if (!canEdit) {
+      alert('Bạn không có quyền ghi nhận tiêm chủng.');
+      return;
+    }
+    const record: VaccinationRecord = {
+      id: `vac_${Date.now()}`,
+      vaccineName: newVacName.trim(),
+      date: newVacDate,
+      dose: newVacDose
+    };
+    setStudents(prev => prev.map(student => (
+      student.id === selectedStudent.id
+        ? { ...student, vaccinations: [record, ...(student.vaccinations || [])] }
+        : student
+    )));
+    logSisAction('Ghi nhận tiêm chủng', selectedStudent.name, `Vaccine: ${newVacName.trim()}, Liều: ${newVacDose}`);
+    setNewVacName('');
+  };
+
+  // Logging function
+  const logSisAction = (action: string, targetStudentName: string, details: string) => {
+    const newLog: SisAuditLog = {
+      id: `audit_${Date.now()}`,
+      timestamp: new Date().toLocaleString('vi-VN', { hour12: false }),
+      operatorName: currentUser?.name || 'Ẩn danh',
+      operatorRole: currentUser?.roleName || currentUser?.role || 'Khách',
+      action,
+      targetStudentName,
+      details
+    };
+    setAuditLogs(prev => [newLog, ...prev]);
+  };
   const [attendanceDate, setAttendanceDate] = useState(todayIso());
   const [attendancePeriod, setAttendancePeriod] = useState(1);
   const [attendanceReason, setAttendanceReason] = useState('');
@@ -268,6 +359,15 @@ export default function StudentSuccessHub() {
   useEffect(() => localStorage.setItem(GRADE_STORAGE_KEY, JSON.stringify(grades)), [grades]);
   useEffect(() => localStorage.setItem(ATTENDANCE_STORAGE_KEY, JSON.stringify(attendance)), [attendance]);
   useEffect(() => localStorage.setItem(NOTICE_STORAGE_KEY, JSON.stringify(notices)), [notices]);
+  useEffect(() => localStorage.setItem('mis_sis_audit_logs_v3', JSON.stringify(auditLogs)), [auditLogs]);
+
+  const lastLoggedStudentRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (selectedStudent && lastLoggedStudentRef.current !== selectedStudent.id) {
+      logSisAction('Xem hồ sơ', selectedStudent.name, 'Xem chi tiết thông tin học sinh');
+      lastLoggedStudentRef.current = selectedStudent.id;
+    }
+  }, [selectedStudentId]);
 
   const classOptions = useMemo(() => {
     const uniqueClasses = Array.from(new Set(students.map(student => student.className))) as string[];
@@ -317,6 +417,8 @@ export default function StudentSuccessHub() {
   const selectedStudent = selectedMetric?.student;
   const selectedGrades = selectedStudent ? grades.filter(grade => grade.studentId === selectedStudent.id) : [];
   const selectedAttendance = selectedStudent ? attendance.filter(item => item.studentId === selectedStudent.id) : [];
+  const selectedGradeLevel = selectedStudent ? getGradeLevelFromClassName(selectedStudent.className) : null;
+  const selectedClassSubjects = selectedStudent ? getSubjectsForClassName(selectedStudent.className) : [];
 
   const stats = useMemo(() => {
     const total = students.length || 1;
@@ -340,6 +442,15 @@ export default function StudentSuccessHub() {
   };
 
   const handleAttendanceChange = (student: StudentRecord, status: AttendanceStatus) => {
+    // Permission check
+    const canEdit = currentUser.role === 'ADMIN' || 
+                    (currentUser.role === 'MANAGER' && currentUser.workspaceId === 'CTHS_TAM_LY') ||
+                    (currentUser.role === 'STAFF' && (currentUser.workspaceId === 'TOAN_TIN' || currentUser.workspaceId === 'VAN'));
+    if (!canEdit) {
+      alert('Bạn không có quyền điểm danh học vụ.');
+      return;
+    }
+
     setAttendance(prev => {
       const existing = prev.find(item => item.studentId === student.id && item.date === attendanceDate && (item.period || 1) === attendancePeriod);
       if (existing) {
@@ -364,6 +475,8 @@ export default function StudentSuccessHub() {
       }, ...prev];
     });
 
+    logSisAction('Điểm danh', student.name, `Ghi nhận trạng thái ${attendanceLabel(status)} tiết ${attendancePeriod} ngày ${attendanceDate}`);
+
     if (status === 'ABSENT' || status === 'LATE') {
       addNotice(student, 'ATTENDANCE', `${student.name} được ghi nhận trạng thái ${attendanceLabel(status)} tiết ${attendancePeriod}, ngày ${attendanceDate}${attendanceReason.trim() ? `: ${attendanceReason.trim()}` : '.'}`);
     }
@@ -371,6 +484,10 @@ export default function StudentSuccessHub() {
 
   const handleAddStudent = (e: React.FormEvent) => {
     e.preventDefault();
+    if (currentUser.role !== 'ADMIN') {
+      alert('Chỉ Ban Giám hiệu mới có quyền thêm học sinh mới.');
+      return;
+    }
     if (!newStudentName.trim()) return;
     const nextId = `student_${Date.now()}`;
     const newStudent: StudentRecord = {
@@ -395,8 +512,12 @@ export default function StudentSuccessHub() {
       transferHistory: [
         { id: `tr_${Date.now()}`, date: todayIso(), fromClass: '-', toClass: '10A1', reason: 'Khởi tạo hồ sơ học sinh mới', approvedBy: 'Hệ thống SIS' },
       ],
+      academicHistory: [],
+      healthIncidents: [],
+      vaccinations: []
     };
     setStudents(prev => [newStudent, ...prev]);
+    logSisAction('Thêm học sinh', newStudent.name, 'Thêm mới hồ sơ học sinh');
     setSelectedStudentId(nextId);
     setNewStudentName('');
   };
@@ -404,6 +525,17 @@ export default function StudentSuccessHub() {
   const handleAddGrade = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedStudent) return;
+    // Check permission
+    const isToanTinTeacher = currentUser.workspaceId === 'TOAN_TIN' && ['Toán', 'Tin học', 'Tin học và Công nghệ', 'Vật lí', 'Vật lý', 'Hóa học', 'Khoa học tự nhiên', 'Khoa học', 'Công nghệ'].includes(newGrade.subject);
+    const isVanTeacher = currentUser.workspaceId === 'VAN' && newGrade.subject === 'Ngữ văn';
+    const isEngTeacher = currentUser.workspaceId === 'QUOC_TE' && ['Tiếng Anh', 'Ngoại ngữ 1', 'Ngoại ngữ 2', 'Tiếng Trung'].includes(newGrade.subject);
+    const canEdit = currentUser.role === 'ADMIN' || isToanTinTeacher || isVanTeacher || isEngTeacher;
+
+    if (!canEdit) {
+      alert(`Bạn không có quyền nhập điểm môn ${newGrade.subject} (quyền hạn thuộc Tổ chuyên môn).`);
+      return;
+    }
+
     const entry: GradeEntry = {
       id: `gr_${Date.now()}`,
       studentId: selectedStudent.id,
@@ -415,11 +547,16 @@ export default function StudentSuccessHub() {
       final: Number(newGrade.final),
     };
     setGrades(prev => [entry, ...prev]);
+    logSisAction('Nhập điểm', selectedStudent.name, `Nhập điểm môn ${entry.subject}: miệng ${entry.oral}, 15p ${entry.fifteenMinute}, giữa kỳ ${entry.midterm}, cuối kỳ ${entry.final}`);
     addNotice(selectedStudent, 'GRADE', `Nhà trường đã cập nhật điểm môn ${entry.subject}: trung bình ${gradeAverage(entry)}/10.`);
   };
 
   const handleAddTransfer = (e: React.FormEvent) => {
     e.preventDefault();
+    if (currentUser.role !== 'ADMIN') {
+      alert('Chỉ Ban Giám hiệu mới có quyền điều chuyển lớp học sinh.');
+      return;
+    }
     if (!selectedStudent || !transferForm.toClass.trim()) return;
     const record: TransferRecord = {
       id: `tr_${Date.now()}`,
@@ -439,22 +576,34 @@ export default function StudentSuccessHub() {
         }
         : student
     )));
+    logSisAction('Chuyển lớp', selectedStudent.name, `Chuyển lớp từ ${selectedStudent.className} sang ${record.toClass}. Lý do: ${record.reason}`);
     setTransferForm({ date: todayIso(), toClass: record.toClass, reason: '' });
   };
 
   const handleAddDiscipline = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedStudent || !newDisciplineText.trim()) return;
+    const canEdit = currentUser.role === 'ADMIN' || currentUser.role === 'MANAGER' || currentUser.workspaceId === 'CTHS_TAM_LY';
+    if (!canEdit) {
+      alert('Bạn không có quyền ghi nhận nề nếp học sinh.');
+      return;
+    }
+
     setStudents(prev => prev.map(student => (
       student.id === selectedStudent.id
         ? { ...student, disciplineLogs: [newDisciplineText.trim(), ...student.disciplineLogs], conduct: 'Khá' }
         : student
     )));
+    logSisAction('Ghi nhận nề nếp', selectedStudent.name, `Vi phạm: ${newDisciplineText.trim()}`);
     addNotice(selectedStudent, 'DISCIPLINE', `Ghi nhận nề nếp: ${newDisciplineText.trim()}`);
     setNewDisciplineText('');
   };
 
   const handleExportStudents = () => {
+    if (currentUser.role !== 'ADMIN') {
+      alert('An ninh SIS: Chỉ Ban Giám hiệu mới có quyền xuất dữ liệu học sinh ra file CSV.');
+      return;
+    }
     const headers = ['Mã học sinh', 'Họ tên', 'Lớp', 'GPA', 'Chuyên cần', 'Phụ huynh', 'SĐT', 'Email phụ huynh', 'Cảnh báo'];
     const rows = studentMetrics.map(({ student, gpa, attendanceRate, needSupport }) => [
       student.code,
@@ -468,6 +617,184 @@ export default function StudentSuccessHub() {
       needSupport ? 'Cần hỗ trợ' : 'Bình thường',
     ]);
     exportToCsv('MIS_SIS_Ho_so_hoc_sinh.csv', headers, rows);
+    logSisAction('Xuất dữ liệu', 'Tất cả học sinh', 'Tải danh sách hồ sơ CSV toàn trường');
+  };
+
+
+
+  const handleAddAcademicHistory = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedStudent) return;
+    if (currentUser.role !== 'ADMIN') {
+      alert('Chỉ Ban Giám hiệu mới có quyền thêm lịch sử năm học.');
+      return;
+    }
+    const record: AcademicYearRecord = {
+      id: `hist_${Date.now()}`,
+      schoolYear: newHistYear,
+      className: newHistClass,
+      gpa: Number(newHistGpa),
+      conduct: newHistConduct,
+      teacherName: newHistTeacher
+    };
+    setStudents(prev => prev.map(student => (
+      student.id === selectedStudent.id
+        ? { ...student, academicHistory: [record, ...(student.academicHistory || [])] }
+        : student
+    )));
+    logSisAction('Thêm lịch sử học tập', selectedStudent.name, `Năm học ${newHistYear}: lớp ${newHistClass}, GPA ${newHistGpa}, Hạnh kiểm ${newHistConduct}`);
+  };
+
+  const handleSaveHealth = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedStudent) return;
+    const isNurse = currentUser.workspaceId === 'HANH_CHINH' && currentUser.title.includes('Y tế');
+    const canEdit = currentUser.role === 'ADMIN' || isNurse;
+    if (!canEdit) {
+      alert('Bạn không có quyền chỉnh sửa hồ sơ y tế học sinh.');
+      return;
+    }
+    setStudents(prev => prev.map(student => (
+      student.id === selectedStudent.id
+        ? {
+            ...student,
+            healthInsurance: healthInsuranceVal,
+            allergies: allergiesVal.split(',').map(s => s.trim()).filter(Boolean),
+            conditions: conditionsVal.split(',').map(s => s.trim()).filter(Boolean),
+            healthNote: healthNoteVal
+          }
+        : student
+    )));
+    logSisAction('Cập nhật y tế', selectedStudent.name, `Cập nhật BHYT: ${healthInsuranceVal}, Dị ứng: ${allergiesVal}, Bệnh nền: ${conditionsVal}`);
+    setEditingHealth(false);
+  };
+
+  const handleAddHealthIncident = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedStudent || !newIncSymptoms.trim()) return;
+    const isNurse = currentUser.workspaceId === 'HANH_CHINH' && currentUser.title.includes('Y tế');
+    const canEdit = currentUser.role === 'ADMIN' || isNurse;
+    if (!canEdit) {
+      alert('Bạn không có quyền ghi nhận sự cố y tế học đường.');
+      return;
+    }
+    const record: HealthIncident = {
+      id: `inc_${Date.now()}`,
+      date: newIncDate,
+      symptoms: newIncSymptoms.trim(),
+      treatment: newIncTreatment.trim() || 'Sơ cứu tại chỗ',
+      nurseName: currentUser.name,
+      status: newIncStatus
+    };
+    setStudents(prev => prev.map(student => (
+      student.id === selectedStudent.id
+        ? { ...student, healthIncidents: [record, ...(student.healthIncidents || [])] }
+        : student
+    )));
+    logSisAction('Ghi sự cố y tế', selectedStudent.name, `Triệu chứng: ${newIncSymptoms.trim()}, Hướng xử lý: ${record.treatment}`);
+    setNewIncSymptoms('');
+    setNewIncTreatment('');
+  };
+
+  const handlePrintClassReportCard = () => {
+    if (classFilter === 'Tất cả') {
+      alert('Vui lòng chọn một lớp cụ thể để xuất bảng điểm cả lớp.');
+      return;
+    }
+    const classStudents = studentMetrics.filter(({ student }) => student.className === classFilter);
+    const rows = classStudents.map(({ student, gpa, attendanceRate, absences, needSupport }, index) => `
+      <tr>
+        <td>${index + 1}</td>
+        <td>${escapeHtml(student.code)}</td>
+        <td><strong>${escapeHtml(student.name)}</strong></td>
+        <td>${student.gender}</td>
+        <td>${student.birthDate}</td>
+        <td>${gpa}</td>
+        <td>${attendanceRate}%</td>
+        <td>${absences}</td>
+        <td>${student.conduct}</td>
+        <td>${needSupport ? '<span style="color:red">Cần hỗ trợ</span>' : 'Bình thường'}</td>
+      </tr>
+    `).join('');
+
+    const html = `<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <title>Bảng điểm lớp ${classFilter}</title>
+  <style>
+    body { font-family: Arial, sans-serif; color: #0f172a; padding: 32px; }
+    h1 { margin: 0; font-size: 22px; text-transform: uppercase; }
+    table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 12px; }
+    th, td { border: 1px solid #cbd5e1; padding: 8px; text-align: left; }
+    th { background: #eef2ff; }
+    .sign { margin-top: 42px; display: flex; justify-content: space-between; text-align: center; font-size: 13px; }
+    @media print { button { display: none; } body { padding: 0; } }
+  </style>
+</head>
+<body>
+  <button onclick="window.print()">In bảng điểm</button>
+  <h1>Bảng tổng hợp học lực & chuyên cần</h1>
+  <p>Trường Phổ thông Liên cấp Đa Trí Tuệ MIS | Lớp: <strong>${classFilter}</strong></p>
+  <p>Ngày xuất báo cáo: ${new Date().toLocaleDateString('vi-VN')}</p>
+  <table>
+    <thead>
+      <tr>
+        <th>STT</th>
+        <th>Mã HS</th>
+        <th>Họ tên</th>
+        <th>Giới tính</th>
+        <th>Ngày sinh</th>
+        <th>GPA TB</th>
+        <th>Chuyên cần</th>
+        <th>Số ngày vắng</th>
+        <th>Hạnh kiểm</th>
+        <th>Trạng thái</th>
+      </tr>
+    </thead>
+    <tbody>${rows || '<tr><td colspan="10">Không có dữ liệu học sinh.</td></tr>'}</tbody>
+  </table>
+  <div class="sign">
+    <div><strong>Giáo viên chủ nhiệm lớp ${classFilter}</strong><br/><br/><br/>________________</div>
+    <div><strong>Ban Giám hiệu</strong><br/><br/><br/>________________</div>
+  </div>
+</body>
+</html>`;
+
+    const popup = window.open('', '_blank');
+    if (popup) {
+      popup.document.write(html);
+      popup.document.close();
+    }
+    logSisAction('Xuất bảng điểm lớp', `Lớp ${classFilter}`, `In bảng điểm tổng hợp ${classStudents.length} học sinh`);
+  };
+
+  const handleImportBackup = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (currentUser.role !== 'ADMIN') {
+      alert('Chỉ Ban Giám hiệu mới có quyền khôi phục cơ sở dữ liệu.');
+      return;
+    }
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const data = JSON.parse(event.target?.result as string);
+        if (data.students && data.grades && data.attendance) {
+          setStudents(data.students);
+          setGrades(data.grades);
+          setAttendance(data.attendance);
+          if (data.auditLogs) setAuditLogs(data.auditLogs);
+          alert('Khôi phục dữ liệu SIS thành công!');
+          logSisAction('Khôi phục dữ liệu', 'Hệ thống SIS', 'Nhập file backup JSON khôi phục dữ liệu thành công');
+        } else {
+          alert('File backup không hợp lệ hoặc thiếu dữ liệu.');
+        }
+      } catch (err) {
+        alert('Không thể đọc file backup. Lỗi định dạng JSON.');
+      }
+    };
+    reader.readAsText(file);
   };
 
   const handlePrintReportCard = () => {
@@ -574,6 +901,7 @@ export default function StudentSuccessHub() {
       link.remove();
       URL.revokeObjectURL(url);
     }
+    logSisAction('Xuất học bạ PDF', selectedStudent.name, 'In phiếu điểm & học bạ tóm tắt');
   };
 
   return (
@@ -590,14 +918,24 @@ export default function StudentSuccessHub() {
               Quản lý hồ sơ học sinh, lớp học, phụ huynh, chuyên cần, sổ điểm, y tế học đường và cảnh báo sớm theo mô hình SIS.
             </p>
           </div>
-          <button
-            type="button"
-            onClick={handleExportStudents}
-            className="w-fit px-3 py-2 bg-white/10 hover:bg-white/15 border border-white/15 rounded-xl text-xs font-bold flex items-center gap-2"
-          >
-            <FileSpreadsheet className="w-4 h-4" />
-            Xuất hồ sơ CSV
-          </button>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={handlePrintClassReportCard}
+              className="w-fit px-3 py-2 bg-white/10 hover:bg-white/15 border border-white/15 rounded-xl text-xs font-bold flex items-center gap-2"
+            >
+              <FileText className="w-4 h-4" />
+              In bảng điểm cả lớp ({classFilter})
+            </button>
+            <button
+              type="button"
+              onClick={handleExportStudents}
+              className="w-fit px-3 py-2 bg-white/10 hover:bg-white/15 border border-white/15 rounded-xl text-xs font-bold flex items-center gap-2"
+            >
+              <FileSpreadsheet className="w-4 h-4" />
+              Xuất hồ sơ CSV
+            </button>
+          </div>
         </div>
       </div>
 
@@ -699,6 +1037,7 @@ export default function StudentSuccessHub() {
                   ['ATTENDANCE', 'Điểm danh'],
                   ['GRADEBOOK', 'Sổ điểm'],
                   ['PARENT', 'Phụ huynh'],
+                  ...(currentUser.role === 'ADMIN' ? [['SECURITY', 'Bảo mật']] : [])
                 ].map(([id, label]) => (
                   <button
                     key={id}
@@ -725,81 +1064,368 @@ export default function StudentSuccessHub() {
                 )}
 
                 {profileTab === 'PROFILE' && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                    <InfoCard icon={User} label="Thông tin cá nhân" lines={[
-                      `Giới tính: ${selectedStudent.gender}`,
-                      `Ngày sinh: ${selectedStudent.birthDate}`,
-                      `Địa chỉ: ${selectedStudent.address}`,
-                    ]} />
-                    <InfoCard icon={HeartPulse} label="Y tế học đường" lines={[
-                      selectedStudent.healthNote,
-                      `Liên hệ khẩn cấp: ${selectedStudent.emergencyContact}`,
-                    ]} />
-                    <InfoCard icon={Award} label="Thành tích & học bổng" lines={[
-                      `Học bổng: ${selectedStudent.scholarship}`,
-                      ...selectedStudent.awards,
-                    ]} />
-                    <InfoCard icon={CheckCircle2} label="Hoạt động & hạnh kiểm" lines={[
-                      `Hạnh kiểm: ${selectedStudent.conduct}`,
-                      selectedStudent.extracurriculars.length ? selectedStudent.extracurriculars.join(', ') : 'Chưa ghi nhận hoạt động ngoại khóa.',
-                    ]} />
+                  <div className="space-y-6 text-xs animate-fade-in">
+                    {editingHealth && (
+                      <form onSubmit={handleSaveHealth} className="bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-3">
+                        <h4 className="font-bold text-slate-800">Chỉnh sửa hồ sơ y tế học sinh</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                          <div>
+                            <label className="text-[10px] font-bold uppercase text-slate-500 block mb-1">Mã thẻ BHYT</label>
+                            <input 
+                              value={healthInsuranceVal} 
+                              onChange={(e) => setHealthInsuranceVal(e.target.value)}
+                              className="w-full text-xs p-2 border border-slate-200 rounded-lg bg-white" 
+                              placeholder="DN12345..."
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-bold uppercase text-slate-500 block mb-1">Dị ứng (ngăn cách bởi dấu phẩy)</label>
+                            <input 
+                              value={allergiesVal} 
+                              onChange={(e) => setAllergiesVal(e.target.value)}
+                              className="w-full text-xs p-2 border border-slate-200 rounded-lg bg-white" 
+                              placeholder="Hải sản, Đậu phộng..."
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-bold uppercase text-slate-500 block mb-1">Bệnh nền (ngăn cách bởi dấu phẩy)</label>
+                            <input 
+                              value={conditionsVal} 
+                              onChange={(e) => setConditionsVal(e.target.value)}
+                              className="w-full text-xs p-2 border border-slate-200 rounded-lg bg-white" 
+                              placeholder="Hen suyễn, Tim bẩm sinh..."
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold uppercase text-slate-500 block mb-1">Ghi chú lâm sàng / Chỉ thị sức khỏe</label>
+                          <textarea 
+                            value={healthNoteVal} 
+                            onChange={(e) => setHealthNoteVal(e.target.value)}
+                            className="w-full text-xs p-2 border border-slate-200 rounded-lg bg-white resize-none" 
+                            rows={2}
+                            placeholder="Mô tả hiện trạng sức khỏe hoặc chỉ thị thuốc uống..."
+                          />
+                        </div>
+                        <div className="flex justify-end gap-2">
+                          <button type="button" onClick={() => setEditingHealth(false)} className="px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-semibold text-slate-500 hover:bg-slate-100">
+                            Hủy
+                          </button>
+                          <button type="submit" className="px-3.5 py-1.5 bg-indigo-650 text-white font-bold text-xs rounded-lg">
+                            Cập nhật y tế
+                          </button>
+                        </div>
+                      </form>
+                    )}
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <InfoCard icon={User} label="Thông tin cá nhân" lines={[
+                        `Giới tính: ${selectedStudent.gender}`,
+                        `Ngày sinh: ${selectedStudent.birthDate}`,
+                        `Địa chỉ: ${selectedStudent.address}`,
+                      ]} />
+                      
+                      <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-2 relative">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                            <HeartPulse className="w-4 h-4 text-rose-500" />
+                            <span className="text-[10px] uppercase font-black text-slate-500 tracking-wide font-sans">Y tế học đường &amp; Sức khỏe</span>
+                          </div>
+                          {(currentUser.role === 'ADMIN' || (currentUser.workspaceId === 'HANH_CHINH' && currentUser.title.includes('Y tế'))) && !editingHealth && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setHealthInsuranceVal(selectedStudent.healthInsurance || '');
+                                setAllergiesVal((selectedStudent.allergies || []).join(', '));
+                                setConditionsVal((selectedStudent.conditions || []).join(', '));
+                                setHealthNoteVal(selectedStudent.healthNote || '');
+                                setEditingHealth(true);
+                              }}
+                              className="px-2 py-0.5 border border-indigo-200 hover:bg-indigo-100 rounded text-[10px] text-indigo-700 font-bold transition-all"
+                            >
+                              Sửa y tế
+                            </button>
+                          )}
+                        </div>
+                        <div className="space-y-1 text-slate-650 leading-relaxed font-sans">
+                          <p><strong>BHYT:</strong> {selectedStudent.healthInsurance || 'Chưa cập nhật'}</p>
+                          <p><strong>Dị ứng:</strong> {(selectedStudent.allergies || []).join(', ') || 'Không phát hiện'}</p>
+                          <p><strong>Bệnh nền:</strong> {(selectedStudent.conditions || []).join(', ') || 'Không ghi nhận'}</p>
+                          <p><strong>Chỉ thị y tế:</strong> {selectedStudent.healthNote || 'Bình thường'}</p>
+                          <p><strong>Liên hệ khẩn cấp:</strong> {selectedStudent.emergencyContact}</p>
+                        </div>
+                      </div>
+
+                      <InfoCard icon={Award} label="Thành tích & học bổng" lines={[
+                        `Học bổng: ${selectedStudent.scholarship}`,
+                        ...selectedStudent.awards,
+                      ]} />
+                      
+                      <InfoCard icon={CheckCircle2} label="Hoạt động & hạnh kiểm" lines={[
+                        `Hạnh kiểm: ${selectedStudent.conduct}`,
+                        selectedStudent.extracurriculars.length ? selectedStudent.extracurriculars.join(', ') : 'Chưa ghi nhận hoạt động ngoại khóa.',
+                      ]} />
+                    </div>
+
+                    {/* Advanced Health: incidents & vaccinations */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      
+                      {/* Incidents logs */}
+                      <div className="border border-slate-200 rounded-xl p-4 bg-slate-50/50 space-y-3">
+                        <h4 className="font-bold text-slate-800 flex items-center gap-1.5 font-sans">
+                          <HeartPulse className="w-4 h-4 text-rose-500" />
+                          Nhật ký sự cố y tế tại trường
+                        </h4>
+                        
+                        {(currentUser.role === 'ADMIN' || (currentUser.workspaceId === 'HANH_CHINH' && currentUser.title.includes('Y tế'))) && (
+                          <form onSubmit={handleAddHealthIncident} className="grid grid-cols-1 md:grid-cols-3 gap-1.5 p-2 border border-slate-200 rounded-lg bg-white">
+                            <input 
+                              value={newIncSymptoms} 
+                              onChange={(e) => setNewIncSymptoms(e.target.value)}
+                              className="text-[10.5px] border rounded p-1" 
+                              placeholder="Triệu chứng" 
+                              required 
+                            />
+                            <input 
+                              value={newIncTreatment} 
+                              onChange={(e) => setNewIncTreatment(e.target.value)}
+                              className="text-[10.5px] border rounded p-1" 
+                              placeholder="Cách xử lý" 
+                            />
+                            <button type="submit" className="bg-rose-600 hover:bg-rose-700 text-white font-bold text-[10.5px] rounded p-1">
+                              Ghi sự cố
+                            </button>
+                          </form>
+                        )}
+
+                        <div className="max-h-48 overflow-y-auto space-y-1.5">
+                          {(selectedStudent.healthIncidents || []).map((inc) => (
+                            <div key={inc.id} className="p-2 border border-slate-200 rounded bg-white space-y-0.5 font-sans">
+                              <div className="flex justify-between items-center text-[9px] text-slate-500 font-mono">
+                                <span>{inc.date} · Y tá: {inc.nurseName}</span>
+                                <span className={`px-1 rounded ${inc.status === 'DA_XU_LY' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>
+                                  {inc.status === 'DA_XU_LY' ? 'Đã xử lý' : 'Theo dõi'}
+                                </span>
+                              </div>
+                              <p className="text-[11px] text-slate-800"><strong>Triệu chứng:</strong> {inc.symptoms}</p>
+                              <p className="text-[10px] text-slate-500"><strong>Xử lý:</strong> {inc.treatment}</p>
+                            </div>
+                          ))}
+                          {(selectedStudent.healthIncidents || []).length === 0 && (
+                            <p className="text-center py-4 text-slate-405 italic text-[11px]">Chưa ghi nhận sự cố y tế nào.</p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Vaccinations */}
+                      <div className="border border-slate-200 rounded-xl p-4 bg-slate-50/50 space-y-3">
+                        <h4 className="font-bold text-slate-800 flex items-center gap-1.5 font-sans">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                          Lịch sử tiêm chủng vaccine
+                        </h4>
+
+                        {(currentUser.role === 'ADMIN' || (currentUser.workspaceId === 'HANH_CHINH' && currentUser.title.includes('Y tế'))) && (
+                          <form onSubmit={handleAddVaccine} className="grid grid-cols-1 md:grid-cols-4 gap-1.5 p-2 border border-slate-200 rounded-lg bg-white">
+                            <input 
+                              value={newVacName} 
+                              onChange={(e) => setNewVacName(e.target.value)}
+                              className="text-[10.5px] border rounded p-1 col-span-2" 
+                              placeholder="Tên Vaccine" 
+                              required 
+                            />
+                            <select 
+                              value={newVacDose} 
+                              onChange={(e) => setNewVacDose(e.target.value)}
+                              className="text-[10.5px] border rounded p-1 bg-white"
+                            >
+                              <option>Mũi 1</option>
+                              <option>Mũi 2</option>
+                              <option>Mũi 3</option>
+                              <option>Mũi nhắc</option>
+                            </select>
+                            <button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10.5px] rounded p-1">
+                              Thêm mũi
+                            </button>
+                          </form>
+                        )}
+
+                        <div className="max-h-48 overflow-y-auto space-y-1.5">
+                          {(selectedStudent.vaccinations || []).map((vac) => (
+                            <div key={vac.id} className="p-2 border border-slate-200 rounded bg-white flex justify-between items-center text-[11px] font-sans">
+                              <div>
+                                <strong className="text-slate-800">{vac.vaccineName}</strong>
+                                <span className="text-slate-400 block text-[9.5px] font-mono">Ngày tiêm: {vac.date}</span>
+                              </div>
+                              <span className="px-2 py-0.5 bg-indigo-50 border border-indigo-150 text-indigo-700 rounded text-[9.5px] font-mono font-bold">
+                                {vac.dose}
+                              </span>
+                            </div>
+                          ))}
+                          {(selectedStudent.vaccinations || []).length === 0 && (
+                            <p className="text-center py-4 text-slate-405 italic text-[11px]">Chưa có lịch sử tiêm chủng.</p>
+                          )}
+                        </div>
+                      </div>
+
+                    </div>
                   </div>
                 )}
 
                 {profileTab === 'HISTORY' && (
-                  <div className="space-y-4">
-                    <form onSubmit={handleAddTransfer} className="grid grid-cols-1 md:grid-cols-4 gap-2 p-3 rounded-xl bg-slate-50 border border-slate-200">
-                      <input
-                        type="date"
-                        value={transferForm.date}
-                        onChange={(e) => setTransferForm({ ...transferForm, date: e.target.value })}
-                        className="text-xs border rounded-lg px-2 py-2 bg-white"
-                      />
-                      <input
-                        value={transferForm.toClass}
-                        onChange={(e) => setTransferForm({ ...transferForm, toClass: e.target.value })}
-                        className="text-xs border rounded-lg px-2 py-2 bg-white"
-                        placeholder="Lớp mới"
-                      />
-                      <input
-                        value={transferForm.reason}
-                        onChange={(e) => setTransferForm({ ...transferForm, reason: e.target.value })}
-                        className="text-xs border rounded-lg px-2 py-2 bg-white"
-                        placeholder="Lý do chuyển lớp/chuyển trường"
-                      />
-                      <button type="submit" className="text-xs font-bold rounded-lg bg-indigo-600 text-white px-3 py-2">
-                        Ghi nhận chuyển lớp
-                      </button>
-                    </form>
+                  <div className="space-y-6 animate-fade-in text-xs">
+                    {/* Academic History (Liên năm học) */}
+                    <div className="border border-slate-200 rounded-xl p-4 bg-slate-50/50 space-y-3">
+                      <div className="flex justify-between items-center flex-wrap gap-2">
+                        <h4 className="font-bold text-slate-850 font-sans">Quá trình học tập học vụ liên năm học</h4>
+                        <span className="text-[10px] text-slate-500 font-mono">Dữ liệu kết quả GPA qua từng năm học</span>
+                      </div>
+                      
+                      {currentUser.role === 'ADMIN' && (
+                        <form onSubmit={handleAddAcademicHistory} className="grid grid-cols-2 md:grid-cols-6 gap-2 p-3 rounded-lg border border-slate-200 bg-white">
+                          <input 
+                            value={newHistYear} 
+                            onChange={(e) => setNewHistYear(e.target.value)} 
+                            className="text-xs border rounded p-1" 
+                            placeholder="Năm học (2025-2026)" 
+                            required 
+                          />
+                          <input 
+                            value={newHistClass} 
+                            onChange={(e) => setNewHistClass(e.target.value)} 
+                            className="text-xs border rounded p-1" 
+                            placeholder="Lớp (9A1)" 
+                            required 
+                          />
+                          <input 
+                            type="number" 
+                            min={0} 
+                            max={10} 
+                            step={0.1}
+                            value={newHistGpa} 
+                            onChange={(e) => setNewHistGpa(Number(e.target.value))} 
+                            className="text-xs border rounded p-1" 
+                            placeholder="GPA cả năm" 
+                            required 
+                          />
+                          <select 
+                            value={newHistConduct} 
+                            onChange={(e: any) => setNewHistConduct(e.target.value)} 
+                            className="text-xs border rounded p-1 bg-white"
+                          >
+                            <option>Tốt</option>
+                            <option>Khá</option>
+                            <option>Trung bình</option>
+                          </select>
+                          <input 
+                            value={newHistTeacher} 
+                            onChange={(e) => setNewHistTeacher(e.target.value)} 
+                            className="text-xs border rounded p-1" 
+                            placeholder="GVCN" 
+                            required 
+                          />
+                          <button type="submit" className="bg-indigo-650 hover:bg-indigo-750 text-white font-bold rounded p-1 text-[11px]">
+                            Thêm lịch sử
+                          </button>
+                        </form>
+                      )}
 
-                    <div className="rounded-xl border border-slate-200 overflow-hidden">
-                      <table className="w-full text-xs">
-                        <thead className="bg-slate-50 text-slate-500">
-                          <tr>
-                            <th className="text-left px-4 py-2">Ngày</th>
-                            <th className="text-left px-4 py-2">Từ lớp</th>
-                            <th className="text-left px-4 py-2">Đến lớp</th>
-                            <th className="text-left px-4 py-2">Lý do</th>
-                            <th className="text-left px-4 py-2">Phê duyệt</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100">
-                          {(selectedStudent.transferHistory || []).map(item => (
-                            <tr key={item.id}>
-                              <td className="px-4 py-2 font-mono">{item.date}</td>
-                              <td className="px-4 py-2">{item.fromClass}</td>
-                              <td className="px-4 py-2 font-bold text-indigo-700">{item.toClass}</td>
-                              <td className="px-4 py-2 text-slate-600">{item.reason}</td>
-                              <td className="px-4 py-2 text-slate-500">{item.approvedBy}</td>
-                            </tr>
-                          ))}
-                          {(selectedStudent.transferHistory || []).length === 0 && (
+                      <div className="rounded-xl border border-slate-200 overflow-hidden bg-white">
+                        <table className="w-full text-xs text-left">
+                          <thead className="bg-slate-50 text-slate-500">
                             <tr>
-                              <td colSpan={5} className="px-4 py-8 text-center text-slate-400">Chưa có lịch sử chuyển lớp/chuyển trường.</td>
+                              <th className="px-4 py-2">Năm học</th>
+                              <th className="px-4 py-2">Lớp học</th>
+                              <th className="text-center px-4 py-2">GPA</th>
+                              <th className="text-center px-4 py-2">Hạnh kiểm</th>
+                              <th className="px-4 py-2">Giáo viên chủ nhiệm</th>
                             </tr>
-                          )}
-                        </tbody>
-                      </table>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100">
+                            {(selectedStudent.academicHistory || []).map((item) => (
+                              <tr key={item.id} className="hover:bg-slate-50/30">
+                                <td className="px-4 py-2 font-bold text-slate-700">{item.schoolYear}</td>
+                                <td className="px-4 py-2 font-semibold text-slate-650">{item.className}</td>
+                                <td className="px-4 py-2 text-center text-indigo-750 font-bold">{item.gpa}</td>
+                                <td className="px-4 py-2 text-center">
+                                  <span className="px-2 py-0.5 bg-emerald-50 border border-emerald-150 text-emerald-700 text-[10px] rounded font-bold">
+                                    {item.conduct}
+                                  </span>
+                                </td>
+                                <td className="px-4 py-2 text-slate-600">{item.teacherName}</td>
+                              </tr>
+                            ))}
+                            {(selectedStudent.academicHistory || []).length === 0 && (
+                              <tr>
+                                <td colSpan={5} className="px-4 py-8 text-center text-slate-400 italic">Chưa ghi nhận lịch sử học tập.</td>
+                              </tr>
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                    {/* Transfer History (Chuyển lớp/chuyển trường) */}
+                    <div className="border border-slate-200 rounded-xl p-4 bg-slate-50/50 space-y-3">
+                      <div className="flex justify-between items-center flex-wrap gap-2">
+                        <h4 className="font-bold text-slate-850 font-sans">Lịch sử điều chuyển lớp học hành chính</h4>
+                        <span className="text-[10px] text-slate-500 font-mono">Duyệt chuyển từ Phòng Đào tạo</span>
+                      </div>
+                      
+                      {currentUser.role === 'ADMIN' && (
+                        <form onSubmit={handleAddTransfer} className="grid grid-cols-1 md:grid-cols-4 gap-2 p-3 rounded-lg border border-slate-200 bg-white">
+                          <input
+                            type="date"
+                            value={transferForm.date}
+                            onChange={(e) => setTransferForm({ ...transferForm, date: e.target.value })}
+                            className="text-xs border rounded-lg px-2 py-1.5 bg-white"
+                          />
+                          <input
+                            value={transferForm.toClass}
+                            onChange={(e) => setTransferForm({ ...transferForm, toClass: e.target.value })}
+                            className="text-xs border rounded-lg px-2 py-1.5 bg-white"
+                            placeholder="Lớp mới"
+                          />
+                          <input
+                            value={transferForm.reason}
+                            onChange={(e) => setTransferForm({ ...transferForm, reason: e.target.value })}
+                            className="text-xs border rounded-lg px-2 py-1.5 bg-white"
+                            placeholder="Lý do chuyển lớp/chuyển trường"
+                          />
+                          <button type="submit" className="text-xs font-bold rounded-lg bg-indigo-650 text-white px-3 py-1.5">
+                            Ghi nhận chuyển lớp
+                          </button>
+                        </form>
+                      )}
+
+                      <div className="rounded-xl border border-slate-200 overflow-hidden bg-white">
+                        <table className="w-full text-xs text-left">
+                          <thead className="bg-slate-50 text-slate-500">
+                            <tr>
+                              <th className="px-4 py-2">Ngày</th>
+                              <th className="px-4 py-2">Từ lớp</th>
+                              <th className="px-4 py-2">Đến lớp</th>
+                              <th className="px-4 py-2">Lý do</th>
+                              <th className="px-4 py-2">Phê duyệt</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100">
+                            {(selectedStudent.transferHistory || []).map(item => (
+                              <tr key={item.id} className="hover:bg-slate-50/30">
+                                <td className="px-4 py-2 font-mono">{item.date}</td>
+                                <td className="px-4 py-2">{item.fromClass}</td>
+                                <td className="px-4 py-2 font-bold text-indigo-700">{item.toClass}</td>
+                                <td className="px-4 py-2 text-slate-600">{item.reason}</td>
+                                <td className="px-4 py-2 text-slate-500">{item.approvedBy}</td>
+                              </tr>
+                            ))}
+                            {(selectedStudent.transferHistory || []).length === 0 && (
+                              <tr>
+                                <td colSpan={5} className="px-4 py-8 text-center text-slate-400 italic">Chưa có lịch sử chuyển lớp/chuyển trường.</td>
+                              </tr>
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -889,12 +1515,11 @@ export default function StudentSuccessHub() {
                     </div>
                     <form onSubmit={handleAddGrade} className="grid grid-cols-2 md:grid-cols-6 gap-2 p-3 rounded-xl bg-slate-50 border border-slate-200">
                       <select value={newGrade.subject} onChange={(e) => setNewGrade({ ...newGrade, subject: e.target.value })} className="text-xs border rounded-lg px-2 py-2 bg-white">
-                        <option>Toán</option>
-                        <option>Ngữ văn</option>
-                        <option>Tiếng Anh</option>
-                        <option>Vật lý</option>
-                        <option>Hóa học</option>
-                        <option>Tin học</option>
+                        {selectedClassSubjects.map(subject => (
+                          <option key={`${subject.name}-${subject.type}`} value={subject.name}>
+                            {subject.name} ({subject.type})
+                          </option>
+                        ))}
                       </select>
                       {(['oral', 'fifteenMinute', 'midterm', 'final'] as const).map(field => (
                         <input
@@ -941,7 +1566,7 @@ export default function StudentSuccessHub() {
                 )}
 
                 {profileTab === 'PARENT' && (
-                  <div className="space-y-4">
+                  <div className="space-y-4 animate-fade-in">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <InfoCard icon={Mail} label="Kênh liên lạc phụ huynh" lines={[
                         `Phụ huynh: ${selectedStudent.parentName}`,
@@ -986,6 +1611,115 @@ export default function StudentSuccessHub() {
                         </tbody>
                       </table>
                     </div>
+                  </div>
+                )}
+
+                {profileTab === 'SECURITY' && currentUser.role === 'ADMIN' && (
+                  <div className="space-y-6 text-xs animate-fade-in">
+                    
+                    {/* Backup & Restore control panel */}
+                    <div className="border border-slate-200 rounded-xl p-4 bg-slate-50/50 space-y-3">
+                      <h4 className="font-bold text-slate-800 flex items-center gap-1.5 font-sans">
+                        <ShieldCheck className="w-4.5 h-4.5 text-indigo-600" />
+                        Trung tâm Sao lưu &amp; Khôi phục cơ sở dữ liệu SIS
+                      </h4>
+                      <p className="text-[11px] text-slate-500 leading-relaxed font-sans">
+                        Chức năng an ninh hệ thống cho phép tải toàn bộ dữ liệu SIS hiện tại về máy tính dưới định dạng tệp JSON bảo mật hoặc tải tệp JSON lên để ghi đè trạng thái.
+                      </p>
+                      <div className="flex items-center gap-3 flex-wrap pt-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const backupData = {
+                              students,
+                              grades,
+                              attendance,
+                              auditLogs
+                            };
+                            const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+                            const url = URL.createObjectURL(blob);
+                            const link = document.createElement('a');
+                            link.href = url;
+                            link.download = `MIS_SIS_Backup_${Date.now()}.json`;
+                            document.body.appendChild(link);
+                            link.click();
+                            link.remove();
+                            URL.revokeObjectURL(url);
+                            logSisAction('Sao lưu dữ liệu', 'Hệ thống SIS', 'Tải file backup JSON cơ sở dữ liệu SIS');
+                          }}
+                          className="px-3.5 py-2 bg-indigo-650 hover:bg-indigo-750 text-white font-bold rounded-lg flex items-center gap-1.5 cursor-pointer shadow-3xs"
+                        >
+                          <FileDown className="w-4 h-4" />
+                          Tải File Sao lưu (.json)
+                        </button>
+
+                        <div className="relative">
+                          <label className="px-3.5 py-2 bg-white border border-slate-350 hover:bg-slate-50 text-slate-700 font-bold rounded-lg flex items-center gap-1.5 cursor-pointer shadow-3xs">
+                            <FileUp className="w-4 h-4 text-emerald-600" />
+                            Khôi phục từ File JSON
+                            <input 
+                              type="file" 
+                              accept=".json" 
+                              onChange={handleImportBackup} 
+                              className="hidden" 
+                            />
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Audit Logs table */}
+                    <div className="border border-slate-200 rounded-xl p-4 bg-slate-50/50 space-y-3">
+                      <div className="flex justify-between items-center">
+                        <h4 className="font-bold text-slate-800 flex items-center gap-1.5 font-sans">
+                          <Lock className="w-4 h-4 text-indigo-600" />
+                          Nhật ký kiểm toán an ninh học vụ (Audit Logs)
+                        </h4>
+                        <span className="px-2 py-0.5 bg-slate-200 text-slate-600 text-[10px] font-mono rounded font-bold">
+                          {auditLogs.length} sự kiện
+                        </span>
+                      </div>
+
+                      <div className="rounded-xl border border-slate-200 overflow-hidden bg-white">
+                        <div className="max-h-72 overflow-y-auto">
+                          <table className="w-full text-xs text-left">
+                            <thead className="bg-slate-50 text-slate-500 sticky top-0">
+                              <tr>
+                                <th className="px-4 py-2">Thời gian</th>
+                                <th className="px-4 py-2">Cán bộ thực hiện</th>
+                                <th className="px-4 py-2">Hành động</th>
+                                <th className="px-4 py-2">Học sinh đích</th>
+                                <th className="px-4 py-2">Chi tiết</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                              {auditLogs.map(log => (
+                                <tr key={log.id} className="hover:bg-slate-50/40">
+                                  <td className="px-4 py-2 font-mono text-slate-500 whitespace-nowrap">{log.timestamp}</td>
+                                  <td className="px-4 py-2 whitespace-nowrap">
+                                    <strong>{log.operatorName}</strong> 
+                                    <span className="text-[10px] text-slate-400 block font-mono">{log.operatorRole}</span>
+                                  </td>
+                                  <td className="px-4 py-2">
+                                    <span className="px-1.5 py-0.5 bg-slate-100 border border-slate-200 text-slate-700 text-[9.5px] font-bold rounded-md uppercase font-mono">
+                                      {log.action}
+                                    </span>
+                                  </td>
+                                  <td className="px-4 py-2 font-semibold text-slate-700 whitespace-nowrap">{log.targetStudentName}</td>
+                                  <td className="px-4 py-2 text-slate-500 max-w-xs truncate" title={log.details}>{log.details}</td>
+                                </tr>
+                              ))}
+                              {auditLogs.length === 0 && (
+                                <tr>
+                                  <td colSpan={5} className="px-4 py-8 text-center text-slate-400 italic">Chưa có nhật ký ghi lại.</td>
+                                </tr>
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+
                   </div>
                 )}
               </div>

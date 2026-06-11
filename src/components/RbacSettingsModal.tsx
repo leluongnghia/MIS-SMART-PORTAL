@@ -57,6 +57,28 @@ export const DEFAULT_RBAC_CONFIG: RbacConfig = {
     rejectReport: false,
     addComment: true,
     manageWorkspaces: false,
+  },
+  PARENT: {
+    createTask: false,
+    editTask: false,
+    deleteTask: false,
+    changeStatus: false,
+    submitReport: false,
+    approveReport: false,
+    rejectReport: false,
+    addComment: false,
+    manageWorkspaces: false,
+  },
+  STUDENT: {
+    createTask: false,
+    editTask: false,
+    deleteTask: false,
+    changeStatus: false,
+    submitReport: false,
+    approveReport: false,
+    rejectReport: false,
+    addComment: false,
+    manageWorkspaces: false,
   }
 };
 

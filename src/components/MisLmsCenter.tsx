@@ -36,6 +36,7 @@ import {
 } from 'lucide-react';
 import { Task, UserProfile } from '../types';
 import { exportToCsv } from '../utils/exportUtils';
+import { ALL_VIETNAM_SUBJECT_NAMES, VIETNAM_GRADE_LEVELS, getSubjectsForClassName } from '../utils/vietnameseCurriculum';
 
 interface MisLmsCenterProps {
   currentUser: UserProfile;
@@ -219,7 +220,7 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
     }
     return [
       { id: 'ZM101', title: 'Toán học nâng cao 10 - Tích phân & Ma trận', subject: 'Toán', teacher: 'Thầy Nam', time: '14:00 - 15:30', classStatus: 'SCHEDULED', studentsPresent: 24, totalStudents: 28 },
-      { id: 'ZM102', title: 'Ngữ văn chuyên đề: Kịch nghệ trong văn học', subject: 'Văn', teacher: 'Thầy Đạt', time: '16:00 - 17:30', classStatus: 'LIVE', studentsPresent: 0, totalStudents: 32 }
+      { id: 'ZM102', title: 'Ngữ văn chuyên đề: Kịch nghệ trong văn học', subject: 'Ngữ văn', teacher: 'Thầy Đạt', time: '16:00 - 17:30', classStatus: 'LIVE', studentsPresent: 0, totalStudents: 32 }
     ];
   });
 
@@ -384,6 +385,7 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
     durationMinutes: 30,
     selectedQuestionIds: [] as number[],
   });
+  const reviewSubjectOptions = getSubjectsForClassName(newReviewData.className);
 
   // Mathematical equation editor state
   const [equationCode, setEquationCode] = useState<string>('f(x) = \\int_{a}^{b} \\frac{x^2 + \\sin(x)}{\\sqrt{3y}} dx');
@@ -1025,9 +1027,9 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
                           onChange={(e) => setNewLeadForm({ ...newLeadForm, grade: e.target.value })}
                           className="w-full text-xs border border-slate-200 rounded-lg p-2 bg-slate-50/50"
                         >
-                          <option value="Lớp 10">Khối 10</option>
-                          <option value="Lớp 11">Khối 11</option>
-                          <option value="Lớp 12">Khối 12</option>
+                          {VIETNAM_GRADE_LEVELS.map(level => (
+                            <option key={level} value={level}>{level.replace('Lớp', 'Khối')}</option>
+                          ))}
                         </select>
                       </div>
                       <div>
@@ -1245,23 +1247,32 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
                               onChange={(e) => setNewReviewData({ ...newReviewData, subject: e.target.value })}
                               className="w-full text-xs border border-slate-200 rounded-lg px-3 py-2 bg-white"
                             >
-                              <option>Toán</option>
-                              <option>Ngữ văn</option>
-                              <option>Tiếng Anh</option>
-                              <option>Vật lý</option>
-                              <option>Hóa học</option>
+                              {reviewSubjectOptions.map(subject => (
+                                <option key={`${subject.name}-${subject.type}`} value={subject.name}>
+                                  {subject.name} ({subject.type})
+                                </option>
+                              ))}
                             </select>
                           </div>
                           <div>
                             <label className="text-[10px] font-bold uppercase text-slate-500 block mb-1">Lớp</label>
                             <select
                               value={newReviewData.className}
-                              onChange={(e) => setNewReviewData({ ...newReviewData, className: e.target.value })}
+                              onChange={(e) => {
+                                const nextSubjects = getSubjectsForClassName(e.target.value);
+                                setNewReviewData({
+                                  ...newReviewData,
+                                  className: e.target.value,
+                                  subject: nextSubjects.some(subject => subject.name === newReviewData.subject)
+                                    ? newReviewData.subject
+                                    : nextSubjects[0]?.name || 'Toán',
+                                });
+                              }}
                               className="w-full text-xs border border-slate-200 rounded-lg px-3 py-2 bg-white"
                             >
-                              <option>Lớp 10A1</option>
-                              <option>Lớp 11A2</option>
-                              <option>Lớp 12A1</option>
+                              {VIETNAM_GRADE_LEVELS.map(level => (
+                                <option key={level}>{level}A1</option>
+                              ))}
                             </select>
                           </div>
                         </div>
@@ -1506,11 +1517,9 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
                               onChange={(e) => setNewClassData({...newClassData, subject: e.target.value})}
                               className="w-full bg-white border border-slate-200 rounded px-2 py-1 text-xs text-slate-800"
                             >
-                              <option value="Toán">Toán Học</option>
-                              <option value="Văn">Ngữ văn</option>
-                              <option value="Lý">Vật Lý</option>
-                              <option value="Hóa">Hóa Học</option>
-                              <option value="Anh">Tiếng Anh</option>
+                              {ALL_VIETNAM_SUBJECT_NAMES.map(subject => (
+                                <option key={subject} value={subject}>{subject}</option>
+                              ))}
                             </select>
                           </div>
                           <div className="space-y-1">
@@ -1843,12 +1852,10 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
                             onChange={(e) => setNewMcqData({...newMcqData, subject: e.target.value})}
                             className="w-full bg-white border border-slate-200 rounded px-2 py-1 text-xs text-slate-800"
                           >
-                            <option>Toán</option>
-                            <option>Ngữ văn</option>
-                            <option>Tiếng Anh</option>
-                            <option>Vật lý</option>
-                            <option>Hóa học</option>
-                            <option>Kỹ năng</option>
+                            {ALL_VIETNAM_SUBJECT_NAMES.map(subject => (
+                              <option key={subject}>{subject}</option>
+                            ))}
+                            <option>Kỹ năng sống</option>
                           </select>
                         </div>
                         <div className="space-y-1">
@@ -1858,9 +1865,9 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
                             onChange={(e) => setNewMcqData({...newMcqData, grade: e.target.value})}
                             className="w-full bg-white border border-slate-200 rounded px-2 py-1 text-xs text-slate-800"
                           >
-                            <option>Lớp 10</option>
-                            <option>Lớp 11</option>
-                            <option>Lớp 12</option>
+                            {VIETNAM_GRADE_LEVELS.map(level => (
+                              <option key={level}>{level}</option>
+                            ))}
                           </select>
                         </div>
                         <div className="space-y-1">

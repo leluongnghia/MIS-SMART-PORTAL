@@ -205,20 +205,32 @@ export function translateWorkspace(w: any, lang: 'vi' | 'en'): any {
     'Phòng Khảo thí & ĐBCL': 'Testing & QA',
     'Tổ Công tác Học sinh & Tham vấn': 'Student Affairs',
     'Phòng Dịch vụ & Vận hành Học đường': 'School Services',
-    'Tổ Chuyên môn Toán - Tin': 'Math & IT',
+    'Tổ Chuyên môn Toán - Tin học': 'Math & IT',
     'Tổ Chuyên môn Ngữ văn': 'Literature',
-    'Tổ Ngữ văn phòng & Kế toán - Tài chính': 'Admin & Finance'
+    'Tổ Chuyên môn Ngoại ngữ': 'Foreign Languages',
+    'Tổ Chuyên môn Khoa học Tự nhiên': 'Natural Sciences',
+    'Tổ Chuyên môn Lịch sử - Địa lí': 'History & Geography',
+    'Tổ GDCD & Giáo dục Kinh tế - Pháp luật': 'Civics & Economics-Law',
+    'Tổ Nghệ thuật - Thể chất - QP-AN': 'Arts, PE & Defense',
+    'Tổ Công nghệ & Hoạt động trải nghiệm': 'Technology & Activities',
+    'Tổ Văn phòng & Kế toán - Tài chính': 'Admin & Finance'
   };
   const descs: Record<string, string> = {
     'Tổng quan công việc toàn trường': 'Overview of school-wide operations',
     'Chỉ đạo điều hành vĩ mô, phê chuẩn chiến lược và chính sách học thuật': 'Macro management, academic strategies & approvals',
-    'Tư vấn tuyển sinh, chăm sóc phụ huynh, truyền thống thương hiệu và đối ngoại': 'Enrollment consulting, parent care & brand PR',
+    'Tư vấn tuyển sinh, chăm sóc phụ huynh, truyền thông thương hiệu và đối ngoại': 'Enrollment consulting, parent care & brand PR',
     'Bản quyền giáo trình quốc tế, quản lý giáo viên nước ngoài và điều phối giao lưu song ngữ': 'International curricula, foreign teachers & bilingual coordination',
     'Rà soát kiểm tra đánh giá, cơ sở dữ liệu học vụ, khảo sát và kiểm định định kỳ': 'Assessments review, academic databases & quality assurance',
-    'Nề nếp bán trú, hoạt động ngoại khóa CLB, kỷ luật tích cực và tham vấn tâm lý học đường': 'Boarding discipline, clubs, active discipline & counseling',
-    'Dịch vụ xe đưa đón học sinh, bếp ăn bán trú, y tế và an ninh': 'xe buýt trường học management, canteen nutrition, medical & security',
-    'Giảng dạy Toán - Tin chương trình Việt Nam, bổ trợ ôn tập học sinh giỏi': 'Math & IT teaching, gifted students coaching',
-    'Giảng dạy Ngữ văn, các chuyên đề văn học nghệ thuật xã hội, nghiên cứu văn hóa': 'Literature teaching, literary seminars & cultural research',
+    'Nề nếp bán trú, hoạt động ngoại khóa CLB, kỷ luật tích cực và tâm lý học đường': 'Boarding discipline, clubs, active discipline & counseling',
+    'Dịch vụ xe đưa đón học sinh, bếp ăn bán trú, y tế và an ninh': 'School bus management, canteen nutrition, medical & security',
+    'Giảng dạy Toán học, Tin học theo Chương trình GDPT 2018': 'Math & IT teaching according to Curriculum 2018',
+    'Giảng dạy Ngữ văn, văn học và truyền thông văn hóa nghệ thuật': 'Literature teaching, literature & cultural arts communication',
+    'Giảng dạy Tiếng Anh, Tiếng Pháp, Tiếng Đức và giao tiếp hội nhập quốc tế': 'Foreign languages (English, French, German) & international integration',
+    'Giảng dạy môn Khoa học tự nhiên liên cấp (Vật lí, Hóa học, Sinh học)': 'Natural Sciences teaching (Physics, Chemistry, Biology)',
+    'Giảng dạy môn Lịch sử, Địa lí và Giáo dục địa phương': 'History, Geography & local education teaching',
+    'Giảng dạy Giáo dục công dân, Giáo dục Kinh tế & Pháp luật': 'Civics, Economics & Law teaching',
+    'Giảng dạy Giáo dục thể chất, GDQP-AN, Âm nhạc và Mĩ thuật': 'Physical Education, Defense Education, Music and Fine Arts',
+    'Giảng dạy môn Công nghệ, Thiết kế kĩ thuật, Hoạt động trải nghiệm hướng nghiệp': 'Technology, engineering, experiential activities & career guidance',
     'Quản lý thu chi học phí, thủ quỹ ngân sách, hồ sơ cán bộ, pháp chế và thủ tục hành chính': 'Tuition management, budgeting, staff records & admin legalities'
   };
   return {

@@ -1,4 +1,4 @@
-export type Role = 'ADMIN' | 'MANAGER' | 'STAFF';
+export type Role = 'ADMIN' | 'MANAGER' | 'STAFF' | 'PARENT' | 'STUDENT';
 
 export interface RolePermissions {
   createTask: boolean;       // Khởi tạo chỉ đạo / nhiệm vụ mới
@@ -39,6 +39,8 @@ export interface UserProfile {
   cpdLog?: { id: string; title: string; hours: number; date: string }[];
   kpiLocked?: boolean;
   email?: string;
+  parentEmail?: string;
+  studentCode?: string;
 }
 
 export type TaskPriority = 'CAO' | 'TRUNG_BINH' | 'THAP';
@@ -208,4 +210,73 @@ export function getSafeAvatar(avatarUrl: string | null | undefined, name?: strin
     return RELIABLE_AVATARS[index];
   }
   return avatarUrl;
+}
+
+export interface AcademicYearRecord {
+  id: string;
+  schoolYear: string;
+  className: string;
+  gpa: number;
+  conduct: string;
+  teacherName: string;
+}
+
+export interface HealthIncident {
+  id: string;
+  date: string;
+  symptoms: string;
+  treatment: string;
+  nurseName: string;
+  status: 'DA_XU_LY' | 'THEO_DOI';
+}
+
+export interface VaccinationRecord {
+  id: string;
+  vaccineName: string;
+  date: string;
+  dose: string;
+}
+
+export interface InventoryItem {
+  id: string;
+  code: string;
+  name: string;
+  category: 'SACH' | 'THIET_BI';
+  location: string;
+  quantity: number;
+  status: 'SAN_SANG' | 'DANG_CHO_MUON' | 'BAO_HONG' | 'THANH_LY';
+  condition: 'MOI' | 'BINH_THUONG' | 'CU' | 'HONG';
+}
+
+export interface BorrowLog {
+  id: string;
+  itemCode: string;
+  itemName: string;
+  category: 'SACH' | 'THIET_BI';
+  borrowerName: string;
+  borrowerRole: 'TEACHER' | 'STUDENT';
+  borrowDate: string;
+  dueDate: string;
+  returnDate?: string;
+  status: 'DANG_MUON' | 'DA_TRA' | 'QUA_HAN' | 'BAO_MAT';
+}
+
+export interface SisAuditLog {
+  id: string;
+  timestamp: string;
+  operatorName: string;
+  operatorRole: string;
+  action: string;
+  targetStudentName: string;
+  details: string;
+}
+
+export interface TimetableSlot {
+  id: string;
+  day: number;
+  period: number;
+  subject: string;
+  className: string;
+  room: string;
+  teacherId: string;
 }

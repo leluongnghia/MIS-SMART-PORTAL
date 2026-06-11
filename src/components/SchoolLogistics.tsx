@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { translateBooking, translateIssue } from '../utils/translations';
 import { 
@@ -14,7 +14,9 @@ import {
   CheckCircle,
   AlertCircle
 } from 'lucide-react';
-import { UserProfile } from '../types';
+import { UserProfile, InventoryItem, BorrowLog } from '../types';
+import { MOCK_INVENTORY_ITEMS, MOCK_BORROW_LOGS } from '../mockData';
+import { BookOpen, FileText } from 'lucide-react';
 
 interface SchoolLogisticsProps {
   currentUser: UserProfile;
@@ -54,6 +56,161 @@ const ROOMS_LIST = [
 
 export default function SchoolLogistics({ currentUser }: SchoolLogisticsProps) {
   const { lang, t } = useLanguage();
+  const [activeSubTab, setActiveSubTab] = useState<'ROOMS_ISSUES' | 'INVENTORY'>('ROOMS_ISSUES');
+
+  // Inventory & Library states
+  const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>(() => {
+    const saved = localStorage.getItem('mis_inventory_items_v3');
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) {}
+    }
+    return MOCK_INVENTORY_ITEMS;
+  });
+
+  const [borrowLogs, setBorrowLogs] = useState<BorrowLog[]>(() => {
+    const saved = localStorage.getItem('mis_borrow_logs_v3');
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) {}
+    }
+    return MOCK_BORROW_LOGS;
+  });
+
+  // Sync to local storage
+  useEffect(() => {
+    localStorage.setItem('mis_inventory_items_v3', JSON.stringify(inventoryItems));
+  }, [inventoryItems]);
+
+  useEffect(() => {
+    localStorage.setItem('mis_borrow_logs_v3', JSON.stringify(borrowLogs));
+  }, [borrowLogs]);
+
+  // Inventory filters and form states
+  const [searchItemQuery, setSearchItemQuery] = useState('');
+  const [itemCategoryFilter, setItemCategoryFilter] = useState<'ALL' | 'SACH' | 'THIET_BI'>('ALL');
+  const [itemStatusFilter, setItemStatusFilter] = useState<'ALL' | 'SAN_SANG' | 'DANG_CHO_MUON' | 'BAO_HONG' | 'THANH_LY'>('ALL');
+
+  // Borrow form states
+  const [borrowItemCode, setBorrowItemCode] = useState('');
+  const [borrowerName, setBorrowerName] = useState('');
+  const [borrowerRole, setBorrowerRole] = useState<'TEACHER' | 'STUDENT'>('STUDENT');
+  const [borrowDate, setBorrowDate] = useState(() => new Date().toISOString().substring(0, 10));
+  const [borrowDueDate, setBorrowDueDate] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 7);
+    return d.toISOString().substring(0, 10);
+  });
+  const [showBorrowForm, setShowBorrowForm] = useState(false);
+
+  // Liquidation / status form states
+  const [updateItemCode, setUpdateItemCode] = useState('');
+  const [updateItemStatus, setUpdateItemStatus] = useState<'SAN_SANG' | 'DANG_CHO_MUON' | 'BAO_HONG' | 'THANH_LY'>('SAN_SANG');
+  const [updateItemCondition, setUpdateItemCondition] = useState<'MOI' | 'BINH_THUONG' | 'CU' | 'HONG'>('BINH_THUONG');
+  const [showUpdateForm, setShowUpdateForm] = useState(false);
+
+  // Handlers for Inventory
+  const handleCreateBorrowLog = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!borrowItemCode || !borrowerName.trim()) return;
+
+    // Check if item exists and has quantity
+    const matchedItem = inventoryItems.find(item => item.code === borrowItemCode);
+    if (!matchedItem) {
+      alert('Không tìm thấy tài sản với mã này trong hệ thống.');
+      return;
+    }
+    if (matchedItem.quantity <= 0) {
+      alert('Số lượng trong kho đã hết. Không thể cho mượn.');
+      return;
+    }
+
+    const newLog: BorrowLog = {
+      id: 'br_' + Date.now(),
+      itemCode: borrowItemCode,
+      itemName: matchedItem.name,
+      category: matchedItem.category,
+      borrowerName: borrowerName.trim(),
+      borrowerRole,
+      borrowDate,
+      dueDate: borrowDueDate,
+      status: 'DANG_MUON'
+    };
+
+    // Decrement item quantity and update status if quantity becomes 0
+    setInventoryItems(prevItems => prevItems.map(item => {
+      if (item.code === borrowItemCode) {
+        const nextQty = item.quantity - 1;
+        return {
+          ...item,
+          quantity: nextQty,
+          status: nextQty === 0 ? 'DANG_CHO_MUON' : item.status
+        };
+      }
+      return item;
+    }));
+
+    setBorrowLogs([newLog, ...borrowLogs]);
+    setBorrowItemCode('');
+    setBorrowerName('');
+    setShowBorrowForm(false);
+    alert('Đăng ký phiếu mượn tài sản thành công!');
+  };
+
+  const handleReturnItem = (logId: string) => {
+    const log = borrowLogs.find(l => l.id === logId);
+    if (!log) return;
+
+    setBorrowLogs(prevLogs => prevLogs.map(l => {
+      if (l.id === logId) {
+        return {
+          ...l,
+          status: 'DA_TRA',
+          returnDate: new Date().toISOString().substring(0, 10)
+        };
+      }
+      return l;
+    }));
+
+    // Increment item quantity and mark ready
+    setInventoryItems(prevItems => prevItems.map(item => {
+      if (item.code === log.itemCode) {
+        return {
+          ...item,
+          quantity: item.quantity + 1,
+          status: item.status === 'DANG_CHO_MUON' ? 'SAN_SANG' : item.status
+        };
+      }
+      return item;
+    }));
+
+    alert('Đã ghi nhận trả tài sản thành công!');
+  };
+
+  const handleUpdateItemStatus = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!updateItemCode) return;
+
+    const matchedItem = inventoryItems.find(item => item.code === updateItemCode);
+    if (!matchedItem) {
+      alert('Không tìm thấy tài sản với mã này.');
+      return;
+    }
+
+    setInventoryItems(prevItems => prevItems.map(item => {
+      if (item.code === updateItemCode) {
+        return {
+          ...item,
+          status: updateItemStatus,
+          condition: updateItemCondition
+        };
+      }
+      return item;
+    }));
+
+    setUpdateItemCode('');
+    setShowUpdateForm(false);
+    alert('Cập nhật trạng thái và kiểm kê tài sản thành công!');
+  };
+
   // 1. Quản lý Đăng ký phòng
   const [bookings, setBookings] = useState<RoomBooking[]>(() => {
     const saved = localStorage.getItem('mis_logistics_bookings');
@@ -203,6 +360,17 @@ export default function SchoolLogistics({ currentUser }: SchoolLogisticsProps) {
     setMaintenanceNotes(prev => ({ ...prev, [id]: '' }));
   };
 
+  const filteredInventory = useMemo(() => {
+    return inventoryItems.filter(item => {
+      const matchesSearch = item.name.toLowerCase().includes(searchItemQuery.toLowerCase()) || item.code.toLowerCase().includes(searchItemQuery.toLowerCase());
+      const matchesCategory = itemCategoryFilter === 'ALL' || item.category === itemCategoryFilter;
+      const matchesStatus = itemStatusFilter === 'ALL' || item.status === itemStatusFilter;
+      return matchesSearch && matchesCategory && matchesStatus;
+    });
+  }, [inventoryItems, searchItemQuery, itemCategoryFilter, itemStatusFilter]);
+
+  const canManageInventory = currentUser.role === 'ADMIN' || currentUser.title.includes('Thư viện') || currentUser.workspaceId === 'HANH_CHINH';
+
   return (
     <div className="w-full space-y-6 animate-fade-in" id="school-logistics-root">
       
@@ -223,7 +391,28 @@ export default function SchoolLogistics({ currentUser }: SchoolLogisticsProps) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+      {/* Sub Tabs Navigation */}
+      <div className="flex border-b border-slate-200 dark:border-slate-800 select-none">
+        <button
+          onClick={() => setActiveSubTab('ROOMS_ISSUES')}
+          className={'px-6 py-3 text-xs font-bold border-b-2 transition-all cursor-pointer ' + (
+            activeSubTab === 'ROOMS_ISSUES' ? 'border-teal-600 text-teal-600 dark:text-teal-400 font-bold' : 'border-transparent text-slate-500 hover:text-slate-700'
+          )}
+        >
+          📅 Đặt phòng &amp; Báo hỏng thiết bị
+        </button>
+        <button
+          onClick={() => setActiveSubTab('INVENTORY')}
+          className={'px-6 py-3 text-xs font-bold border-b-2 transition-all cursor-pointer ' + (
+            activeSubTab === 'INVENTORY' ? 'border-teal-600 text-teal-600 dark:text-teal-400 font-bold' : 'border-transparent text-slate-500 hover:text-slate-700'
+          )}
+        >
+          📚 Thư viện &amp; Kho thiết bị (Inventory)
+        </button>
+      </div>
+
+      {activeSubTab === 'ROOMS_ISSUES' ? (
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
 
         {/* 1. PHÂN HỆ ĐĂNG KÝ PHÒNG CHỨC NĂNG */}
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-3xs space-y-4">
@@ -592,6 +781,312 @@ export default function SchoolLogistics({ currentUser }: SchoolLogisticsProps) {
         </div>
 
       </div>
+      ) : (
+        <div className="space-y-6 text-xs animate-fade-in">
+          
+          {/* Inventory Controls Grid */}
+          <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+            
+            {/* Catalog list */}
+            <div className="xl:col-span-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-4 shadow-3xs">
+              <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-850 pb-3 flex-wrap gap-2">
+                <div>
+                  <h3 className="font-display font-black text-slate-900 dark:text-white text-sm flex items-center gap-1.5">
+                    <BookOpen className="text-teal-600 w-4.5 h-4.5" />
+                    Danh mục Tài sản &amp; Sách Thư viện
+                  </h3>
+                  <p className="text-[10.5px] text-slate-500">Xem và lọc danh sách sách thư viện cùng các trang thiết bị trường học.</p>
+                </div>
+                
+                <div className="flex gap-2">
+                  {canManageInventory && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => { setShowBorrowForm(!showBorrowForm); setShowUpdateForm(false); }}
+                        className="px-2.5 py-1.5 bg-teal-650 hover:bg-teal-750 text-white font-bold rounded-lg flex items-center gap-1 cursor-pointer"
+                      >
+                        <Plus className="w-3 h-3" /> Cho mượn
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setShowUpdateForm(!showUpdateForm); setShowBorrowForm(false); }}
+                        className="px-2.5 py-1.5 bg-slate-100 dark:bg-slate-800 border border-slate-250 hover:bg-slate-200 text-slate-700 dark:text-slate-200 font-bold rounded-lg flex items-center gap-1 cursor-pointer"
+                      >
+                        <Wrench className="w-3 h-3" /> Kiểm kê/Thanh lý
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Filters & Search */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <input 
+                  value={searchItemQuery}
+                  onChange={(e) => setSearchItemQuery(e.target.value)}
+                  className="text-xs p-2 border border-slate-200 dark:border-slate-800 rounded-lg bg-slate-50 dark:bg-slate-955 focus:outline-none" 
+                  placeholder="Tìm theo tên hoặc mã tài sản..."
+                />
+                <select 
+                  value={itemCategoryFilter}
+                  onChange={(e: any) => setItemCategoryFilter(e.target.value)}
+                  className="text-xs p-2 border border-slate-200 dark:border-slate-800 rounded-lg bg-slate-50 dark:bg-slate-955 text-slate-700 dark:text-slate-300"
+                >
+                  <option value="ALL">Tất cả danh mục</option>
+                  <option value="SACH">Sách (SACH)</option>
+                  <option value="THIET_BI">Thiết bị (THIET_BI)</option>
+                </select>
+                <select 
+                  value={itemStatusFilter}
+                  onChange={(e: any) => setItemStatusFilter(e.target.value)}
+                  className="text-xs p-2 border border-slate-200 dark:border-slate-800 rounded-lg bg-slate-50 dark:bg-slate-955 text-slate-700 dark:text-slate-300"
+                >
+                  <option value="ALL">Tất cả trạng thái</option>
+                  <option value="SAN_SANG">Sẵn sàng</option>
+                  <option value="DANG_CHO_MUON">Đang cho mượn</option>
+                  <option value="BAO_HONG">Báo hỏng</option>
+                  <option value="THANH_LY">Thanh lý</option>
+                </select>
+              </div>
+
+              {/* Forms */}
+              {showBorrowForm && (
+                <form onSubmit={handleCreateBorrowLog} className="bg-slate-50 dark:bg-slate-950 p-4 border border-slate-200 dark:border-slate-850 rounded-xl space-y-3">
+                  <h4 className="font-bold text-slate-800 dark:text-slate-200">Đăng ký cho mượn tài sản / sách</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <div>
+                      <label className="text-[9px] uppercase font-bold text-slate-500 block mb-1">Mã tài sản</label>
+                      <select 
+                        value={borrowItemCode} 
+                        onChange={(e) => setBorrowItemCode(e.target.value)}
+                        className="w-full text-xs p-2 border border-slate-200 dark:border-slate-800 rounded bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:outline-none"
+                        required
+                      >
+                        <option value="">-- Chọn tài sản --</option>
+                        {inventoryItems.filter(item => item.quantity > 0 && item.status === 'SAN_SANG').map(item => (
+                          <option key={item.id} value={item.code}>{item.name} ({item.code} - còn {item.quantity})</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-[9px] uppercase font-bold text-slate-500 block mb-1">Tên người mượn</label>
+                      <input 
+                        value={borrowerName} 
+                        onChange={(e) => setBorrowerName(e.target.value)}
+                        className="w-full text-xs p-2 border border-slate-200 dark:border-slate-800 rounded bg-white text-slate-800 dark:text-slate-200 focus:outline-none" 
+                        placeholder="Nguyễn Văn A..." 
+                        required 
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[9px] uppercase font-bold text-slate-500 block mb-1">Vai trò</label>
+                      <select 
+                        value={borrowerRole} 
+                        onChange={(e: any) => setBorrowerRole(e.target.value)}
+                        className="w-full text-xs p-2 border border-slate-200 dark:border-slate-800 rounded bg-white dark:bg-slate-900 text-slate-850 dark:text-slate-350 focus:outline-none"
+                      >
+                        <option value="STUDENT">Học sinh</option>
+                        <option value="TEACHER">Giáo viên</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-[9px] uppercase font-bold text-slate-500 block mb-1">Ngày mượn</label>
+                      <input 
+                        type="date"
+                        value={borrowDate} 
+                        onChange={(e) => setBorrowDate(e.target.value)}
+                        className="w-full text-xs p-2 border border-slate-200 dark:border-slate-800 rounded bg-white text-slate-800 dark:text-slate-200"
+                        required 
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[9px] uppercase font-bold text-slate-500 block mb-1">Hạn trả dự kiến</label>
+                      <input 
+                        type="date"
+                        value={borrowDueDate} 
+                        onChange={(e) => setBorrowDueDate(e.target.value)}
+                        className="w-full text-xs p-2 border border-slate-200 dark:border-slate-800 rounded bg-white text-slate-800 dark:text-slate-200"
+                        required 
+                      />
+                    </div>
+                  </div>
+                  <div className="flex gap-2 justify-end">
+                    <button type="button" onClick={() => setShowBorrowForm(false)} className="px-3 py-1.5 border border-slate-200 rounded-lg font-semibold text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-900">Hủy</button>
+                    <button type="submit" className="px-3.5 py-1.5 bg-teal-655 text-white font-bold rounded-lg">Cho mượn</button>
+                  </div>
+                </form>
+              )}
+
+              {showUpdateForm && (
+                <form onSubmit={handleUpdateItemStatus} className="bg-slate-50 dark:bg-slate-950 p-4 border border-slate-200 dark:border-slate-850 rounded-xl space-y-3">
+                  <h4 className="font-bold text-slate-800 dark:text-slate-200">Kiểm kê tình trạng &amp; Thanh lý tài sản</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <div>
+                      <label className="text-[9px] uppercase font-bold text-slate-500 block mb-1">Tài sản cần cập nhật</label>
+                      <select 
+                        value={updateItemCode} 
+                        onChange={(e) => setUpdateItemCode(e.target.value)}
+                        className="w-full text-xs p-2 border border-slate-200 dark:border-slate-800 rounded bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:outline-none"
+                        required
+                      >
+                        <option value="">-- Chọn tài sản --</option>
+                        {inventoryItems.map(item => (
+                          <option key={item.id} value={item.code}>{item.name} ({item.code})</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-[9px] uppercase font-bold text-slate-500 block mb-1">Trạng thái vận hành</label>
+                      <select 
+                        value={updateItemStatus} 
+                        onChange={(e: any) => setUpdateItemStatus(e.target.value)}
+                        className="w-full text-xs p-2 border border-slate-200 dark:border-slate-800 rounded bg-white dark:bg-slate-900 text-slate-805 dark:text-slate-350 focus:outline-none"
+                      >
+                        <option value="SAN_SANG">Sẵn sàng</option>
+                        <option value="DANG_CHO_MUON">Đang cho mượn</option>
+                        <option value="BAO_HONG">Báo hỏng</option>
+                        <option value="THANH_LY">Thanh lý (Liquidated)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-[9px] uppercase font-bold text-slate-500 block mb-1">Hiện trạng vật lý</label>
+                      <select 
+                        value={updateItemCondition} 
+                        onChange={(e: any) => setUpdateItemCondition(e.target.value)}
+                        className="w-full text-xs p-2 border border-slate-200 dark:border-slate-800 rounded bg-white dark:bg-slate-900 text-slate-805 dark:text-slate-350 focus:outline-none"
+                      >
+                        <option value="MOI">Mới 100%</option>
+                        <option value="BINH_THUONG">Bình thường</option>
+                        <option value="CU">Cũ/Đã qua sử dụng</option>
+                        <option value="HONG">Hỏng hóc/Cần sửa chữa</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="flex gap-2 justify-end">
+                    <button type="button" onClick={() => setShowUpdateForm(false)} className="px-3 py-1.5 border border-slate-200 rounded-lg font-semibold text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-900">Hủy</button>
+                    <button type="submit" className="px-3.5 py-1.5 bg-rose-650 text-white font-bold rounded-lg">Cập nhật kiểm kê</button>
+                  </div>
+                </form>
+              )}
+
+              {/* Table list */}
+              <div className="rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden bg-white dark:bg-slate-900">
+                <table className="w-full text-xs text-left">
+                  <thead className="bg-slate-50 dark:bg-slate-950 text-slate-500">
+                    <tr>
+                      <th className="px-4 py-2.5">Mã TS</th>
+                      <th className="px-4 py-2.5">Tên tài sản</th>
+                      <th className="px-4 py-2.5">Vị trí</th>
+                      <th className="text-center px-4 py-2.5">SL tồn kho</th>
+                      <th className="px-4 py-2.5">Tình trạng</th>
+                      <th className="px-4 py-2.5">Trạng thái</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-150 dark:divide-slate-850">
+                    {filteredInventory.map(item => {
+                      const conditionBadge = item.condition === 'MOI' 
+                        ? 'bg-emerald-50 border-emerald-150 text-emerald-700'
+                        : item.condition === 'HONG'
+                        ? 'bg-rose-50 border-rose-150 text-rose-700 animate-pulse'
+                        : 'bg-slate-50 border-slate-200 text-slate-650';
+                      
+                      const statusBadge = item.status === 'SAN_SANG'
+                        ? 'bg-emerald-550/10 text-emerald-700 border-emerald-200/50'
+                        : item.status === 'THANH_LY'
+                        ? 'bg-rose-550/10 text-rose-700 border-rose-200/50'
+                        : 'bg-amber-550/10 text-amber-705 border-amber-200/50';
+
+                      return (
+                        <tr key={item.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-850/30">
+                          <td className="px-4 py-2.5 font-bold font-mono text-slate-700 dark:text-slate-350">{item.code}</td>
+                          <td className="px-4 py-2.5">
+                            <strong>{item.name}</strong>
+                            <span className="text-[10px] text-slate-450 block">{item.category === 'SACH' ? '📚 Sách giáo khoa' : '⚙️ Trang thiết bị'}</span>
+                          </td>
+                          <td className="px-4 py-2.5 text-slate-500">{item.location}</td>
+                          <td className="px-4 py-2.5 text-center font-bold text-slate-800 dark:text-slate-200">{item.quantity}</td>
+                          <td className="px-4 py-2.5">
+                            <span className={'px-2 py-0.5 rounded border text-[9.5px] font-bold ' + conditionBadge}>
+                              {item.condition === 'MOI' ? 'Mới' : item.condition === 'BINH_THUONG' ? 'Tốt' : item.condition === 'CU' ? 'Cũ' : 'Hỏng'}
+                            </span>
+                          </td>
+                          <td className="px-4 py-2.5">
+                            <span className={'px-2 py-0.5 rounded border text-[9.5px] font-bold ' + statusBadge}>
+                              {item.status === 'SAN_SANG' ? 'Sẵn sàng' : item.status === 'DANG_CHO_MUON' ? 'Đang mượn' : item.status === 'BAO_HONG' ? 'Hỏng hóc' : 'Thanh lý'}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Borrow return logs */}
+            <div className="xl:col-span-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-4 shadow-3xs">
+              <div>
+                <h3 className="font-display font-black text-slate-900 dark:text-white text-sm flex items-center gap-1.5">
+                  <FileText className="text-teal-600 w-4.5 h-4.5" />
+                  Nhật ký Mượn - Trả tài sản
+                </h3>
+                <p className="text-[10.5px] text-slate-500">Tra cứu quá trình bàn giao mượn trả tài sản giảng dạy.</p>
+              </div>
+
+              <div className="space-y-3.5 max-h-[500px] overflow-y-auto pr-1">
+                {borrowLogs.map(log => {
+                  const isReturned = log.status === 'DA_TRA';
+                  const isOverdue = log.status === 'QUA_HAN';
+                  const badgeStyle = isReturned
+                    ? 'bg-emerald-50 border-emerald-150 text-emerald-700'
+                    : isOverdue
+                    ? 'bg-rose-50 border-rose-150 text-rose-700 animate-pulse'
+                    : 'bg-amber-50 border-amber-150 text-amber-705';
+
+                  return (
+                    <div key={log.id} className="p-3.5 border border-slate-200 dark:border-slate-850 rounded-xl space-y-2 bg-slate-50/35 dark:bg-slate-950/20 font-sans">
+                      <div className="flex justify-between items-start gap-2">
+                        <div>
+                          <strong className="text-slate-800 dark:text-white font-bold block">{log.itemName}</strong>
+                          <span className="text-[9.5px] text-slate-450 block font-mono mt-0.5">{log.itemCode}</span>
+                        </div>
+                        <span className={'px-2 py-0.5 rounded border text-[9px] font-black uppercase ' + badgeStyle}>
+                          {log.status === 'DA_TRA' ? 'Đã trả' : log.status === 'QUA_HAN' ? 'Quá hạn' : 'Đang mượn'}
+                        </span>
+                      </div>
+                      
+                      <div className="space-y-0.5 text-[10.5px] text-slate-650 dark:text-slate-400 font-sans border-t border-slate-100 dark:border-slate-850 pt-2">
+                        <p>👤 Người mượn: <strong>{log.borrowerName}</strong> ({log.borrowerRole === 'TEACHER' ? 'GV' : 'HS'})</p>
+                        <p>📅 Ngày mượn: {log.borrowDate}</p>
+                        <p>⏰ Hạn trả: <strong className={isOverdue ? 'text-rose-600' : 'text-slate-700'}>{log.dueDate}</strong></p>
+                        {log.returnDate && <p>✅ Ngày thực tế trả: <strong>{log.returnDate}</strong></p>}
+                      </div>
+
+                      {canManageInventory && !isReturned && (
+                        <div className="flex justify-end pt-1">
+                          <button
+                            onClick={() => handleReturnItem(log.id)}
+                            className="px-2.5 py-0.5 bg-emerald-600 hover:bg-emerald-705 text-white font-bold text-[9.5px] rounded cursor-pointer flex items-center gap-0.5"
+                          >
+                            <Check className="w-3 h-3" /> Xác nhận Trả tài sản
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+                {borrowLogs.length === 0 && (
+                  <p className="text-center py-8 text-slate-400 italic">Chưa ghi nhận lịch sử bàn giao nào.</p>
+                )}
+              </div>
+            </div>
+
+          </div>
+        </div>
+      )}
     </div>
   );
 }
