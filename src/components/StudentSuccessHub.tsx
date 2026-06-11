@@ -24,6 +24,7 @@ import { exportToCsv } from '../utils/exportUtils';
 import { UserProfile, AcademicYearRecord, HealthIncident, VaccinationRecord, SisAuditLog } from '../types';
 import { getGradeLevelFromClassName, getSubjectsForClassName } from '../utils/vietnameseCurriculum';
 import { encryptData, decryptData, generateBackupSignature } from '../utils/security';
+import { normalizeStudentProfile, normalizeStudentProfiles } from '../utils/peopleDirectory';
 
 type ConductLevel = 'Tốt' | 'Khá' | 'Trung bình';
 type AttendanceStatus = 'PRESENT' | 'LATE' | 'ABSENT' | 'EXCUSED';
@@ -136,7 +137,7 @@ const generateMockData = () => {
         const avatarIndex = (studentCount % 70) + 1;
         const avatar = `https://xsgames.co/randomusers/assets/avatars/${gender === 'Nữ' ? 'female' : 'male'}/${avatarIndex}.jpg`;
 
-        studentsList.push({
+        const baseStudent: StudentRecord = {
           id: studentId,
           code: `MIS-${String(grade).padStart(2, '0')}A${c}-${String(s).padStart(3, '0')}`,
           name: name,
@@ -168,7 +169,10 @@ const generateMockData = () => {
           academicHistory: [
             { id: `hist_${studentCount}_1`, schoolYear: '2024-2025', className: `${grade - 1 > 0 ? grade - 1 : 1}A${c}`, gpa: Number((6.5 + Math.random() * 3).toFixed(1)), conduct: 'Tốt', teacherName: 'Cô Nguyễn Thanh Lan' }
           ]
-        });
+        };
+        const normalizedStudent = normalizeStudentProfile(baseStudent, studentCount, { refreshContact: true }) as StudentRecord;
+        normalizedStudent.avatar = `https://xsgames.co/randomusers/assets/avatars/${normalizedStudent.gender === 'Nữ' ? 'female' : 'male'}/${avatarIndex}.jpg`;
+        studentsList.push(normalizedStudent);
         
         // Generate 2 random grades for this student
         const sub1 = classSubjects[studentCount % classSubjects.length] || 'Toán';
@@ -281,7 +285,7 @@ function statusColor(status: AttendanceStatus) {
 }
 
 export default function StudentSuccessHub({ currentUser }: { currentUser: UserProfile }) {
-  const [students, setStudents] = useState<StudentRecord[]>(() => readStored(STUDENT_STORAGE_KEY, initialStudents));
+  const [students, setStudents] = useState<StudentRecord[]>(() => normalizeStudentProfiles(readStored(STUDENT_STORAGE_KEY, initialStudents)) as StudentRecord[]);
   const [grades, setGrades] = useState<GradeEntry[]>(() => readStored(GRADE_STORAGE_KEY, initialGrades));
   const [attendance, setAttendance] = useState<AttendanceEntry[]>(() => readStored(ATTENDANCE_STORAGE_KEY, initialAttendance));
   const [notices, setNotices] = useState<ParentNotice[]>(() => readStored(NOTICE_STORAGE_KEY, []));
@@ -500,7 +504,7 @@ export default function StudentSuccessHub({ currentUser }: { currentUser: UserPr
     }
     if (!newStudentName.trim()) return;
     const nextId = `student_${Date.now()}`;
-    const newStudent: StudentRecord = {
+    const newStudent = normalizeStudentProfile({
       id: nextId,
       code: `MIS-10A1-${String(students.length + 1).padStart(3, '0')}`,
       name: newStudentName.trim(),
@@ -525,7 +529,7 @@ export default function StudentSuccessHub({ currentUser }: { currentUser: UserPr
       academicHistory: [],
       healthIncidents: [],
       vaccinations: []
-    };
+    }, students.length + 1, { refreshContact: true }) as StudentRecord;
     setStudents(prev => [newStudent, ...prev]);
     logSisAction('Thêm học sinh', newStudent.name, 'Thêm mới hồ sơ học sinh');
     setSelectedStudentId(nextId);

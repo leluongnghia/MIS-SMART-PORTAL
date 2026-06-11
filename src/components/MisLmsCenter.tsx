@@ -37,6 +37,7 @@ import {
 import { Task, UserProfile } from '../types';
 import { exportToCsv } from '../utils/exportUtils';
 import { ALL_VIETNAM_SUBJECT_NAMES, VIETNAM_GRADE_LEVELS, getSubjectsForClassName } from '../utils/vietnameseCurriculum';
+import { normalizeStudentProfile, normalizeStudentProfiles } from '../utils/peopleDirectory';
 
 interface MisLmsCenterProps {
   currentUser: UserProfile;
@@ -48,8 +49,13 @@ interface LmsStudent {
   id: string;
   name: string;
   className: string;
+  gender?: string;
+  birthDate?: string;
   parentName: string;
+  parentPhone?: string;
   parentEmail: string;
+  emergencyContact?: string;
+  address?: string;
 }
 
 interface ReviewAssignment {
@@ -152,14 +158,14 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
   const [lmsStudents, setLmsStudents] = useState<LmsStudent[]>(() => {
     const saved = localStorage.getItem('mis_lms_students');
     if (saved) {
-      try { return JSON.parse(saved); } catch (e) { console.error(e); }
+      try { return normalizeStudentProfiles(JSON.parse(saved)) as LmsStudent[]; } catch (e) { console.error(e); }
     }
-    return [
+    return normalizeStudentProfiles([
       { id: 'std1', name: 'Nguyễn Minh Quân', className: 'Lớp 10A1', parentName: 'Nguyễn Văn Hải', parentEmail: 'hai.nguyen@parent.mis.edu.vn' },
       { id: 'std2', name: 'Trần Mỹ Lệ', className: 'Lớp 11A2', parentName: 'Lê Thị Thu Trà', parentEmail: 'tra.le@parent.mis.edu.vn' },
       { id: 'std3', name: 'Phạm Hồng Thái', className: 'Lớp 12A1', parentName: 'Phạm Hồng Sơn', parentEmail: 'son.pham@parent.mis.edu.vn' },
       { id: 'std4', name: 'Hoàng Thùy Dương', className: 'Lớp 10A1', parentName: 'Hoàng Văn Thắng', parentEmail: 'thang.hoang@parent.mis.edu.vn' },
-    ];
+    ]) as LmsStudent[];
   });
 
   useEffect(() => {
@@ -690,13 +696,14 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
           else if (lead.grade.includes('12')) className = '12A1';
         }
 
-        const newStudent: LmsStudent = {
+        const newStudent = normalizeStudentProfile({
           id: 'std_crm_' + lead.id,
           name: lead.studentName,
           className: className,
           parentName: lead.parentName || 'Người liên hệ',
+          parentPhone: lead.phone,
           parentEmail: lead.email || `parent_${lead.phone}@parent.mis.edu.vn`
-        };
+        }) as LmsStudent;
         // Store crmLeadId dynamically
         (newStudent as any).crmLeadId = lead.id;
         return [...prevStudents, newStudent];

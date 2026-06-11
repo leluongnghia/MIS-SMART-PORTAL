@@ -865,6 +865,71 @@ export const MOCK_USERS: UserProfile[] = [
     title: 'Y tá trưởng phụ trách sức khoẻ học vụ & tủ thuốc sơ cấp cứu',
     avatar: 'https://images.unsplash.com/photo-1594744803329-e58b31de215f?w=150&h=150&fit=crop&crop=face',
     workspaceId: 'DICH_VU_HOC_DUONG'
+  },
+  {
+    id: 'user_dv_kitchen',
+    email: 'dv_kitchen@mis.edu.vn',
+    name: 'Cô Nguyễn Thị Hòa',
+    role: 'STAFF',
+    roleName: 'Nhân viên vận hành học đường',
+    title: 'Nhân viên bếp bán trú',
+    avatar: 'https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=150&h=150&fit=crop&crop=face',
+    workspaceId: 'DICH_VU_HOC_DUONG',
+    gender: 'Nữ',
+    phone: '0903456781',
+    address: 'Số 24, ngõ 16, Nam Từ Liêm, Hà Nội'
+  },
+  {
+    id: 'user_dv_canteen',
+    email: 'dv_canteen@mis.edu.vn',
+    name: 'Cô Trần Mai Hương',
+    role: 'STAFF',
+    roleName: 'Nhân viên vận hành học đường',
+    title: 'Nhân viên canteen học đường',
+    avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&h=150&fit=crop&crop=face',
+    workspaceId: 'DICH_VU_HOC_DUONG',
+    gender: 'Nữ',
+    phone: '0903456782',
+    address: 'Số 31, ngõ 8, Cầu Giấy, Hà Nội'
+  },
+  {
+    id: 'user_dv_cleaning',
+    email: 'dv_cleaning@mis.edu.vn',
+    name: 'Cô Phạm Thị Dung',
+    role: 'STAFF',
+    roleName: 'Nhân viên vận hành học đường',
+    title: 'Nhân viên tạp vụ vệ sinh học đường',
+    avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&h=150&fit=crop&crop=face',
+    workspaceId: 'DICH_VU_HOC_DUONG',
+    gender: 'Nữ',
+    phone: '0903456783',
+    address: 'Số 15, ngõ 22, Hà Đông, Hà Nội'
+  },
+  {
+    id: 'user_dv_security',
+    email: 'dv_security@mis.edu.vn',
+    name: 'Thầy Lê Văn Dũng',
+    role: 'STAFF',
+    roleName: 'Nhân viên vận hành học đường',
+    title: 'Nhân viên bảo vệ cổng trường',
+    avatar: 'https://images.unsplash.com/photo-1566492031773-4f4e44671857?w=150&h=150&fit=crop&crop=face',
+    workspaceId: 'DICH_VU_HOC_DUONG',
+    gender: 'Nam',
+    phone: '0903456784',
+    address: 'Số 42, ngõ 19, Long Biên, Hà Nội'
+  },
+  {
+    id: 'user_cths_giamthi',
+    email: 'giamthi@mis.edu.vn',
+    name: 'Thầy Nguyễn Đức Thành',
+    role: 'STAFF',
+    roleName: 'Nhân viên công tác học sinh',
+    title: 'Giám thị học đường',
+    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face',
+    workspaceId: 'CTHS_TAM_LY',
+    gender: 'Nam',
+    phone: '0903456785',
+    address: 'Số 12, ngõ 5, Thanh Xuân, Hà Nội'
   }
 ];
 

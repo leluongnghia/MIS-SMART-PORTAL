@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { UserProfile } from '../types';
 import { Target, Users, Sparkles, Award, ShieldAlert, Check, X, ArrowRightLeft, Clock, Calendar, Mail, Briefcase, BookOpen, Lock, Phone, MapPin, IdCard, UserCheck } from 'lucide-react';
+import { inferVietnameseGender } from '../utils/peopleDirectory';
 
 interface TeacherHrHubProps {
   currentUser: UserProfile;
@@ -123,7 +124,7 @@ export default function TeacherHrHub({ currentUser, users, onUpdateUsers }: Teac
       phone: user.phone || `09${String(10000000 + (seed * 7919) % 90000000).padStart(8, '0')}`,
       address: user.address || `So ${(seed % 88) + 10}, ngo ${(seed % 45) + 1}, ${addressAreas[seed % addressAreas.length]}`,
       dateOfBirth: user.dateOfBirth || `${1978 + (seed % 20)}-${month}-${day}`,
-      gender: user.gender || (seed % 3 === 0 ? 'Nam' : 'Nữ'),
+      gender: user.gender || inferVietnameseGender(user.name),
       startDate: user.startDate || `${startYears[seed % startYears.length]}-08-${String((seed % 15) + 1).padStart(2, '0')}`,
       contractType: user.contractType || (isManager ? 'Hợp đồng quản lý toàn thời gian' : 'Hợp đồng lao động toàn thời gian'),
       qualification: user.qualification || (isManager ? 'Thạc sĩ Quản trị giáo dục' : isTeacher ? 'Cử nhân/Thạc sĩ Sư phạm' : 'Cử nhân chuyên ngành phù hợp'),

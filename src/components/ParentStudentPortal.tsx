@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { UserProfile, AcademicYearRecord, HealthIncident, VaccinationRecord, BorrowLog } from '../types';
 import { encryptData, decryptData } from '../utils/security';
+import { normalizeStudentProfile, normalizeStudentProfiles } from '../utils/peopleDirectory';
 
 interface ParentStudentPortalProps {
   currentUser: UserProfile;
@@ -88,7 +89,14 @@ const DEFAULT_PORTAL_STUDENT = {
   code: 'MIS-10A1-001',
   name: 'Nguyễn Minh Quân',
   className: '10A1',
+  gender: 'Nam',
+  birthDate: '2010-09-05',
   avatar: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150&h=150&fit=crop&crop=face',
+  parentName: 'Nguyễn Văn Hải',
+  parentPhone: '0912345678',
+  parentEmail: 'parent.1@parent.mis.edu.vn',
+  emergencyContact: '0812345678',
+  address: 'Số 18, ngõ 12, Cầu Giấy, Hà Nội',
   scholarship: 'Không',
   awards: ['Học sinh tích cực trong hoạt động lớp'],
   healthNote: 'Bình thường',
@@ -100,7 +108,7 @@ export default function ParentStudentPortal({ currentUser, onLogout }: ParentStu
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Read data synced with SIS
-  const students = useMemo(() => readStored<any[]>('mis_sis_students_v3', []), []);
+  const students = useMemo(() => normalizeStudentProfiles(readStored<any[]>('mis_sis_students_v3', [])), []);
   const [grades, setGrades] = useState<any[]>(() => readStored<any[]>('mis_sis_grades_v3', []));
   const attendance = useMemo(() => readStored<any[]>('mis_sis_attendance_v3', []), []);
   const notices = useMemo(() => readStored<any[]>('mis_sis_parent_notices_v3', []), []);
@@ -114,7 +122,7 @@ export default function ParentStudentPortal({ currentUser, onLogout }: ParentStu
     if (currentUser.role === 'PARENT') {
       return students.find(s => s.parentEmail === currentUser.parentEmail) || students[0];
     }
-    return students[0] || DEFAULT_PORTAL_STUDENT;
+    return students[0] || normalizeStudentProfile(DEFAULT_PORTAL_STUDENT);
   }, [students, currentUser]);
 
   // Automatically populate rich, realistic grades if the student has fewer than 5 subjects

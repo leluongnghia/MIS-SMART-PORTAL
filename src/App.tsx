@@ -7,6 +7,7 @@ import { enrichUserWithMIDetails, MI_KEY_DETAILS } from './miAndOkrUtils';
 import { MIProfile } from './types';
 import { db, auth, handleFirestoreError, OperationType } from './firebase';
 import { encryptData, decryptData } from './utils/security';
+import { normalizeTaskAssigneeRoles, normalizeUserProfile, normalizeUserProfiles } from './utils/peopleDirectory';
 import { 
   collection, 
   doc, 
@@ -266,7 +267,7 @@ export default function App() {
   }, [darkMode]);
 
   // Persistence state
-  const [tasks, setTasks] = useState<Task[]>(() => readLocalJson<Task[]>(LOCAL_TASKS_KEY, INITIAL_TASKS));
+  const [tasks, setTasks] = useState<Task[]>(() => normalizeTaskAssigneeRoles(readLocalJson<Task[]>(LOCAL_TASKS_KEY, INITIAL_TASKS), normalizeUserProfiles(MOCK_USERS)));
   const [workspaces, setWorkspaces] = useState<Workspace[]>(() => readLocalJson<Workspace[]>(LOCAL_WORKSPACES_KEY, INITIAL_WORKSPACES));
   const [isWorkspaceModalOpen, setIsWorkspaceModalOpen] = useState(false);
 
@@ -277,15 +278,15 @@ export default function App() {
       try {
         // Try decrypting first; fallback to plain JSON for backward compatibility
         const decrypted = decryptData(saved);
-        if (decrypted !== null) return decrypted as UserProfile[];
-        return JSON.parse(saved);
+        if (decrypted !== null) return normalizeUserProfiles(decrypted as UserProfile[]);
+        return normalizeUserProfiles(JSON.parse(saved));
       } catch (e) {
         console.error(e);
       }
     }
-    const initUsers = MOCK_USERS.map(u => {
+    const initUsers = MOCK_USERS.map((u, index) => {
       const enriched = enrichUserWithMIDetails(u);
-      return {
+      return normalizeUserProfile({
         ...enriched,
         cpdHours: u.id === 'user_nhan' ? 24 : u.id === 'user_nhung' ? 18 : u.id === 'user_dat' ? 12 : 8,
         cpdLog: [
@@ -293,15 +294,16 @@ export default function App() {
           { id: 'cpd_2', title: 'Hội thảo Đổi mới Phương pháp Giáo dục liên môn', hours: 4, date: '2026-05-18' }
         ],
         kpiLocked: false
-      };
+      }, index);
     });
     localStorage.setItem('school_task_manager_users_profiles', encryptData(initUsers));
     return initUsers;
   });
 
   const saveUsers = (updatedUsers: UserProfile[]) => {
-    setUsers(updatedUsers);
-    localStorage.setItem('school_task_manager_users_profiles', encryptData(updatedUsers));
+    const normalizedUsers = normalizeUserProfiles(updatedUsers);
+    setUsers(normalizedUsers);
+    localStorage.setItem('school_task_manager_users_profiles', encryptData(normalizedUsers));
   };
 
   const [selectedStaffProfile, setSelectedStaffProfile] = useState<UserProfile | null>(null);
@@ -320,13 +322,14 @@ export default function App() {
     const localUsersStr = localStorage.getItem('school_task_manager_users_profiles');
     if (localUsersStr) {
       try {
-        const parsed = JSON.parse(localUsersStr) as UserProfile[];
+        const decrypted = decryptData(localUsersStr);
+        const parsed = normalizeUserProfiles((decrypted !== null ? decrypted : JSON.parse(localUsersStr)) as UserProfile[]);
         const matched = parsed.find(u => u.id === savedUserId);
-        if (matched) return matched;
+        if (matched) return normalizeUserProfile(matched);
       } catch (e) {}
     }
     const matched = MOCK_USERS.find(u => u.id === savedUserId);
-    return matched ? enrichUserWithMIDetails(matched) : enrichUserWithMIDetails(MOCK_USERS[0]);
+    return matched ? normalizeUserProfile(enrichUserWithMIDetails(matched)) : normalizeUserProfile(enrichUserWithMIDetails(MOCK_USERS[0]));
   });
 
   const handleOnboardUser = (newStaff: { name: string; workspaceId: string; title: string; role: Role }) => {
@@ -334,7 +337,7 @@ export default function App() {
     const newId = `user_${newStaff.name.toLowerCase().replace(/\s+/g, '_').normalize("NFD").replace(/[\u0300-\u036f]/g, "")}_${Date.now().toString().slice(-4)}`;
     const avatar = getSafeAvatar('', newStaff.name);
     
-    const newUser: UserProfile = {
+    const newUser: UserProfile = normalizeUserProfile({
       id: newId,
       name: newStaff.name,
       role: newStaff.role,
@@ -356,7 +359,7 @@ export default function App() {
       cpdHours: 0,
       cpdLog: [],
       kpiLocked: false
-    };
+    });
 
     saveUsers([...users, newUser]);
   };
@@ -446,6 +449,14 @@ export default function App() {
       handleFirestoreError(e, OperationType.UPDATE, 'config/user_overrides');
     }
   };
+
+  useEffect(() => {
+    const normalizedTasks = normalizeTaskAssigneeRoles(tasks, users);
+    if (JSON.stringify(normalizedTasks) !== JSON.stringify(tasks)) {
+      setTasks(normalizedTasks);
+      writeLocalJson(LOCAL_TASKS_KEY, normalizedTasks);
+    }
+  }, [tasks, users]);
 
   const hasPermission = (permissionKey: keyof RolePermissions, taskContext?: Task) => {
     if (!currentUser) return false;
@@ -661,10 +672,11 @@ export default function App() {
           });
         }
 
-        prevTasksRef.current = loaded;
+        const normalizedLoaded = normalizeTaskAssigneeRoles(loaded, users);
+        prevTasksRef.current = normalizedLoaded;
         isFirstLoadRef.current = false;
-        setTasks(loaded);
-        writeLocalJson(LOCAL_TASKS_KEY, loaded);
+        setTasks(normalizedLoaded);
+        writeLocalJson(LOCAL_TASKS_KEY, normalizedLoaded);
 
         // Auto seed any missing standard/demo mock tasks directly to keep the system visually rich with all 50+ tasks
         if (loaded.length < 48) {
@@ -974,7 +986,7 @@ export default function App() {
 
   // Switch workspace restriction based on roles if they have a constrained scope
   const handleUserSwitch = (user: UserProfile) => {
-    setCurrentUser(user);
+    setCurrentUser(normalizeUserProfile(user));
     localStorage.setItem('mis_edutask_logged_in_user_id', user.id);
     localStorage.setItem('mis_edutask_logged_in', 'true');
     // If the selected user belongs to a specific department and is NOT Admin, filter that department initially
@@ -1475,12 +1487,13 @@ export default function App() {
       <LoginPortal
         initialUser={displayCurrentUser}
         onLoginSuccess={(user) => {
-          setCurrentUser(user);
+          const normalizedUser = normalizeUserProfile(user);
+          setCurrentUser(normalizedUser);
           setIsLoggedIn(true);
           localStorage.setItem('mis_edutask_logged_in', 'true');
           localStorage.setItem('mis_edutask_logged_in_user_id', user.id);
-          if (user.role !== 'ADMIN') {
-            setSelectedWorkspace(user.workspaceId);
+          if (normalizedUser.role !== 'ADMIN') {
+            setSelectedWorkspace(normalizedUser.workspaceId);
           } else {
             setSelectedWorkspace('ALL');
           }
