@@ -12,3 +12,15 @@ services:
         sync: false  # Nhập thủ công trên Render Dashboard
       - key: APP_URL
         sync: false  # URL do Render cấp, nhập sau khi deploy
+      - key: SMTP_HOST
+        sync: false  # SMTP host của nhà cung cấp email, ví dụ smtp.gmail.com
+      - key: SMTP_PORT
+        sync: false  # Cổng SMTP, thường là 587 hoặc 465
+      - key: SMTP_SECURE
+        sync: false  # true nếu dùng cổng 465, false nếu dùng 587/TLS
+      - key: SMTP_USER
+        sync: false  # Tài khoản SMTP
+      - key: SMTP_PASS
+        sync: false  # Mật khẩu SMTP hoặc app password
+      - key: EMAIL_FROM
+        sync: false  # Tên/người gửi, ví dụ "MIS Smart Portal <noreply@mis.edu.vn>"
