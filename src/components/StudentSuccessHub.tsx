@@ -83,14 +83,14 @@ interface ParentNotice {
   createdAt: string;
 }
 
-const STUDENT_STORAGE_KEY = 'mis_sis_students_v2';
-const GRADE_STORAGE_KEY = 'mis_sis_grades_v2';
-const ATTENDANCE_STORAGE_KEY = 'mis_sis_attendance_v2';
-const NOTICE_STORAGE_KEY = 'mis_sis_parent_notices_v2';
+const STUDENT_STORAGE_KEY = 'mis_sis_students_v3';
+const GRADE_STORAGE_KEY = 'mis_sis_grades_v3';
+const ATTENDANCE_STORAGE_KEY = 'mis_sis_attendance_v3';
+const NOTICE_STORAGE_KEY = 'mis_sis_parent_notices_v3';
 
 const todayIso = () => new Date().toISOString().slice(0, 10);
 
-// Generate 1000 mock students sorted from Grade 1 to 12
+// Generate mock students: 12 grades, 3 classes per grade, 30 students per class
 const generateMockData = () => {
   const firstNames = ['Nguyễn', 'Trần', 'Lê', 'Phạm', 'Hoàng', 'Huỳnh', 'Phan', 'Vũ', 'Võ', 'Đặng', 'Bùi', 'Đỗ', 'Hồ', 'Ngô', 'Dương', 'Lý'];
   const middleNames = ['Văn', 'Thị', 'Minh', 'Anh', 'Gia', 'Đức', 'Quang', 'Xuân', 'Khánh', 'Phương', 'Thanh', 'Tiến', 'Thu', 'Ngọc', 'Hải'];
@@ -104,92 +104,91 @@ const generateMockData = () => {
   const subjects = ['Toán', 'Ngữ văn', 'Tiếng Anh', 'Vật lý', 'Hóa học', 'Tin học'];
   
   for (let grade = 1; grade <= 12; grade++) {
-    const countForGrade = grade <= 8 ? 83 : 84;
-    
-    for (let s = 1; s <= countForGrade; s++) {
-      const classNum = ((s % 2) === 1) ? 1 : 2;
-      const className = `${grade}A${classNum}`;
+    for (let c = 1; c <= 3; c++) {
+      const className = `${grade}A${c}`;
       
-      const gender = (studentCount % 2 === 0) ? 'Nữ' : 'Nam';
-      const fn = firstNames[(studentCount + s) % firstNames.length];
-      const mn = middleNames[(studentCount * 3 + s) % middleNames.length];
-      const ln = lastNames[(studentCount * 7 + s) % lastNames.length];
-      const name = `${fn} ${mn} ${ln}`;
-      
-      const birthYear = 2026 - (grade + 5);
-      const birthDate = `${birthYear}-09-05`;
-      const studentId = `student_gen_${studentCount}`;
-      
-      const avatarIndex = (studentCount % 70) + 1;
-      const avatar = `https://xsgames.co/randomusers/assets/avatars/${gender === 'Nữ' ? 'female' : 'male'}/${avatarIndex}.jpg`;
+      for (let s = 1; s <= 30; s++) {
+        const gender = (studentCount % 2 === 0) ? 'Nữ' : 'Nam';
+        const fn = firstNames[(studentCount + s) % firstNames.length];
+        const mn = middleNames[(studentCount * 3 + s) % middleNames.length];
+        const ln = lastNames[(studentCount * 7 + s) % lastNames.length];
+        const name = `${fn} ${mn} ${ln}`;
+        
+        const birthYear = 2026 - (grade + 5);
+        const birthDate = `${birthYear}-09-05`;
+        const studentId = `student_gen_${studentCount}`;
+        
+        const avatarIndex = (studentCount % 70) + 1;
+        const avatar = `https://xsgames.co/randomusers/assets/avatars/${gender === 'Nữ' ? 'female' : 'male'}/${avatarIndex}.jpg`;
 
-      studentsList.push({
-        id: studentId,
-        code: `MIS-${String(grade).padStart(2, '0')}A${classNum}-${String(s).padStart(3, '0')}`,
-        name: name,
-        className: className,
-        gender: gender,
-        birthDate: birthDate,
-        avatar: avatar,
-        parentName: `${fn} ${lastNames[(studentCount + 2) % lastNames.length]}`,
-        parentPhone: `09${Math.floor(10000000 + Math.random() * 90000000)}`,
-        parentEmail: `parent.${studentCount}@parent.mis.edu.vn`,
-        emergencyContact: `09${Math.floor(10000000 + Math.random() * 90000000)}`,
-        address: 'Cầu Giấy, Hà Nội',
-        healthNote: 'Bình thường',
-        conduct: studentCount % 15 === 0 ? 'Trung bình' : studentCount % 8 === 0 ? 'Khá' : 'Tốt',
-        scholarship: studentCount % 25 === 0 ? 'Học bổng 30% Đa Trí Tuệ' : 'Không',
-        extracurriculars: studentCount % 5 === 0 ? ['CLB Âm nhạc', 'CLB Bóng rổ'] : [],
-        awards: studentCount % 12 === 0 ? ['Học sinh giỏi cấp trường'] : [],
-        disciplineLogs: studentCount % 15 === 0 ? ['Đi học muộn nhiều lần'] : [],
-      });
-      
-      // Generate 2 random grades for this student
-      const sub1 = subjects[studentCount % subjects.length];
-      const sub2 = subjects[(studentCount + 1) % subjects.length];
-      
-      const randGrade = (min: number, max: number) => Number((min + Math.random() * (max - min)).toFixed(1));
-      
-      gradesList.push({
-        id: `gr_gen_${studentCount}_1`,
-        studentId: studentId,
-        subject: sub1,
-        semester: 'HK1',
-        oral: randGrade(6, 10),
-        fifteenMinute: randGrade(5, 10),
-        midterm: randGrade(5, 10),
-        final: randGrade(5, 10)
-      });
-      
-      gradesList.push({
-        id: `gr_gen_${studentCount}_2`,
-        studentId: studentId,
-        subject: sub2,
-        semester: 'HK1',
-        oral: randGrade(4, 9),
-        fifteenMinute: randGrade(4, 9),
-        midterm: randGrade(4, 9),
-        final: randGrade(4, 9)
-      });
+        studentsList.push({
+          id: studentId,
+          code: `MIS-${String(grade).padStart(2, '0')}A${c}-${String(s).padStart(3, '0')}`,
+          name: name,
+          className: className,
+          gender: gender,
+          birthDate: birthDate,
+          avatar: avatar,
+          parentName: `${fn} ${lastNames[(studentCount + 2) % lastNames.length]}`,
+          parentPhone: `09${Math.floor(10000000 + Math.random() * 90000000)}`,
+          parentEmail: `parent.${studentCount}@parent.mis.edu.vn`,
+          emergencyContact: `09${Math.floor(10000000 + Math.random() * 90000000)}`,
+          address: 'Cầu Giấy, Hà Nội',
+          healthNote: 'Bình thường',
+          conduct: studentCount % 15 === 0 ? 'Trung bình' : studentCount % 8 === 0 ? 'Khá' : 'Tốt',
+          scholarship: studentCount % 25 === 0 ? 'Học bổng 30% Đa Trí Tuệ' : 'Không',
+          extracurriculars: studentCount % 5 === 0 ? ['CLB Âm nhạc', 'CLB Bóng rổ'] : [],
+          awards: studentCount % 12 === 0 ? ['Học sinh giỏi cấp trường'] : [],
+          disciplineLogs: studentCount % 15 === 0 ? ['Đi học muộn nhiều lần'] : [],
+        });
+        
+        // Generate 2 random grades for this student
+        const sub1 = subjects[studentCount % subjects.length];
+        const sub2 = subjects[(studentCount + 1) % subjects.length];
+        
+        const randGrade = (min: number, max: number) => Number((min + Math.random() * (max - min)).toFixed(1));
+        
+        gradesList.push({
+          id: `gr_gen_${studentCount}_1`,
+          studentId: studentId,
+          subject: sub1,
+          semester: 'HK1',
+          oral: randGrade(6, 10),
+          fifteenMinute: randGrade(5, 10),
+          midterm: randGrade(5, 10),
+          final: randGrade(5, 10)
+        });
+        
+        gradesList.push({
+          id: `gr_gen_${studentCount}_2`,
+          studentId: studentId,
+          subject: sub2,
+          semester: 'HK1',
+          oral: randGrade(4, 9),
+          fifteenMinute: randGrade(4, 9),
+          midterm: randGrade(4, 9),
+          final: randGrade(4, 9)
+        });
 
-      // Generate 2 random attendance records
-      const statuses: AttendanceStatus[] = ['PRESENT', 'PRESENT', 'PRESENT', 'PRESENT', 'LATE', 'PRESENT', 'ABSENT', 'EXCUSED'];
-      attendanceList.push({
-        id: `att_gen_${studentCount}_1`,
-        studentId: studentId,
-        date: '2026-06-08',
-        status: statuses[studentCount % statuses.length],
-        reason: 'Lý do cá nhân'
-      });
-      attendanceList.push({
-        id: `att_gen_${studentCount}_2`,
-        studentId: studentId,
-        date: '2026-06-09',
-        status: statuses[(studentCount + 2) % statuses.length],
-        reason: 'Lý do cá nhân'
-      });
+        // Generate 2 random attendance records
+        const statuses: AttendanceStatus[] = ['PRESENT', 'PRESENT', 'PRESENT', 'PRESENT', 'LATE', 'PRESENT', 'ABSENT', 'EXCUSED'];
+        attendanceList.push({
+          id: `att_gen_${studentCount}_1`,
+          studentId: studentId,
+          date: '2026-06-08',
+          status: statuses[studentCount % statuses.length],
+          reason: 'Lý do cá nhân'
+        });
+        attendanceList.push({
+          id: `att_gen_${studentCount}_2`,
+          studentId: studentId,
+          date: '2026-06-09',
+          status: statuses[(studentCount + 2) % statuses.length],
+          reason: 'Lý do cá nhân'
+        });
 
-      studentCount++;
+        studentCount++;
+      }
     }
   }
 
@@ -747,8 +746,89 @@ export default function StudentSuccessHub() {
                   </div>
                 )}
 
+                {profileTab === 'HISTORY' && (
+                  <div className="space-y-4">
+                    <form onSubmit={handleAddTransfer} className="grid grid-cols-1 md:grid-cols-4 gap-2 p-3 rounded-xl bg-slate-50 border border-slate-200">
+                      <input
+                        type="date"
+                        value={transferForm.date}
+                        onChange={(e) => setTransferForm({ ...transferForm, date: e.target.value })}
+                        className="text-xs border rounded-lg px-2 py-2 bg-white"
+                      />
+                      <input
+                        value={transferForm.toClass}
+                        onChange={(e) => setTransferForm({ ...transferForm, toClass: e.target.value })}
+                        className="text-xs border rounded-lg px-2 py-2 bg-white"
+                        placeholder="Lớp mới"
+                      />
+                      <input
+                        value={transferForm.reason}
+                        onChange={(e) => setTransferForm({ ...transferForm, reason: e.target.value })}
+                        className="text-xs border rounded-lg px-2 py-2 bg-white"
+                        placeholder="Lý do chuyển lớp/chuyển trường"
+                      />
+                      <button type="submit" className="text-xs font-bold rounded-lg bg-indigo-600 text-white px-3 py-2">
+                        Ghi nhận chuyển lớp
+                      </button>
+                    </form>
+
+                    <div className="rounded-xl border border-slate-200 overflow-hidden">
+                      <table className="w-full text-xs">
+                        <thead className="bg-slate-50 text-slate-500">
+                          <tr>
+                            <th className="text-left px-4 py-2">Ngày</th>
+                            <th className="text-left px-4 py-2">Từ lớp</th>
+                            <th className="text-left px-4 py-2">Đến lớp</th>
+                            <th className="text-left px-4 py-2">Lý do</th>
+                            <th className="text-left px-4 py-2">Phê duyệt</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {(selectedStudent.transferHistory || []).map(item => (
+                            <tr key={item.id}>
+                              <td className="px-4 py-2 font-mono">{item.date}</td>
+                              <td className="px-4 py-2">{item.fromClass}</td>
+                              <td className="px-4 py-2 font-bold text-indigo-700">{item.toClass}</td>
+                              <td className="px-4 py-2 text-slate-600">{item.reason}</td>
+                              <td className="px-4 py-2 text-slate-500">{item.approvedBy}</td>
+                            </tr>
+                          ))}
+                          {(selectedStudent.transferHistory || []).length === 0 && (
+                            <tr>
+                              <td colSpan={5} className="px-4 py-8 text-center text-slate-400">Chưa có lịch sử chuyển lớp/chuyển trường.</td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
                 {profileTab === 'ATTENDANCE' && (
                   <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2 p-3 rounded-xl bg-slate-50 border border-slate-200">
+                      <input
+                        type="date"
+                        value={attendanceDate}
+                        onChange={(e) => setAttendanceDate(e.target.value)}
+                        className="text-xs border rounded-lg px-2 py-2 bg-white"
+                      />
+                      <select
+                        value={attendancePeriod}
+                        onChange={(e) => setAttendancePeriod(Number(e.target.value))}
+                        className="text-xs border rounded-lg px-2 py-2 bg-white"
+                      >
+                        {[1, 2, 3, 4, 5, 6, 7, 8].map(period => (
+                          <option key={period} value={period}>Tiết {period}</option>
+                        ))}
+                      </select>
+                      <input
+                        value={attendanceReason}
+                        onChange={(e) => setAttendanceReason(e.target.value)}
+                        className="text-xs border rounded-lg px-2 py-2 bg-white"
+                        placeholder="Lý do nghỉ/muộn hoặc ghi chú"
+                      />
+                    </div>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                       {(['PRESENT', 'LATE', 'ABSENT', 'EXCUSED'] as AttendanceStatus[]).map(status => (
                         <button
@@ -766,8 +846,9 @@ export default function StudentSuccessHub() {
                         <thead className="bg-slate-50 text-slate-500">
                           <tr>
                             <th className="text-left px-4 py-2">Ngày</th>
+                            <th className="text-left px-4 py-2">Tiết</th>
                             <th className="text-left px-4 py-2">Trạng thái</th>
-                            <th className="text-left px-4 py-2">Ghi chú</th>
+                            <th className="text-left px-4 py-2">Lý do / Ghi chú</th>
                             <th className="text-center px-4 py-2">Phụ huynh</th>
                           </tr>
                         </thead>
@@ -775,12 +856,13 @@ export default function StudentSuccessHub() {
                           {selectedAttendance.map(item => (
                             <tr key={item.id}>
                               <td className="px-4 py-2 font-mono">{item.date}</td>
+                              <td className="px-4 py-2 font-mono">Tiết {item.period || 1}</td>
                               <td className="px-4 py-2">
                                 <span className={`px-2 py-0.5 rounded-full border text-[10px] font-bold ${statusColor(item.status)}`}>
                                   {attendanceLabel(item.status)}
                                 </span>
                               </td>
-                              <td className="px-4 py-2 text-slate-500">{item.note || '-'}</td>
+                              <td className="px-4 py-2 text-slate-500">{item.reason || item.note || '-'}</td>
                               <td className="px-4 py-2 text-center">{item.notifiedParent ? 'Đã báo' : '-'}</td>
                             </tr>
                           ))}
@@ -792,6 +874,19 @@ export default function StudentSuccessHub() {
 
                 {profileTab === 'GRADEBOOK' && (
                   <div className="space-y-4">
+                    <div className="flex items-center justify-between gap-3 flex-wrap rounded-xl border border-indigo-100 bg-indigo-50/60 p-3">
+                      <div>
+                        <p className="text-xs font-black text-slate-900">Phiếu điểm / học bạ tóm tắt</p>
+                        <p className="text-[10.5px] text-slate-500">Tự tổng hợp điểm, chuyên cần và quá trình chuyển lớp để in hoặc lưu thành PDF.</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handlePrintReportCard}
+                        className="px-3 py-2 rounded-lg bg-indigo-600 text-white text-xs font-bold"
+                      >
+                        In / Lưu PDF
+                      </button>
+                    </div>
                     <form onSubmit={handleAddGrade} className="grid grid-cols-2 md:grid-cols-6 gap-2 p-3 rounded-xl bg-slate-50 border border-slate-200">
                       <select value={newGrade.subject} onChange={(e) => setNewGrade({ ...newGrade, subject: e.target.value })} className="text-xs border rounded-lg px-2 py-2 bg-white">
                         <option>Toán</option>
