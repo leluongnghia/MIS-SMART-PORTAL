@@ -1,4 +1,4 @@
-﻿import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Task, Workspace, UserProfile, BoardDirective, TaskPriority } from '../types';
 import { 
   AlertTriangle, 
@@ -344,7 +344,7 @@ export default function ExecutiveDashboard({
           
           {/* Card 1: Overdue (Critical red) */}
           <div 
-            onClick={() => onSelectWorkspace('ALL')}
+            onClick={() => onShowTaskList && onShowTaskList('OVERDUE')}
             className="cursor-pointer bg-white border-2 border-rose-500/80 rounded-2xl p-6 shadow-xs flex items-center justify-between transition-[border-color,box-shadow,transform] duration-200 hover:shadow-md hover:scale-[1.01] select-none"
           >
             <div>
@@ -364,7 +364,10 @@ export default function ExecutiveDashboard({
           </div>
 
           {/* Card 2: Pending Approval */}
-          <div className="bg-white border border-slate-200 dark:border-slate-800/80 rounded-2xl p-6 shadow-xs flex items-center justify-between transition-[border-color,box-shadow,transform] duration-200 hover:shadow-md hover:scale-[1.01] select-none">
+          <div 
+            onClick={() => onShowTaskList && onShowTaskList('PENDING')}
+            className="cursor-pointer bg-white border border-slate-200 dark:border-slate-800/80 rounded-2xl p-6 shadow-xs flex items-center justify-between transition-[border-color,box-shadow,transform] duration-200 hover:shadow-md hover:scale-[1.01] select-none"
+          >
             <div>
               <span className="text-[10px] tracking-widest font-black uppercase text-amber-600 dark:text-amber-400 block font-mono">
                 Chờ phê duyệt
@@ -382,7 +385,10 @@ export default function ExecutiveDashboard({
           </div>
 
           {/* Card 3: In Progress */}
-          <div className="bg-white border border-slate-200 dark:border-slate-800/80 rounded-2xl p-6 shadow-xs flex items-center justify-between transition-[border-color,box-shadow,transform] duration-200 hover:shadow-md hover:scale-[1.01] select-none">
+          <div 
+            onClick={() => onShowTaskList && onShowTaskList('IN_PROGRESS')}
+            className="cursor-pointer bg-white border border-slate-200 dark:border-slate-800/80 rounded-2xl p-6 shadow-xs flex items-center justify-between transition-[border-color,box-shadow,transform] duration-200 hover:shadow-md hover:scale-[1.01] select-none"
+          >
             <div>
               <span className="text-[10px] tracking-widest font-black uppercase text-blue-600 dark:text-blue-400 block font-mono">
                 Đang thực hiện
@@ -400,7 +406,10 @@ export default function ExecutiveDashboard({
           </div>
 
           {/* Card 4: Overall Completion Rate */}
-          <div className="bg-white border border-slate-200 dark:border-slate-800/80 rounded-2xl p-6 shadow-xs flex items-center justify-between transition-[border-color,box-shadow,transform] duration-200 hover:shadow-md hover:scale-[1.01] select-none">
+          <div 
+            onClick={() => onShowTaskList && onShowTaskList('COMPLETED')}
+            className="cursor-pointer bg-white border border-slate-200 dark:border-slate-800/80 rounded-2xl p-6 shadow-xs flex items-center justify-between transition-[border-color,box-shadow,transform] duration-200 hover:shadow-md hover:scale-[1.01] select-none"
+          >
             <div>
               <span className="text-[10px] tracking-widest font-black uppercase text-emerald-600 dark:text-emerald-400 block font-mono">
                 KPI Toàn Trường

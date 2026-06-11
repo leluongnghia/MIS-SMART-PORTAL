@@ -2280,6 +2280,10 @@ export default function App() {
                 setSelectedWorkspace(wId);
                 setOverviewTab('TASKS');
               }}
+              onShowTaskList={(type) => {
+                setSelectedWorkspace('ALL');
+                setActiveStatsTaskType(type);
+              }}
             />
           )}
 
