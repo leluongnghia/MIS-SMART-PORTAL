@@ -1,0 +1,155 @@
+# Kịch bản video hướng dẫn MIS Smart Portal
+
+Tổng thời lượng dự kiến: 158 giây.
+
+## 1. MIS Smart Portal
+
+- Video hướng dẫn tổng quan cách sử dụng phần mềm quản trị trường học.
+- Áp dụng cho Ban Giám hiệu, quản lý bộ phận, giáo viên, nhân viên, phụ huynh và học sinh.
+- Nội dung đi theo luồng thao tác thực tế từ đăng nhập, tìm kiếm, xử lý việc đến theo dõi học sinh.
+
+Ghi chú: Mục tiêu: nắm nhanh toàn bộ các phân hệ chính và biết vào đúng nơi cần thao tác.
+
+## 2. 1. Đăng nhập và chọn đúng vai trò
+
+- Mở phần mềm, chọn chế độ Cán bộ nhà trường hoặc Cổng học sinh & phụ huynh.
+- Tài khoản cán bộ vào được dashboard quản trị, công việc, quy trình, học vụ và vận hành.
+- Tài khoản phụ huynh/học sinh vào portal riêng để xem điểm, chuyên cần, học phí, lịch học và thư viện.
+
+Ghi chú: Nếu đang kiểm thử từ tài khoản quản trị, mở menu Nghiệp vụ Trường học > Cổng PHHS / Học sinh.
+
+## 3. 2. Header, tìm kiếm nhanh và menu trái
+
+- Ô tìm kiếm nhanh trên header dùng để tìm chức năng, hồ sơ, người dùng hoặc công việc.
+- Menu trái chia theo nhóm: Chiến lược, Nền tảng, Vận hành, Nghiệp vụ Trường học và Vận hành Học đường.
+- Khi không thấy chức năng, hãy mở đúng nhóm menu hoặc gõ tên chức năng vào ô tìm kiếm.
+
+Ghi chú: Các mục quan trọng đã được đặt tên rõ: Cổng PHHS, Thời khóa biểu tổng, Thư viện & Thiết bị.
+
+## 4. 3. Tổng quan điều hành
+
+- Dashboard hiển thị công việc quá hạn, chờ duyệt, đang thực hiện và tỷ lệ hoàn thành toàn trường.
+- Bấm vào từng thẻ thống kê để mở danh sách công việc tương ứng.
+- Ban Giám hiệu dùng màn này để xem điểm nghẽn, chỉ đạo liên quan và tình trạng triển khai theo phòng ban.
+
+Ghi chú: Nên kiểm tra dashboard đầu ngày và cuối ngày để nắm các việc cần can thiệp.
+
+## 5. 4. Quản lý công việc và dự án
+
+- Vào Vận hành > Nhiệm vụ & Dự án để xem Kanban, lịch, Gantt hoặc danh sách.
+- Tạo việc mới, chọn người phụ trách, phòng ban, deadline, KPI, tài liệu tham khảo và thẻ phân loại.
+- Người thực hiện cập nhật trạng thái, bình luận, đính kèm báo cáo và gửi duyệt khi hoàn thành.
+
+Ghi chú: Việc sát hạn hoặc quá hạn có cơ chế nhắc qua email cho người phụ trách.
+
+## 6. 5. Quy trình và phê duyệt
+
+- Vào Vận hành > Quy trình & Phê duyệt để tạo đơn từ, phiếu đề xuất, nghỉ phép hoặc mua sắm.
+- Quy trình hỗ trợ nhiều bước duyệt, rẽ nhánh, nhật ký xử lý và trạng thái từng bước.
+- Người duyệt chỉ cần mở hồ sơ, xem nội dung, chọn phê duyệt hoặc từ chối kèm lý do.
+
+Ghi chú: Dùng phân hệ này để giảm ký giấy, tránh thiếu bước hoặc trùng lặp công việc.
+
+## 7. 6. Quản lý văn bản và lưu trữ
+
+- Vào Nền tảng > Quản lý Văn bản để tải lên, xem, tải xuống, luân chuyển và lưu trữ hồ sơ.
+- Tệp upload được giữ nguyên định dạng gốc như PDF, DOCX, XLSX, PPTX hoặc ảnh.
+- Dùng bộ lọc và kho lưu trữ để tìm lại công văn, giáo án, biên bản hoặc minh chứng.
+
+Ghi chú: Luôn đặt tên văn bản rõ ràng theo năm học, bộ phận và loại hồ sơ.
+
+## 8. 7. CRM tuyển sinh
+
+- Vào Nghiệp vụ Trường học > Tuyển sinh & CRM để quản lý lead phụ huynh và học sinh.
+- Nhập thông tin phụ huynh, số điện thoại, khối dự tuyển, nguồn tiếp cận và ghi chú tư vấn.
+- Theo dõi trạng thái mới nhận, đã tư vấn, nhập học hoặc tạm hủy; xuất báo cáo khi cần.
+
+Ghi chú: Dữ liệu CRM giúp đo hiệu quả kênh tuyển sinh và chăm sóc phụ huynh.
+
+## 9. 8. Hồ sơ Học sinh 360 và SIS
+
+- Vào Hồ sơ Học sinh 360 để quản lý thông tin cá nhân, phụ huynh, liên hệ khẩn cấp và lớp học.
+- Các tab gồm hồ sơ, quá trình học tập, điểm danh, sổ điểm, liên lạc phụ huynh và bảo mật.
+- Sổ điểm đã có danh mục môn học từ lớp 1 đến lớp 12 theo chương trình giáo dục Việt Nam.
+
+Ghi chú: Đây là lõi dữ liệu học sinh, cần phân quyền chặt và ghi nhận nhật ký truy cập.
+
+## 10. 9. Cổng PHHS / Học sinh
+
+- Cổng PHHS cho phép phụ huynh xem bảng điều khiển riêng của con em mình.
+- Các mục chính: thời khóa biểu, kết quả học tập, chuyên cần, học phí, xin nghỉ phép, y tế, thư viện và khảo sát.
+- Học sinh có thêm khu luyện tập LMS để làm bài ôn tập và xem kết quả.
+
+Ghi chú: Tài khoản quản trị có thể mở mục này trong menu để kiểm tra trải nghiệm phụ huynh.
+
+## 11. 10. Thời khóa biểu tổng và giáo án
+
+- Vào Vận hành Học đường > Thời khóa biểu tổng & Giáo án.
+- Màn hình hiển thị lịch dạy theo thứ, tiết học, giáo viên, phòng học và lớp.
+- Giáo viên có thể nộp giáo án theo khối 1-12, chọn môn đúng chương trình và giữ nguyên file đính kèm.
+
+Ghi chú: Phân hệ này cần dùng để kiểm tra trùng lịch giáo viên, phòng học và kế hoạch dạy thay.
+
+## 12. 11. LMS và ôn tập trực tuyến
+
+- Vào Hệ thống LMS để quản lý lớp online, bài ôn tập, ngân hàng câu hỏi và chứng nhận.
+- Tạo bài ôn tập bằng cách chọn lớp, môn học, deadline, thời gian làm bài và câu hỏi.
+- Theo dõi tỷ lệ nộp bài, điểm trung bình, học sinh chưa nộp và xuất báo cáo gửi phụ huynh.
+
+Ghi chú: Nên gắn bài ôn tập với môn và lớp để dữ liệu phân tích học tập chính xác.
+
+## 13. 12. Thư viện và thiết bị
+
+- Vào Vận hành Học đường > Thư viện & Thiết bị.
+- Tab thư viện/kho thiết bị quản lý danh mục sách, thiết bị, vị trí, số lượng, tình trạng và kiểm kê.
+- Tạo phiếu mượn trả, ghi nhận hỏng/mất, thanh lý và liên kết nhu cầu mua sắm khi cần.
+
+Ghi chú: Phụ huynh/học sinh cũng xem được lịch sử mượn sách và thiết bị trong cổng riêng.
+
+## 14. 13. Tài chính, học phí và hóa đơn
+
+- Trong LMS hoặc cổng PHHS có khu học phí và hóa đơn.
+- Nhà trường theo dõi hóa đơn đã đóng, chờ đóng, quá hạn và ngày thanh toán.
+- Phụ huynh xem khoản phải thu, hạn đóng, trạng thái và có thể in biên lai.
+
+Ghi chú: Nên dùng mã hóa đơn thống nhất để thuận tiện đối soát kế toán.
+
+## 15. 14. Nhân sự, HRM và nghỉ phép
+
+- Vào Nhân sự giáo viên hoặc Quản trị HRM để quản lý hồ sơ nhân sự, KPI, khối lượng dạy và nghỉ phép.
+- Giáo viên gửi đơn nghỉ, hệ thống có thể gợi ý bố trí dạy thay dựa trên thời khóa biểu.
+- Quản lý theo dõi chấm công, lương, giờ dạy, tăng ca và chứng chỉ chuyên môn.
+
+Ghi chú: Dữ liệu nhân sự cần được cập nhật định kỳ để KPI và phân công chính xác.
+
+## 16. 15. Sự kiện, cuộc họp và kho tri thức
+
+- Vào Quản lý Sự kiện để lập kế hoạch Open Day, họp phụ huynh hoặc hoạt động toàn trường.
+- Vào Quản lý Cuộc họp để tạo lịch, biên bản, người tham dự và xác nhận tham gia.
+- Vào Kho Tri Thức để tra cứu quy định, hướng dẫn nghiệp vụ, chính sách và tài liệu nội bộ.
+
+Ghi chú: Ba phân hệ này giúp chuẩn hóa truyền thông và vận hành nội bộ.
+
+## 17. 16. Báo cáo, rủi ro và bảo mật
+
+- Báo cáo phân tích giúp lọc dữ liệu theo phòng ban, trạng thái, tiến độ và hiệu quả.
+- Quản trị rủi ro theo dõi cảnh báo, sự cố, vấn đề quá hạn và các điểm cần xử lý.
+- Cấu hình RBAC, nhật ký truy cập, sao lưu/khôi phục dữ liệu giúp bảo vệ dữ liệu học sinh.
+
+Ghi chú: Dữ liệu học sinh là nhóm nhạy cảm, chỉ cấp quyền theo đúng vai trò cần dùng.
+
+## 18. 17. Quy trình sử dụng hằng ngày
+
+- Buổi sáng: mở dashboard, xem việc quá hạn, chờ duyệt và lịch họp.
+- Trong ngày: xử lý công việc, cập nhật tiến độ, duyệt quy trình, điểm danh và trả lời phụ huynh.
+- Cuối ngày: xuất báo cáo, kiểm tra nhắc hạn, sao lưu dữ liệu quan trọng và ghi nhận vấn đề tồn đọng.
+
+Ghi chú: Làm đều quy trình này sẽ giúp dữ liệu phần mềm luôn đúng và có giá trị quản trị.
+
+## 19. Hoàn tất
+
+- Video hướng dẫn đã bao quát các chức năng chính của MIS Smart Portal.
+- Khi đào tạo người dùng mới, nên đi theo thứ tự: đăng nhập, menu, công việc, học sinh, PHHS, vận hành và báo cáo.
+- Có thể dùng file kịch bản đi kèm để thu âm thuyết minh hoặc chỉnh lại theo quy trình riêng của trường.
+
+Ghi chú: Kết thúc hướng dẫn.

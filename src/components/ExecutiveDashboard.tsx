@@ -40,6 +40,7 @@ interface ExecutiveDashboardProps {
   onViewDetails: (task: Task) => void;
   onUpdateStatus: (taskId: string, newStatus: any) => void;
   onSelectWorkspace: (workspaceId: string) => void;
+  onShowTaskList?: (type: 'COMPLETED' | 'PENDING' | 'IN_PROGRESS' | 'OVERDUE') => void;
 }
 
 export default function ExecutiveDashboard({
@@ -50,7 +51,8 @@ export default function ExecutiveDashboard({
   currentUser,
   onViewDetails,
   onUpdateStatus,
-  onSelectWorkspace
+  onSelectWorkspace,
+  onShowTaskList
 }: ExecutiveDashboardProps) {
   const [selectedDirective, setSelectedDirective] = useState<BoardDirective | null>(null);
 
