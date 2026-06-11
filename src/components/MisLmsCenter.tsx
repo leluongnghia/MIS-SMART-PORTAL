@@ -142,25 +142,35 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
   const [lang, setLang] = useState<'VI' | 'EN'>('VI');
   const [activeTab, setActiveTab] = useState<'ADMISSION' | 'OPERATIONS' | 'FINANCIALS' | 'SECURITY_UX'>('ADMISSION');
   const t = TRANSLATIONS[lang];
-  const lmsStudents: LmsStudent[] = [
-    { id: 'std1', name: 'Nguyễn Minh Quân', className: 'Lớp 10A1', parentName: 'Nguyễn Văn Hải', parentEmail: 'hai.nguyen@parent.mis.edu.vn' },
-    { id: 'std2', name: 'Trần Mỹ Lệ', className: 'Lớp 11A2', parentName: 'Lê Thị Thu Trà', parentEmail: 'tra.le@parent.mis.edu.vn' },
-    { id: 'std3', name: 'Phạm Hồng Thái', className: 'Lớp 12A1', parentName: 'Phạm Hồng Sơn', parentEmail: 'son.pham@parent.mis.edu.vn' },
-    { id: 'std4', name: 'Hoàng Thùy Dương', className: 'Lớp 10A1', parentName: 'Hoàng Văn Thắng', parentEmail: 'thang.hoang@parent.mis.edu.vn' },
-  ];
+  const [lmsStudents, setLmsStudents] = useState<LmsStudent[]>(() => {
+    const saved = localStorage.getItem('mis_lms_students');
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) { console.error(e); }
+    }
+    return [
+      { id: 'std1', name: 'Nguyễn Minh Quân', className: 'Lớp 10A1', parentName: 'Nguyễn Văn Hải', parentEmail: 'hai.nguyen@parent.mis.edu.vn' },
+      { id: 'std2', name: 'Trần Mỹ Lệ', className: 'Lớp 11A2', parentName: 'Lê Thị Thu Trà', parentEmail: 'tra.le@parent.mis.edu.vn' },
+      { id: 'std3', name: 'Phạm Hồng Thái', className: 'Lớp 12A1', parentName: 'Phạm Hồng Sơn', parentEmail: 'son.pham@parent.mis.edu.vn' },
+      { id: 'std4', name: 'Hoàng Thùy Dương', className: 'Lớp 10A1', parentName: 'Hoàng Văn Thắng', parentEmail: 'thang.hoang@parent.mis.edu.vn' },
+    ];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('mis_lms_students', JSON.stringify(lmsStudents));
+  }, [lmsStudents]);
 
   // Helper to export Leads list to CSV
   const handleExportLeadsCsv = () => {
     const headers = ['Ma Lead', 'Hoc sinh', 'Phu huynh', 'So dien thoai', 'Khoi', 'Nguon', 'Tu van vien', 'Trang thai', 'Ghi chu'];
     const rows = leads.map(l => [
       l.id,
-      l.name,
+      l.studentName || l.name,
       l.parentName,
       l.phone,
       l.grade,
       l.source,
-      l.consultant,
-      l.status === 'NEW' ? 'Moi nhan' : l.status === 'CONSULTED' ? 'Da tu van' : l.status === 'ENROLLED' ? 'Khop hoc' : 'Tam huy',
+      l.consultant || 'Hệ thống',
+      l.stage === 'CONSULTING' ? 'Consulting' : l.stage === 'TESTING' ? 'Testing' : l.stage === 'RESERVED' ? 'Reserved' : 'Enrolled',
       l.notes
     ]);
     exportToCsv('MIS_CRM_Leads_Report.csv', headers, rows);
@@ -180,31 +190,92 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
     exportToCsv('MIS_Financial_Invoices.csv', headers, rows);
   };
 
-  // Interactive state for CRM Leads (Persistent)
+  // Interactive state for CRM Leads (Persistent and synced with CRM key)
   const [leads, setLeads] = useState<any[]>(() => {
-    const saved = localStorage.getItem('mis_lms_leads');
+    const saved = localStorage.getItem('school_crm_leads');
     if (saved) {
       try { return JSON.parse(saved); } catch (e) { console.error(e); }
     }
     return [
-      { id: 'LD001', name: 'Nguyễn Minh Quân', parentName: 'Nguyễn Văn Hải', phone: '0912345678', grade: 'Lớp 10', source: 'Facebook Ads', consultant: 'Cô Thanh Nhàn', status: 'NEW', notes: 'Phụ huynh quan tâm chương trình học bổng Toán - Tin học.' },
-      { id: 'LD002', name: 'Trần Mỹ Lệ', parentName: 'Lê Thị Thu Trà', phone: '0987654321', grade: 'Lớp 11', source: 'Web Form', consultant: 'Thầy Đức Nam', status: 'CONSULTED', notes: 'Đã tư vấn lộ trình IELTS và học thuật Ngữ văn.' },
-      { id: 'LD003', name: 'Phạm Hồng Thái', parentName: 'Phạm Hồng Sơn', phone: '0945678912', grade: 'Lớp 12', source: 'Giới thiệu', consultant: 'Thầy Quốc Đạt', status: 'ENROLLED', notes: 'Đã nộp hồ sơ nhập học, đã thanh toán học phí đợt 1.' },
-      { id: 'LD004', name: 'Hoàng Thùy Dương', parentName: 'Hoàng Văn Thắng', phone: '0932112233', grade: 'Lớp 10', source: 'Google Search', consultant: 'Cô Minh Tuyết', status: 'LOST', notes: 'Không liên lạc được sau 3 cuộc gọi.' }
+      {
+        id: 'lead_1',
+        studentName: 'Nguyễn Minh Anh',
+        parentName: 'Nguyễn Văn Hải',
+        phone: '0912345678',
+        email: 'hai.nguyen@gmail.com',
+        stage: 'CONSULTING',
+        source: 'Social',
+        grade: 'Lớp 10',
+        notes: 'Đăng ký tìm hiểu lớp 10 chất lượng cao chuyên Anh.',
+        docChecklist: { hocBa: false, khaiSinh: false, anh3x4: false },
+        interactions: [
+          { date: '2026-06-09', type: 'Đăng ký Form', content: 'Quan tâm chính sách học bổng đầu vào' }
+        ]
+      },
+      {
+        id: 'lead_2',
+        studentName: 'Trần Bảo Nam',
+        parentName: 'Lê Thị Thu',
+        phone: '0987654321',
+        email: 'thu.le@gmail.com',
+        stage: 'CONSULTING',
+        source: 'Website',
+        grade: 'Lớp 10',
+        notes: 'Đăng ký tìm hiểu lớp 10 song bằng.',
+        docChecklist: { hocBa: false, khaiSinh: true, anh3x4: false },
+        interactions: [
+          { date: '2026-06-08', type: 'Gọi điện', content: 'Tư vấn biểu phí học tập' }
+        ]
+      },
+      {
+        id: 'lead_3',
+        studentName: 'Phạm Tiến Dũng',
+        parentName: 'Phạm Văn Thành',
+        phone: '0905123456',
+        email: 'thanh.pham@gmail.com',
+        stage: 'TESTING',
+        source: 'Referral',
+        grade: 'Lớp 10',
+        notes: 'Đăng ký kiểm tra năng lực môn Toán.',
+        docChecklist: { hocBa: false, khaiSinh: true, anh3x4: true },
+        testDate: '2026-06-15',
+        testTime: '09:00',
+        interactions: [
+          { date: '2026-06-07', type: 'Ghi nhận lịch', content: 'Sắp xếp lịch test đầu vào ngày 15/06' }
+        ]
+      },
+      {
+        id: 'lead_4',
+        studentName: 'Hoàng Thùy Dương',
+        parentName: 'Hoàng Văn Thắng',
+        phone: '0932112233',
+        email: 'thang.hoang@gmail.com',
+        stage: 'ENROLLED',
+        source: 'Website',
+        grade: 'Lớp 10',
+        notes: 'Học sinh đạt học bổng 30% và đã hoàn thành thủ tục nhập học.',
+        docChecklist: { hocBa: true, khaiSinh: true, anh3x4: true },
+        testScore: '9.0/10',
+        scholarshipInfo: 'Học bổng 30%',
+        baseTuitionFee: 15000000,
+        scholarshipDiscount: 4500000,
+        interactions: [
+          { date: '2026-06-06', type: 'Nhập học', content: 'Đã đóng học phí và phê duyệt nhập học' }
+        ]
+      }
     ];
   });
 
   useEffect(() => {
-    localStorage.setItem('mis_lms_leads', JSON.stringify(leads));
+    localStorage.setItem('school_crm_leads', JSON.stringify(leads));
   }, [leads]);
 
-  // Lead search & filter states
+  // Filter and search active state for Leads
   const [searchLeadQuery, setSearchLeadQuery] = useState('');
-  const [statusLeadFilter, setStatusLeadFilter] = useState<'ALL' | 'NEW' | 'CONSULTED' | 'ENROLLED' | 'LOST'>('ALL');
-
-  const [newLeadForm, setNewLeadForm] = useState({ name: '', phone: '', grade: 'Lớp 10', source: 'Facebook Ads', notes: '' });
+  const [statusLeadFilter, setStatusLeadFilter] = useState<'ALL' | 'CONSULTING' | 'TESTING' | 'RESERVED' | 'ENROLLED'>('ALL');
+  const [activeLeadId, setActiveLeadId] = useState<string>('lead_1');
+  const [newLeadForm, setNewLeadForm] = useState({ name: '', parentName: '', phone: '', email: '', grade: 'Lớp 10', source: 'Facebook Ads', notes: '' });
   const [noteInputs, setNoteInputs] = useState<Record<string, string>>({});
-  const [activeLeadId, setActiveLeadId] = useState<string>('LD001');
 
   // Email Campaign States
   const [emailTemplate, setEmailTemplate] = useState('OPEN_DAY');
@@ -516,20 +587,37 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
   // Add a new lead
   const handleAddLeadSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newLeadForm.name || !newLeadForm.phone) return;
+    if (!newLeadForm.name.trim() || !newLeadForm.phone.trim()) return;
+
+    const isPhoneDup = leads.some(l => l.phone === newLeadForm.phone.trim());
+    const isEmailDup = newLeadForm.email.trim() && leads.some(l => l.email && l.email.toLowerCase() === newLeadForm.email.trim().toLowerCase());
+
+    if (isPhoneDup || isEmailDup) {
+      const confirmMsg = `Phát hiện thông tin học sinh trùng lặp:\n${isPhoneDup ? '- Số điện thoại đã tồn tại\n' : ''}${isEmailDup ? '- Email đã tồn tại\n' : ''}\nBạn có chắc chắn vẫn muốn thêm học sinh này?`;
+      if (!window.confirm(confirmMsg)) return;
+    }
+
     const newL = {
-      id: `LD00${leads.length + 1}`,
-      name: newLeadForm.name,
-      parentName: 'Người liên hệ',
-      phone: newLeadForm.phone,
-      grade: newLeadForm.grade || 'Lớp 10',
+      id: `lead_${Date.now()}`,
+      studentName: newLeadForm.name.trim(),
+      parentName: newLeadForm.parentName.trim() || 'Người liên hệ',
+      phone: newLeadForm.phone.trim(),
+      email: newLeadForm.email.trim(),
+      stage: 'CONSULTING',
       source: newLeadForm.source,
       consultant: currentUser.name,
-      status: 'NEW',
-      notes: newLeadForm.notes || 'Chưa ghi chú cụ thể.'
+      grade: newLeadForm.grade || 'Lớp 10',
+      notes: newLeadForm.notes.trim() || 'Chưa ghi chú cụ thể.',
+      interactions: [
+        {
+          date: new Date().toISOString().split('T')[0],
+          type: 'Tạo mới',
+          content: 'Được phân bổ lead qua cổng tuyển sinh LMS'
+        }
+      ]
     };
     setLeads([newL, ...leads]);
-    setNewLeadForm({ name: '', phone: '', grade: '', source: 'Facebook Ads', notes: '' });
+    setNewLeadForm({ name: '', parentName: '', phone: '', email: '', grade: 'Lớp 10', source: 'Facebook Ads', notes: '' });
   };
 
   // Add notes to a lead
@@ -538,7 +626,19 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
     if (!text?.trim()) return;
     setLeads(prev => prev.map(l => {
       if (l.id === leadId) {
-        return { ...l, notes: `${l.notes}\n[Ghi chú mới]: ${text.trim()}` };
+        const currentInteractions = l.interactions || [];
+        return { 
+          ...l, 
+          notes: `${l.notes}\n[Ghi chú mới]: ${text.trim()}`,
+          interactions: [
+            ...currentInteractions,
+            {
+              date: new Date().toISOString().split('T')[0],
+              type: 'Ghi chú',
+              content: text.trim()
+            }
+          ]
+        };
       }
       return l;
     }));
@@ -546,9 +646,80 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
   };
 
   // Update lead status
-  const updateLeadStatus = (leadId: string, status: string) => {
-    setLeads(prev => prev.map(l => l.id === leadId ? { ...l, status } : l));
+  const updateLeadStatus = (leadId: string, stage: 'CONSULTING' | 'TESTING' | 'RESERVED' | 'ENROLLED') => {
+    setLeads(prev => prev.map(l => {
+      if (l.id === leadId) {
+        const currentInteractions = l.interactions || [];
+        return { 
+          ...l, 
+          stage,
+          interactions: [
+            ...currentInteractions,
+            {
+              date: new Date().toISOString().split('T')[0],
+              type: 'Chuyển trạng thái',
+              content: `Thay đổi trạng thái sang ${stage}`
+            }
+          ]
+        };
+      }
+      return l;
+    }));
   };
+
+  // Sync ENROLLED leads to LMS students and generate tuition invoices
+  useEffect(() => {
+    const enrolledLeads = leads.filter(l => l.stage === 'ENROLLED');
+    if (enrolledLeads.length === 0) return;
+
+    enrolledLeads.forEach(lead => {
+      setLmsStudents(prevStudents => {
+        const studentExists = prevStudents.some(s => (s as any).crmLeadId === lead.id || s.name === lead.studentName);
+        if (studentExists) return prevStudents;
+
+        let className = '10A1';
+        if (lead.grade) {
+          if (lead.grade.includes('11')) className = '11A1';
+          else if (lead.grade.includes('12')) className = '12A1';
+        }
+
+        const newStudent: LmsStudent = {
+          id: 'std_crm_' + lead.id,
+          name: lead.studentName,
+          className: className,
+          parentName: lead.parentName || 'Người liên hệ',
+          parentEmail: lead.email || `parent_${lead.phone}@parent.mis.edu.vn`
+        };
+        // Store crmLeadId dynamically
+        (newStudent as any).crmLeadId = lead.id;
+        return [...prevStudents, newStudent];
+      });
+
+      setTuitionFees(prevTuition => {
+        const invoiceNo = 'INV-CRM-' + lead.id;
+        const invoiceExists = prevTuition.some(t => t.invoiceNo === invoiceNo);
+        if (invoiceExists) return prevTuition;
+
+        const base = lead.baseTuitionFee || 15000000;
+        const tDisc = lead.tuitionDiscount || 0;
+        const sDisc = lead.scholarshipDiscount || 0;
+        const pDisc = lead.phaseEnrollmentDiscount || 0;
+        const oDisc = lead.otherDiscount || 0;
+        const adv = lead.advancedFee || 0;
+        const payable = base - (tDisc + sDisc + pDisc + oDisc) + adv;
+
+        const newInvoice = {
+          id: 'inv_crm_' + lead.id,
+          student: lead.studentName,
+          amount: payable.toLocaleString('vi-VN') + 'đ',
+          deadline: new Date(Date.now() + 15 * 24 * 3600 * 1000).toISOString().split('T')[0],
+          status: 'CHO_DONG',
+          invoiceNo: invoiceNo
+        };
+        return [...prevTuition, newInvoice];
+      });
+    });
+  }, [leads]);
 
   // Start sending emails simulation
   const handleSendMassEmail = () => {
@@ -837,10 +1008,10 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
                       className="w-full text-xs px-3 py-1.5 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-emerald-500 font-semibold text-slate-650"
                     >
                       <option value="ALL">Tất cả trạng thái lead</option>
-                      <option value="NEW">Mới nhận</option>
-                      <option value="CONSULTED">Đã Tư vấn</option>
-                      <option value="ENROLLED">Khớp Học</option>
-                      <option value="LOST">Tạm huỷ</option>
+                      <option value="CONSULTING">Đang tư vấn & Lead</option>
+                      <option value="TESTING">Thi test & Đặt lịch</option>
+                      <option value="RESERVED">Giữ chỗ & Hồ sơ</option>
+                      <option value="ENROLLED">Đã nhập học</option>
                     </select>
                   </div>
                 </div>
@@ -860,8 +1031,9 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
                     <tbody className="divide-y divide-slate-100">
                       {(() => {
                         const filteredLeads = leads.filter(l => {
-                          const matchesQuery = l.name.toLowerCase().includes(searchLeadQuery.toLowerCase()) || l.phone.includes(searchLeadQuery);
-                          const matchesStatus = statusLeadFilter === 'ALL' || l.status === statusLeadFilter;
+                          const nameVal = l.studentName || l.name || '';
+                          const matchesQuery = nameVal.toLowerCase().includes(searchLeadQuery.toLowerCase()) || l.phone.includes(searchLeadQuery);
+                          const matchesStatus = statusLeadFilter === 'ALL' || l.stage === statusLeadFilter;
                           return matchesQuery && matchesStatus;
                         });
 
@@ -877,9 +1049,10 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
 
                         return filteredLeads.map(lead => {
                           const isActive = lead.id === activeLeadId;
-                          const statusColors = lead.status === 'NEW' ? 'bg-blue-100 text-blue-800'
-                            : lead.status === 'CONSULTED' ? 'bg-amber-100 text-amber-805'
-                            : lead.status === 'ENROLLED' ? 'bg-emerald-100 text-emerald-800'
+                          const statusColors = lead.stage === 'CONSULTING' ? 'bg-blue-105/90 text-blue-800'
+                            : lead.stage === 'TESTING' ? 'bg-amber-105/90 text-amber-800'
+                            : lead.stage === 'RESERVED' ? 'bg-purple-105/90 text-purple-800'
+                            : lead.stage === 'ENROLLED' ? 'bg-emerald-100 text-emerald-800'
                             : 'bg-slate-100 text-slate-800';
 
                           return (
@@ -892,7 +1065,7 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
                                 <div className="flex items-center gap-1.5">
                                   <span className="text-[10px]">👤</span>
                                   <div>
-                                    <span className="block">{lead.name}</span>
+                                    <span className="block">{lead.studentName || lead.name}</span>
                                     <span className="text-[9px] text-slate-450 block font-normal">PH: {lead.parentName}</span>
                                   </div>
                                 </div>
@@ -901,7 +1074,7 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
                               <td className="px-4 py-3 whitespace-nowrap text-slate-600 font-mono">{lead.phone}</td>
                               <td className="px-4 py-3 font-sans whitespace-nowrap">
                                 <select 
-                                  value={lead.consultant}
+                                  value={lead.consultant || 'Cô Thanh Nhàn'}
                                   onChange={(e) => {
                                     e.stopPropagation();
                                     const val = e.target.value;
@@ -918,10 +1091,10 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
                               <td className="px-4 py-3 whitespace-nowrap text-slate-500 font-medium text-[11px]">🎈 {lead.source}</td>
                               <td className="px-4 py-3 text-center whitespace-nowrap">
                                 <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-tight ${statusColors}`}>
-                                  {lead.status === 'NEW' ? 'Mới' 
-                                    : lead.status === 'CONSULTED' ? 'Đã Tư vấn' 
-                                    : lead.status === 'ENROLLED' ? 'Khớp Học' 
-                                    : 'Tạm huỷ'}
+                                  {lead.stage === 'CONSULTING' ? 'Tư vấn & Lead' 
+                                    : lead.stage === 'TESTING' ? 'Thi test' 
+                                    : lead.stage === 'RESERVED' ? 'Giữ chỗ' 
+                                    : 'Nhập học'}
                                 </span>
                               </td>
                             </tr>
@@ -938,22 +1111,34 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
                     const activeLead = leads.find(l => l.id === activeLeadId)!;
                     return (
                       <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 mt-2 space-y-3">
-                        <div className="flex justify-between items-center border-b border-slate-200/60 pb-2">
+                        <div className="flex justify-between items-center border-b border-slate-200/60 pb-2 flex-wrap gap-2">
                           <h4 className="text-xs font-bold text-slate-800 flex items-center gap-1">
-                            <span>📝</span> Bản lưu tư vấn cho: <strong className="text-emerald-700">{activeLead.name}</strong>
+                            <span>📝</span> Bản lưu tư vấn cho: <strong className="text-emerald-700">{activeLead.studentName || activeLead.name}</strong>
                           </h4>
-                          <div className="flex gap-1">
+                          <div className="flex gap-1 flex-wrap">
                             <button 
-                              onClick={() => updateLeadStatus(activeLead.id, 'CONSULTED')}
-                              className="px-2 py-0.5 bg-amber-500 hover:bg-amber-650 text-white text-[9px] font-bold rounded"
+                              onClick={() => updateLeadStatus(activeLead.id, 'CONSULTING')}
+                              className={`px-2 py-0.5 text-[9px] font-bold rounded ${activeLead.stage === 'CONSULTING' ? 'bg-blue-600 text-white' : 'bg-slate-200 text-slate-700 hover:bg-slate-300'}`}
                             >
-                              Đánh dấu Tư vấn
+                              Đang tư vấn
+                            </button>
+                            <button 
+                              onClick={() => updateLeadStatus(activeLead.id, 'TESTING')}
+                              className={`px-2 py-0.5 text-[9px] font-bold rounded ${activeLead.stage === 'TESTING' ? 'bg-amber-600 text-white' : 'bg-slate-200 text-slate-700 hover:bg-slate-300'}`}
+                            >
+                              Thi test
+                            </button>
+                            <button 
+                              onClick={() => updateLeadStatus(activeLead.id, 'RESERVED')}
+                              className={`px-2 py-0.5 text-[9px] font-bold rounded ${activeLead.stage === 'RESERVED' ? 'bg-purple-600 text-white' : 'bg-slate-200 text-slate-700 hover:bg-slate-300'}`}
+                            >
+                              Giữ chỗ
                             </button>
                             <button 
                               onClick={() => updateLeadStatus(activeLead.id, 'ENROLLED')}
-                              className="px-2 py-0.5 bg-emerald-600 hover:bg-emerald-750 text-white text-[9px] font-bold rounded"
+                              className={`px-2 py-0.5 text-[9px] font-bold rounded ${activeLead.stage === 'ENROLLED' ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-700 hover:bg-slate-300'}`}
                             >
-                              Phê duyệt nhập học
+                              Nhập học
                             </button>
                           </div>
                         </div>
@@ -1008,6 +1193,18 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
                     </div>
 
                     <div>
+                      <label className="text-[10px] font-bold uppercase text-slate-400 block mb-1">Họ tên phụ huynh</label>
+                      <input 
+                        type="text" 
+                        required
+                        placeholder="Ví dụ: Nguyễn Văn Hải"
+                        value={newLeadForm.parentName}
+                        onChange={(e) => setNewLeadForm({ ...newLeadForm, parentName: e.target.value })}
+                        className="w-full text-xs border border-slate-200 rounded-lg p-2 focus:outline-none focus:ring-1 focus:ring-emerald-500 bg-slate-50/50"
+                      />
+                    </div>
+
+                    <div>
                       <label className="text-[10px] font-bold uppercase text-slate-400 block mb-1">Số điện thoại liên hệ</label>
                       <input 
                         type="tel" 
@@ -1017,6 +1214,23 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
                         onChange={(e) => setNewLeadForm({ ...newLeadForm, phone: e.target.value })}
                         className="w-full text-xs border border-slate-200 rounded-lg p-2 focus:outline-none focus:ring-1 focus:ring-emerald-500 bg-slate-50/50"
                       />
+                      {newLeadForm.phone.trim() && leads.some(l => l.phone === newLeadForm.phone.trim()) && (
+                        <p className="text-[10px] text-rose-650 font-bold mt-1 animate-pulse">⚠️ Số điện thoại đã tồn tại trên CRM</p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] font-bold uppercase text-slate-400 block mb-1">Email liên hệ</label>
+                      <input 
+                        type="email" 
+                        placeholder="Ví dụ: parent.email@gmail.com"
+                        value={newLeadForm.email}
+                        onChange={(e) => setNewLeadForm({ ...newLeadForm, email: e.target.value })}
+                        className="w-full text-xs border border-slate-200 rounded-lg p-2 focus:outline-none focus:ring-1 focus:ring-emerald-500 bg-slate-50/50"
+                      />
+                      {newLeadForm.email.trim() && leads.some(l => l.email && l.email.toLowerCase() === newLeadForm.email.trim().toLowerCase()) && (
+                        <p className="text-[10px] text-rose-650 font-bold mt-1 animate-pulse">⚠️ Email đã tồn tại trên CRM</p>
+                      )}
                     </div>
 
                     <div className="grid grid-cols-2 gap-2">

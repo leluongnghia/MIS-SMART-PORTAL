@@ -8,12 +8,13 @@ interface Lead {
   parentName: string;
   phone: string;
   email: string;
-  stage: 'LEAD' | 'CONSULTING' | 'TEST_REGISTERED' | 'TESTED' | 'NOT_RESERVED' | 'RESERVED' | 'REGISTERED' | 'ENROLLED';
+  stage: 'CONSULTING' | 'TESTING' | 'RESERVED' | 'ENROLLED';
   source: 'Social' | 'Website' | 'Referral' | 'Event';
   notes: string;
   interactions: { date: string; type: string; content: string }[];
   testScore?: string;
   scholarshipInfo?: string;
+  grade?: string;
   docChecklist?: {
     hocBa: boolean;
     khaiSinh: boolean;
@@ -32,15 +33,16 @@ interface Lead {
 }
 
 export default function SchoolCrmHub() {
-  const [leads, setLeads] = useState<Lead[]>([
+  const defaultLeads: Lead[] = [
     {
       id: 'lead_1',
       studentName: 'Nguyễn Minh Anh',
       parentName: 'Nguyễn Văn Hải',
       phone: '0912345678',
       email: 'hai.nguyen@gmail.com',
-      stage: 'LEAD',
+      stage: 'CONSULTING',
       source: 'Social',
+      grade: 'Lớp 10',
       notes: 'Đăng ký tìm hiểu lớp 10 chất lượng cao chuyên Anh.',
       docChecklist: { hocBa: false, khaiSinh: false, anh3x4: false },
       interactions: [
@@ -55,6 +57,7 @@ export default function SchoolCrmHub() {
       email: 'thu.le@gmail.com',
       stage: 'CONSULTING',
       source: 'Website',
+      grade: 'Lớp 10',
       notes: 'Đang tư vấn lộ trình học song bằng Cambridge.',
       docChecklist: { hocBa: false, khaiSinh: true, anh3x4: false },
       interactions: [
@@ -67,8 +70,9 @@ export default function SchoolCrmHub() {
       parentName: 'Phạm Văn Thành',
       phone: '0905123456',
       email: 'thanh.pham@gmail.com',
-      stage: 'TEST_REGISTERED',
+      stage: 'TESTING',
       source: 'Referral',
+      grade: 'Lớp 10',
       notes: 'Đăng ký kiểm tra năng lực đầu vào môn Toán & tiếng Anh.',
       docChecklist: { hocBa: false, khaiSinh: true, anh3x4: true },
       testDate: '2026-06-15',
@@ -83,8 +87,9 @@ export default function SchoolCrmHub() {
       parentName: 'Đặng Quốc Hưng',
       phone: '0904223344',
       email: 'hung.dang@gmail.com',
-      stage: 'TESTED',
+      stage: 'TESTING',
       source: 'Event',
+      grade: 'Lớp 10',
       notes: 'Đã hoàn thành bài kiểm tra học bổng đầu vào.',
       testScore: '8.5/10 (Toán: 8.0, Anh: 9.0)',
       scholarshipInfo: 'Học bổng 30% học phí',
@@ -99,8 +104,9 @@ export default function SchoolCrmHub() {
       parentName: 'Nguyễn Văn Thắng',
       phone: '0977889900',
       email: 'thang.nguyen@gmail.com',
-      stage: 'NOT_RESERVED',
+      stage: 'RESERVED',
       source: 'Social',
+      grade: 'Lớp 10',
       notes: 'Đạt điểm test cao nhưng đang cân nhắc ưu đãi học phí bên trường quốc tế khác.',
       testScore: '9.0/10 (Toán: 9.5, Anh: 8.5)',
       scholarshipInfo: 'Học bổng 50% học phí',
@@ -117,6 +123,7 @@ export default function SchoolCrmHub() {
       email: 'lan.do@gmail.com',
       stage: 'RESERVED',
       source: 'Event',
+      grade: 'Lớp 10',
       notes: 'Đã đóng 5.000.000đ phí giữ chỗ nhận ưu đãi tuyển sinh sớm.',
       testScore: '8.0/10',
       scholarshipInfo: 'Không có học bổng',
@@ -137,8 +144,9 @@ export default function SchoolCrmHub() {
       parentName: 'Bùi Văn Hùng',
       phone: '0911223344',
       email: 'hung.bui@gmail.com',
-      stage: 'REGISTERED',
+      stage: 'RESERVED',
       source: 'Website',
+      grade: 'Lớp 10',
       notes: 'Đã nộp đầy đủ hồ sơ học bạ THCS gốc và giấy chứng nhận học sinh giỏi cấp quận.',
       testScore: '8.5/10',
       scholarshipInfo: 'Học bổng 30%',
@@ -161,6 +169,7 @@ export default function SchoolCrmHub() {
       email: 'lam.hoang@gmail.com',
       stage: 'ENROLLED',
       source: 'Website',
+      grade: 'Lớp 10',
       notes: 'Đã hoàn tất học phí đợt 1 và nhận đồng phục.',
       testScore: '9.5/10',
       scholarshipInfo: 'Học bổng 70% tuyển thẳng',
@@ -175,7 +184,25 @@ export default function SchoolCrmHub() {
         { date: '2026-06-01', type: 'Nhập học', content: 'Xác nhận thu học phí học kỳ I và phát đồng phục' }
       ]
     }
-  ]);
+  ];
+
+  const [leads, setLeads] = useState<Lead[]>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('school_crm_leads');
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    }
+    return defaultLeads;
+  });
+
+  React.useEffect(() => {
+    localStorage.setItem('school_crm_leads', JSON.stringify(leads));
+  }, [leads]);
 
   // Selected Lead Details Modal
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
@@ -188,7 +215,8 @@ export default function SchoolCrmHub() {
   const [editPhone, setEditPhone] = useState('');
   const [editEmail, setEditEmail] = useState('');
   const [editSource, setEditSource] = useState<'Social' | 'Website' | 'Referral' | 'Event'>('Social');
-  const [editStage, setEditStage] = useState<Lead['stage']>('LEAD');
+  const [editStage, setEditStage] = useState<Lead['stage']>('CONSULTING');
+  const [editGrade, setEditGrade] = useState('Lớp 10');
   const [editNotes, setEditNotes] = useState('');
   const [editTestScore, setEditTestScore] = useState('');
   const [editScholarshipInfo, setEditScholarshipInfo] = useState('');
@@ -213,7 +241,8 @@ export default function SchoolCrmHub() {
   const [newPhone, setNewPhone] = useState('');
   const [newEmail, setNewEmail] = useState('');
   const [newSource, setNewSource] = useState<'Social' | 'Website' | 'Referral' | 'Event'>('Social');
-  const [newStage, setNewStage] = useState<Lead['stage']>('LEAD');
+  const [newStage, setNewStage] = useState<Lead['stage']>('CONSULTING');
+  const [newGrade, setNewGrade] = useState('Lớp 10');
   const [newNotes, setNewNotes] = useState('');
   const [newTestScore, setNewTestScore] = useState('');
   const [newScholarshipInfo, setNewScholarshipInfo] = useState('');
@@ -235,6 +264,7 @@ export default function SchoolCrmHub() {
   const [showQuickImport, setShowQuickImport] = useState(false);
   const [importText, setImportText] = useState('');
   const [importPreview, setImportPreview] = useState<Omit<Lead, 'id' | 'interactions'>[]>([]);
+  const [skipImportDuplicates, setSkipImportDuplicates] = useState(true);
 
   // Email Notification State
   const [sendingEmail, setSendingEmail] = useState(false);
@@ -244,14 +274,10 @@ export default function SchoolCrmHub() {
   const [interactionContent, setInteractionContent] = useState('');
 
   const stages: { key: Lead['stage']; label: string; bg: string; text: string }[] = [
-    { key: 'LEAD', label: 'Lead tiềm năng', bg: 'bg-slate-50 border-slate-200 dark:bg-slate-900 dark:border-slate-800', text: 'text-slate-700 dark:text-slate-300' },
-    { key: 'CONSULTING', label: 'Đang tư vấn', bg: 'bg-blue-50/50 border-blue-150 dark:bg-blue-950/20 dark:border-blue-900', text: 'text-blue-700 dark:text-blue-300' },
-    { key: 'TEST_REGISTERED', label: 'Đăng ký test', bg: 'bg-amber-50/50 border-amber-200 dark:bg-amber-950/20 dark:border-amber-900', text: 'text-amber-700 dark:text-amber-300' },
-    { key: 'TESTED', label: 'Đã test', bg: 'bg-purple-50/50 border-purple-200 dark:bg-purple-950/20 dark:border-purple-900', text: 'text-purple-700 dark:text-purple-300' },
-    { key: 'NOT_RESERVED', label: 'Chưa giữ chỗ', bg: 'bg-rose-50/50 border-rose-200 dark:bg-rose-950/20 dark:border-rose-900', text: 'text-rose-700 dark:text-rose-300' },
-    { key: 'RESERVED', label: 'Đã giữ chỗ', bg: 'bg-cyan-50/50 border-cyan-200 dark:bg-cyan-950/20 dark:border-cyan-900', text: 'text-cyan-700 dark:text-cyan-300' },
-    { key: 'REGISTERED', label: 'Đã nộp hồ sơ', bg: 'bg-indigo-50/50 border-indigo-200 dark:bg-indigo-950/20 dark:border-indigo-900', text: 'text-indigo-700 dark:text-indigo-300' },
-    { key: 'ENROLLED', label: 'Đã nhập học', bg: 'bg-emerald-50/50 border-emerald-150 dark:bg-emerald-950/20 dark:border-emerald-900', text: 'text-emerald-700 dark:text-emerald-350' }
+    { key: 'CONSULTING', label: 'Đang tư vấn & Lead', bg: 'bg-blue-50/50 border-blue-150 dark:bg-blue-950/20 dark:border-blue-900', text: 'text-blue-700 dark:text-blue-300' },
+    { key: 'TESTING', label: 'Thi test & Đặt lịch', bg: 'bg-amber-50/50 border-amber-200 dark:bg-amber-950/20 dark:border-amber-900', text: 'text-amber-700 dark:text-amber-300' },
+    { key: 'RESERVED', label: 'Giữ chỗ & Hồ sơ', bg: 'bg-cyan-50/50 border-cyan-200 dark:bg-cyan-950/20 dark:border-cyan-900', text: 'text-cyan-700 dark:text-cyan-300' },
+    { key: 'ENROLLED', label: 'Đã nhập học', bg: 'bg-emerald-50/50 border-emerald-150 dark:bg-emerald-950/20 dark:border-emerald-900', text: 'text-emerald-700 dark:text-emerald-355' }
   ];
 
   // Helper to compute document processing status
@@ -272,9 +298,31 @@ export default function SchoolCrmHub() {
   // Dynamic calculations
   const enrolledCount = useMemo(() => leads.filter(l => l.stage === 'ENROLLED').length, [leads]);
   const reservedCount = useMemo(() => leads.filter(l => l.stage === 'RESERVED').length, [leads]);
-  const testedCount = useMemo(() => leads.filter(l => ['TESTED', 'NOT_RESERVED', 'RESERVED', 'REGISTERED', 'ENROLLED'].includes(l.stage)).length, [leads]);
-  const registeredCount = useMemo(() => leads.filter(l => l.stage === 'REGISTERED').length, [leads]);
+  const testedCount = useMemo(() => leads.filter(l => l.stage === 'TESTING').length, [leads]);
+  const registeredCount = useMemo(() => leads.filter(l => l.stage === 'RESERVED' && l.docChecklist?.hocBa && l.docChecklist?.khaiSinh && l.docChecklist?.anh3x4).length, [leads]);
   const consultingCount = useMemo(() => leads.filter(l => l.stage === 'CONSULTING').length, [leads]);
+
+  // Duplicate check memos for Add Lead
+  const isAddPhoneDuplicate = useMemo(() => {
+    if (!newPhone.trim()) return false;
+    return leads.some(l => l.phone === newPhone.trim());
+  }, [leads, newPhone]);
+
+  const isAddEmailDuplicate = useMemo(() => {
+    if (!newEmail.trim()) return false;
+    return leads.some(l => l.email && l.email.toLowerCase() === newEmail.trim().toLowerCase());
+  }, [leads, newEmail]);
+
+  // Duplicate check memos for Edit Lead
+  const isEditPhoneDuplicate = useMemo(() => {
+    if (!editPhone.trim() || !selectedLeadId) return false;
+    return leads.some(l => l.id !== selectedLeadId && l.phone === editPhone.trim());
+  }, [leads, editPhone, selectedLeadId]);
+
+  const isEditEmailDuplicate = useMemo(() => {
+    if (!editEmail.trim() || !selectedLeadId) return false;
+    return leads.some(l => l.id !== selectedLeadId && l.email && l.email.toLowerCase() === editEmail.trim().toLowerCase());
+  }, [leads, editEmail, selectedLeadId]);
 
   // Source chart data
   const sourceChartData = useMemo(() => {
@@ -552,15 +600,17 @@ export default function SchoolCrmHub() {
       const testScore = cols[6]?.trim() || undefined;
       const scholarshipInfo = cols[7]?.trim() || undefined;
       
-      let stage: Lead['stage'] = 'LEAD';
+      let grade = 'Lớp 10';
+      if (notes.includes('10')) grade = 'Lớp 10';
+      else if (notes.includes('11')) grade = 'Lớp 11';
+      else if (notes.includes('12')) grade = 'Lớp 12';
+
+      let stage: Lead['stage'] = 'CONSULTING';
       const rawStage = cols[8]?.trim().toLowerCase();
-      if (rawStage?.includes('tu van')) stage = 'CONSULTING';
-      else if (rawStage?.includes('dk test') || rawStage?.includes('dang ky test')) stage = 'TEST_REGISTERED';
-      else if (rawStage?.includes('da test')) stage = 'TESTED';
-      else if (rawStage?.includes('chua giu')) stage = 'NOT_RESERVED';
-      else if (rawStage?.includes('da giu')) stage = 'RESERVED';
-      else if (rawStage?.includes('nop ho so') || rawStage?.includes('da nop')) stage = 'REGISTERED';
-      else if (rawStage?.includes('nhap hoc')) stage = 'ENROLLED';
+      if (rawStage?.includes('tu van') || rawStage?.includes('lead')) stage = 'CONSULTING';
+      else if (rawStage?.includes('test') || rawStage?.includes('lich')) stage = 'TESTING';
+      else if (rawStage?.includes('giu') || rawStage?.includes('ho so') || rawStage?.includes('nop')) stage = 'RESERVED';
+      else if (rawStage?.includes('nhap hoc') || rawStage?.includes('enrolled')) stage = 'ENROLLED';
 
       parsed.push({
         studentName,
@@ -572,10 +622,11 @@ export default function SchoolCrmHub() {
         notes,
         testScore,
         scholarshipInfo,
+        grade,
         docChecklist: {
-          hocBa: stage === 'REGISTERED' || stage === 'ENROLLED',
-          khaiSinh: stage === 'REGISTERED' || stage === 'ENROLLED',
-          anh3x4: stage === 'REGISTERED' || stage === 'ENROLLED',
+          hocBa: stage === 'RESERVED' || stage === 'ENROLLED',
+          khaiSinh: stage === 'RESERVED' || stage === 'ENROLLED',
+          anh3x4: stage === 'RESERVED' || stage === 'ENROLLED',
         }
       });
     });
@@ -586,7 +637,25 @@ export default function SchoolCrmHub() {
   const handleConfirmImport = () => {
     if (importPreview.length === 0) return;
 
-    const newLeads: Lead[] = importPreview.map((item, idx) => ({
+    const filteredPreview = skipImportDuplicates
+      ? importPreview.filter(item => {
+          const isDup = leads.some(l => 
+            l.phone === item.phone || 
+            (item.email && l.email && l.email.toLowerCase() === item.email.toLowerCase())
+          );
+          return !isDup;
+        })
+      : importPreview;
+
+    if (filteredPreview.length === 0) {
+      alert("Tất cả các bản ghi nhập vào đều trùng lặp và đã được bỏ qua!");
+      setImportPreview([]);
+      setImportText('');
+      setShowQuickImport(false);
+      return;
+    }
+
+    const newLeads: Lead[] = filteredPreview.map((item, idx) => ({
       ...item,
       id: `import_${Date.now()}_${idx}`,
       interactions: [
@@ -608,9 +677,14 @@ export default function SchoolCrmHub() {
     e.preventDefault();
     if (!newStudentName.trim() || !newParentName.trim() || !newPhone.trim()) return;
 
-    const hasScoreFields = ['TESTED', 'NOT_RESERVED', 'RESERVED', 'REGISTERED', 'ENROLLED'].includes(newStage);
-    const hasFinancialFields = ['RESERVED', 'REGISTERED', 'ENROLLED'].includes(newStage);
-    const hasSchedulingFields = newStage === 'TEST_REGISTERED';
+    if (isAddPhoneDuplicate || isAddEmailDuplicate) {
+      const confirmMsg = `Phát hiện thông tin học sinh trùng lặp:\n${isAddPhoneDuplicate ? '- Số điện thoại đã tồn tại\n' : ''}${isAddEmailDuplicate ? '- Email đã tồn tại\n' : ''}\nBạn có chắc chắn vẫn muốn thêm học sinh này?`;
+      if (!window.confirm(confirmMsg)) return;
+    }
+
+    const hasSchedulingFields = newStage === 'TESTING';
+    const hasScoreFields = ['TESTING', 'RESERVED', 'ENROLLED'].includes(newStage);
+    const hasFinancialFields = ['RESERVED', 'ENROLLED'].includes(newStage);
 
     const newLead: Lead = {
       id: `lead_${Date.now()}`,
@@ -620,6 +694,7 @@ export default function SchoolCrmHub() {
       email: newEmail.trim(),
       stage: newStage,
       source: newSource,
+      grade: newGrade,
       notes: newNotes.trim(),
       testScore: hasScoreFields && newTestScore.trim() ? newTestScore.trim() : undefined,
       scholarshipInfo: hasScoreFields && newScholarshipInfo.trim() ? newScholarshipInfo.trim() : undefined,
@@ -653,7 +728,8 @@ export default function SchoolCrmHub() {
     setNewPhone('');
     setNewEmail('');
     setNewNotes('');
-    setNewStage('LEAD');
+    setNewStage('CONSULTING');
+    setNewGrade('Lớp 10');
     setNewTestScore('');
     setNewScholarshipInfo('');
     setNewDocHocBa(false);
@@ -861,6 +937,7 @@ export default function SchoolCrmHub() {
     setEditEmail(selectedLead.email);
     setEditSource(selectedLead.source);
     setEditStage(selectedLead.stage);
+    setEditGrade(selectedLead.grade || 'Lớp 10');
     setEditNotes(selectedLead.notes);
     setEditTestScore(selectedLead.testScore || '');
     setEditScholarshipInfo(selectedLead.scholarshipInfo || '');
@@ -922,6 +999,11 @@ export default function SchoolCrmHub() {
     e.preventDefault();
     if (!selectedLeadId || !editStudentName.trim() || !editParentName.trim() || !editPhone.trim()) return;
 
+    if (isEditPhoneDuplicate || isEditEmailDuplicate) {
+      const confirmMsg = `Phát hiện thông tin học sinh trùng lặp với học sinh khác:\n${isEditPhoneDuplicate ? '- Số điện thoại đã tồn tại\n' : ''}${isEditEmailDuplicate ? '- Email đã tồn tại\n' : ''}\nBạn có chắc chắn vẫn muốn lưu thay đổi này?`;
+      if (!window.confirm(confirmMsg)) return;
+    }
+
     setLeads(prev => prev.map(l => {
       if (l.id === selectedLeadId) {
         const logs = [...l.interactions];
@@ -932,11 +1014,12 @@ export default function SchoolCrmHub() {
         if (l.email !== editEmail.trim()) changes.push(`Email: ${l.email || 'Chưa có'} → ${editEmail.trim()}`);
         if (l.stage !== editStage) changes.push(`Trạng thái: ${stages.find(s => s.key === l.stage)?.label} → ${stages.find(s => s.key === editStage)?.label}`);
         if (l.source !== editSource) changes.push(`Nguồn: ${l.source} → ${editSource}`);
+        if (l.grade !== editGrade) changes.push(`Khối: ${l.grade || 'Chưa chọn'} → ${editGrade}`);
         if (l.notes !== editNotes.trim()) changes.push(`Ghi chú cập nhật`);
         
-        const hasScoreFields = ['TESTED', 'NOT_RESERVED', 'RESERVED', 'REGISTERED', 'ENROLLED'].includes(editStage);
-        const hasFinancialFields = ['RESERVED', 'REGISTERED', 'ENROLLED'].includes(editStage);
-        const hasSchedulingFields = editStage === 'TEST_REGISTERED';
+        const hasSchedulingFields = editStage === 'TESTING';
+        const hasScoreFields = ['TESTING', 'RESERVED', 'ENROLLED'].includes(editStage);
+        const hasFinancialFields = ['RESERVED', 'ENROLLED'].includes(editStage);
 
         const nextScore = hasScoreFields && editTestScore.trim() ? editTestScore.trim() : undefined;
         const nextScholarship = hasScoreFields && editScholarshipInfo.trim() ? editScholarshipInfo.trim() : undefined;
@@ -983,6 +1066,7 @@ export default function SchoolCrmHub() {
           email: editEmail.trim(),
           source: editSource,
           stage: editStage,
+          grade: editGrade,
           notes: editNotes.trim(),
           testScore: nextScore || undefined,
           scholarshipInfo: nextScholarship || undefined,
@@ -1133,6 +1217,9 @@ export default function SchoolCrmHub() {
                   className="w-full text-xs p-2 border border-slate-200 dark:border-slate-850 rounded-xl bg-white dark:bg-slate-800 text-slate-800 dark:text-white focus:border-indigo-400 outline-none"
                   placeholder="Số điện thoại liên hệ..."
                 />
+                {isAddPhoneDuplicate && (
+                  <p className="text-[10px] text-rose-500 font-bold mt-1">⚠️ Số điện thoại đã tồn tại trong CRM!</p>
+                )}
               </div>
               <div>
                 <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 font-mono">Địa chỉ Email</label>
@@ -1143,6 +1230,21 @@ export default function SchoolCrmHub() {
                   className="w-full text-xs p-2 border border-slate-200 dark:border-slate-850 rounded-xl bg-white dark:bg-slate-800 text-slate-800 dark:text-white focus:border-indigo-400 outline-none"
                   placeholder="Email liên hệ..."
                 />
+                {isAddEmailDuplicate && (
+                  <p className="text-[10px] text-rose-500 font-bold mt-1">⚠️ Email đã tồn tại trong CRM!</p>
+                )}
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 font-mono">Khối lớp đăng ký</label>
+                <select
+                  value={newGrade}
+                  onChange={(e) => setNewGrade(e.target.value)}
+                  className="w-full text-xs p-2 border border-slate-200 dark:border-slate-855 rounded-xl bg-white dark:bg-slate-800 text-slate-800 dark:text-white outline-none focus:border-indigo-400 font-semibold"
+                >
+                  <option value="Lớp 10">Lớp 10</option>
+                  <option value="Lớp 11">Lớp 11</option>
+                  <option value="Lớp 12">Lớp 12</option>
+                </select>
               </div>
               <div>
                 <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 font-mono">Nguồn marketing</label>
@@ -1189,8 +1291,8 @@ export default function SchoolCrmHub() {
                 </div>
               </div>
 
-              {/* Dynamic inputs for Test schedule (TEST_REGISTERED stage) */}
-              {newStage === 'TEST_REGISTERED' && (
+              {/* Dynamic inputs for Test schedule (TESTING stage) */}
+              {newStage === 'TESTING' && (
                 <div className="md:col-span-2 grid grid-cols-2 gap-3 p-3.5 bg-amber-50/40 dark:bg-amber-950/10 border border-amber-150/45 dark:border-amber-900/40 rounded-2xl animate-in fade-in slide-in-from-top-1 duration-200">
                   <div>
                     <label className="block text-[10px] font-bold text-amber-700 dark:text-amber-300 uppercase tracking-wider mb-1 font-mono">Ngày test đầu vào</label>
@@ -1213,8 +1315,8 @@ export default function SchoolCrmHub() {
                 </div>
               )}
 
-              {/* Dynamic inputs for Financial Details (RESERVED, REGISTERED, ENROLLED stages) */}
-              {['RESERVED', 'REGISTERED', 'ENROLLED'].includes(newStage) && (
+              {/* Dynamic inputs for Financial Details (RESERVED, ENROLLED stages) */}
+              {['RESERVED', 'ENROLLED'].includes(newStage) && (
                 <div className="md:col-span-2 p-3.5 bg-indigo-50/20 dark:bg-indigo-950/10 border border-indigo-100 dark:border-indigo-900 rounded-2xl space-y-3.5 animate-in fade-in slide-in-from-top-1 duration-200">
                   <span className="block text-[10.5px] font-bold text-indigo-700 dark:text-indigo-300 uppercase tracking-wider font-mono">Thông Tin Tài Chính & Ưu Đãi (Đã giữ chỗ)</span>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -1305,7 +1407,7 @@ export default function SchoolCrmHub() {
                 />
               </div>
 
-              {['TESTED', 'NOT_RESERVED'].includes(newStage) && (
+              {['TESTING', 'RESERVED', 'ENROLLED'].includes(newStage) && (
                 <>
                   <div className="animate-in fade-in slide-in-from-top-1 duration-200">
                     <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 font-mono">Điểm kiểm tra (testScore)</label>
@@ -1404,9 +1506,18 @@ export default function SchoolCrmHub() {
                         </tr>
                       </thead>
                       <tbody>
-                        {importPreview.map((item, idx) => (
-                          <tr key={idx} className="border-b border-slate-100 dark:border-slate-800/80 text-slate-700 dark:text-slate-300">
-                            <td className="p-2.5 font-bold">{item.studentName}</td>
+                        {importPreview.map((item, idx) => {
+                          const isRowDup = leads.some(l => l.phone === item.phone || (item.email && l.email && l.email.toLowerCase() === item.email.toLowerCase()));
+                          return (
+                            <tr key={idx} className={`border-b border-slate-100 dark:border-slate-800/80 text-slate-700 dark:text-slate-300 ${isRowDup ? 'bg-rose-500/5 dark:bg-rose-955/10' : ''}`}>
+                              <td className="p-2.5 font-bold">
+                                <div className="flex items-center gap-1.5">
+                                  <span>{item.studentName}</span>
+                                  {isRowDup && (
+                                    <span className="px-1.5 py-0.2 bg-rose-100 text-rose-700 dark:bg-rose-950/30 dark:text-rose-300 text-[8.5px] rounded border border-rose-200 dark:border-rose-900/40 font-bold shrink-0">Trùng</span>
+                                  )}
+                                </div>
+                              </td>
                             <td className="p-2.5">{item.parentName}</td>
                             <td className="p-2.5 font-mono">{item.phone}</td>
                             <td className="p-2.5 truncate max-w-[120px]">{item.email || '-'}</td>
@@ -1420,14 +1531,25 @@ export default function SchoolCrmHub() {
                               {item.testScore ? `${item.testScore}đ` : ''} {item.scholarshipInfo ? `(${item.scholarshipInfo})` : ''}
                             </td>
                           </tr>
-                        ))}
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>
                 </div>
               )}
 
-              <div className="flex justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+              <div className="flex justify-between items-center pt-2 border-t border-slate-100 dark:border-slate-800">
+                <label className="flex items-center gap-1.5 cursor-pointer text-xs font-semibold text-slate-700 dark:text-slate-350 select-none">
+                  <input
+                    type="checkbox"
+                    checked={skipImportDuplicates}
+                    onChange={(e) => setSkipImportDuplicates(e.target.checked)}
+                    className="rounded text-indigo-600 focus:ring-indigo-400"
+                  />
+                  <span>Bỏ qua dòng trùng SĐT/Email</span>
+                </label>
+                <div className="flex gap-2">
                 <button
                   type="button"
                   onClick={() => { setShowQuickImport(false); setImportText(''); setImportPreview([]); }}
@@ -1446,7 +1568,8 @@ export default function SchoolCrmHub() {
               </div>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
         {/* Kanban Board - Horizontal Scrollable Flex Layout */}
         <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin select-none">
@@ -1482,17 +1605,22 @@ export default function SchoolCrmHub() {
                           <h4 className="text-[11.5px] font-bold text-slate-900 dark:text-white truncate">
                             {lead.studentName}
                           </h4>
-                          <span className="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-[8.5px] font-mono text-slate-500 dark:text-slate-450 rounded font-semibold shrink-0">
-                            {lead.source}
-                          </span>
+                          <div className="flex items-center gap-1 shrink-0">
+                            <span className="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-[8.5px] font-mono text-slate-500 dark:text-slate-455 rounded font-semibold">
+                              {lead.grade || 'Lớp 10'}
+                            </span>
+                            <span className="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-[8.5px] font-mono text-slate-500 dark:text-slate-455 rounded font-semibold">
+                              {lead.source}
+                            </span>
+                          </div>
                         </div>
 
                         <div className="text-[10px] text-slate-550 dark:text-slate-400 mt-1">
                           PH: {lead.parentName} • SĐT: {lead.phone}
                         </div>
 
-                        {/* Display scheduling parameters (TEST_REGISTERED stage) */}
-                        {lead.stage === 'TEST_REGISTERED' && lead.testDate && (
+                        {/* Display scheduling parameters (TESTING stage) */}
+                        {lead.stage === 'TESTING' && lead.testDate && (
                           <div className="mt-2 p-1.5 bg-amber-500/10 border border-amber-100 dark:border-amber-900/20 text-amber-700 dark:text-amber-400 rounded-lg text-[9px] font-semibold flex items-center gap-1">
                             <Clock className="w-3 h-3 text-amber-500" />
                             <span>Lịch test: {lead.testDate} ({lead.testTime || '--:--'})</span>
@@ -1500,7 +1628,7 @@ export default function SchoolCrmHub() {
                         )}
 
                         {/* Display dynamic discount summary badge (RESERVED stage or later) */}
-                        {['RESERVED', 'REGISTERED', 'ENROLLED'].includes(lead.stage) && totalDiscount > 0 && (
+                        {['RESERVED', 'ENROLLED'].includes(lead.stage) && totalDiscount > 0 && (
                           <div className="mt-2 p-1.5 bg-cyan-500/10 border border-cyan-100 dark:border-cyan-900/20 text-cyan-700 dark:text-cyan-400 rounded-lg text-[9px] font-bold flex items-center gap-1 justify-between">
                             <span className="flex items-center gap-1"><DollarSign className="w-3 h-3 text-cyan-500" /> Ưu đãi:</span>
                             <span>{formatCurrency(totalDiscount)}</span>
@@ -1653,6 +1781,9 @@ export default function SchoolCrmHub() {
                       onChange={(e) => setEditPhone(e.target.value)}
                       className="w-full text-xs p-2 border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-800 text-slate-800 dark:text-white outline-none focus:border-indigo-400"
                     />
+                    {isEditPhoneDuplicate && (
+                      <p className="text-[10px] text-rose-500 font-bold mt-1">⚠️ Số điện thoại đã trùng với học sinh khác!</p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 font-mono">Địa chỉ Email</label>
@@ -1662,6 +1793,21 @@ export default function SchoolCrmHub() {
                       onChange={(e) => setEditEmail(e.target.value)}
                       className="w-full text-xs p-2 border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-800 text-slate-800 dark:text-white outline-none focus:border-indigo-400"
                     />
+                    {isEditEmailDuplicate && (
+                      <p className="text-[10px] text-rose-500 font-bold mt-1">⚠️ Email đã trùng với học sinh khác!</p>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 font-mono">Khối lớp đăng ký</label>
+                    <select
+                      value={editGrade}
+                      onChange={(e) => setEditGrade(e.target.value)}
+                      className="w-full text-xs p-2 border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-800 text-slate-800 dark:text-white outline-none focus:border-indigo-400 font-semibold"
+                    >
+                      <option value="Lớp 10">Lớp 10</option>
+                      <option value="Lớp 11">Lớp 11</option>
+                      <option value="Lớp 12">Lớp 12</option>
+                    </select>
                   </div>
                   <div>
                     <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 font-mono">Nguồn marketing</label>
@@ -1708,8 +1854,8 @@ export default function SchoolCrmHub() {
                     </div>
                   </div>
 
-                  {/* Edit scheduling details if TEST_REGISTERED */}
-                  {editStage === 'TEST_REGISTERED' && (
+                  {/* Edit scheduling details if TESTING */}
+                  {editStage === 'TESTING' && (
                     <div className="md:col-span-2 grid grid-cols-2 gap-3 p-3 bg-amber-500/10 border border-amber-200 rounded-xl animate-in fade-in duration-200">
                       <div>
                         <label className="block text-[10px] font-bold text-amber-700 dark:text-amber-300 uppercase tracking-wider mb-1 font-mono">Ngày làm bài test</label>
@@ -1732,8 +1878,8 @@ export default function SchoolCrmHub() {
                     </div>
                   )}
 
-                  {/* Edit Financial Details (RESERVED, REGISTERED, ENROLLED stages) */}
-                  {['RESERVED', 'REGISTERED', 'ENROLLED'].includes(editStage) && (
+                  {/* Edit Financial Details (RESERVED, ENROLLED stages) */}
+                  {['RESERVED', 'ENROLLED'].includes(editStage) && (
                     <div className="md:col-span-2 p-3 bg-indigo-50/20 dark:bg-indigo-950/10 border border-indigo-100 dark:border-indigo-900 rounded-xl space-y-3 animate-in fade-in duration-200">
                       <span className="block text-[10.5px] font-bold text-indigo-700 dark:text-indigo-300 uppercase tracking-wider font-mono">Thông Tin Tài Chính & Ưu Đãi</span>
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -1813,7 +1959,7 @@ export default function SchoolCrmHub() {
                     </div>
                   )}
 
-                  {['TESTED', 'NOT_RESERVED'].includes(editStage) && (
+                  {['TESTING', 'RESERVED', 'ENROLLED'].includes(editStage) && (
                     <>
                       <div>
                         <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 font-mono">Điểm kiểm tra</label>
@@ -1886,7 +2032,11 @@ export default function SchoolCrmHub() {
                     <span className="font-bold text-indigo-600 dark:text-indigo-400 mt-0.5 block">{selectedLead.source}</span>
                   </div>
                   <div>
-                    <span className="text-slate-400 dark:text-slate-500 font-medium block mb-0.5">Trạng thái tuyển sinh</span>
+                    <span className="text-slate-400 dark:text-slate-500 font-medium block">Khối lớp đăng ký</span>
+                    <span className="font-bold text-slate-800 dark:text-slate-200 mt-0.5 block">{selectedLead.grade || 'Lớp 10'}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 dark:text-slate-555 font-medium block mb-0.5">Trạng thái tuyển sinh</span>
                     <span className={`inline-block px-2.5 py-0.5 text-[10.5px] font-bold rounded-full ${stages.find(s => s.key === selectedLead.stage)?.bg} ${stages.find(s => s.key === selectedLead.stage)?.text} border`}>
                       {stages.find(s => s.key === selectedLead.stage)?.label}
                     </span>
@@ -1927,8 +2077,8 @@ export default function SchoolCrmHub() {
                   </div>
                 </div>
 
-                {/* Display test scheduling details and invitation email trigger inside Modal (TEST_REGISTERED stage) */}
-                {selectedLead.stage === 'TEST_REGISTERED' && (
+                {/* Display test scheduling details and invitation email trigger inside Modal (TESTING stage) */}
+                {selectedLead.stage === 'TESTING' && (
                   <div className="p-3 bg-amber-50/45 dark:bg-amber-950/15 border border-amber-150 dark:border-amber-900/40 rounded-xl space-y-3.5">
                     <div className="flex justify-between items-center text-xs flex-wrap gap-2">
                       <div>
@@ -1965,7 +2115,7 @@ export default function SchoolCrmHub() {
                 )}
 
                 {/* Display billing and discounts details inside Modal (RESERVED stage or later) */}
-                {['RESERVED', 'REGISTERED', 'ENROLLED'].includes(selectedLead.stage) && (
+                {['RESERVED', 'ENROLLED'].includes(selectedLead.stage) && (
                   <div className="p-4 bg-indigo-50/30 dark:bg-indigo-950/15 border border-indigo-100 dark:border-indigo-900/50 rounded-xl space-y-3">
                     <span className="block text-[11px] font-bold text-indigo-700 dark:text-indigo-300 uppercase tracking-wider font-mono">Chi tiết biểu phí & ưu đãi học sinh</span>
                     <div className="grid grid-cols-2 gap-3 text-xs">
@@ -2027,7 +2177,7 @@ export default function SchoolCrmHub() {
                 )}
 
                 {/* Test score & Scholarship Display in Modal with Send Email Action */}
-                {['TESTED', 'NOT_RESERVED', 'RESERVED', 'REGISTERED', 'ENROLLED'].includes(selectedLead.stage) && (
+                {['TESTING', 'RESERVED', 'ENROLLED'].includes(selectedLead.stage) && (
                   <div className="p-3 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl space-y-3">
                     <div className="grid grid-cols-2 gap-3 text-xs">
                       <div>

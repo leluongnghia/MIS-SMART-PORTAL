@@ -11,7 +11,7 @@ dotenv.config();
 const app = express();
 const PORT = parseInt(process.env.PORT || '3000', 10);
 
-app.use(express.json());
+app.use(express.json({ limit: '5mb' }));
 
 // Initialize Gemini SDK with named parameter
 const apiKey = process.env.GEMINI_API_KEY;
@@ -28,7 +28,11 @@ const ai = apiKey
 
 // API routes FIRST
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', hasGeminiKey: !!apiKey });
+  res.json({
+    status: 'ok',
+    hasGeminiKey: !!apiKey,
+    hasSmtpConfig: Boolean(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS),
+  });
 });
 
 // 1. Summarize Reports API
@@ -479,18 +483,21 @@ async function sendDeadlineReminderBatch({
   users,
   nearDeadlineDays = 2,
   markMemory = true,
+  maxPerRun = parseInt(process.env.MAX_EMAIL_REMINDERS_PER_RUN || '5', 10),
 }: {
   tasks: ReminderTask[];
   users: ReminderUser[];
   nearDeadlineDays?: number;
   markMemory?: boolean;
+  maxPerRun?: number;
 }) {
   const todayStr = getLocalDateString();
   const candidates = findReminderCandidates(tasks, users, nearDeadlineDays, todayStr);
+  const candidatesToSend = candidates.slice(0, Math.max(1, maxPerRun));
   const sent: Array<{ taskId: string; type: ReminderType; reminderDate: string; provider?: string; previewUrl?: string }> = [];
   const failed: Array<{ taskId: string; type: ReminderType; error: string }> = [];
 
-  for (const candidate of candidates) {
+  for (const candidate of candidatesToSend) {
     try {
       const result = await sendEmailNotification({
         taskTitle: candidate.task.title,
@@ -525,6 +532,8 @@ async function sendDeadlineReminderBatch({
     todayStr,
     scanned: tasks.length,
     candidates: candidates.length,
+    processed: candidatesToSend.length,
+    remaining: Math.max(0, candidates.length - candidatesToSend.length),
     sent,
     failed,
   };

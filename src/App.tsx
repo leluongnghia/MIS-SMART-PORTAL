@@ -195,6 +195,38 @@ const INITIAL_DIRECTIVES: BoardDirective[] = [
   }
 ];
 
+const LOCAL_TASKS_KEY = 'school_task_manager_tasks_fallback';
+const LOCAL_WORKSPACES_KEY = 'school_task_manager_workspaces';
+const LOCAL_DIRECTIVES_KEY = 'school_task_manager_directives';
+const LOCAL_RBAC_KEY = 'school_task_manager_rbac';
+const LOCAL_USER_OVERRIDES_KEY = 'school_task_manager_user_overrides';
+
+function readLocalJson<T>(key: string, fallback: T): T {
+  try {
+    const saved = localStorage.getItem(key);
+    if (!saved) return fallback;
+    if (key === LOCAL_RBAC_KEY || key === LOCAL_DIRECTIVES_KEY) {
+      return decryptData(saved) || fallback;
+    }
+    return JSON.parse(saved) as T;
+  } catch (error) {
+    console.warn(`[Local fallback] Cannot read ${key}:`, error);
+    return fallback;
+  }
+}
+
+function writeLocalJson<T>(key: string, value: T) {
+  try {
+    if (key === LOCAL_RBAC_KEY || key === LOCAL_DIRECTIVES_KEY) {
+      localStorage.setItem(key, encryptData(value));
+    } else {
+      localStorage.setItem(key, JSON.stringify(value));
+    }
+  } catch (error) {
+    console.warn(`[Local fallback] Cannot write ${key}:`, error);
+  }
+}
+
 export default function App() {
   const { lang, setLang, t } = useLanguage();
   const [isAuthReady, setIsAuthReady] = useState(false);
@@ -234,8 +266,8 @@ export default function App() {
   }, [darkMode]);
 
   // Persistence state
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [workspaces, setWorkspaces] = useState<Workspace[]>(INITIAL_WORKSPACES);
+  const [tasks, setTasks] = useState<Task[]>(() => readLocalJson<Task[]>(LOCAL_TASKS_KEY, INITIAL_TASKS));
+  const [workspaces, setWorkspaces] = useState<Workspace[]>(() => readLocalJson<Workspace[]>(LOCAL_WORKSPACES_KEY, INITIAL_WORKSPACES));
   const [isWorkspaceModalOpen, setIsWorkspaceModalOpen] = useState(false);
 
   // Stateful users directory
@@ -388,8 +420,8 @@ export default function App() {
     }
   };
 
-  const [rbacConfig, setRbacConfig] = useState<RbacConfig>(DEFAULT_RBAC_CONFIG);
-  const [userOverrides, setUserOverrides] = useState<Record<string, Partial<RolePermissions>>>({});
+  const [rbacConfig, setRbacConfig] = useState<RbacConfig>(() => readLocalJson<RbacConfig>(LOCAL_RBAC_KEY, DEFAULT_RBAC_CONFIG));
+  const [userOverrides, setUserOverrides] = useState<Record<string, Partial<RolePermissions>>>(() => readLocalJson<Record<string, Partial<RolePermissions>>>(LOCAL_USER_OVERRIDES_KEY, {}));
   const [groupByDepartment, setGroupByDepartment] = useState<boolean>(true);
   const [mobileActiveWorkspace, setMobileActiveWorkspace] = useState<string>('');
   const [isRbacModalOpen, setIsRbacModalOpen] = useState(false);
@@ -407,6 +439,7 @@ export default function App() {
 
   const saveUserOverrides = async (updatedOverrides: Record<string, Partial<RolePermissions>>) => {
     setUserOverrides(updatedOverrides);
+    writeLocalJson(LOCAL_USER_OVERRIDES_KEY, updatedOverrides);
     try {
       await setDoc(doc(db, 'config', 'user_overrides'), { overrides: updatedOverrides });
     } catch (e) {
@@ -538,7 +571,7 @@ export default function App() {
   const [activeStatsTaskType, setActiveStatsTaskType] = useState<'COMPLETED' | 'PENDING' | 'IN_PROGRESS' | 'OVERDUE' | null>(null);
 
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
-  const [directives, setDirectives] = useState<BoardDirective[]>([]);
+  const [directives, setDirectives] = useState<BoardDirective[]>(() => readLocalJson<BoardDirective[]>(LOCAL_DIRECTIVES_KEY, INITIAL_DIRECTIVES));
 
   const saveAnnouncements = (updated: Announcement[]) => {
     setAnnouncements(updated);
@@ -583,6 +616,7 @@ export default function App() {
           loaded.push(doc.data() as Workspace);
         });
         setWorkspaces(loaded);
+        writeLocalJson(LOCAL_WORKSPACES_KEY, loaded);
       }
     }, (error) => {
       handleFirestoreError(error, OperationType.GET, 'workspaces');
@@ -630,6 +664,7 @@ export default function App() {
         prevTasksRef.current = loaded;
         isFirstLoadRef.current = false;
         setTasks(loaded);
+        writeLocalJson(LOCAL_TASKS_KEY, loaded);
 
         // Auto seed any missing standard/demo mock tasks directly to keep the system visually rich with all 50+ tasks
         if (loaded.length < 48) {
@@ -678,6 +713,7 @@ export default function App() {
           loaded.push(doc.data() as BoardDirective);
         });
         setDirectives(loaded);
+        writeLocalJson(LOCAL_DIRECTIVES_KEY, loaded);
       }
     }, (error) => {
       handleFirestoreError(error, OperationType.GET, 'directives');
@@ -699,6 +735,7 @@ export default function App() {
         const rbacDoc = snapshot.data();
         if (rbacDoc && rbacDoc.config) {
           setRbacConfig(rbacDoc.config as RbacConfig);
+          writeLocalJson(LOCAL_RBAC_KEY, rbacDoc.config as RbacConfig);
         }
       }
     }, (error) => {
@@ -721,6 +758,7 @@ export default function App() {
         const docData = snapshot.data();
         if (docData && docData.overrides) {
           setUserOverrides(docData.overrides);
+          writeLocalJson(LOCAL_USER_OVERRIDES_KEY, docData.overrides);
         }
       }
     }, (error) => {
@@ -774,11 +812,13 @@ export default function App() {
           const task = tasks.find(t => t.id === item.taskId);
           if (!task) return;
 
-          await setDoc(doc(db, 'tasks', task.id), {
+          const updatedTask = {
             ...task,
             [item.type === 'OVERDUE' ? 'overdueReminderSent' : 'nearDeadlineReminderSent']: true,
             [item.type === 'OVERDUE' ? 'lastOverdueReminderDate' : 'lastNearDeadlineReminderDate']: item.reminderDate,
-          });
+          };
+          persistTaskLocally(updatedTask);
+          await setDoc(doc(db, 'tasks', task.id), updatedTask);
         }));
 
         console.log(`[Auto-Reminder] Updated ${data.sent.length} reminder flag(s) in Firestore.`);
@@ -878,6 +918,7 @@ export default function App() {
       senderAvatar: currentUser.avatar,
       implementations: []
     };
+    persistDirectiveLocally(newDir);
     try {
       await setDoc(doc(db, 'directives', newDirId), newDir);
     } catch (e) {
@@ -902,6 +943,7 @@ export default function App() {
       ...d,
       implementations: [...filtered, newImp]
     };
+    persistDirectiveLocally(updatedDir);
     try {
       await setDoc(doc(db, 'directives', directiveId), updatedDir);
     } catch (e) {
@@ -910,6 +952,7 @@ export default function App() {
   };
 
   const handleDeleteDirective = async (id: string) => {
+    removeDirectiveLocally(id);
     try {
       await deleteDoc(doc(db, 'directives', id));
     } catch (e) {
@@ -951,8 +994,39 @@ export default function App() {
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${hrStr}:${minStr}`;
   };
 
+  const persistTasksLocally = (updatedTasks: Task[]) => {
+    setTasks(updatedTasks);
+    writeLocalJson(LOCAL_TASKS_KEY, updatedTasks);
+  };
+
+  const persistTaskLocally = (updatedTask: Task) => {
+    const updatedTasks = tasks.some(t => t.id === updatedTask.id)
+      ? tasks.map(t => t.id === updatedTask.id ? updatedTask : t)
+      : [updatedTask, ...tasks];
+    persistTasksLocally(updatedTasks);
+  };
+
+  const removeTaskLocally = (taskId: string) => {
+    const updatedTasks = tasks.filter(t => t.id !== taskId);
+    persistTasksLocally(updatedTasks);
+  };
+
+  const persistDirectiveLocally = (updatedDirective: BoardDirective) => {
+    const updatedDirectives = directives.some(d => d.id === updatedDirective.id)
+      ? directives.map(d => d.id === updatedDirective.id ? updatedDirective : d)
+      : [updatedDirective, ...directives];
+    setDirectives(updatedDirectives);
+    writeLocalJson(LOCAL_DIRECTIVES_KEY, updatedDirectives);
+  };
+
+  const removeDirectiveLocally = (directiveId: string) => {
+    const updatedDirectives = directives.filter(d => d.id !== directiveId);
+    setDirectives(updatedDirectives);
+    writeLocalJson(LOCAL_DIRECTIVES_KEY, updatedDirectives);
+  };
+
   const handleSyncComplete = async (syncedTasks: Task[]) => {
-    setTasks(syncedTasks);
+    persistTasksLocally(syncedTasks);
     try {
       for (const t of syncedTasks) {
         await setDoc(doc(db, 'tasks', t.id), t);
@@ -984,6 +1058,7 @@ export default function App() {
       ]
     };
 
+    persistTaskLocally(newTask);
     try {
       await setDoc(doc(db, 'tasks', newTaskId), newTask);
     } catch (e) {
@@ -1037,6 +1112,7 @@ export default function App() {
       reportEvidence: evidence !== undefined ? evidence : (t.reportEvidence || '')
     };
 
+    persistTaskLocally(updatedTask);
     try {
       await setDoc(doc(db, 'tasks', taskId), updatedTask);
     } catch (e) {
@@ -1072,6 +1148,7 @@ export default function App() {
       history: updatedHistory
     };
 
+    persistTaskLocally(updatedTask);
     try {
       await setDoc(doc(db, 'tasks', taskId), updatedTask);
     } catch (e) {
@@ -1088,6 +1165,7 @@ export default function App() {
       alert('Tài khoản của bạn không được cấp quyền xóa chỉ đạo.');
       return;
     }
+    removeTaskLocally(taskId);
     try {
       await deleteDoc(doc(db, 'tasks', taskId));
       if (selectedTaskForDetail && selectedTaskForDetail.id === taskId) {
@@ -1168,6 +1246,7 @@ export default function App() {
       history: updatedHistory
     };
 
+    persistTaskLocally(updatedTask);
     try {
       await setDoc(doc(db, 'tasks', taskId), updatedTask);
     } catch (e) {
@@ -1210,6 +1289,7 @@ export default function App() {
       history: updatedHistory
     };
 
+    persistTaskLocally(updatedTask);
     try {
       await setDoc(doc(db, 'tasks', taskId), updatedTask);
     } catch (e) {

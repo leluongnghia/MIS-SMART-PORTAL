@@ -9,7 +9,7 @@ service cloud.firestore {
 
     // Global Helpers
     function isSignedIn() {
-      return true; // Allow access even if silent anonymous auth is disabled in the Firebase project console.
+      return request.auth != null;
     }
 
     function isValidId(id) {

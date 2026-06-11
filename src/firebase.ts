@@ -50,8 +50,8 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
     operationType,
     path
   };
-  console.error('Firestore Error: ', JSON.stringify(errInfo));
-  throw new Error(JSON.stringify(errInfo));
+  console.warn('Firestore fallback active: ', JSON.stringify(errInfo));
+  return errInfo;
 }
 
 // CRITICAL CONSTRAINT: Validate Connection to Firestore on startup

@@ -24,3 +24,5 @@ services:
         sync: false  # Mật khẩu SMTP hoặc app password
       - key: EMAIL_FROM
         sync: false  # Tên/người gửi, ví dụ "MIS Smart Portal <noreply@mis.edu.vn>"
+      - key: MAX_EMAIL_REMINDERS_PER_RUN
+        value: "5"
