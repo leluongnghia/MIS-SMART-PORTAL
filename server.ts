@@ -671,6 +671,124 @@ app.post('/api/email/send-admissions-result', async (req, res) => {
   }
 });
 
+// 5c. Send Test Invitation Email to Parent API
+app.post('/api/email/send-test-invite', async (req, res) => {
+  const { studentName, parentName, parentEmail, testDate, testTime } = req.body;
+
+  if (!studentName || !parentName || !parentEmail || !testDate || !testTime) {
+    return res.status(400).json({ status: 'error', error: 'Missing required test invitation details.' });
+  }
+
+  const subject = `📧 THƯ MỜI THAM GIA KHẢO SÁT NĂNG LỰC ĐẦU VÀO - HS: ${studentName}`;
+  const receiver = parentEmail;
+
+  const htmlContent = `
+    <div style="font-family: 'Be Vietnam Pro', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+      <div style="background-color: #4f46e5; color: white; padding: 24px; text-align: center;">
+        <h2 style="margin: 0; font-size: 20px; font-weight: 850; letter-spacing: -0.02em;">HỆ THỐNG GIÁO DỤC ĐA TRÍ TUỆ MIS</h2>
+        <p style="margin: 4px 0 0 0; font-size: 14px; opacity: 0.9;">Thư Mời Khảo Sát Năng Lực Đầu Vào</p>
+      </div>
+      <div style="padding: 24px; background-color: #ffffff; color: #1e293b;">
+        <p style="font-size: 15px; line-height: 1.6; margin-top: 0;">Kính gửi Phụ huynh học sinh <strong>${parentName}</strong>,</p>
+        
+        <p style="font-size: 15px; line-height: 1.6;">Hội đồng Tuyển sinh Trường Đa Trí Tuệ MIS xin trân trọng kính mời học sinh <strong>${studentName}</strong> tham gia đợt khảo sát đánh giá năng lực đầu vào với lịch hẹn chi tiết như sau:</p>
+        
+        <div style="background-color: #f8fafc; border-left: 4px solid #f59e0b; padding: 16px; margin: 20px 0; border-radius: 0 8px 8px 0;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+            <tr style="border-bottom: 1px solid #f1f5f9;">
+              <td style="padding: 8px 0; color: #64748b; width: 40%;"><strong>Học sinh:</strong></td>
+              <td style="padding: 8px 0; color: #0f172a; font-weight: bold;">${studentName}</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #f1f5f9;">
+              <td style="padding: 8px 0; color: #64748b;"><strong>Ngày làm bài test:</strong></td>
+              <td style="padding: 8px 0; color: #0f172a; font-weight: bold; font-size: 14.5px;">${testDate}</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #f1f5f9;">
+              <td style="padding: 8px 0; color: #64748b;"><strong>Thời gian làm bài:</strong></td>
+              <td style="padding: 8px 0; color: #7c3aed; font-weight: bold; font-size: 14.5px;">${testTime}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; color: #64748b;"><strong>Địa điểm làm bài:</strong></td>
+              <td style="padding: 8px 0; color: #0f172a; font-weight: bold;">Phòng Khảo thí - Văn phòng Tuyển sinh MIS</td>
+            </tr>
+          </table>
+        </div>
+
+        <p style="font-size: 15px; line-height: 1.6;"><strong>Lưu ý dành cho phụ huynh & học sinh:</strong></p>
+        <div style="background-color: #f1f5f9; padding: 16px; border-radius: 8px; font-size: 13px; color: #475569; line-height: 1.6;">
+          - Học sinh vui lòng có mặt trước giờ kiểm tra 15 phút.<br/>
+          - Mang theo đồ dùng học tập cần thiết (Bút chì, bút mực, thước kẻ).<br/>
+          - Kết quả kiểm tra sẽ được Hội đồng tuyển sinh thông báo trực tiếp qua Email/Cổng thông tin phụ huynh sau 3 ngày làm việc.
+        </div>
+
+        <div style="text-align: center; margin: 32px 0 12px 0;">
+          <a href="http://localhost:3000" style="background-color: #4f46e5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 14px; display: inline-block; box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2);">
+            Cổng Thông Tin Tuyển Sinh MIS
+          </a>
+        </div>
+      </div>
+      <div style="background-color: #f1f5f9; padding: 16px; text-align: center; font-size: 12px; color: #64748b; border-top: 1px solid #e2e8f0;">
+        <p style="margin: 0;">Mọi thắc mắc vui lòng liên hệ Ban Tuyển sinh qua Hotline: <strong>024.1234.5678</strong>.</p>
+        <p style="margin: 4px 0 0 0;">© 2026 Trường Đa Trí Tuệ MIS. All rights reserved.</p>
+      </div>
+    </div>
+  `;
+
+  const mailOptions = {
+    from: process.env.EMAIL_FROM || '"Tuyển sinh MIS" <noreply@mis.edu.vn>',
+    to: receiver,
+    subject,
+    html: htmlContent,
+  };
+
+  try {
+    if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+      const transporter = nodemailer.createTransport(smtpConfig);
+      const info = await transporter.sendMail(mailOptions);
+      console.log(`[Email Service] Test invitation sent via SMTP to ${receiver}. Message ID: ${info.messageId}`);
+      res.json({ status: 'success', provider: 'SMTP', messageId: info.messageId });
+    } else {
+      console.log('------------------------------------------------------------');
+      console.log(`[SMTP MOCK TEST INVITATION] To: ${receiver}`);
+      console.log(`Subject: ${subject}`);
+      console.log(`Student: ${studentName} | Date: ${testDate} | Time: ${testTime}`);
+      console.log('------------------------------------------------------------');
+
+      try {
+        const testAccount = await withTimeout(nodemailer.createTestAccount(), 8000, 'Ethereal test account creation');
+        const transporter = nodemailer.createTransport({
+          host: 'smtp.ethereal.email',
+          port: 587,
+          secure: false,
+          auth: {
+            user: testAccount.user,
+            pass: testAccount.pass,
+          },
+          connectionTimeout: 10000,
+          greetingTimeout: 10000,
+          socketTimeout: 15000,
+        });
+
+        const info = await withTimeout(transporter.sendMail(mailOptions), 15000, 'Ethereal test invitation email send');
+        const previewUrl = nodemailer.getTestMessageUrl(info);
+        console.log(`[Email Service] Test Invitation Preview URL: ${previewUrl}`);
+        res.json({ status: 'success', provider: 'Ethereal', previewUrl });
+      } catch (err: any) {
+        console.warn(`[Email Service] Test invitation email fallback: ${err?.message || err}`);
+        res.json({
+          status: 'success',
+          provider: 'ConsoleLogOnly',
+          warning: 'SMTP is not configured and Ethereal test email is unavailable; message was logged on the server only.',
+        });
+      }
+    }
+  } catch (error: any) {
+    console.error('Email error in send-test-invite:', error);
+    res.status(500).json({ status: 'error', error: error.message || 'Error sending test invitation email' });
+  }
+});
+
+
 
 // 6. Batch deadline reminder API
 app.post('/api/email/run-deadline-reminders', async (req, res) => {

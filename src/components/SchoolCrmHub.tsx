@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Target, Search, Plus, PhoneCall, Mail, Calendar, Sparkles, Megaphone, ArrowRight, Award, FileText, CheckCircle2, ClipboardList, Edit3, X, Download, Upload, Loader2 } from 'lucide-react';
+import { Target, Search, Plus, PhoneCall, Mail, Calendar, Sparkles, Megaphone, ArrowRight, Award, FileText, CheckCircle2, ClipboardList, Edit3, X, Download, Upload, Loader2, Clock, DollarSign } from 'lucide-react';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 
 interface Lead {
@@ -19,6 +19,16 @@ interface Lead {
     khaiSinh: boolean;
     anh3x4: boolean;
   };
+  // Financial fields
+  tuitionDiscount?: number;
+  scholarshipDiscount?: number;
+  phaseEnrollmentDiscount?: number;
+  advancedFee?: number;
+  otherDiscount?: number;
+  baseTuitionFee?: number;
+  // Scheduling fields
+  testDate?: string;
+  testTime?: string;
 }
 
 export default function SchoolCrmHub() {
@@ -59,10 +69,12 @@ export default function SchoolCrmHub() {
       email: 'thanh.pham@gmail.com',
       stage: 'TEST_REGISTERED',
       source: 'Referral',
-      notes: 'Hẹn ngày 15/06/2026 kiểm tra năng lực Toán, Anh.',
+      notes: 'Đăng ký kiểm tra năng lực đầu vào môn Toán & tiếng Anh.',
       docChecklist: { hocBa: false, khaiSinh: true, anh3x4: true },
+      testDate: '2026-06-15',
+      testTime: '09:00',
       interactions: [
-        { date: '2026-06-09', type: 'Đặt lịch', content: 'Xác nhận tham quan cơ sở vật chất và lịch kiểm tra đầu vào' }
+        { date: '2026-06-09', type: 'Đặt lịch', content: 'Xác nhận tham quan cơ sở vật chất và đặt lịch hẹn kiểm tra ngày 15/06/2026 lúc 09:00' }
       ]
     },
     {
@@ -109,6 +121,12 @@ export default function SchoolCrmHub() {
       testScore: '8.0/10',
       scholarshipInfo: 'Không có học bổng',
       docChecklist: { hocBa: true, khaiSinh: true, anh3x4: false },
+      baseTuitionFee: 60000000,
+      tuitionDiscount: 2000000,
+      scholarshipDiscount: 0,
+      phaseEnrollmentDiscount: 1500000,
+      advancedFee: 3000000,
+      otherDiscount: 500000,
       interactions: [
         { date: '2026-06-05', type: 'Đóng phí giữ chỗ', content: 'Thu học phí giữ chỗ 5.000.000đ thành công' }
       ]
@@ -125,6 +143,12 @@ export default function SchoolCrmHub() {
       testScore: '8.5/10',
       scholarshipInfo: 'Học bổng 30%',
       docChecklist: { hocBa: true, khaiSinh: true, anh3x4: true },
+      baseTuitionFee: 60000000,
+      tuitionDiscount: 2000000,
+      scholarshipDiscount: 18000000,
+      phaseEnrollmentDiscount: 1500000,
+      advancedFee: 3000000,
+      otherDiscount: 0,
       interactions: [
         { date: '2026-06-03', type: 'Nộp hồ sơ', content: 'Thu nhận học bạ gốc và hồ sơ nhập học đầy đủ' }
       ]
@@ -141,6 +165,12 @@ export default function SchoolCrmHub() {
       testScore: '9.5/10',
       scholarshipInfo: 'Học bổng 70% tuyển thẳng',
       docChecklist: { hocBa: true, khaiSinh: true, anh3x4: true },
+      baseTuitionFee: 60000000,
+      tuitionDiscount: 3000000,
+      scholarshipDiscount: 42000000,
+      phaseEnrollmentDiscount: 2000000,
+      advancedFee: 4500000,
+      otherDiscount: 1000000,
       interactions: [
         { date: '2026-06-01', type: 'Nhập học', content: 'Xác nhận thu học phí học kỳ I và phát đồng phục' }
       ]
@@ -165,6 +195,16 @@ export default function SchoolCrmHub() {
   const [editDocHocBa, setEditDocHocBa] = useState(false);
   const [editDocKhaiSinh, setEditDocKhaiSinh] = useState(false);
   const [editDocAnh3x4, setEditDocAnh3x4] = useState(false);
+  // Financial fields
+  const [editBaseTuitionFee, setEditBaseTuitionFee] = useState('');
+  const [editTuitionDiscount, setEditTuitionDiscount] = useState('');
+  const [editScholarshipDiscount, setEditScholarshipDiscount] = useState('');
+  const [editPhaseEnrollmentDiscount, setEditPhaseEnrollmentDiscount] = useState('');
+  const [editAdvancedFee, setEditAdvancedFee] = useState('');
+  const [editOtherDiscount, setEditOtherDiscount] = useState('');
+  // Scheduling fields
+  const [editTestDate, setEditTestDate] = useState('');
+  const [editTestTime, setEditTestTime] = useState('');
 
   // Form State
   const [showAddLead, setShowAddLead] = useState(false);
@@ -180,6 +220,16 @@ export default function SchoolCrmHub() {
   const [newDocHocBa, setNewDocHocBa] = useState(false);
   const [newDocKhaiSinh, setNewDocKhaiSinh] = useState(false);
   const [newDocAnh3x4, setNewDocAnh3x4] = useState(false);
+  // Financial fields
+  const [newBaseTuitionFee, setNewBaseTuitionFee] = useState('');
+  const [newTuitionDiscount, setNewTuitionDiscount] = useState('');
+  const [newScholarshipDiscount, setNewScholarshipDiscount] = useState('');
+  const [newPhaseEnrollmentDiscount, setNewPhaseEnrollmentDiscount] = useState('');
+  const [newAdvancedFee, setNewAdvancedFee] = useState('');
+  const [newOtherDiscount, setNewOtherDiscount] = useState('');
+  // Scheduling fields
+  const [newTestDate, setNewTestDate] = useState('');
+  const [newTestTime, setNewTestTime] = useState('');
 
   // Quick Import State
   const [showQuickImport, setShowQuickImport] = useState(false);
@@ -213,6 +263,12 @@ export default function SchoolCrmHub() {
     return { label: 'Chưa nộp', bg: 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700', count };
   };
 
+  // Currency Formatter Helper
+  const formatCurrency = (val?: number) => {
+    if (val === undefined || isNaN(val)) return '0 đ';
+    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val);
+  };
+
   // Dynamic calculations
   const enrolledCount = useMemo(() => leads.filter(l => l.stage === 'ENROLLED').length, [leads]);
   const reservedCount = useMemo(() => leads.filter(l => l.stage === 'RESERVED').length, [leads]);
@@ -229,16 +285,20 @@ export default function SchoolCrmHub() {
     return Object.entries(counts).map(([name, value]) => ({ name, value }));
   }, [leads]);
 
-  // Export CSV function (BOM UTF-8 standard for Excel)
+  // Export CSV function
   const handleExportCsv = () => {
     const headers = [
       'ID', 'Tên Học Sinh', 'Tên Phụ Huynh', 'Số Điện Thoại', 'Email', 
       'Trạng Thái Tuyển Sinh', 'Nguồn Tiếp Cận', 'Điểm Test', 'Học Bổng', 
-      'Học Bạ Gốc', 'Bản Sao Khai Sinh', 'Ảnh 3x4', 'Trạng Thái Hồ Sơ', 'Ghi Chú'
+      'Học Bạ Gốc', 'Bản Sao Khai Sinh', 'Ảnh 3x4', 'Trạng Thái Hồ Sơ', 
+      'Học Phí Gốc', 'Ưu Đãi Học Phí', 'Ưu Đãi Học Bổng', 'Ưu Đãi Đóng Sớm', 
+      'Phí Bổ Trợ', 'Ưu Đãi Khác', 'Tổng Ưu Đãi', 'Lịch Test', 'Ghi Chú'
     ];
     
     const rows = leads.map(l => {
       const docStatus = getDocumentStatus(l);
+      const totalDiscount = (l.tuitionDiscount || 0) + (l.scholarshipDiscount || 0) + (l.phaseEnrollmentDiscount || 0) + (l.otherDiscount || 0);
+      const testSchedule = l.testDate ? `${l.testDate} ${l.testTime || ''}`.trim() : '';
       return [
         l.id,
         l.studentName,
@@ -253,6 +313,14 @@ export default function SchoolCrmHub() {
         l.docChecklist?.khaiSinh ? 'Đã nộp' : 'Chưa nộp',
         l.docChecklist?.anh3x4 ? 'Đã nộp' : 'Chưa nộp',
         docStatus.label,
+        l.baseTuitionFee || 0,
+        l.tuitionDiscount || 0,
+        l.scholarshipDiscount || 0,
+        l.phaseEnrollmentDiscount || 0,
+        l.advancedFee || 0,
+        l.otherDiscount || 0,
+        totalDiscount,
+        testSchedule,
         l.notes.replace(/"/g, '""')
       ];
     });
@@ -272,7 +340,7 @@ export default function SchoolCrmHub() {
     document.body.removeChild(link);
   };
 
-  // Excel Copy-Paste TSV/CSV Parser Importer
+  // Excel copy-paste TSV parser
   const handleParseImportText = (text: string) => {
     if (!text.trim()) {
       setImportPreview([]);
@@ -285,7 +353,6 @@ export default function SchoolCrmHub() {
     lines.forEach(line => {
       if (!line.trim()) return;
       
-      // Support split by Tab (Excel) or Comma (CSV)
       const cols = line.includes('\t') ? line.split('\t') : line.split(',');
       if (cols.length < 3 || !cols[0].trim() || !cols[1].trim() || !cols[2].trim()) return;
 
@@ -294,7 +361,6 @@ export default function SchoolCrmHub() {
       const phone = cols[2].trim();
       const email = cols[3]?.trim() || '';
       
-      // Resolve source
       let source: Lead['source'] = 'Social';
       const rawSource = cols[4]?.trim().toLowerCase();
       if (rawSource?.includes('web')) source = 'Website';
@@ -305,7 +371,6 @@ export default function SchoolCrmHub() {
       const testScore = cols[6]?.trim() || undefined;
       const scholarshipInfo = cols[7]?.trim() || undefined;
       
-      // Resolve stage
       let stage: Lead['stage'] = 'LEAD';
       const rawStage = cols[8]?.trim().toLowerCase();
       if (rawStage?.includes('tu van')) stage = 'CONSULTING';
@@ -363,6 +428,8 @@ export default function SchoolCrmHub() {
     if (!newStudentName.trim() || !newParentName.trim() || !newPhone.trim()) return;
 
     const hasScoreFields = ['TESTED', 'NOT_RESERVED', 'RESERVED', 'REGISTERED', 'ENROLLED'].includes(newStage);
+    const hasFinancialFields = ['RESERVED', 'REGISTERED', 'ENROLLED'].includes(newStage);
+    const hasSchedulingFields = newStage === 'TEST_REGISTERED';
 
     const newLead: Lead = {
       id: `lead_${Date.now()}`,
@@ -380,6 +447,16 @@ export default function SchoolCrmHub() {
         khaiSinh: newDocKhaiSinh,
         anh3x4: newDocAnh3x4
       },
+      // Financial inputs
+      baseTuitionFee: hasFinancialFields && newBaseTuitionFee.trim() ? Number(newBaseTuitionFee) : undefined,
+      tuitionDiscount: hasFinancialFields && newTuitionDiscount.trim() ? Number(newTuitionDiscount) : undefined,
+      scholarshipDiscount: hasFinancialFields && newScholarshipDiscount.trim() ? Number(newScholarshipDiscount) : undefined,
+      phaseEnrollmentDiscount: hasFinancialFields && newPhaseEnrollmentDiscount.trim() ? Number(newPhaseEnrollmentDiscount) : undefined,
+      advancedFee: hasFinancialFields && newAdvancedFee.trim() ? Number(newAdvancedFee) : undefined,
+      otherDiscount: hasFinancialFields && newOtherDiscount.trim() ? Number(newOtherDiscount) : undefined,
+      // Scheduling inputs
+      testDate: hasSchedulingFields && newTestDate ? newTestDate : undefined,
+      testTime: hasSchedulingFields && newTestTime ? newTestTime : undefined,
       interactions: [
         { 
           date: new Date().toISOString().split('T')[0], 
@@ -401,6 +478,16 @@ export default function SchoolCrmHub() {
     setNewDocHocBa(false);
     setNewDocKhaiSinh(false);
     setNewDocAnh3x4(false);
+    // Reset financial states
+    setNewBaseTuitionFee('');
+    setNewTuitionDiscount('');
+    setNewScholarshipDiscount('');
+    setNewPhaseEnrollmentDiscount('');
+    setNewAdvancedFee('');
+    setNewOtherDiscount('');
+    // Reset scheduling states
+    setNewTestDate('');
+    setNewTestTime('');
     setShowAddLead(false);
   };
 
@@ -483,12 +570,11 @@ export default function SchoolCrmHub() {
 
       if (response.ok && data && data.status === 'success') {
         const message = data.provider === 'Ethereal' 
-          ? `Gửi email giả lập thành công! Xem trước tại: ${data.previewUrl}`
+          ? `Gửi email báo điểm giả lập thành công! Xem trước tại: ${data.previewUrl}`
           : 'Đã gửi email thông báo thực tế tới phụ huynh!';
 
         setEmailAlert({ type: 'success', message });
 
-        // Add log entry
         setLeads(prev => prev.map(l => {
           if (l.id === lead.id) {
             return {
@@ -516,6 +602,76 @@ export default function SchoolCrmHub() {
     }
   };
 
+  // Trigger SMTP/Ethereal test invitation email
+  const handleSendTestInvitationEmail = async (lead: Lead) => {
+    if (!lead.email) {
+      setEmailAlert({ type: 'error', message: 'Vui lòng bổ sung địa chỉ email phụ huynh trước khi gửi!' });
+      return;
+    }
+    if (!lead.testDate || !lead.testTime) {
+      setEmailAlert({ type: 'error', message: 'Vui lòng cấu hình ngày tháng và giờ thi test của học sinh trước khi gửi!' });
+      return;
+    }
+
+    setSendingEmail(true);
+    setEmailAlert(null);
+
+    try {
+      const response = await fetch('/api/email/send-test-invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          studentName: lead.studentName,
+          parentName: lead.parentName,
+          parentEmail: lead.email,
+          testDate: lead.testDate,
+          testTime: lead.testTime
+        })
+      });
+
+      const contentType = response.headers.get("content-type");
+      let data;
+      if (contentType && contentType.includes("application/json")) {
+        data = await response.json();
+      } else {
+        const errText = await response.text();
+        throw new Error(errText || `Server returned status: ${response.status}`);
+      }
+
+      if (response.ok && data && data.status === 'success') {
+        const message = data.provider === 'Ethereal' 
+          ? `Gửi thư mời test giả lập thành công! Xem trước tại: ${data.previewUrl}`
+          : 'Đã gửi thư mời kiểm tra thực tế tới phụ huynh!';
+
+        setEmailAlert({ type: 'success', message });
+
+        setLeads(prev => prev.map(l => {
+          if (l.id === lead.id) {
+            return {
+              ...l,
+              interactions: [
+                ...l.interactions,
+                {
+                  date: new Date().toISOString().split('T')[0],
+                  type: 'Gửi thư mời test',
+                  content: `Đã gửi thư mời test cho phụ huynh (${lead.email}). Lịch hẹn: ngày ${lead.testDate} lúc ${lead.testTime}`
+                }
+              ]
+            };
+          }
+          return l;
+        }));
+      } else {
+        throw new Error((data && data.error) || 'Lỗi gửi thư mời từ server');
+      }
+    } catch (error: any) {
+      console.error(error);
+      setEmailAlert({ type: 'error', message: `Không thể gửi thư mời: ${error.message || 'Lỗi kết nối server'}` });
+    } finally {
+      setSendingEmail(false);
+    }
+  };
+
   const startEditing = () => {
     if (!selectedLead) return;
     setEditStudentName(selectedLead.studentName);
@@ -530,6 +686,17 @@ export default function SchoolCrmHub() {
     setEditDocHocBa(selectedLead.docChecklist?.hocBa || false);
     setEditDocKhaiSinh(selectedLead.docChecklist?.khaiSinh || false);
     setEditDocAnh3x4(selectedLead.docChecklist?.anh3x4 || false);
+    // Financial states
+    setEditBaseTuitionFee(selectedLead.baseTuitionFee !== undefined ? String(selectedLead.baseTuitionFee) : '');
+    setEditTuitionDiscount(selectedLead.tuitionDiscount !== undefined ? String(selectedLead.tuitionDiscount) : '');
+    setEditScholarshipDiscount(selectedLead.scholarshipDiscount !== undefined ? String(selectedLead.scholarshipDiscount) : '');
+    setEditPhaseEnrollmentDiscount(selectedLead.phaseEnrollmentDiscount !== undefined ? String(selectedLead.phaseEnrollmentDiscount) : '');
+    setEditAdvancedFee(selectedLead.advancedFee !== undefined ? String(selectedLead.advancedFee) : '');
+    setEditOtherDiscount(selectedLead.otherDiscount !== undefined ? String(selectedLead.otherDiscount) : '');
+    // Scheduling states
+    setEditTestDate(selectedLead.testDate || '');
+    setEditTestTime(selectedLead.testTime || '');
+    
     setIsEditing(true);
     setEmailAlert(null);
   };
@@ -587,6 +754,9 @@ export default function SchoolCrmHub() {
         if (l.notes !== editNotes.trim()) changes.push(`Ghi chú cập nhật`);
         
         const hasScoreFields = ['TESTED', 'NOT_RESERVED', 'RESERVED', 'REGISTERED', 'ENROLLED'].includes(editStage);
+        const hasFinancialFields = ['RESERVED', 'REGISTERED', 'ENROLLED'].includes(editStage);
+        const hasSchedulingFields = editStage === 'TEST_REGISTERED';
+
         const nextScore = hasScoreFields && editTestScore.trim() ? editTestScore.trim() : undefined;
         const nextScholarship = hasScoreFields && editScholarshipInfo.trim() ? editScholarshipInfo.trim() : undefined;
         
@@ -596,6 +766,25 @@ export default function SchoolCrmHub() {
         if ((l.docChecklist?.hocBa || false) !== editDocHocBa) changes.push(`Học bạ gốc: ${editDocHocBa ? 'Đã nộp' : 'Chưa nộp'}`);
         if ((l.docChecklist?.khaiSinh || false) !== editDocKhaiSinh) changes.push(`Khai sinh: ${editDocKhaiSinh ? 'Đã nộp' : 'Chưa nộp'}`);
         if ((l.docChecklist?.anh3x4 || false) !== editDocAnh3x4) changes.push(`Ảnh 3x4: ${editDocAnh3x4 ? 'Đã nộp' : 'Chưa nộp'}`);
+
+        // Financial values
+        const nextBaseTuition = hasFinancialFields && editBaseTuitionFee.trim() ? Number(editBaseTuitionFee) : undefined;
+        const nextTuitionDiscount = hasFinancialFields && editTuitionDiscount.trim() ? Number(editTuitionDiscount) : undefined;
+        const nextScholarshipDiscount = hasFinancialFields && editScholarshipDiscount.trim() ? Number(editScholarshipDiscount) : undefined;
+        const nextPhaseDiscount = hasFinancialFields && editPhaseEnrollmentDiscount.trim() ? Number(editPhaseEnrollmentDiscount) : undefined;
+        const nextAdvancedFee = hasFinancialFields && editAdvancedFee.trim() ? Number(editAdvancedFee) : undefined;
+        const nextOtherDiscount = hasFinancialFields && editOtherDiscount.trim() ? Number(editOtherDiscount) : undefined;
+
+        if (l.baseTuitionFee !== nextBaseTuition) changes.push(`Học phí gốc: ${formatCurrency(l.baseTuitionFee)} → ${formatCurrency(nextBaseTuition)}`);
+        if (l.tuitionDiscount !== nextTuitionDiscount) changes.push(`Ưu đãi học phí: ${formatCurrency(l.tuitionDiscount)} → ${formatCurrency(nextTuitionDiscount)}`);
+        
+        // Scheduling values
+        const nextTestDateVal = hasSchedulingFields && editTestDate ? editTestDate : undefined;
+        const nextTestTimeVal = hasSchedulingFields && editTestTime ? editTestTime : undefined;
+
+        if (l.testDate !== nextTestDateVal || l.testTime !== nextTestTimeVal) {
+          changes.push(`Lịch test: ${l.testDate || ''} ${l.testTime || ''} → ${nextTestDateVal || ''} ${nextTestTimeVal || ''}`);
+        }
 
         if (changes.length > 0) {
           logs.push({
@@ -621,6 +810,16 @@ export default function SchoolCrmHub() {
             khaiSinh: editDocKhaiSinh,
             anh3x4: editDocAnh3x4
           },
+          // Save Financial Fields
+          baseTuitionFee: nextBaseTuition,
+          tuitionDiscount: nextTuitionDiscount,
+          scholarshipDiscount: nextScholarshipDiscount,
+          phaseEnrollmentDiscount: nextPhaseDiscount,
+          advancedFee: nextAdvancedFee,
+          otherDiscount: nextOtherDiscount,
+          // Save Scheduling Fields
+          testDate: nextTestDateVal,
+          testTime: nextTestTimeVal,
           interactions: logs
         };
       }
@@ -631,7 +830,7 @@ export default function SchoolCrmHub() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-in fade-in duration-300">
       {/* Admissions Header */}
       <div className="bg-gradient-to-r from-slate-900 to-indigo-950 p-6 rounded-2xl text-white border border-slate-800 shadow-sm relative overflow-hidden">
         <div className="absolute right-0 top-0 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
@@ -700,7 +899,7 @@ export default function SchoolCrmHub() {
 
             <button
               onClick={() => setShowAddLead(!showAddLead)}
-              className="px-3.5 py-1.5 bg-indigo-650 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-3xs"
+              className="px-3.5 py-1.5 bg-indigo-650 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-3xs animate-pulse"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Thêm Lead</span>
@@ -709,7 +908,7 @@ export default function SchoolCrmHub() {
         </div>
 
         {showAddLead && (
-          <form onSubmit={handleAddLead} className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 p-4 rounded-2xl space-y-4 max-w-3xl animate-in fade-in duration-200">
+          <form onSubmit={handleAddLead} className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 p-4 rounded-2xl space-y-4 max-w-3xl animate-in fade-in slide-in-from-top-3 duration-250">
             <h4 className="text-xs font-bold text-slate-800 dark:text-white uppercase tracking-wider font-mono">Khởi tạo Lead mới</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
@@ -760,7 +959,7 @@ export default function SchoolCrmHub() {
                 <select
                   value={newSource}
                   onChange={(e) => setNewSource(e.target.value as any)}
-                  className="w-full text-xs p-2 border border-slate-200 dark:border-slate-850 rounded-xl bg-white dark:bg-slate-800 text-slate-800 dark:text-white outline-none focus:border-indigo-400"
+                  className="w-full text-xs p-2 border border-slate-200 dark:border-slate-855 rounded-xl bg-white dark:bg-slate-800 text-slate-800 dark:text-white outline-none focus:border-indigo-400 font-semibold"
                 >
                   <option value="Social">Mạng xã hội (Social)</option>
                   <option value="Website">Cổng thông tin (Website)</option>
@@ -773,7 +972,7 @@ export default function SchoolCrmHub() {
                 <select
                   value={newStage}
                   onChange={(e) => setNewStage(e.target.value as Lead['stage'])}
-                  className="w-full text-xs p-2 border border-slate-200 dark:border-slate-850 rounded-xl bg-white dark:bg-slate-850 text-slate-800 dark:text-white font-semibold outline-none focus:border-indigo-400"
+                  className="w-full text-xs p-2 border border-slate-200 dark:border-slate-855 rounded-xl bg-white dark:bg-slate-850 text-slate-800 dark:text-white font-bold outline-none focus:border-indigo-400"
                 >
                   {stages.map(s => (
                     <option key={s.key} value={s.key}>{s.label}</option>
@@ -791,7 +990,7 @@ export default function SchoolCrmHub() {
                   </label>
                   <label className="flex items-center gap-1.5 cursor-pointer select-none">
                     <input type="checkbox" checked={newDocKhaiSinh} onChange={(e) => setNewDocKhaiSinh(e.target.checked)} className="rounded text-indigo-600 focus:ring-indigo-400" />
-                    <span>Bản sao Khai sinh</span>
+                    <span>Bản sao G.Khai sinh</span>
                   </label>
                   <label className="flex items-center gap-1.5 cursor-pointer select-none">
                     <input type="checkbox" checked={newDocAnh3x4} onChange={(e) => setNewDocAnh3x4(e.target.checked)} className="rounded text-indigo-600 focus:ring-indigo-400" />
@@ -800,18 +999,123 @@ export default function SchoolCrmHub() {
                 </div>
               </div>
 
+              {/* Dynamic inputs for Test schedule (TEST_REGISTERED stage) */}
+              {newStage === 'TEST_REGISTERED' && (
+                <div className="md:col-span-2 grid grid-cols-2 gap-3 p-3.5 bg-amber-50/40 dark:bg-amber-950/10 border border-amber-150/45 dark:border-amber-900/40 rounded-2xl animate-in fade-in slide-in-from-top-1 duration-200">
+                  <div>
+                    <label className="block text-[10px] font-bold text-amber-700 dark:text-amber-300 uppercase tracking-wider mb-1 font-mono">Ngày test đầu vào</label>
+                    <input
+                      type="date"
+                      value={newTestDate}
+                      onChange={(e) => setNewTestDate(e.target.value)}
+                      className="w-full text-xs p-2 border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-800 text-slate-800 dark:text-white outline-none focus:border-indigo-400"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold text-amber-700 dark:text-amber-300 uppercase tracking-wider mb-1 font-mono">Giờ kiểm tra (Giờ test)</label>
+                    <input
+                      type="time"
+                      value={newTestTime}
+                      onChange={(e) => setNewTestTime(e.target.value)}
+                      className="w-full text-xs p-2 border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-800 text-slate-800 dark:text-white outline-none focus:border-indigo-400"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Dynamic inputs for Financial Details (RESERVED, REGISTERED, ENROLLED stages) */}
+              {['RESERVED', 'REGISTERED', 'ENROLLED'].includes(newStage) && (
+                <div className="md:col-span-2 p-3.5 bg-indigo-50/20 dark:bg-indigo-950/10 border border-indigo-100 dark:border-indigo-900 rounded-2xl space-y-3.5 animate-in fade-in slide-in-from-top-1 duration-200">
+                  <span className="block text-[10.5px] font-bold text-indigo-700 dark:text-indigo-300 uppercase tracking-wider font-mono">Thông Tin Tài Chính & Ưu Đãi (Đã giữ chỗ)</span>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-450 uppercase mb-1">Học phí gốc tại thời điểm</label>
+                      <input
+                        type="number"
+                        value={newBaseTuitionFee}
+                        onChange={(e) => setNewBaseTuitionFee(e.target.value)}
+                        className="w-full text-xs p-2 border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-800"
+                        placeholder="Số tiền (VND)..."
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-450 uppercase mb-1">Ưu đãi học phí</label>
+                      <input
+                        type="number"
+                        value={newTuitionDiscount}
+                        onChange={(e) => setNewTuitionDiscount(e.target.value)}
+                        className="w-full text-xs p-2 border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-800"
+                        placeholder="Số tiền (VND)..."
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-450 uppercase mb-1">Ưu đãi học bổng</label>
+                      <input
+                        type="number"
+                        value={newScholarshipDiscount}
+                        onChange={(e) => setNewScholarshipDiscount(e.target.value)}
+                        className="w-full text-xs p-2 border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-800"
+                        placeholder="Số tiền (VND)..."
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-450 uppercase mb-1">Ưu đãi đóng theo giai đoạn</label>
+                      <input
+                        type="number"
+                        value={newPhaseEnrollmentDiscount}
+                        onChange={(e) => setNewPhaseEnrollmentDiscount(e.target.value)}
+                        className="w-full text-xs p-2 border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-800"
+                        placeholder="Số tiền (VND)..."
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-450 uppercase mb-1">Phí bổ trợ nâng cao</label>
+                      <input
+                        type="number"
+                        value={newAdvancedFee}
+                        onChange={(e) => setNewAdvancedFee(e.target.value)}
+                        className="w-full text-xs p-2 border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-800 font-bold"
+                        placeholder="Số tiền (VND)..."
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-450 uppercase mb-1">Các ưu đãi khác</label>
+                      <input
+                        type="number"
+                        value={newOtherDiscount}
+                        onChange={(e) => setNewOtherDiscount(e.target.value)}
+                        className="w-full text-xs p-2 border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-800"
+                        placeholder="Số tiền (VND)..."
+                      />
+                    </div>
+                  </div>
+
+                  <div className="pt-2.5 border-t border-indigo-100 dark:border-indigo-900 flex justify-between items-center text-xs">
+                    <span className="font-bold text-slate-500">Tổng toàn bộ các ưu đãi cộng dồn:</span>
+                    <strong className="text-sm text-emerald-600 font-black">
+                      {formatCurrency(
+                        (Number(newTuitionDiscount) || 0) + 
+                        (Number(newScholarshipDiscount) || 0) + 
+                        (Number(newPhaseEnrollmentDiscount) || 0) + 
+                        (Number(newOtherDiscount) || 0)
+                      )}
+                    </strong>
+                  </div>
+                </div>
+              )}
+
               <div className="md:col-span-2">
                 <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 font-mono">Ghi chú nhu cầu</label>
                 <input
                   type="text"
                   value={newNotes}
                   onChange={(e) => setNewNotes(e.target.value)}
-                  className="w-full text-xs p-2 border border-slate-200 dark:border-slate-855 rounded-xl bg-white dark:bg-slate-800 text-slate-800 dark:text-white focus:border-indigo-400 outline-none"
+                  className="w-full text-xs p-2 border border-slate-200 dark:border-slate-850 rounded-xl bg-white dark:bg-slate-800 text-slate-800 dark:text-white focus:border-indigo-400 outline-none"
                   placeholder="Lớp đăng ký, nhu cầu bán trú..."
                 />
               </div>
 
-              {['TESTED', 'NOT_RESERVED', 'RESERVED', 'REGISTERED', 'ENROLLED'].includes(newStage) && (
+              {['TESTED', 'NOT_RESERVED'].includes(newStage) && (
                 <>
                   <div className="animate-in fade-in slide-in-from-top-1 duration-200">
                     <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 font-mono">Điểm kiểm tra (testScore)</label>
@@ -857,7 +1161,7 @@ export default function SchoolCrmHub() {
         {/* Quick Import Modal */}
         {showQuickImport && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 backdrop-blur-xs p-4">
-            <div className="bg-white dark:bg-slate-850 rounded-2xl max-w-3xl w-full p-6 space-y-4 border border-slate-200 dark:border-slate-800 shadow-xl max-h-[85vh] overflow-y-auto">
+            <div className="bg-white dark:bg-slate-850 rounded-2xl max-w-3xl w-full p-6 space-y-4 border border-slate-200 dark:border-slate-800 shadow-xl max-h-[85vh] overflow-y-auto animate-in scale-in duration-200">
               <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3">
                 <div>
                   <h3 className="text-base font-extrabold text-slate-900 dark:text-white">Import dữ liệu nhanh từ Excel / Google Sheets</h3>
@@ -962,7 +1266,7 @@ export default function SchoolCrmHub() {
             return (
               <div
                 key={col.key}
-                className={`p-4 rounded-2xl border ${col.bg} flex flex-col min-h-[460px] w-72 shrink-0`}
+                className={`p-4 rounded-2xl border ${col.bg} flex flex-col min-h-[480px] w-72 shrink-0 transition-all duration-300`}
               >
                 {/* Column header */}
                 <div className="flex items-center justify-between pb-3 border-b border-slate-250/40 dark:border-slate-800/40 mb-3">
@@ -973,15 +1277,16 @@ export default function SchoolCrmHub() {
                 </div>
 
                 {/* Column Cards */}
-                <div className="space-y-3 flex-1 overflow-y-auto max-h-[490px]">
+                <div className="space-y-3 flex-1 overflow-y-auto max-h-[520px]">
                   {colLeads.map(lead => {
                     const docStatus = getDocumentStatus(lead);
+                    const totalDiscount = (lead.tuitionDiscount || 0) + (lead.scholarshipDiscount || 0) + (lead.phaseEnrollmentDiscount || 0) + (lead.otherDiscount || 0);
                     
                     return (
                       <div
                         key={lead.id}
                         onClick={() => setSelectedLeadId(lead.id)}
-                        className="p-3 bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800/80 rounded-xl hover:border-indigo-400 dark:hover:border-indigo-500 transition-all cursor-pointer shadow-3xs hover:shadow-2xs"
+                        className="p-3 bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800/80 rounded-xl hover:border-indigo-400 dark:hover:border-indigo-500 transition-all cursor-pointer shadow-3xs hover:shadow-2xs select-none hover:-translate-y-0.5"
                       >
                         <div className="flex items-start justify-between gap-2">
                           <h4 className="text-[11.5px] font-bold text-slate-900 dark:text-white truncate">
@@ -996,10 +1301,26 @@ export default function SchoolCrmHub() {
                           PH: {lead.parentName} • SĐT: {lead.phone}
                         </div>
 
+                        {/* Display scheduling parameters (TEST_REGISTERED stage) */}
+                        {lead.stage === 'TEST_REGISTERED' && lead.testDate && (
+                          <div className="mt-2 p-1.5 bg-amber-500/10 border border-amber-100 dark:border-amber-900/20 text-amber-700 dark:text-amber-400 rounded-lg text-[9px] font-semibold flex items-center gap-1">
+                            <Clock className="w-3 h-3 text-amber-500" />
+                            <span>Lịch test: {lead.testDate} ({lead.testTime || '--:--'})</span>
+                          </div>
+                        )}
+
+                        {/* Display dynamic discount summary badge (RESERVED stage or later) */}
+                        {['RESERVED', 'REGISTERED', 'ENROLLED'].includes(lead.stage) && totalDiscount > 0 && (
+                          <div className="mt-2 p-1.5 bg-cyan-500/10 border border-cyan-100 dark:border-cyan-900/20 text-cyan-700 dark:text-cyan-400 rounded-lg text-[9px] font-bold flex items-center gap-1 justify-between">
+                            <span className="flex items-center gap-1"><DollarSign className="w-3 h-3 text-cyan-500" /> Ưu đãi:</span>
+                            <span>{formatCurrency(totalDiscount)}</span>
+                          </div>
+                        )}
+
                         {/* Display document processing checklist status dynamically */}
                         <div className="mt-2 flex items-center justify-between text-[9.5px]">
                           <span className="text-slate-400 dark:text-slate-500">Hồ sơ bàn giao:</span>
-                          <span className={`px-1.5 py-0.2 rounded-md border text-[8.5px] font-bold ${docStatus.bg}`}>
+                          <span className={`px-1.5 py-0.2 rounded border text-[8.5px] font-bold ${docStatus.bg}`}>
                             {docStatus.label} ({docStatus.count}/3)
                           </span>
                         </div>
@@ -1062,7 +1383,7 @@ export default function SchoolCrmHub() {
       {/* Selected Lead Details Modal */}
       {selectedLead && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 backdrop-blur-xs p-4">
-          <div className="bg-white dark:bg-slate-850 rounded-2xl max-w-2xl w-full p-6 space-y-4 border border-slate-200 dark:border-slate-800 shadow-xl max-h-[90vh] overflow-y-auto">
+          <div className="bg-white dark:bg-slate-850 rounded-2xl max-w-2xl w-full p-6 space-y-4 border border-slate-200 dark:border-slate-800 shadow-xl max-h-[90vh] overflow-y-auto animate-in zoom-in duration-200">
             <div className="flex justify-between items-start border-b border-slate-100 dark:border-slate-800 pb-3">
               <div>
                 <span className="text-[9px] font-black uppercase text-indigo-600 dark:text-indigo-400 font-mono tracking-wider">
@@ -1197,7 +1518,112 @@ export default function SchoolCrmHub() {
                     </div>
                   </div>
 
-                  {['TESTED', 'NOT_RESERVED', 'RESERVED', 'REGISTERED', 'ENROLLED'].includes(editStage) && (
+                  {/* Edit scheduling details if TEST_REGISTERED */}
+                  {editStage === 'TEST_REGISTERED' && (
+                    <div className="md:col-span-2 grid grid-cols-2 gap-3 p-3 bg-amber-500/10 border border-amber-200 rounded-xl animate-in fade-in duration-200">
+                      <div>
+                        <label className="block text-[10px] font-bold text-amber-700 dark:text-amber-300 uppercase tracking-wider mb-1 font-mono">Ngày làm bài test</label>
+                        <input
+                          type="date"
+                          value={editTestDate}
+                          onChange={(e) => setEditTestDate(e.target.value)}
+                          className="w-full text-xs p-2 border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-800 text-slate-800 dark:text-white outline-none focus:border-indigo-400"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold text-amber-700 dark:text-amber-300 uppercase tracking-wider mb-1 font-mono">Giờ test</label>
+                        <input
+                          type="time"
+                          value={editTestTime}
+                          onChange={(e) => setEditTestTime(e.target.value)}
+                          className="w-full text-xs p-2 border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-800 text-slate-800 dark:text-white outline-none focus:border-indigo-400"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Edit Financial Details (RESERVED, REGISTERED, ENROLLED stages) */}
+                  {['RESERVED', 'REGISTERED', 'ENROLLED'].includes(editStage) && (
+                    <div className="md:col-span-2 p-3 bg-indigo-50/20 dark:bg-indigo-950/10 border border-indigo-100 dark:border-indigo-900 rounded-xl space-y-3 animate-in fade-in duration-200">
+                      <span className="block text-[10.5px] font-bold text-indigo-700 dark:text-indigo-300 uppercase tracking-wider font-mono">Thông Tin Tài Chính & Ưu Đãi</span>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-450 uppercase mb-1">Học phí gốc tại thời điểm</label>
+                          <input
+                            type="number"
+                            value={editBaseTuitionFee}
+                            onChange={(e) => setEditBaseTuitionFee(e.target.value)}
+                            className="w-full text-xs p-2 border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-800"
+                            placeholder="Số tiền (VND)..."
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-450 uppercase mb-1">Ưu đãi học phí</label>
+                          <input
+                            type="number"
+                            value={editTuitionDiscount}
+                            onChange={(e) => setEditTuitionDiscount(e.target.value)}
+                            className="w-full text-xs p-2 border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-800"
+                            placeholder="Số tiền (VND)..."
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-450 uppercase mb-1">Ưu đãi học bổng</label>
+                          <input
+                            type="number"
+                            value={editScholarshipDiscount}
+                            onChange={(e) => setEditScholarshipDiscount(e.target.value)}
+                            className="w-full text-xs p-2 border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-800"
+                            placeholder="Số tiền (VND)..."
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-450 uppercase mb-1">Ưu đãi theo giai đoạn</label>
+                          <input
+                            type="number"
+                            value={editPhaseEnrollmentDiscount}
+                            onChange={(e) => setEditPhaseEnrollmentDiscount(e.target.value)}
+                            className="w-full text-xs p-2 border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-800"
+                            placeholder="Số tiền (VND)..."
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-450 uppercase mb-1">Phí bổ trợ nâng cao</label>
+                          <input
+                            type="number"
+                            value={editAdvancedFee}
+                            onChange={(e) => setEditAdvancedFee(e.target.value)}
+                            className="w-full text-xs p-2 border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-800"
+                            placeholder="Số tiền (VND)..."
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-450 uppercase mb-1">Các ưu đãi khác</label>
+                          <input
+                            type="number"
+                            value={editOtherDiscount}
+                            onChange={(e) => setEditOtherDiscount(e.target.value)}
+                            className="w-full text-xs p-2 border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-800"
+                            placeholder="Số tiền (VND)..."
+                          />
+                        </div>
+                      </div>
+
+                      <div className="pt-2.5 border-t border-indigo-100 dark:border-indigo-900 flex justify-between items-center text-xs">
+                        <span className="font-bold text-slate-500">Tổng toàn bộ các ưu đãi cộng dồn:</span>
+                        <strong className="text-sm text-emerald-600 font-black">
+                          {formatCurrency(
+                            (Number(editTuitionDiscount) || 0) + 
+                            (Number(editScholarshipDiscount) || 0) + 
+                            (Number(editPhaseEnrollmentDiscount) || 0) + 
+                            (Number(editOtherDiscount) || 0)
+                          )}
+                        </strong>
+                      </div>
+                    </div>
+                  )}
+
+                  {['TESTED', 'NOT_RESERVED'].includes(editStage) && (
                     <>
                       <div>
                         <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 font-mono">Điểm kiểm tra</label>
@@ -1277,7 +1703,7 @@ export default function SchoolCrmHub() {
                   </div>
                 </div>
 
-                {/* Checklist display and toggling in static modal */}
+                {/* Display checklist status dynamically */}
                 <div className="p-3 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl">
                   <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 font-mono">Bàn giao hồ sơ (Nhấp để thay đổi nhanh)</span>
                   <div className="flex gap-4 text-xs font-semibold text-slate-700 dark:text-slate-350">
@@ -1311,6 +1737,105 @@ export default function SchoolCrmHub() {
                   </div>
                 </div>
 
+                {/* Display test scheduling details and invitation email trigger inside Modal (TEST_REGISTERED stage) */}
+                {selectedLead.stage === 'TEST_REGISTERED' && (
+                  <div className="p-3 bg-amber-50/45 dark:bg-amber-950/15 border border-amber-150 dark:border-amber-900/40 rounded-xl space-y-3.5">
+                    <div className="flex justify-between items-center text-xs flex-wrap gap-2">
+                      <div>
+                        <span className="text-amber-800 dark:text-amber-300 font-bold block">Lịch hẹn kiểm tra năng lực đầu vào:</span>
+                        <div className="mt-1 font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                          <Calendar className="w-4 h-4 text-amber-500" />
+                          <span>Ngày: {selectedLead.testDate || 'Chưa xếp lịch'}</span>
+                          <span className="text-slate-300 font-normal">|</span>
+                          <Clock className="w-4 h-4 text-amber-500" />
+                          <span>Giờ: {selectedLead.testTime || 'Chưa xếp giờ'}</span>
+                        </div>
+                      </div>
+                      
+                      <button
+                        type="button"
+                        disabled={sendingEmail || !selectedLead.testDate || !selectedLead.testTime}
+                        onClick={() => handleSendTestInvitationEmail(selectedLead)}
+                        className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all disabled:opacity-60 cursor-pointer shadow-3xs"
+                      >
+                        {sendingEmail ? (
+                          <>
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            <span>Đang gửi...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Mail className="w-3.5 h-3.5" />
+                            <span>Gửi thư mời test</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Display billing and discounts details inside Modal (RESERVED stage or later) */}
+                {['RESERVED', 'REGISTERED', 'ENROLLED'].includes(selectedLead.stage) && (
+                  <div className="p-4 bg-indigo-50/30 dark:bg-indigo-950/15 border border-indigo-100 dark:border-indigo-900/50 rounded-xl space-y-3">
+                    <span className="block text-[11px] font-bold text-indigo-700 dark:text-indigo-300 uppercase tracking-wider font-mono">Chi tiết biểu phí & ưu đãi học sinh</span>
+                    <div className="grid grid-cols-2 gap-3 text-xs">
+                      <div className="space-y-1.5">
+                        <div className="flex justify-between border-b border-slate-100 dark:border-slate-800 pb-1">
+                          <span className="text-slate-500">Học phí thời điểm:</span>
+                          <span className="font-semibold text-slate-800 dark:text-slate-250">{formatCurrency(selectedLead.baseTuitionFee)}</span>
+                        </div>
+                        <div className="flex justify-between border-b border-slate-100 dark:border-slate-800 pb-1">
+                          <span className="text-slate-500">Ưu đãi học phí:</span>
+                          <span className="font-semibold text-slate-800 dark:text-slate-250">- {formatCurrency(selectedLead.tuitionDiscount)}</span>
+                        </div>
+                        <div className="flex justify-between border-b border-slate-100 dark:border-slate-800 pb-1">
+                          <span className="text-slate-500">Ưu đãi học bổng:</span>
+                          <span className="font-semibold text-slate-800 dark:text-slate-250">- {formatCurrency(selectedLead.scholarshipDiscount)}</span>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-1.5">
+                        <div className="flex justify-between border-b border-slate-100 dark:border-slate-800 pb-1">
+                          <span className="text-slate-500">Ưu đãi đợt tuyển sinh:</span>
+                          <span className="font-semibold text-slate-800 dark:text-slate-250">- {formatCurrency(selectedLead.phaseEnrollmentDiscount)}</span>
+                        </div>
+                        <div className="flex justify-between border-b border-slate-100 dark:border-slate-800 pb-1">
+                          <span className="text-slate-500">Phí bổ trợ nâng cao:</span>
+                          <span className="font-bold text-purple-600 dark:text-purple-400">+ {formatCurrency(selectedLead.advancedFee)}</span>
+                        </div>
+                        <div className="flex justify-between border-b border-slate-100 dark:border-slate-800 pb-1">
+                          <span className="text-slate-500">Các ưu đãi khác:</span>
+                          <span className="font-semibold text-slate-800 dark:text-slate-250">- {formatCurrency(selectedLead.otherDiscount)}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="pt-2.5 border-t border-slate-200/50 dark:border-slate-800/50 flex justify-between items-center text-[11.5px] flex-wrap gap-2">
+                      <div>
+                        <span className="text-slate-450 block">Tổng ưu đãi áp dụng:</span>
+                        <strong className="text-xs text-emerald-600 dark:text-emerald-400 font-bold block mt-0.5">
+                          {formatCurrency(
+                            (selectedLead.tuitionDiscount || 0) + 
+                            (selectedLead.scholarshipDiscount || 0) + 
+                            (selectedLead.phaseEnrollmentDiscount || 0) + 
+                            (selectedLead.otherDiscount || 0)
+                          )}
+                        </strong>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-slate-450 block">Học phí cần đóng thực tế:</span>
+                        <strong className="text-sm text-indigo-650 dark:text-indigo-400 font-black block mt-0.5">
+                          {formatCurrency(
+                            (selectedLead.baseTuitionFee || 0) - 
+                            ((selectedLead.tuitionDiscount || 0) + (selectedLead.scholarshipDiscount || 0) + (selectedLead.phaseEnrollmentDiscount || 0) + (selectedLead.otherDiscount || 0)) + 
+                            (selectedLead.advancedFee || 0)
+                          )}
+                        </strong>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Test score & Scholarship Display in Modal with Send Email Action */}
                 {['TESTED', 'NOT_RESERVED', 'RESERVED', 'REGISTERED', 'ENROLLED'].includes(selectedLead.stage) && (
                   <div className="p-3 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl space-y-3">
@@ -1338,15 +1863,15 @@ export default function SchoolCrmHub() {
                       </div>
                     </div>
 
-                    <div className="pt-2 border-t border-slate-200/40 dark:border-slate-800/40 flex justify-between items-center">
-                      <span className="text-[11.5px] text-slate-500 dark:text-slate-400">
-                        Gửi thông báo kết quả kiểm tra trực tiếp cho phụ huynh:
+                    <div className="pt-2.5 border-t border-slate-200/40 dark:border-slate-800/40 flex justify-between items-center">
+                      <span className="text-[11px] text-slate-550 dark:text-slate-400">
+                        Gửi kết quả test và thông báo học bổng cho phụ huynh:
                       </span>
                       <button
                         type="button"
                         disabled={sendingEmail}
                         onClick={() => handleSendAdmissionsEmail(selectedLead)}
-                        className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold flex items-center gap-1 transition-all disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed shadow-3xs"
+                        className="px-3 py-1.5 bg-indigo-650 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold flex items-center gap-1 transition-all disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed shadow-3xs"
                       >
                         {sendingEmail ? (
                           <>
@@ -1356,7 +1881,7 @@ export default function SchoolCrmHub() {
                         ) : (
                           <>
                             <Mail className="w-3.5 h-3.5" />
-                            <span>Gửi Email thông báo</span>
+                            <span>Gửi kết quả test</span>
                           </>
                         )}
                       </button>
@@ -1364,7 +1889,7 @@ export default function SchoolCrmHub() {
                   </div>
                 )}
 
-                <div className="p-3 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl text-xs text-slate-750 dark:text-slate-350">
+                <div className="p-3 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl text-xs text-slate-755 dark:text-slate-350">
                   <span className="font-bold text-slate-400 dark:text-slate-555 block mb-1">Ghi chú hiện trạng:</span>
                   "{selectedLead.notes || 'Không có ghi chú'}"
                 </div>
@@ -1373,7 +1898,7 @@ export default function SchoolCrmHub() {
                 <div className="space-y-3">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider font-mono block">Lịch sử tương tác ({selectedLead.interactions.length})</span>
                   
-                  <div className="space-y-2 max-h-40 overflow-y-auto border border-slate-100 dark:border-slate-800 p-2.5 rounded-xl">
+                  <div className="space-y-2 max-h-40 overflow-y-auto border border-slate-100 dark:border-slate-800 p-2.5 rounded-xl font-medium">
                     {selectedLead.interactions.map((it, idx) => (
                       <div key={idx} className="p-2 bg-slate-50/50 dark:bg-slate-900/50 rounded-lg text-[11px] border border-slate-100/50 dark:border-slate-800/50">
                         <span className="font-mono text-slate-400">{it.date}</span> • <strong className="text-indigo-650 dark:text-indigo-400">{it.type}</strong>: {it.content}
