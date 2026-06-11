@@ -539,6 +539,112 @@ app.post('/api/email/send-reminder', async (req, res) => {
   }
 });
 
+// 5b. Send Admissions Result & Scholarship Email to Parent API
+app.post('/api/email/send-admissions-result', async (req, res) => {
+  const { studentName, parentName, parentEmail, testScore, scholarshipInfo, stage } = req.body;
+
+  if (!studentName || !parentName || !parentEmail) {
+    return res.status(400).json({ status: 'error', error: 'Missing required admissions details.' });
+  }
+
+  const subject = `✨ THÔNG BÁO KẾT QUẢ KHẢO SÁT NĂNG LỰC ĐẦU VÀO - HS: ${studentName}`;
+  const receiver = parentEmail;
+
+  const htmlContent = `
+    <div style="font-family: 'Be Vietnam Pro', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+      <div style="background-color: #4f46e5; color: white; padding: 24px; text-align: center;">
+        <h2 style="margin: 0; font-size: 20px; font-weight: 850; letter-spacing: -0.02em;">HỆ THỐNG GIÁO DỤC ĐA TRÍ TUỆ MIS</h2>
+        <p style="margin: 4px 0 0 0; font-size: 14px; opacity: 0.9;">Hội Đồng Tuyển Sinh Thông Báo</p>
+      </div>
+      <div style="padding: 24px; background-color: #ffffff; color: #1e293b;">
+        <p style="font-size: 15px; line-height: 1.6; margin-top: 0;">Kính gửi Phụ huynh học sinh <strong>${parentName}</strong>,</p>
+        
+        <p style="font-size: 15px; line-height: 1.6;">Hội đồng Tuyển sinh Trường Đa Trí Tuệ MIS xin trân trọng thông báo kết quả khảo sát năng lực đầu vào và thông tin xét duyệt học bổng của học sinh <strong>${studentName}</strong>:</p>
+        
+        <div style="background-color: #f8fafc; border-left: 4px solid #4f46e5; padding: 16px; margin: 20px 0; border-radius: 0 8px 8px 0;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+            <tr style="border-bottom: 1px solid #f1f5f9;">
+              <td style="padding: 8px 0; color: #64748b; width: 40%;"><strong>Học sinh:</strong></td>
+              <td style="padding: 8px 0; color: #0f172a; font-weight: bold;">${studentName}</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #f1f5f9;">
+              <td style="padding: 8px 0; color: #64748b;"><strong>Kết quả test năng lực:</strong></td>
+              <td style="padding: 8px 0; color: #7c3aed; font-weight: bold; font-size: 15px;">${testScore || 'Đang chờ cập nhật'}</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #f1f5f9;">
+              <td style="padding: 8px 0; color: #64748b;"><strong>Thông tin học bổng:</strong></td>
+              <td style="padding: 8px 0; color: #d97706; font-weight: bold;">${scholarshipInfo || 'Không nhận học bổng'}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; color: #64748b;"><strong>Trạng thái hồ sơ:</strong></td>
+              <td style="padding: 8px 0; color: #4f46e5; font-weight: bold;">${stage || 'Đang xử lý'}</td>
+            </tr>
+          </table>
+        </div>
+
+        <p style="font-size: 15px; line-height: 1.6;">Quy trình hoàn tất hồ sơ tiếp theo của học sinh:</p>
+        <div style="background-color: #f1f5f9; padding: 16px; border-radius: 8px; font-size: 13.5px; color: #475569; line-height: 1.6;">
+          1. <strong>Xác nhận giữ chỗ</strong>: Hoàn thành phí giữ chỗ ưu đãi tuyển sinh sớm.<br/>
+          2. <strong>Nộp hồ sơ học bạ gốc</strong>: Bổ sung Học bạ gốc THCS/Tiểu học, bản sao Giấy khai sinh và 3 ảnh 3x4 tại văn phòng tuyển sinh trường.<br/>
+          3. <strong>Nhận biên chế lớp</strong>: Đóng học phí đợt 1 và nhận đồng phục, sách giáo khoa chuẩn bị cho năm học mới.
+        </div>
+
+        <div style="text-align: center; margin: 32px 0 12px 0;">
+          <a href="http://localhost:3000" style="background-color: #4f46e5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 14px; display: inline-block; box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2);">
+            Cổng Thông Tin Tuyển Sinh MIS
+          </a>
+        </div>
+      </div>
+      <div style="background-color: #f1f5f9; padding: 16px; text-align: center; font-size: 12px; color: #64748b; border-top: 1px solid #e2e8f0;">
+        <p style="margin: 0;">Mọi thắc mắc vui lòng liên hệ Ban Tuyển sinh qua Hotline: <strong>024.1234.5678</strong> hoặc gửi phản hồi tới email này.</p>
+        <p style="margin: 4px 0 0 0;">© 2026 Trường Đa Trí Tuệ MIS. All rights reserved.</p>
+      </div>
+    </div>
+  `;
+
+  const mailOptions = {
+    from: process.env.EMAIL_FROM || '"Tuyển sinh MIS" <noreply@mis.edu.vn>',
+    to: receiver,
+    subject,
+    html: htmlContent,
+  };
+
+  try {
+    if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+      const transporter = nodemailer.createTransport(smtpConfig);
+      const info = await transporter.sendMail(mailOptions);
+      console.log(`[Email Service] Admissions notice sent via SMTP to ${receiver}. Message ID: ${info.messageId}`);
+      res.json({ status: 'success', provider: 'SMTP', messageId: info.messageId });
+    } else {
+      console.log('------------------------------------------------------------');
+      console.log(`[SMTP MOCK ADMISSIONS EMAIL] To: ${receiver}`);
+      console.log(`Subject: ${subject}`);
+      console.log(`Student: ${studentName} | Score: ${testScore} | Scholarship: ${scholarshipInfo}`);
+      console.log('------------------------------------------------------------');
+
+      const testAccount = await nodemailer.createTestAccount();
+      const transporter = nodemailer.createTransport({
+        host: 'smtp.ethereal.email',
+        port: 587,
+        secure: false,
+        auth: {
+          user: testAccount.user,
+          pass: testAccount.pass,
+        },
+      });
+
+      const info = await transporter.sendMail(mailOptions);
+      const previewUrl = nodemailer.getTestMessageUrl(info);
+      console.log(`[Email Service] Admissions Preview URL: ${previewUrl}`);
+      res.json({ status: 'success', provider: 'Ethereal', previewUrl });
+    }
+  } catch (error: any) {
+    console.error('Email error in send-admissions-result:', error);
+    res.status(500).json({ status: 'error', error: error.message || 'Error sending admissions email notification' });
+  }
+});
+
+
 // 6. Batch deadline reminder API
 app.post('/api/email/run-deadline-reminders', async (req, res) => {
   const { tasks, users, nearDeadlineDays = 2, registerSource = true } = req.body;
