@@ -142,6 +142,13 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
   const [lang, setLang] = useState<'VI' | 'EN'>('VI');
   const [activeTab, setActiveTab] = useState<'ADMISSION' | 'OPERATIONS' | 'FINANCIALS' | 'SECURITY_UX'>('ADMISSION');
   const t = TRANSLATIONS[lang];
+  const isFinanceAuthorized = 
+    currentUser.title?.toLowerCase().includes('chủ tịch') || 
+    currentUser.title?.toLowerCase().includes('ceo') || 
+    currentUser.title?.toLowerCase().includes('kế toán') ||
+    currentUser.roleName?.toLowerCase().includes('chủ tịch') ||
+    currentUser.roleName?.toLowerCase().includes('ceo') ||
+    currentUser.roleName?.toLowerCase().includes('kế toán');
   const [lmsStudents, setLmsStudents] = useState<LmsStudent[]>(() => {
     const saved = localStorage.getItem('mis_lms_students');
     if (saved) {
@@ -936,17 +943,19 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
           <span>{t.operations}</span>
         </button>
 
-        <button
-          onClick={() => setActiveTab('FINANCIALS')}
-          className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-            activeTab === 'FINANCIALS'
-              ? 'bg-emerald-600 text-white shadow-sm'
-              : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
-          }`}
-        >
-          <Calculator className="w-4 h-4" />
-          <span>{t.financials}</span>
-        </button>
+        {isFinanceAuthorized && (
+          <button
+            onClick={() => setActiveTab('FINANCIALS')}
+            className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              activeTab === 'FINANCIALS'
+                ? 'bg-emerald-600 text-white shadow-sm'
+                : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+            }`}
+          >
+            <Calculator className="w-4 h-4" />
+            <span>{t.financials}</span>
+          </button>
+        )}
 
         <button
           onClick={() => setActiveTab('SECURITY_UX')}
@@ -2256,7 +2265,7 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
         )}
 
         {/* TAB 3: FINANCIALS, TUITION INVOICE, PAYROLL CALCULATION & GRAD CERTIFICATE */}
-        {activeTab === 'FINANCIALS' && (
+        {activeTab === 'FINANCIALS' && isFinanceAuthorized && (
           <div className="space-y-6">
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
               
