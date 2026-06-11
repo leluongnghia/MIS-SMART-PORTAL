@@ -6,6 +6,7 @@ import { WORKSPACES as INITIAL_WORKSPACES, MOCK_USERS, INITIAL_TASKS } from './m
 import { enrichUserWithMIDetails, MI_KEY_DETAILS } from './miAndOkrUtils';
 import { MIProfile } from './types';
 import { db, auth, handleFirestoreError, OperationType } from './firebase';
+import { encryptData, decryptData } from './utils/security';
 import { 
   collection, 
   doc, 
@@ -242,6 +243,9 @@ export default function App() {
     const saved = localStorage.getItem('school_task_manager_users_profiles');
     if (saved) {
       try {
+        // Try decrypting first; fallback to plain JSON for backward compatibility
+        const decrypted = decryptData(saved);
+        if (decrypted !== null) return decrypted as UserProfile[];
         return JSON.parse(saved);
       } catch (e) {
         console.error(e);
@@ -259,13 +263,13 @@ export default function App() {
         kpiLocked: false
       };
     });
-    localStorage.setItem('school_task_manager_users_profiles', JSON.stringify(initUsers));
+    localStorage.setItem('school_task_manager_users_profiles', encryptData(initUsers));
     return initUsers;
   });
 
   const saveUsers = (updatedUsers: UserProfile[]) => {
     setUsers(updatedUsers);
-    localStorage.setItem('school_task_manager_users_profiles', JSON.stringify(updatedUsers));
+    localStorage.setItem('school_task_manager_users_profiles', encryptData(updatedUsers));
   };
 
   const [selectedStaffProfile, setSelectedStaffProfile] = useState<UserProfile | null>(null);
@@ -393,7 +397,7 @@ export default function App() {
 
   const saveRbacConfig = async (updatedConfig: RbacConfig) => {
     setRbacConfig(updatedConfig);
-    localStorage.setItem('school_task_manager_rbac', JSON.stringify(updatedConfig));
+    localStorage.setItem('school_task_manager_rbac', encryptData(updatedConfig));
     try {
       await setDoc(doc(db, 'config', 'rbac'), { config: updatedConfig });
     } catch (e) {
@@ -538,12 +542,12 @@ export default function App() {
 
   const saveAnnouncements = (updated: Announcement[]) => {
     setAnnouncements(updated);
-    localStorage.setItem('school_task_manager_announcements', JSON.stringify(updated));
+    localStorage.setItem('school_task_manager_announcements', encryptData(updated));
   };
 
   const saveDirectives = (updated: BoardDirective[]) => {
     setDirectives(updated);
-    localStorage.setItem('school_task_manager_directives', JSON.stringify(updated));
+    localStorage.setItem('school_task_manager_directives', encryptData(updated));
   };
 
   // central effect to trigger silent anonymous auth

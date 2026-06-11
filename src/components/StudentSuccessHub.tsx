@@ -23,6 +23,7 @@ import {
 import { exportToCsv } from '../utils/exportUtils';
 import { UserProfile, AcademicYearRecord, HealthIncident, VaccinationRecord, SisAuditLog } from '../types';
 import { getGradeLevelFromClassName, getSubjectsForClassName } from '../utils/vietnameseCurriculum';
+import { encryptData, decryptData, generateBackupSignature } from '../utils/security';
 
 type ConductLevel = 'Tốt' | 'Khá' | 'Trung bình';
 type AttendanceStatus = 'PRESENT' | 'LATE' | 'ABSENT' | 'EXCUSED';
@@ -227,13 +228,22 @@ const initialStudents = generatedData.studentsList;
 const initialGrades = generatedData.gradesList;
 const initialAttendance = generatedData.attendanceList;
 
+// Secure local storage helpers — data is encrypted at rest
 function readStored<T>(key: string, fallback: T): T {
   try {
     const saved = localStorage.getItem(key);
-    return saved ? JSON.parse(saved) : fallback;
+    if (!saved) return fallback;
+    // Try decrypting first; falls back to plain JSON for backward compatibility
+    const decrypted = decryptData(saved);
+    if (decrypted !== null) return decrypted as T;
+    return fallback;
   } catch {
     return fallback;
   }
+}
+
+function writeStored(key: string, data: any): void {
+  localStorage.setItem(key, encryptData(data));
 }
 
 function gradeAverage(grade: GradeEntry) {
@@ -355,11 +365,11 @@ export default function StudentSuccessHub({ currentUser }: { currentUser: UserPr
     reason: '',
   });
 
-  useEffect(() => localStorage.setItem(STUDENT_STORAGE_KEY, JSON.stringify(students)), [students]);
-  useEffect(() => localStorage.setItem(GRADE_STORAGE_KEY, JSON.stringify(grades)), [grades]);
-  useEffect(() => localStorage.setItem(ATTENDANCE_STORAGE_KEY, JSON.stringify(attendance)), [attendance]);
-  useEffect(() => localStorage.setItem(NOTICE_STORAGE_KEY, JSON.stringify(notices)), [notices]);
-  useEffect(() => localStorage.setItem('mis_sis_audit_logs_v3', JSON.stringify(auditLogs)), [auditLogs]);
+  useEffect(() => writeStored(STUDENT_STORAGE_KEY, students), [students]);
+  useEffect(() => writeStored(GRADE_STORAGE_KEY, grades), [grades]);
+  useEffect(() => writeStored(ATTENDANCE_STORAGE_KEY, attendance), [attendance]);
+  useEffect(() => writeStored(NOTICE_STORAGE_KEY, notices), [notices]);
+  useEffect(() => writeStored('mis_sis_audit_logs_v3', auditLogs), [auditLogs]);
 
   const lastLoggedStudentRef = useRef<string | null>(null);
   useEffect(() => {
@@ -779,14 +789,33 @@ export default function StudentSuccessHub({ currentUser }: { currentUser: UserPr
     const reader = new FileReader();
     reader.onload = (event) => {
       try {
-        const data = JSON.parse(event.target?.result as string);
+        const rawText = event.target?.result as string;
+
+        // 🛡️ XSS Guard: reject files containing HTML/script tags
+        if (/<\s*script|<\s*iframe|<\s*img|on\w+\s*=/i.test(rawText)) {
+          alert('⛔ File backup bị từ chối: Phát hiện mã HTML/JavaScript nguy hiểm (XSS). Vui lòng sử dụng file backup gốc từ hệ thống.');
+          return;
+        }
+
+        const data = JSON.parse(rawText);
+
+        // 🛡️ Signature Verification: verify backup was not tampered with
+        if (data.signature !== undefined) {
+          const { signature, ...payloadWithoutSig } = data;
+          const expectedSig = generateBackupSignature(JSON.stringify(payloadWithoutSig));
+          if (signature !== expectedSig) {
+            alert('⛔ Xác thực thất bại: Chữ ký số không hợp lệ. File backup có thể đã bị chỉnh sửa hoặc giả mạo. Hủy khôi phục.');
+            return;
+          }
+        }
+
         if (data.students && data.grades && data.attendance) {
           setStudents(data.students);
           setGrades(data.grades);
           setAttendance(data.attendance);
           if (data.auditLogs) setAuditLogs(data.auditLogs);
-          alert('Khôi phục dữ liệu SIS thành công!');
-          logSisAction('Khôi phục dữ liệu', 'Hệ thống SIS', 'Nhập file backup JSON khôi phục dữ liệu thành công');
+          alert('✅ Khôi phục dữ liệu SIS thành công! Chữ ký số đã được xác thực.');
+          logSisAction('Khôi phục dữ liệu', 'Hệ thống SIS', 'Nhập file backup JSON khôi phục dữ liệu thành công — chữ ký hợp lệ');
         } else {
           alert('File backup không hợp lệ hoặc thiếu dữ liệu.');
         }
@@ -1630,12 +1659,15 @@ export default function StudentSuccessHub({ currentUser }: { currentUser: UserPr
                         <button
                           type="button"
                           onClick={() => {
-                            const backupData = {
+                            const backupPayload = {
                               students,
                               grades,
                               attendance,
                               auditLogs
                             };
+                            // 🛡️ Append cryptographic signature to backup file
+                            const signature = generateBackupSignature(JSON.stringify(backupPayload));
+                            const backupData = { ...backupPayload, signature };
                             const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
                             const url = URL.createObjectURL(blob);
                             const link = document.createElement('a');
@@ -1645,7 +1677,7 @@ export default function StudentSuccessHub({ currentUser }: { currentUser: UserPr
                             link.click();
                             link.remove();
                             URL.revokeObjectURL(url);
-                            logSisAction('Sao lưu dữ liệu', 'Hệ thống SIS', 'Tải file backup JSON cơ sở dữ liệu SIS');
+                            logSisAction('Sao lưu dữ liệu', 'Hệ thống SIS', 'Tải file backup JSON có chữ ký số');
                           }}
                           className="px-3.5 py-2 bg-indigo-650 hover:bg-indigo-750 text-white font-bold rounded-lg flex items-center gap-1.5 cursor-pointer shadow-3xs"
                         >

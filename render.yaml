@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: mis-smart-portal
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: GEMINI_API_KEY
+        sync: false  # Nhập thủ công trên Render Dashboard
+      - key: APP_URL
+        sync: false  # URL do Render cấp, nhập sau khi deploy

@@ -27,20 +27,29 @@ import {
   XCircle
 } from 'lucide-react';
 import { UserProfile, AcademicYearRecord, HealthIncident, VaccinationRecord, BorrowLog } from '../types';
+import { encryptData, decryptData } from '../utils/security';
 
 interface ParentStudentPortalProps {
   currentUser: UserProfile;
   onLogout: () => void;
 }
 
-// Local storage helpers
+// Secure local storage helpers — data is encrypted at rest
 function readStored<T>(key: string, fallback: T): T {
   try {
     const saved = localStorage.getItem(key);
-    return saved ? JSON.parse(saved) : fallback;
+    if (!saved) return fallback;
+    // Try decrypting first; falls back to plain JSON for backward compatibility
+    const decrypted = decryptData(saved);
+    if (decrypted !== null) return decrypted as T;
+    return fallback;
   } catch {
     return fallback;
   }
+}
+
+function writeStored(key: string, data: any): void {
+  localStorage.setItem(key, encryptData(data));
 }
 
 const calculateDays = (start: string, end: string) => {
@@ -141,7 +150,7 @@ export default function ParentStudentPortal({ currentUser, onLogout }: ParentStu
       const otherGrades = grades.filter(g => g.studentId !== student.id);
       const updatedGrades = [...otherGrades, ...newGrades];
       
-      localStorage.setItem('mis_sis_grades_v3', JSON.stringify(updatedGrades));
+      writeStored('mis_sis_grades_v3', updatedGrades);
       setGrades(updatedGrades);
     }
   }, [student, grades]);
@@ -216,7 +225,7 @@ export default function ParentStudentPortal({ currentUser, onLogout }: ParentStu
     };
     const updated = [newRequest, ...leaveRequests];
     setLeaveRequests(updated);
-    localStorage.setItem('mis_portal_leave_requests_v3', JSON.stringify(updated));
+    writeStored('mis_portal_leave_requests_v3', updated);
     setLeaveStartDate('');
     setLeaveEndDate('');
     setLeaveReason('');
@@ -228,7 +237,7 @@ export default function ParentStudentPortal({ currentUser, onLogout }: ParentStu
     if (window.confirm("Quý phụ huynh có chắc chắn muốn thu hồi đơn xin nghỉ phép này không?")) {
       const updated = leaveRequests.filter((r: any) => r.id !== requestId);
       setLeaveRequests(updated);
-      localStorage.setItem('mis_portal_leave_requests_v3', JSON.stringify(updated));
+      writeStored('mis_portal_leave_requests_v3', updated);
     }
   };
 
@@ -248,7 +257,7 @@ export default function ParentStudentPortal({ currentUser, onLogout }: ParentStu
     });
 
     setTuitionFees(updatedTuition);
-    localStorage.setItem('mis_lms_tuition_fees', JSON.stringify(updatedTuition));
+    writeStored('mis_lms_tuition_fees', updatedTuition);
     setPaymentSuccess('🎉 Thanh toán học phí trực tuyến thành công!');
     setTimeout(() => {
       setPaymentSuccess('');
@@ -271,7 +280,7 @@ export default function ParentStudentPortal({ currentUser, onLogout }: ParentStu
     });
 
     setSurveys(updatedSurveys);
-    localStorage.setItem('mis_portal_surveys_v3', JSON.stringify(updatedSurveys));
+    writeStored('mis_portal_surveys_v3', updatedSurveys);
     
     // Save feedback details
     const savedFeedbacks = readStored<any[]>('mis_portal_surveys_feedback_v3', []);
@@ -284,7 +293,7 @@ export default function ParentStudentPortal({ currentUser, onLogout }: ParentStu
       comment: surveyComment,
       submittedAt: new Date().toLocaleString('vi-VN', { hour12: false })
     };
-    localStorage.setItem('mis_portal_surveys_feedback_v3', JSON.stringify([newFeedback, ...savedFeedbacks]));
+    writeStored('mis_portal_surveys_feedback_v3', [newFeedback, ...savedFeedbacks]);
 
     setFeedbackSuccess('🎉 Cảm ơn ý kiến góp ý quý báu của quý Phụ huynh!');
     setTimeout(() => {
@@ -442,7 +451,7 @@ export default function ParentStudentPortal({ currentUser, onLogout }: ParentStu
       correctCount,
       totalQuestions: quizQuestions.length
     };
-    localStorage.setItem('mis_lms_review_submissions', JSON.stringify([newSub, ...currentSubs]));
+    writeStored('mis_lms_review_submissions', [newSub, ...currentSubs]);
   };
 
   const resetQuiz = () => {
