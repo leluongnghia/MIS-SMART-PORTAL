@@ -1905,13 +1905,14 @@ export default function SchoolCrmHub() {
 
       {/* Main Admissions Pipeline Board */}
       <div className="space-y-4">
-        <div className="flex items-center justify-between flex-wrap gap-2">
+        <div className="flex items-center justify-between flex-wrap gap-3">
           <h3 className="font-display font-extrabold text-slate-900 dark:text-white text-sm">Phễu chuyển đổi tuyển sinh (Pipeline)</h3>
           
-          <div className="flex items-center gap-2">
+          <div className="flex w-full flex-wrap items-center justify-start gap-2 sm:w-auto sm:justify-end">
             <button
+              type="button"
               onClick={handleExportExcel}
-              className="px-3 py-1.5 border border-emerald-200 dark:border-emerald-900 bg-emerald-50/60 hover:bg-emerald-100 dark:bg-emerald-950/20 dark:hover:bg-emerald-950/40 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer text-emerald-700 dark:text-emerald-300"
+              className="h-9 px-3 border border-emerald-200 dark:border-emerald-900 bg-emerald-50/60 hover:bg-emerald-100 dark:bg-emerald-950/20 dark:hover:bg-emerald-950/40 rounded-xl text-xs font-bold transition-all inline-flex items-center justify-center gap-1.5 cursor-pointer text-emerald-700 dark:text-emerald-300"
               title="Xuất báo cáo tuyển sinh ra file Excel có định dạng"
             >
               <Download className="w-3.5 h-3.5" />
@@ -1919,8 +1920,9 @@ export default function SchoolCrmHub() {
             </button>
 
             <button
+              type="button"
               onClick={handleExportWord}
-              className="px-3 py-1.5 border border-blue-200 dark:border-blue-900 bg-blue-50/60 hover:bg-blue-100 dark:bg-blue-950/20 dark:hover:bg-blue-950/40 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer text-blue-700 dark:text-blue-300"
+              className="h-9 px-3 border border-blue-200 dark:border-blue-900 bg-blue-50/60 hover:bg-blue-100 dark:bg-blue-950/20 dark:hover:bg-blue-950/40 rounded-xl text-xs font-bold transition-all inline-flex items-center justify-center gap-1.5 cursor-pointer text-blue-700 dark:text-blue-300"
               title="Xuất báo cáo tuyển sinh dạng Word tổng hợp"
             >
               <FileText className="w-3.5 h-3.5" />
@@ -1928,20 +1930,23 @@ export default function SchoolCrmHub() {
             </button>
 
             <button
+              type="button"
               onClick={() => setShowQuickImport(true)}
-              className="px-3 py-1.5 border border-slate-250 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/60 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer text-slate-700 dark:text-slate-200"
+              className="h-9 px-3 border border-slate-250 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/60 rounded-xl text-xs font-bold transition-all inline-flex items-center justify-center gap-1.5 cursor-pointer text-slate-700 dark:text-slate-200"
               title="Nhập nhanh danh sách từ file Excel/Google Sheets"
             >
               <Upload className="w-3.5 h-3.5" />
-              <span>Import nhanh</span>
+              <span>Nhập nhanh</span>
             </button>
 
             <button
+              type="button"
               onClick={() => setShowAddLead(!showAddLead)}
-              className="px-3.5 py-1.5 bg-indigo-650 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-3xs animate-pulse"
+              className="h-9 px-3.5 bg-indigo-650 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all inline-flex items-center justify-center gap-1.5 cursor-pointer shadow-3xs"
+              title="Thêm lead tuyển sinh mới"
             >
               <Plus className="w-3.5 h-3.5" />
-              <span>Thêm Lead</span>
+              <span>Thêm lead</span>
             </button>
           </div>
         </div>
@@ -2224,8 +2229,8 @@ export default function SchoolCrmHub() {
             <div className="bg-white dark:bg-slate-850 rounded-2xl max-w-3xl w-full p-6 space-y-4 border border-slate-200 dark:border-slate-800 shadow-xl max-h-[85vh] overflow-y-auto animate-in scale-in duration-200">
               <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3">
                 <div>
-                  <h3 className="text-base font-extrabold text-slate-900 dark:text-white">Import dữ liệu nhanh từ Excel / Google Sheets</h3>
-                  <p className="text-[11px] text-slate-450 mt-0.5">Copy các cột dữ liệu trong file Excel của bạn và dán trực tiếp vào khung dưới đây.</p>
+                  <h3 className="text-base font-extrabold text-slate-900 dark:text-white">Nhập dữ liệu nhanh từ Excel / Google Sheets</h3>
+                  <p className="text-[11px] text-slate-450 mt-0.5">Sao chép các cột dữ liệu trong file Excel của bạn và dán trực tiếp vào khung dưới đây.</p>
                 </div>
                 <button
                   onClick={() => { setShowQuickImport(false); setImportText(''); setImportPreview([]); }}
@@ -2236,9 +2241,9 @@ export default function SchoolCrmHub() {
               </div>
 
               <div className="p-3 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl text-[11px] text-slate-600 dark:text-slate-400 space-y-1">
-                <span className="font-bold block text-slate-800 dark:text-slate-300">Thứ tự các cột phân tích mặc định (phân cách bằng phím Tab hoặc Dấu phẩy):</span>
-                <span className="font-mono bg-white dark:bg-slate-800 px-1 py-0.5 rounded border dark:border-slate-700">Tên Học Sinh | Tên Phụ Huynh | Số Điện Thoại | Email | Nguồn | Ghi Chú | Điểm Test | Học Bổng | Trạng Thái</span>
-                <span className="block mt-1 italic text-slate-450 text-[10px]">* Trạng thái hợp lệ: Lead, Tu van, Dk test, Da test, Chua giu, Da giu, Nop ho so, Nhap hoc.</span>
+                <span className="font-bold block text-slate-800 dark:text-slate-300">Thứ tự cột mặc định, phân cách bằng phím Tab hoặc dấu phẩy:</span>
+                <span className="font-mono bg-white dark:bg-slate-800 px-1 py-0.5 rounded border dark:border-slate-700">Tên học sinh | Tên phụ huynh | Số điện thoại | Email | Nguồn | Ghi chú | Điểm test | Học bổng | Trạng thái | Chiến dịch | Tư vấn viên</span>
+                <span className="block mt-1 italic text-slate-450 text-[10px]">* Trạng thái hợp lệ: Lead quảng cáo, Tư vấn, Tham quan/Open Day, Lịch test, Offer, Giữ chỗ/Nộp hồ sơ, Nhập học.</span>
               </div>
 
               <div className="space-y-1">
@@ -2331,7 +2336,7 @@ export default function SchoolCrmHub() {
                   onClick={handleConfirmImport}
                   className="px-5 py-1.5 bg-indigo-650 hover:bg-indigo-755 text-white rounded-xl text-xs font-bold disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
                 >
-                  Xác nhận Import vào CRM
+                  Xác nhận nhập vào CRM
                 </button>
               </div>
             </div>
