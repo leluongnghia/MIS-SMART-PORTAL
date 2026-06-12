@@ -39,6 +39,8 @@ import { exportToCsv } from '../utils/exportUtils';
 import { ALL_VIETNAM_SUBJECT_NAMES, VIETNAM_GRADE_LEVELS, getSubjectsForClassName } from '../utils/vietnameseCurriculum';
 import { normalizeStudentProfile, normalizeStudentProfiles, getUnifiedStudents, saveUnifiedStudents, UnifiedStudent } from '../utils/peopleDirectory';
 import { syncEnrolledCrmLeadsToLifecycle } from '../utils/crmStudentSync';
+import { db } from '../firebase';
+import { collection, onSnapshot, doc, setDoc } from 'firebase/firestore';
 
 interface MisLmsCenterProps {
   currentUser: UserProfile;
@@ -162,6 +164,37 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
     const unified = getUnifiedStudents();
     return unified.filter(s => s.enrollmentStatus === 'ENROLLED') as LmsStudent[];
   });
+
+  // Real-time Firestore Sync for Student Directory
+  useEffect(() => {
+    const unsub = onSnapshot(collection(db, 'mis_student_directory'), (snapshot) => {
+      const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as UnifiedStudent[];
+      if (list.length > 0) {
+        const enrolled = list.filter(s => s.enrollmentStatus === 'ENROLLED') as LmsStudent[];
+        setLmsStudents(prev => {
+          if (JSON.stringify(prev) !== JSON.stringify(enrolled)) {
+            return enrolled;
+          }
+          return prev;
+        });
+
+        const mappedLeads = list.map(s => ({
+          ...s,
+          studentName: s.name,
+          stage: s.enrollmentStatus,
+          phone: s.parentPhone,
+          email: s.parentEmail,
+        }));
+        setLeads(prev => {
+          if (JSON.stringify(prev) !== JSON.stringify(mappedLeads)) {
+            return mappedLeads;
+          }
+          return prev;
+        });
+      }
+    });
+    return unsub;
+  }, []);
 
   useEffect(() => {
     const currentUnified = getUnifiedStudents();
@@ -489,7 +522,32 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
   });
 
   useEffect(() => {
+    const unsub = onSnapshot(collection(db, 'mis_lms_tuition_fees'), (snapshot) => {
+      const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      if (list.length > 0) {
+        setTuitionFees(prev => {
+          if (JSON.stringify(prev) !== JSON.stringify(list)) {
+            return list;
+          }
+          return prev;
+        });
+      }
+    });
+    return unsub;
+  }, []);
+
+  useEffect(() => {
     localStorage.setItem('mis_lms_tuition_fees', JSON.stringify(tuitionFees));
+    const syncInvoices = async () => {
+      try {
+        for (const t of tuitionFees) {
+          await setDoc(doc(db, 'mis_lms_tuition_fees', t.id), t);
+        }
+      } catch (e) {
+        console.warn('Failed to sync invoices to Firestore: ', e);
+      }
+    };
+    syncInvoices();
   }, [tuitionFees]);
 
   const [showAddInvoiceForm, setShowAddInvoiceForm] = useState(false);

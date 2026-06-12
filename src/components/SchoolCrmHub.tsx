@@ -3,6 +3,8 @@ import { Target, Search, Plus, PhoneCall, Mail, Calendar, Sparkles, Megaphone, A
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import { syncEnrolledCrmLeadsToLifecycle } from '../utils/crmStudentSync';
 import { initializeUnifiedDatabase, getUnifiedStudents, saveUnifiedStudents, UnifiedStudent } from '../utils/peopleDirectory';
+import { db } from '../firebase';
+import { collection, onSnapshot } from 'firebase/firestore';
 
 type LeadStage = 'NEW' | 'CONSULTING' | 'TOUR' | 'TESTING' | 'OFFER' | 'RESERVED' | 'ENROLLED';
 
@@ -410,6 +412,22 @@ export default function SchoolCrmHub() {
     const unified = initializeUnifiedDatabase([], defaultLeads.map(normalizeLead));
     return unified.map(mapStudentToLead);
   });
+
+  React.useEffect(() => {
+    const unsub = onSnapshot(collection(db, 'mis_student_directory'), (snapshot) => {
+      const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as UnifiedStudent[];
+      if (list.length > 0) {
+        const nextLeads = list.map(mapStudentToLead);
+        setLeads(prev => {
+          if (JSON.stringify(prev) !== JSON.stringify(nextLeads)) {
+            return nextLeads;
+          }
+          return prev;
+        });
+      }
+    });
+    return unsub;
+  }, []);
 
   React.useEffect(() => {
     const currentUnified = getUnifiedStudents();

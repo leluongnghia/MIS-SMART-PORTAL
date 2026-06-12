@@ -1,4 +1,6 @@
 import { Task, UserProfile } from '../types';
+import { db } from '../firebase';
+import { collection, doc, setDoc, getDocs } from 'firebase/firestore';
 
 type GenderText = 'Nam' | 'Nữ' | 'Khác';
 
@@ -328,6 +330,21 @@ export function initializeUnifiedDatabase(
   }));
   localStorage.setItem('school_crm_leads', JSON.stringify(leadsOnly));
 
+  // Sync default profiles to Firestore if empty
+  const syncDefaultsToCloud = async () => {
+    try {
+      const snapshot = await getDocs(collection(db, 'mis_student_directory'));
+      if (snapshot.empty) {
+        for (const s of unifiedList) {
+          await setDoc(doc(db, 'mis_student_directory', s.id), s);
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to initialize Firestore student database: ', e);
+    }
+  };
+  syncDefaultsToCloud();
+
   return unifiedList;
 }
 
@@ -364,4 +381,16 @@ export function saveUnifiedStudents(students: UnifiedStudent[]) {
 
   // Backward compatibility: keep mis_lms_students synced
   localStorage.setItem('mis_lms_students', JSON.stringify(enrolledOnly));
+
+  // Sync to Firestore in background
+  const syncToCloud = async () => {
+    try {
+      for (const s of students) {
+        await setDoc(doc(db, 'mis_student_directory', s.id), s);
+      }
+    } catch (e) {
+      console.warn('Failed to sync saved students to Firestore: ', e);
+    }
+  };
+  syncToCloud();
 }

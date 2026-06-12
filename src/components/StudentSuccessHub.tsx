@@ -26,6 +26,8 @@ import { getGradeLevelFromClassName, getSubjectsForClassName } from '../utils/vi
 import { encryptData, decryptData, generateBackupSignature } from '../utils/security';
 import { normalizeStudentProfile, normalizeStudentProfiles, initializeUnifiedDatabase, getUnifiedStudents, saveUnifiedStudents, UnifiedStudent } from '../utils/peopleDirectory';
 import { readCrmLeadsFromStorage, syncEnrolledCrmLeadsToLifecycle } from '../utils/crmStudentSync';
+import { db } from '../firebase';
+import { collection, onSnapshot, doc, setDoc } from 'firebase/firestore';
 
 type ConductLevel = 'Tốt' | 'Khá' | 'Trung bình';
 type AttendanceStatus = 'PRESENT' | 'LATE' | 'ABSENT' | 'EXCUSED';
@@ -394,6 +396,38 @@ export default function StudentSuccessHub({ currentUser }: { currentUser: UserPr
     reason: '',
   });
 
+  // Real-time Firestore Sync Listeners
+  useEffect(() => {
+    const unsub = onSnapshot(collection(db, 'mis_student_directory'), (snapshot) => {
+      const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as UnifiedStudent[];
+      if (list.length > 0) {
+        const enrolled = list.filter(s => s.enrollmentStatus === 'ENROLLED') as StudentRecord[];
+        setStudents(prev => {
+          if (JSON.stringify(prev) !== JSON.stringify(enrolled)) {
+            return enrolled;
+          }
+          return prev;
+        });
+      }
+    });
+    return unsub;
+  }, []);
+
+  useEffect(() => {
+    const unsub = onSnapshot(collection(db, GRADE_STORAGE_KEY), (snapshot) => {
+      const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as GradeEntry[];
+      if (list.length > 0) {
+        setGrades(prev => {
+          if (JSON.stringify(prev) !== JSON.stringify(list)) {
+            return list;
+          }
+          return prev;
+        });
+      }
+    });
+    return unsub;
+  }, []);
+
   useEffect(() => {
     const currentUnified = getUnifiedStudents();
     const nextUnified = currentUnified.map(student => {
@@ -419,15 +453,24 @@ export default function StudentSuccessHub({ currentUser }: { currentUser: UserPr
 
     saveUnifiedStudents(nextUnified);
   }, [students]);
-  useEffect(() => writeStored(GRADE_STORAGE_KEY, grades), [grades]);
+
+  useEffect(() => {
+    writeStored(GRADE_STORAGE_KEY, grades);
+    const syncGrades = async () => {
+      try {
+        for (const g of grades) {
+          await setDoc(doc(db, GRADE_STORAGE_KEY, g.id), g);
+        }
+      } catch (e) {
+        console.warn('Failed to sync grades to Firestore: ', e);
+      }
+    };
+    syncGrades();
+  }, [grades]);
+
   useEffect(() => writeStored(ATTENDANCE_STORAGE_KEY, attendance), [attendance]);
   useEffect(() => writeStored(NOTICE_STORAGE_KEY, notices), [notices]);
   useEffect(() => writeStored('mis_sis_audit_logs_v3', auditLogs), [auditLogs]);
-
-  useEffect(() => {
-    const unified = getUnifiedStudents();
-    setStudents(unified.filter(s => s.enrollmentStatus === 'ENROLLED') as StudentRecord[]);
-  }, []);
 
   const lastLoggedStudentRef = useRef<string | null>(null);
   useEffect(() => {

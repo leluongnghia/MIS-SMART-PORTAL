@@ -30,6 +30,8 @@ import { UserProfile, AcademicYearRecord, HealthIncident, VaccinationRecord, Bor
 import { encryptData, decryptData } from '../utils/security';
 import { normalizeStudentProfile, normalizeStudentProfiles } from '../utils/peopleDirectory';
 import { readCrmLeadsFromStorage, syncEnrolledCrmLeadsToLifecycle } from '../utils/crmStudentSync';
+import { db } from '../firebase';
+import { collection, onSnapshot, doc, setDoc, deleteDoc } from 'firebase/firestore';
 
 interface ParentStudentPortalProps {
   currentUser: UserProfile;
@@ -109,14 +111,76 @@ export default function ParentStudentPortal({ currentUser, onLogout }: ParentStu
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Read data synced with SIS
-  const students = useMemo(() => {
+  const [students, setStudents] = useState<any[]>(() => {
     return normalizeStudentProfiles(readStored<any[]>('mis_student_directory', []));
-  }, []);
+  });
   const [grades, setGrades] = useState<any[]>(() => readStored<any[]>('mis_sis_grades_v3', []));
   const attendance = useMemo(() => readStored<any[]>('mis_sis_attendance_v3', []), []);
   const notices = useMemo(() => readStored<any[]>('mis_sis_parent_notices_v3', []), []);
   const borrowLogs = useMemo(() => readStored<BorrowLog[]>('mis_borrow_logs_v3', []), []);
-  
+
+  // Real-time Firestore Sync Listeners
+  useEffect(() => {
+    const unsub = onSnapshot(collection(db, 'mis_student_directory'), (snapshot) => {
+      const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      if (list.length > 0) {
+        const normalized = normalizeStudentProfiles(list as any);
+        setStudents(prev => {
+          if (JSON.stringify(prev) !== JSON.stringify(normalized)) {
+            return normalized;
+          }
+          return prev;
+        });
+      }
+    });
+    return unsub;
+  }, []);
+
+  useEffect(() => {
+    const unsub = onSnapshot(collection(db, 'mis_sis_grades_v3'), (snapshot) => {
+      const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      if (list.length > 0) {
+        setGrades(prev => {
+          if (JSON.stringify(prev) !== JSON.stringify(list)) {
+            return list;
+          }
+          return prev;
+        });
+      }
+    });
+    return unsub;
+  }, []);
+
+  useEffect(() => {
+    const unsub = onSnapshot(collection(db, 'mis_lms_tuition_fees'), (snapshot) => {
+      const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      if (list.length > 0) {
+        setTuitionFees(prev => {
+          if (JSON.stringify(prev) !== JSON.stringify(list)) {
+            return list;
+          }
+          return prev;
+        });
+      }
+    });
+    return unsub;
+  }, []);
+
+  useEffect(() => {
+    const unsub = onSnapshot(collection(db, 'mis_portal_leave_requests_v3'), (snapshot) => {
+      const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      if (list.length > 0) {
+        setLeaveRequests(prev => {
+          if (JSON.stringify(prev) !== JSON.stringify(list)) {
+            return list;
+          }
+          return prev;
+        });
+      }
+    });
+    return unsub;
+  }, []);
+
   // Find associated student
   const student = useMemo(() => {
     if (currentUser.role === 'STUDENT') {
@@ -163,6 +227,18 @@ export default function ParentStudentPortal({ currentUser, onLogout }: ParentStu
       
       writeStored('mis_sis_grades_v3', updatedGrades);
       setGrades(updatedGrades);
+
+      // Sync default grades to Firestore in background
+      const syncGradesToCloud = async () => {
+        try {
+          for (const g of newGrades) {
+            await setDoc(doc(db, 'mis_sis_grades_v3', g.id), g);
+          }
+        } catch (e) {
+          console.warn('Failed to sync generated grades to Firestore: ', e);
+        }
+      };
+      syncGradesToCloud();
     }
   }, [student, grades]);
 
@@ -242,6 +318,16 @@ export default function ParentStudentPortal({ currentUser, onLogout }: ParentStu
     setLeaveReason('');
     setLeaveSuccess('🎉 Gửi đơn xin nghỉ học thành công! Đang chờ Giáo viên chủ nhiệm duyệt.');
     setTimeout(() => setLeaveSuccess(''), 5000);
+
+    // Sync to Firestore in background
+    const syncLeaveToCloud = async () => {
+      try {
+        await setDoc(doc(db, 'mis_portal_leave_requests_v3', newRequest.id), newRequest);
+      } catch (err) {
+        console.warn('Failed to sync leave request to Firestore: ', err);
+      }
+    };
+    syncLeaveToCloud();
   };
 
   const handleWithdrawLeaveRequest = (requestId: string) => {
@@ -249,6 +335,16 @@ export default function ParentStudentPortal({ currentUser, onLogout }: ParentStu
       const updated = leaveRequests.filter((r: any) => r.id !== requestId);
       setLeaveRequests(updated);
       writeStored('mis_portal_leave_requests_v3', updated);
+
+      // Sync to Firestore in background
+      const deleteLeaveFromCloud = async () => {
+        try {
+          await deleteDoc(doc(db, 'mis_portal_leave_requests_v3', requestId));
+        } catch (err) {
+          console.warn('Failed to delete leave request from Firestore: ', err);
+        }
+      };
+      deleteLeaveFromCloud();
     }
   };
 
@@ -256,13 +352,15 @@ export default function ParentStudentPortal({ currentUser, onLogout }: ParentStu
     e.preventDefault();
     if (!selectedInvoice) return;
     
+    let updatedInvoice: any = null;
     const updatedTuition = tuitionFees.map(t => {
       if (t.id === selectedInvoice.id) {
-        return {
+        updatedInvoice = {
           ...t,
           status: 'DA_DONG',
           paidDate: new Date().toISOString().split('T')[0]
         };
+        return updatedInvoice;
       }
       return t;
     });
@@ -277,6 +375,18 @@ export default function ParentStudentPortal({ currentUser, onLogout }: ParentStu
       setCardExpiry('');
       setCardCvv('');
     }, 2000);
+
+    // Sync to Firestore in background
+    if (updatedInvoice) {
+      const syncInvoiceToCloud = async () => {
+        try {
+          await setDoc(doc(db, 'mis_lms_tuition_fees', selectedInvoice.id), updatedInvoice);
+        } catch (err) {
+          console.warn('Failed to sync invoice payment to Firestore: ', err);
+        }
+      };
+      syncInvoiceToCloud();
+    }
   };
 
   const handleSurveySubmit = (e: React.FormEvent) => {
