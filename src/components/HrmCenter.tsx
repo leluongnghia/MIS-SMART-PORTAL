@@ -76,14 +76,14 @@ export default function HrmCenter({ currentUser, users, onUpdateUsers }: HrmCent
       {
         id: 'LV001',
         teacherId: 'user_dat',
-        teacherName: 'Thầy Trần Quốc Đạt',
+        teacherName: 'Thầy Vũ Tiến Đạt',
         departmentId: 'VAN',
         leaveDate: '2026-06-08',
         slots: [3, 4],
         reason: 'Đi khám bệnh định kỳ tại bệnh viện Trung ương',
         status: 'APPROVED',
         substituteTeacherId: 'user_nhung',
-        substituteTeacherName: 'Cô Nguyễn Hồng Nhung',
+        substituteTeacherName: 'Cô Phạm Hồng Nhung',
         createdAt: '2026-06-05'
       },
       {

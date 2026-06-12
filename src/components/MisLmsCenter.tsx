@@ -51,9 +51,11 @@ interface LmsStudent {
   className: string;
   gender?: string;
   birthDate?: string;
+  phone?: string;
   parentName: string;
   parentPhone?: string;
   parentEmail: string;
+  parentGender?: string;
   emergencyContact?: string;
   address?: string;
 }
@@ -161,10 +163,10 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
       try { return normalizeStudentProfiles(JSON.parse(saved)) as LmsStudent[]; } catch (e) { console.error(e); }
     }
     return normalizeStudentProfiles([
-      { id: 'std1', name: 'Nguyễn Minh Quân', className: 'Lớp 10A1', parentName: 'Nguyễn Văn Hải', parentEmail: 'hai.nguyen@parent.mis.edu.vn' },
-      { id: 'std2', name: 'Trần Mỹ Lệ', className: 'Lớp 11A2', parentName: 'Lê Thị Thu Trà', parentEmail: 'tra.le@parent.mis.edu.vn' },
-      { id: 'std3', name: 'Phạm Hồng Thái', className: 'Lớp 12A1', parentName: 'Phạm Hồng Sơn', parentEmail: 'son.pham@parent.mis.edu.vn' },
-      { id: 'std4', name: 'Hoàng Thùy Dương', className: 'Lớp 10A1', parentName: 'Hoàng Văn Thắng', parentEmail: 'thang.hoang@parent.mis.edu.vn' },
+      { id: 'std1', name: 'Nguyễn Minh Quân', className: 'Lớp 10A1', gender: 'Nam', birthDate: '2010-03-15', phone: '0912345678', parentName: 'Nguyễn Văn Hải', parentPhone: '0987654321', parentEmail: 'hai.nguyen@parent.mis.edu.vn', parentGender: 'Nam', emergencyContact: '0987654321', address: 'Số 12, ngõ 4, Cầu Giấy, Hà Nội' },
+      { id: 'std2', name: 'Trần Mỹ Lệ', className: 'Lớp 11A2', gender: 'Nữ', birthDate: '2009-08-20', phone: '0922345678', parentName: 'Lê Thị Thu Trà', parentPhone: '0977654321', parentEmail: 'tra.le@parent.mis.edu.vn', parentGender: 'Nữ', emergencyContact: '0977654321', address: 'Số 45, ngõ 12, Thanh Xuân, Hà Nội' },
+      { id: 'std3', name: 'Phạm Hồng Thái', className: 'Lớp 12A1', gender: 'Nam', birthDate: '2008-11-05', phone: '0932345678', parentName: 'Phạm Hồng Sơn', parentPhone: '0967654321', parentEmail: 'son.pham@parent.mis.edu.vn', parentGender: 'Nam', emergencyContact: '0967654321', address: 'Số 8, ngõ 2, Ba Đình, Hà Nội' },
+      { id: 'std4', name: 'Hoàng Thùy Dương', className: 'Lớp 10A1', gender: 'Nữ', birthDate: '2010-05-12', phone: '0942345678', parentName: 'Hoàng Văn Thắng', parentPhone: '0957654321', parentEmail: 'thang.hoang@parent.mis.edu.vn', parentGender: 'Nam', emergencyContact: '0957654321', address: 'Số 22, ngõ 9, Đống Đa, Hà Nội' },
     ]) as LmsStudent[];
   });
 

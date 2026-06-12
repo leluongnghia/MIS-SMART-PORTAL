@@ -72,11 +72,11 @@ const initialEvents: EventItem[] = [
     status: 'Đang chuẩn bị',
     progress: 65,
     checklist: [
-      { id: 't1', name: 'Thiết kế ấn phẩm truyền thông & Standee', assignee: 'Nguyễn Thị Mai', completed: true },
-      { id: 't2', name: 'Gửi thư mời và SMS cho phụ huynh đăng ký', assignee: 'Trần Văn Đức', completed: true },
-      { id: 't3', name: 'Setup các gian hàng trải nghiệm câu lạc bộ', assignee: 'Lê Quang Hải', completed: false },
-      { id: 't4', name: 'Chuẩn bị tiệc trà nhẹ và quà lưu niệm', assignee: 'Phạm Minh Tuấn', completed: false },
-      { id: 't5', name: 'Phân công học sinh tình nguyện viên hỗ trợ', assignee: 'Cô Lê Thị Hương', completed: true },
+      { id: 't1', name: 'Thiết kế ấn phẩm truyền thông & Standee', assignee: 'Cô Lương Mỹ Hạnh', completed: true },
+      { id: 't2', name: 'Gửi thư mời và SMS cho phụ huynh đăng ký', assignee: 'Thầy Nguyễn Tiến Đạt', completed: true },
+      { id: 't3', name: 'Setup các gian hàng trải nghiệm câu lạc bộ', assignee: 'Thầy Ngô Anh Tuấn', completed: false },
+      { id: 't4', name: 'Chuẩn bị tiệc trà nhẹ và quà lưu niệm', assignee: 'Thầy Vũ Tiến Đạt', completed: false },
+      { id: 't5', name: 'Phân công học sinh tình nguyện viên hỗ trợ', assignee: 'Cô Lê Thị Thanh Nhàn', completed: true },
     ],
   },
   {
@@ -92,9 +92,9 @@ const initialEvents: EventItem[] = [
     status: 'Đang chuẩn bị',
     progress: 20,
     checklist: [
-      { id: 't11', name: 'Duyệt danh sách sản phẩm STEM trưng bày', assignee: 'Cô Trần Thị Bình', completed: true },
-      { id: 't12', name: 'Mua sắm nguyên vật liệu lắp đặt kỹ thuật', assignee: 'Nguyễn Thị Mai', completed: false },
-      { id: 't13', name: 'Liên hệ ban giám khảo bên ngoài', assignee: 'Thầy Nguyễn Văn An', completed: false },
+      { id: 't11', name: 'Duyệt danh sách sản phẩm STEM trưng bày', assignee: 'Thầy Dương Nam Anh', completed: true },
+      { id: 't12', name: 'Mua sắm nguyên vật liệu lắp đặt kỹ thuật', assignee: 'Cô Lương Mỹ Hạnh', completed: false },
+      { id: 't13', name: 'Liên hệ ban giám khảo bên ngoài', assignee: 'Thầy Nguyễn Minh Triết', completed: false },
       { id: 't14', name: 'Thiết lập hệ thống âm thanh, ánh sáng gian trưng bày', assignee: 'Phòng CNTT', completed: false },
     ],
   },
@@ -111,10 +111,10 @@ const initialEvents: EventItem[] = [
     status: 'Đang chuẩn bị',
     progress: 90,
     checklist: [
-      { id: 't21', name: 'Hoàn thiện slide thuyết trình của diễn giả', assignee: 'Cô Lê Thị Hương', completed: true },
+      { id: 't21', name: 'Hoàn thiện slide thuyết trình của diễn giả', assignee: 'Cô Lê Thị Thanh Nhàn', completed: true },
       { id: 't22', name: 'Kiểm tra máy chiếu, hệ thống mic và đường truyền internet', assignee: 'Phòng CNTT', completed: true },
-      { id: 't23', name: 'In tài liệu hướng dẫn và danh sách điểm danh', assignee: 'Lê Quang Hải', completed: true },
-      { id: 't24', name: 'Chuẩn bị nước uống, hoa tươi tặng diễn giả', assignee: 'Nguyễn Thị Mai', completed: false },
+      { id: 't23', name: 'In tài liệu hướng dẫn và danh sách điểm danh', assignee: 'Thầy Ngô Anh Tuấn', completed: true },
+      { id: 't24', name: 'Chuẩn bị nước uống, hoa tươi tặng diễn giả', assignee: 'Cô Lương Mỹ Hạnh', completed: false },
     ],
   },
   {
@@ -130,10 +130,10 @@ const initialEvents: EventItem[] = [
     status: 'Chưa bắt đầu',
     progress: 5,
     checklist: [
-      { id: 't31', name: 'Thông qua kế hoạch kịch bản tổng thể', assignee: 'Thầy Nguyễn Văn An', completed: true },
-      { id: 't32', name: 'Duyệt chương trình văn nghệ chào mừng', assignee: 'Cô Nguyễn Thu Hà', completed: false },
-      { id: 't33', name: 'Thuê bàn ghế, dù bạt che nắng', assignee: 'Lê Quang Hải', completed: false },
-      { id: 't34', name: 'Liên hệ đại biểu sở và quận tham dự', assignee: 'Trần Văn Đức', completed: false },
+      { id: 't31', name: 'Thông qua kế hoạch kịch bản tổng thể', assignee: 'Thầy Nguyễn Minh Triết', completed: true },
+      { id: 't32', name: 'Duyệt chương trình văn nghệ chào mừng', assignee: 'Cô Vũ Khánh Chi', completed: false },
+      { id: 't33', name: 'Thuê bàn ghế, dù bạt che nắng', assignee: 'Thầy Ngô Anh Tuấn', completed: false },
+      { id: 't34', name: 'Liên hệ đại biểu sở và quận tham dự', assignee: 'Thầy Nguyễn Tiến Đạt', completed: false },
     ],
   },
   {
@@ -149,11 +149,11 @@ const initialEvents: EventItem[] = [
     status: 'Đã hoàn thành',
     progress: 100,
     checklist: [
-      { id: 't41', name: 'Đặt địa điểm hội trường và duyệt menu', assignee: 'Trần Văn Đức', completed: true },
-      { id: 't42', name: 'Gửi thiệp mời giấy tới phụ huynh khối 12', assignee: 'Nguyễn Thị Mai', completed: true },
-      { id: 't43', name: 'Chuẩn bị lễ phục tốt nghiệp cho học sinh', assignee: 'Lê Quang Hải', completed: true },
+      { id: 't41', name: 'Đặt địa điểm hội trường và duyệt menu', assignee: 'Thầy Nguyễn Tiến Đạt', completed: true },
+      { id: 't42', name: 'Gửi thiệp mời giấy tới phụ huynh khối 12', assignee: 'Cô Lương Mỹ Hạnh', completed: true },
+      { id: 't43', name: 'Chuẩn bị lễ phục tốt nghiệp cho học sinh', assignee: 'Thầy Ngô Anh Tuấn', completed: true },
       { id: 't44', name: 'Thiết kế kỷ yếu và clip phóng sự 3 năm học', assignee: 'Phòng CNTT', completed: true },
-      { id: 't45', name: 'Tổ chức duyệt tổng thể chương trình', assignee: 'Cô Trần Thị Bình', completed: true },
+      { id: 't45', name: 'Tổ chức duyệt tổng thể chương trình', assignee: 'Thầy Dương Nam Anh', completed: true },
     ],
   },
   {
@@ -169,9 +169,9 @@ const initialEvents: EventItem[] = [
     status: 'Đã hoàn thành',
     progress: 100,
     checklist: [
-      { id: 't51', name: 'Ban hành điều lệ giải đấu và nhận đăng ký', assignee: 'Thầy Phạm Minh Tuấn', completed: true },
-      { id: 't52', name: 'Mua sắm huy chương, cờ lưu niệm và giải thưởng', assignee: 'Nguyễn Thị Mai', completed: true },
-      { id: 't53', name: 'Chuẩn bị sân bãi, lưới, bóng thi đấu', assignee: 'Lê Quang Hải', completed: true },
+      { id: 't51', name: 'Ban hành điều lệ giải đấu và nhận đăng ký', assignee: 'Thầy Vũ Tiến Đạt', completed: true },
+      { id: 't52', name: 'Mua sắm huy chương, cờ lưu niệm và giải thưởng', assignee: 'Cô Lương Mỹ Hạnh', completed: true },
+      { id: 't53', name: 'Chuẩn bị sân bãi, lưới, bóng thi đấu', assignee: 'Thầy Ngô Anh Tuấn', completed: true },
       { id: 't54', name: 'Bố trí tổ y tế trực sơ cứu chấn thương', assignee: 'Y tế học đường', completed: true },
     ],
   },
@@ -188,8 +188,8 @@ const initialEvents: EventItem[] = [
     status: 'Đã hoàn thành',
     progress: 100,
     checklist: [
-      { id: 't61', name: 'Liên hệ xin cấp phép biểu diễn nghệ thuật', assignee: 'Thầy Nguyễn Văn An', completed: true },
-      { id: 't62', name: 'Mời các ca sĩ, nghệ sĩ khách mời tham gia', assignee: 'Cô Nguyễn Thu Hà', completed: true },
+      { id: 't61', name: 'Liên hệ xin cấp phép biểu diễn nghệ thuật', assignee: 'Thầy Nguyễn Minh Triết', completed: true },
+      { id: 't62', name: 'Mời các ca sĩ, nghệ sĩ khách mời tham gia', assignee: 'Cô Vũ Khánh Chi', completed: true },
       { id: 't63', name: 'Phát hành vé quyên góp ủng hộ', assignee: 'Ban Đại diện Cha mẹ HS', completed: true },
       { id: 't64', name: 'Tổng hợp quỹ nhận đóng góp và công khai tài chính', assignee: 'Phòng Kế toán', completed: true },
     ],
@@ -207,9 +207,9 @@ const initialEvents: EventItem[] = [
     status: 'Đang chuẩn bị',
     progress: 45,
     checklist: [
-      { id: 't71', name: 'Liên hệ 5 diễn giả khách mời', assignee: 'Cô Nguyễn Thu Hà', completed: true },
-      { id: 't72', name: 'Tổng hợp các câu hỏi khảo sát từ học sinh', assignee: 'Cô Lê Thị Hương', completed: true },
-      { id: 't73', name: 'Chuẩn bị phông nền chụp hình và quà tặng lưu niệm', assignee: 'Nguyễn Thị Mai', completed: false },
+      { id: 't71', name: 'Liên hệ 5 diễn giả khách mời', assignee: 'Cô Vũ Khánh Chi', completed: true },
+      { id: 't72', name: 'Tổng hợp các câu hỏi khảo sát từ học sinh', assignee: 'Cô Lê Thị Thanh Nhàn', completed: true },
+      { id: 't73', name: 'Chuẩn bị phông nền chụp hình và quà tặng lưu niệm', assignee: 'Cô Lương Mỹ Hạnh', completed: false },
       { id: 't74', name: 'Truyền thông sự kiện qua bảng tin khối 12', assignee: 'Phòng Công nghệ', completed: false },
     ],
   },
@@ -848,11 +848,11 @@ export default function EventManagement() {
                             className="bg-transparent text-[10px] text-indigo-600 dark:text-indigo-400 font-semibold focus:outline-none border-0"
                           >
                             <option value="Chưa phân công">Chưa phân công</option>
-                            <option value="Nguyễn Thị Mai">Nguyễn Thị Mai</option>
-                            <option value="Trần Văn Đức">Trần Văn Đức</option>
-                            <option value="Lê Quang Hải">Lê Quang Hải</option>
+                            <option value="Cô Lương Mỹ Hạnh">Cô Lương Mỹ Hạnh</option>
+                            <option value="Thầy Nguyễn Tiến Đạt">Thầy Nguyễn Tiến Đạt</option>
+                            <option value="Thầy Ngô Anh Tuấn">Thầy Ngô Anh Tuấn</option>
                             <option value="Phòng CNTT">Phòng CNTT</option>
-                            <option value="Thầy Nguyễn Văn An">Thầy Nguyễn Văn An</option>
+                            <option value="Thầy Nguyễn Minh Triết">Thầy Nguyễn Minh Triết</option>
                           </select>
                           <button
                             type="button"

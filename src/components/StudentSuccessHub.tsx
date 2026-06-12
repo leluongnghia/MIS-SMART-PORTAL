@@ -322,6 +322,17 @@ export default function StudentSuccessHub({ currentUser }: { currentUser: UserPr
   const [conditionsVal, setConditionsVal] = useState('');
   const [healthNoteVal, setHealthNoteVal] = useState('');
 
+  // Profile editing states
+  const [editingProfile, setEditingProfile] = useState(false);
+  const [profileNameVal, setProfileNameVal] = useState('');
+  const [profileGenderVal, setProfileGenderVal] = useState('');
+  const [profileBirthDateVal, setProfileBirthDateVal] = useState('');
+  const [profileAddressVal, setProfileAddressVal] = useState('');
+  const [profileParentNameVal, setProfileParentNameVal] = useState('');
+  const [profileParentPhoneVal, setProfileParentPhoneVal] = useState('');
+  const [profileParentEmailVal, setProfileParentEmailVal] = useState('');
+  const [profileEmergencyContactVal, setProfileEmergencyContactVal] = useState('');
+
   // Health Incident form states
   const [newIncDate, setNewIncDate] = useState(() => new Date().toISOString().substring(0, 10));
   const [newIncSymptoms, setNewIncSymptoms] = useState('');
@@ -691,6 +702,32 @@ export default function StudentSuccessHub({ currentUser }: { currentUser: UserPr
     )));
     logSisAction('Cập nhật y tế', selectedStudent.name, `Cập nhật BHYT: ${healthInsuranceVal}, Dị ứng: ${allergiesVal}, Bệnh nền: ${conditionsVal}`);
     setEditingHealth(false);
+  };
+
+  const handleSaveProfile = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedStudent) return;
+    if (currentUser.role !== 'ADMIN') {
+      alert('Bạn không có quyền chỉnh sửa hồ sơ học sinh.');
+      return;
+    }
+    setStudents(prev => prev.map(student => (
+      student.id === selectedStudent.id
+        ? {
+            ...student,
+            name: profileNameVal.trim(),
+            gender: profileGenderVal,
+            birthDate: profileBirthDateVal,
+            address: profileAddressVal.trim(),
+            parentName: profileParentNameVal.trim(),
+            parentPhone: profileParentPhoneVal.trim(),
+            parentEmail: profileParentEmailVal.trim(),
+            emergencyContact: profileEmergencyContactVal.trim(),
+          }
+        : student
+    )));
+    logSisAction('Sửa hồ sơ', selectedStudent.name, `Cập nhật thông tin cơ bản: ${profileNameVal}, Giới tính: ${profileGenderVal}, SĐT phụ huynh: ${profileParentPhoneVal}`);
+    setEditingProfile(false);
   };
 
   const handleAddHealthIncident = (e: React.FormEvent) => {
@@ -1108,6 +1145,98 @@ export default function StudentSuccessHub({ currentUser }: { currentUser: UserPr
 
                 {profileTab === 'PROFILE' && (
                   <div className="space-y-6 text-xs animate-fade-in">
+                    {editingProfile && (
+                      <form onSubmit={handleSaveProfile} className="bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-3">
+                        <h4 className="font-bold text-slate-800">Chỉnh sửa thông tin cơ bản học sinh</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                          <div>
+                            <label className="text-[10px] font-bold uppercase text-slate-500 block mb-1">Họ và tên</label>
+                            <input 
+                              value={profileNameVal} 
+                              onChange={(e) => setProfileNameVal(e.target.value)}
+                              className="w-full text-xs p-2 border border-slate-200 rounded-lg bg-white" 
+                              required
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-bold uppercase text-slate-500 block mb-1">Giới tính</label>
+                            <select 
+                              value={profileGenderVal} 
+                              onChange={(e) => setProfileGenderVal(e.target.value)}
+                              className="w-full text-xs p-2 border border-slate-200 rounded-lg bg-white"
+                            >
+                              <option value="Nam">Nam</option>
+                              <option value="Nữ">Nữ</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-bold uppercase text-slate-500 block mb-1">Ngày sinh</label>
+                            <input 
+                              type="date"
+                              value={profileBirthDateVal} 
+                              onChange={(e) => setProfileBirthDateVal(e.target.value)}
+                              className="w-full text-xs p-2 border border-slate-200 rounded-lg bg-white" 
+                              required
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-bold uppercase text-slate-500 block mb-1">Địa chỉ</label>
+                            <input 
+                              value={profileAddressVal} 
+                              onChange={(e) => setProfileAddressVal(e.target.value)}
+                              className="w-full text-xs p-2 border border-slate-200 rounded-lg bg-white" 
+                              required
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-bold uppercase text-slate-500 block mb-1">Họ tên phụ huynh</label>
+                            <input 
+                              value={profileParentNameVal} 
+                              onChange={(e) => setProfileParentNameVal(e.target.value)}
+                              className="w-full text-xs p-2 border border-slate-200 rounded-lg bg-white" 
+                              required
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-bold uppercase text-slate-500 block mb-1">SĐT phụ huynh</label>
+                            <input 
+                              value={profileParentPhoneVal} 
+                              onChange={(e) => setProfileParentPhoneVal(e.target.value)}
+                              className="w-full text-xs p-2 border border-slate-200 rounded-lg bg-white" 
+                              required
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-bold uppercase text-slate-500 block mb-1">Email phụ huynh</label>
+                            <input 
+                              type="email"
+                              value={profileParentEmailVal} 
+                              onChange={(e) => setProfileParentEmailVal(e.target.value)}
+                              className="w-full text-xs p-2 border border-slate-200 rounded-lg bg-white" 
+                              required
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-bold uppercase text-slate-500 block mb-1">Liên hệ khẩn cấp</label>
+                            <input 
+                              value={profileEmergencyContactVal} 
+                              onChange={(e) => setProfileEmergencyContactVal(e.target.value)}
+                              className="w-full text-xs p-2 border border-slate-200 rounded-lg bg-white" 
+                              required
+                            />
+                          </div>
+                        </div>
+                        <div className="flex justify-end gap-2">
+                          <button type="button" onClick={() => setEditingProfile(false)} className="px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-semibold text-slate-500 hover:bg-slate-100">
+                            Hủy
+                          </button>
+                          <button type="submit" className="px-3.5 py-1.5 bg-indigo-650 text-white font-bold text-xs rounded-lg">
+                            Cập nhật hồ sơ
+                          </button>
+                        </div>
+                      </form>
+                    )}
+
                     {editingHealth && (
                       <form onSubmit={handleSaveHealth} className="bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-3">
                         <h4 className="font-bold text-slate-800">Chỉnh sửa hồ sơ y tế học sinh</h4>
@@ -1162,11 +1291,35 @@ export default function StudentSuccessHub({ currentUser }: { currentUser: UserPr
                     )}
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <InfoCard icon={User} label="Thông tin cá nhân" lines={[
-                        `Giới tính: ${selectedStudent.gender}`,
-                        `Ngày sinh: ${selectedStudent.birthDate}`,
-                        `Địa chỉ: ${selectedStudent.address}`,
-                      ]} />
+                      <InfoCard 
+                        icon={User} 
+                        label="Thông tin cá nhân" 
+                        action={currentUser.role === 'ADMIN' && !editingProfile && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setProfileNameVal(selectedStudent.name);
+                              setProfileGenderVal(selectedStudent.gender || 'Nam');
+                              setProfileBirthDateVal(selectedStudent.birthDate || '');
+                              setProfileAddressVal(selectedStudent.address || '');
+                              setProfileParentNameVal(selectedStudent.parentName || '');
+                              setProfileParentPhoneVal(selectedStudent.parentPhone || '');
+                              setProfileParentEmailVal(selectedStudent.parentEmail || '');
+                              setProfileEmergencyContactVal(selectedStudent.emergencyContact || '');
+                              setEditingProfile(true);
+                            }}
+                            className="px-2 py-0.5 border border-indigo-200 hover:bg-indigo-100 rounded text-[10px] text-indigo-700 font-bold transition-all"
+                          >
+                            Sửa hồ sơ
+                          </button>
+                        )}
+                        lines={[
+                          <p><strong>Họ và tên:</strong> {selectedStudent.name}</p>,
+                          <p><strong>Giới tính:</strong> {selectedStudent.gender}</p>,
+                          <p><strong>Ngày sinh:</strong> {selectedStudent.birthDate}</p>,
+                          <p><strong>Địa chỉ:</strong> {selectedStudent.address}</p>,
+                        ]} 
+                      />
                       
                       <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-2 relative">
                         <div className="flex items-center justify-between gap-2">
@@ -1800,20 +1953,24 @@ function MetricCard({ label, value, note, icon: Icon, color }: {
   );
 }
 
-function InfoCard({ icon: Icon, label, lines }: {
+function InfoCard({ icon: Icon, label, lines, action }: {
   icon: React.ComponentType<{ className?: string }>;
   label: string;
-  lines: string[];
+  lines: (string | React.ReactNode)[];
+  action?: React.ReactNode;
 }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-      <div className="flex items-center gap-2 mb-2">
-        <Icon className="w-4 h-4 text-indigo-600" />
-        <span className="text-[10px] uppercase font-black text-slate-500 tracking-wide">{label}</span>
+    <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 relative">
+      <div className="flex items-center justify-between gap-2 mb-2">
+        <div className="flex items-center gap-2">
+          <Icon className="w-4 h-4 text-indigo-600" />
+          <span className="text-[10px] uppercase font-black text-slate-500 tracking-wide">{label}</span>
+        </div>
+        {action}
       </div>
-      <div className="space-y-1">
+      <div className="space-y-1 text-xs text-slate-650 leading-relaxed">
         {lines.map((line, index) => (
-          <p key={`${label}-${index}`} className="text-xs text-slate-650 leading-relaxed">{line}</p>
+          <div key={`${label}-${index}`}>{line}</div>
         ))}
       </div>
     </div>
