@@ -132,6 +132,20 @@ const getPriorityClass = (priority: LeadPriority) => {
   return 'bg-slate-50 text-slate-600 border-slate-150';
 };
 
+const getMissingDocumentLabels = (lead: Lead) => {
+  const checklist = lead.docChecklist || { hocBa: false, khaiSinh: false, anh3x4: false };
+  const labels: Array<[keyof NonNullable<Lead['docChecklist']>, string]> = [
+    ['hocBa', 'Học bạ gốc'],
+    ['khaiSinh', 'Bản sao khai sinh'],
+    ['anh3x4', 'Ảnh 3x4'],
+    ['cccdParent', 'CCCD phụ huynh'],
+    ['healthRecord', 'Hồ sơ y tế'],
+    ['paymentProof', 'Xác nhận đóng phí'],
+    ['admissionForm', 'Đơn nhập học'],
+  ];
+  return labels.filter(([key]) => !checklist[key]).map(([, label]) => label);
+};
+
 const normalizeLead = (raw: Partial<Lead>): Lead => {
   const stage = normalizeLeadStage(raw.stage);
   const source = normalizeLeadSource(raw.source);
@@ -414,6 +428,7 @@ export default function SchoolCrmHub() {
   // Email Notification State
   const [sendingEmail, setSendingEmail] = useState(false);
   const [emailAlert, setEmailAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [intakeQueueStatus, setIntakeQueueStatus] = useState('');
 
   const [interactionType, setInteractionType] = useState('Gọi điện');
   const [interactionContent, setInteractionContent] = useState('');
@@ -558,6 +573,27 @@ export default function SchoolCrmHub() {
 
   const overdueSlaCount = useMemo(() => slaTasks.filter(task => task.status === 'OVERDUE').length, [slaTasks]);
   const dueTodaySlaCount = useMemo(() => slaTasks.filter(task => task.status === 'DUE_TODAY').length, [slaTasks]);
+
+  const testReadyForOfferLeads = useMemo(() => {
+    return leads.filter(lead => lead.stage === 'TESTING' && Boolean(lead.testScore));
+  }, [leads]);
+
+  const reservedMissingDocumentLeads = useMemo(() => {
+    return leads.filter(lead => financialStages.includes(lead.stage) && getMissingDocumentLabels(lead).length > 0);
+  }, [leads]);
+
+  const enrolledReadyToSyncLeads = useMemo(() => {
+    return leads.filter(lead => lead.stage === 'ENROLLED');
+  }, [leads]);
+
+  const webFormIntakeReadiness = useMemo(() => {
+    return [
+      { label: 'Trường bắt buộc', value: 'studentName, parentName, phone' },
+      { label: 'Mapping nguồn', value: 'Google, Facebook, TikTok, Website, Event' },
+      { label: 'Trạng thái mặc định', value: 'Lead quảng cáo mới' },
+      { label: 'Chống trùng', value: 'SĐT + Email phụ huynh' },
+    ];
+  }, []);
 
   // Export CSV function
   const handleExportCsv = () => {
@@ -1115,6 +1151,112 @@ export default function SchoolCrmHub() {
     }));
   };
 
+  const handlePromoteTestedToOffer = () => {
+    if (testReadyForOfferLeads.length === 0) return;
+    const leadIds = new Set(testReadyForOfferLeads.map(lead => lead.id));
+    setLeads(prev => prev.map(lead => {
+      if (!leadIds.has(lead.id)) return lead;
+      return {
+        ...lead,
+        stage: 'OFFER',
+        interestLevel: 'HOT',
+        nextFollowUpDate: addDays(1),
+        scholarshipInfo: lead.scholarshipInfo || 'Chờ hội đồng xét học bổng',
+        interactions: [
+          ...lead.interactions,
+          {
+            date: new Date().toISOString().split('T')[0],
+            type: 'Automation: chuyển Offer',
+            content: 'Lead đã có điểm kiểm tra, hệ thống chuyển sang bước Xét học bổng / Offer và tạo lịch follow-up.',
+          },
+        ],
+      };
+    }));
+  };
+
+  const handleCreateDocumentReminders = () => {
+    if (reservedMissingDocumentLeads.length === 0) return;
+    const leadIds = new Set(reservedMissingDocumentLeads.map(lead => lead.id));
+    setLeads(prev => prev.map(lead => {
+      if (!leadIds.has(lead.id)) return lead;
+      const missingDocs = getMissingDocumentLabels(lead);
+      return {
+        ...lead,
+        nextFollowUpDate: addDays(1),
+        interactions: [
+          ...lead.interactions,
+          {
+            date: new Date().toISOString().split('T')[0],
+            type: 'Automation: nhắc hồ sơ',
+            content: `Tự tạo nhắc bổ sung hồ sơ còn thiếu: ${missingDocs.join(', ')}`,
+          },
+        ],
+      };
+    }));
+  };
+
+  const handleSyncEnrolledStudents = () => {
+    if (enrolledReadyToSyncLeads.length === 0) return;
+    const savedStudents = (() => {
+      try {
+        return JSON.parse(localStorage.getItem('mis_lms_students') || '[]');
+      } catch {
+        return [];
+      }
+    })();
+    const existingKeys = new Set(savedStudents.map((student: any) => student.crmLeadId || `${student.name}-${student.parentEmail}`));
+    const studentsToAdd = enrolledReadyToSyncLeads
+      .filter(lead => !existingKeys.has(lead.id) && !existingKeys.has(`${lead.studentName}-${lead.email}`))
+      .map(lead => ({
+        id: `std_crm_${lead.id}`,
+        crmLeadId: lead.id,
+        name: lead.studentName,
+        className: lead.grade || 'Lớp 10',
+        parentName: lead.parentName,
+        parentPhone: lead.phone,
+        parentEmail: lead.email || `parent_${lead.phone}@parent.mis.edu.vn`,
+        address: 'Chuyển từ CRM tuyển sinh',
+        emergencyContact: lead.phone,
+      }));
+
+    if (studentsToAdd.length === 0) {
+      window.alert('Các lead nhập học hiện tại đã được đồng bộ sang hồ sơ học sinh trước đó.');
+      return;
+    }
+
+    localStorage.setItem('mis_lms_students', JSON.stringify([...savedStudents, ...studentsToAdd]));
+    const syncedLeadIds = new Set(studentsToAdd.map((student: any) => student.crmLeadId));
+    setLeads(prev => prev.map(lead => {
+      if (!syncedLeadIds.has(lead.id)) return lead;
+      return {
+        ...lead,
+        interactions: [
+          ...lead.interactions,
+          {
+            date: new Date().toISOString().split('T')[0],
+            type: 'Automation: đồng bộ SIS',
+            content: 'Đã chuyển lead nhập học sang danh sách hồ sơ học sinh/LMS.',
+          },
+        ],
+      };
+    }));
+    window.alert(`Đã đồng bộ ${studentsToAdd.length} học sinh sang hồ sơ học sinh/LMS.`);
+  };
+
+  const handleCheckIntakeQueue = async () => {
+    setIntakeQueueStatus('Đang kiểm tra hàng chờ intake...');
+    try {
+      const response = await fetch('/api/crm/leads/intake-queue');
+      const data = await response.json();
+      if (!response.ok || data.status !== 'success') {
+        throw new Error(data.error || 'Không thể kiểm tra intake queue.');
+      }
+      setIntakeQueueStatus(`API intake đang hoạt động. Hàng chờ hiện có ${data.count || 0} lead.`);
+    } catch (error: any) {
+      setIntakeQueueStatus(`Không kiểm tra được intake queue: ${error.message || 'Lỗi kết nối API'}`);
+    }
+  };
+
   // Trigger SMTP/Ethereal admissions result email
   const handleSendAdmissionsEmail = async (lead: Lead) => {
     if (!lead.email) {
@@ -1658,6 +1800,106 @@ export default function SchoolCrmHub() {
               </div>
             ))}
           </div>
+        </div>
+      </div>
+
+      <div className="bg-white border border-slate-200 dark:border-slate-800/80 p-5 rounded-2xl shadow-xs space-y-4">
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div>
+            <h3 className="font-display font-extrabold text-slate-900 dark:text-white text-sm">Automation Workflow Center</h3>
+            <p className="text-[11px] text-slate-500 mt-1">Chạy các workflow SaaS CRM theo dữ liệu thật đang có trong pipeline.</p>
+          </div>
+          <span className="rounded-full border border-indigo-100 bg-indigo-50 px-3 py-1 text-[10px] font-black text-indigo-700">
+            Rules engine v1
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="rounded-2xl border border-orange-100 bg-orange-50/50 p-4 space-y-3">
+            <div>
+              <h4 className="text-xs font-black text-orange-800">Tự chuyển sang Offer</h4>
+              <p className="text-[11px] text-orange-700/80 mt-1">Lead đã có điểm kiểm tra sẽ được chuyển sang bước xét học bổng/offer.</p>
+            </div>
+            <div className="flex items-end justify-between gap-2">
+              <strong className="text-2xl font-black text-orange-900">{testReadyForOfferLeads.length}</strong>
+              <button
+                type="button"
+                disabled={testReadyForOfferLeads.length === 0}
+                onClick={handlePromoteTestedToOffer}
+                className="px-3 py-1.5 rounded-xl bg-orange-600 text-white text-xs font-bold disabled:opacity-50 hover:bg-orange-700"
+              >
+                Chạy rule
+              </button>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-cyan-100 bg-cyan-50/50 p-4 space-y-3">
+            <div>
+              <h4 className="text-xs font-black text-cyan-800">Nhắc bổ sung hồ sơ</h4>
+              <p className="text-[11px] text-cyan-700/80 mt-1">Tự tạo log và lịch chăm sóc cho hồ sơ giữ chỗ còn thiếu giấy tờ.</p>
+            </div>
+            <div className="flex items-end justify-between gap-2">
+              <strong className="text-2xl font-black text-cyan-900">{reservedMissingDocumentLeads.length}</strong>
+              <button
+                type="button"
+                disabled={reservedMissingDocumentLeads.length === 0}
+                onClick={handleCreateDocumentReminders}
+                className="px-3 py-1.5 rounded-xl bg-cyan-600 text-white text-xs font-bold disabled:opacity-50 hover:bg-cyan-700"
+              >
+                Tạo nhắc việc
+              </button>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-4 space-y-3">
+            <div>
+              <h4 className="text-xs font-black text-emerald-800">Đồng bộ học sinh</h4>
+              <p className="text-[11px] text-emerald-700/80 mt-1">Chuyển lead đã nhập học sang danh sách hồ sơ học sinh/LMS.</p>
+            </div>
+            <div className="flex items-end justify-between gap-2">
+              <strong className="text-2xl font-black text-emerald-900">{enrolledReadyToSyncLeads.length}</strong>
+              <button
+                type="button"
+                disabled={enrolledReadyToSyncLeads.length === 0}
+                onClick={handleSyncEnrolledStudents}
+                className="px-3 py-1.5 rounded-xl bg-emerald-600 text-white text-xs font-bold disabled:opacity-50 hover:bg-emerald-700"
+              >
+                Đồng bộ
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-slate-150 bg-slate-50/70 p-4">
+          <div className="flex items-start justify-between gap-3 flex-wrap">
+            <div>
+              <h4 className="text-xs font-black text-slate-900">Chuẩn bị API/Web form intake</h4>
+              <p className="text-[11px] text-slate-500 mt-1">Định nghĩa mapping để sau này nhận lead trực tiếp từ website, form sự kiện hoặc quảng cáo.</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <code className="rounded-lg bg-slate-900 px-2 py-1 text-[10px] font-bold text-slate-100">POST /api/crm/leads/intake</code>
+              <button
+                type="button"
+                onClick={handleCheckIntakeQueue}
+                className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-[10px] font-black text-slate-700 hover:bg-slate-50"
+              >
+                Kiểm tra queue
+              </button>
+            </div>
+          </div>
+          <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+            {webFormIntakeReadiness.map(item => (
+              <div key={item.label} className="rounded-xl bg-white border border-slate-150 p-3">
+                <span className="block text-[9.5px] font-black uppercase text-slate-400">{item.label}</span>
+                <strong className="mt-1 block text-[11px] text-slate-800">{item.value}</strong>
+              </div>
+            ))}
+          </div>
+          {intakeQueueStatus && (
+            <div className="mt-3 rounded-xl border border-indigo-100 bg-indigo-50 px-3 py-2 text-[11px] font-bold text-indigo-800">
+              {intakeQueueStatus}
+            </div>
+          )}
         </div>
       </div>
 

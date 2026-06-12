@@ -269,6 +269,8 @@ const smtpConfig = {
   socketTimeout: 15000,
 };
 
+const crmLeadIntakeQueue: any[] = [];
+
 function hasSmtpConfig() {
   return Boolean(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS);
 }
@@ -491,6 +493,52 @@ app.post('/api/zalo/broadcast/prepare', async (req, res) => {
       'Vào Broadcast của Zalo OA, chọn nhóm người quan tâm/nhãn phù hợp và đặt lịch gửi.',
       'Cập nhật lại log gửi trong MIS sau khi OA xác nhận.',
     ],
+  });
+});
+
+app.post('/api/crm/leads/intake', (req, res) => {
+  const payload = req.body || {};
+  const studentName = String(payload.studentName || payload.student_name || payload.name || '').trim();
+  const parentName = String(payload.parentName || payload.parent_name || payload.contactName || '').trim();
+  const phone = String(payload.phone || payload.mobile || payload.parentPhone || '').trim();
+
+  if (!studentName || !parentName || !phone) {
+    return res.status(400).json({
+      status: 'error',
+      error: 'studentName, parentName and phone are required.',
+    });
+  }
+
+  const intakeLead = {
+    id: `intake_${Date.now()}`,
+    studentName,
+    parentName,
+    phone,
+    email: String(payload.email || payload.parentEmail || '').trim(),
+    grade: String(payload.grade || payload.className || 'Lớp 10').trim(),
+    source: String(payload.source || payload.utm_source || 'Website').trim(),
+    campaignName: String(payload.campaignName || payload.utm_campaign || 'Website tuyển sinh').trim(),
+    notes: String(payload.notes || payload.message || 'Lead nhận từ web form/API tuyển sinh').trim(),
+    rawPayload: payload,
+    receivedAt: new Date().toISOString(),
+    status: 'QUEUED',
+  };
+
+  crmLeadIntakeQueue.unshift(intakeLead);
+  if (crmLeadIntakeQueue.length > 200) crmLeadIntakeQueue.pop();
+
+  res.status(201).json({
+    status: 'success',
+    lead: intakeLead,
+    queueSize: crmLeadIntakeQueue.length,
+  });
+});
+
+app.get('/api/crm/leads/intake-queue', (req, res) => {
+  res.json({
+    status: 'success',
+    leads: crmLeadIntakeQueue,
+    count: crmLeadIntakeQueue.length,
   });
 });
 
