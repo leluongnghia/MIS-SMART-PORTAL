@@ -1,8 +1,69 @@
 import React, { useState, useMemo } from 'react';
 import { Target, Search, Plus, PhoneCall, Mail, Calendar, Sparkles, Megaphone, ArrowRight, Award, FileText, CheckCircle2, ClipboardList, Edit3, X, Download, Upload, Loader2, Clock, DollarSign } from 'lucide-react';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
+import { syncEnrolledCrmLeadsToLifecycle } from '../utils/crmStudentSync';
+import { initializeUnifiedDatabase, getUnifiedStudents, saveUnifiedStudents, UnifiedStudent } from '../utils/peopleDirectory';
 
 type LeadStage = 'NEW' | 'CONSULTING' | 'TOUR' | 'TESTING' | 'OFFER' | 'RESERVED' | 'ENROLLED';
+
+const mapStudentToLead = (student: UnifiedStudent): Lead => {
+  return {
+    id: student.id,
+    studentName: student.name,
+    parentName: student.parentName || '',
+    phone: student.parentPhone || '',
+    email: student.parentEmail || '',
+    stage: (student.enrollmentStatus === 'ENROLLED' ? 'ENROLLED' : student.enrollmentStatus) as LeadStage,
+    source: (student.source || 'Website') as LeadSource,
+    notes: student.notes || '',
+    interactions: (student as any).interactions || [],
+    testScore: student.testScore ? String(student.testScore) : undefined,
+    scholarshipInfo: student.scholarshipInfo || student.scholarship,
+    grade: student.className ? `Lớp ${student.className.replace(/\D/g, '')}` : 'Lớp 10',
+    docChecklist: student.docChecklist || { hocBa: false, khaiSinh: false, anh3x4: false },
+    baseTuitionFee: student.baseTuitionFee,
+    tuitionDiscount: student.tuitionDiscount,
+    scholarshipDiscount: student.scholarshipDiscount,
+    phaseEnrollmentDiscount: student.phaseEnrollmentDiscount,
+    advancedFee: student.advancedFee,
+    otherDiscount: student.otherDiscount,
+    testDate: student.testDate,
+    testTime: student.testTime,
+    interestLevel: (student as any).interestLevel || 'WARM',
+    leadOwner: (student as any).leadOwner || 'Thầy Nguyễn Minh Triết',
+  };
+};
+
+const mapLeadToStudent = (lead: Lead, existingStudent?: UnifiedStudent): UnifiedStudent => {
+  return {
+    ...existingStudent,
+    id: lead.id,
+    name: lead.studentName,
+    parentName: lead.parentName,
+    parentPhone: lead.phone,
+    parentEmail: lead.email,
+    enrollmentStatus: lead.stage as UnifiedStudent['enrollmentStatus'],
+    source: lead.source,
+    notes: lead.notes,
+    testDate: lead.testDate,
+    testTime: lead.testTime,
+    testScore: lead.testScore,
+    scholarshipInfo: lead.scholarshipInfo,
+    docChecklist: lead.docChecklist || { hocBa: false, khaiSinh: false, anh3x4: false },
+    baseTuitionFee: lead.baseTuitionFee,
+    tuitionDiscount: lead.tuitionDiscount,
+    scholarshipDiscount: lead.scholarshipDiscount,
+    phaseEnrollmentDiscount: lead.phaseEnrollmentDiscount,
+    advancedFee: lead.advancedFee,
+    otherDiscount: lead.otherDiscount,
+    interactions: lead.interactions as any,
+    interestLevel: lead.interestLevel,
+    leadOwner: lead.leadOwner,
+    className: existingStudent?.className || (lead.stage === 'ENROLLED' ? `10A1` : ''),
+    gender: existingStudent?.gender || 'Nam',
+    birthDate: existingStudent?.birthDate || '2010-09-05',
+  };
+};
 type LeadSource = 'Social' | 'Website' | 'Referral' | 'Event' | 'Google' | 'Facebook' | 'TikTok';
 type InterestLevel = 'HOT' | 'WARM' | 'COLD';
 type LeadPriority = 'A' | 'B' | 'C';
@@ -346,21 +407,28 @@ export default function SchoolCrmHub() {
   ];
 
   const [leads, setLeads] = useState<Lead[]>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('school_crm_leads');
-      if (saved) {
-        try {
-          return JSON.parse(saved).map(normalizeLead);
-        } catch (e) {
-          console.error(e);
-        }
-      }
-    }
-    return defaultLeads.map(normalizeLead);
+    const unified = initializeUnifiedDatabase([], defaultLeads.map(normalizeLead));
+    return unified.map(mapStudentToLead);
   });
 
   React.useEffect(() => {
-    localStorage.setItem('school_crm_leads', JSON.stringify(leads));
+    const currentUnified = getUnifiedStudents();
+    const nextUnified = currentUnified.map(student => {
+      const match = leads.find(l => l.id === student.id);
+      if (match) {
+        return mapLeadToStudent(match, student);
+      }
+      return student;
+    });
+
+    leads.forEach(lead => {
+      const exists = nextUnified.some(s => s.id === lead.id);
+      if (!exists) {
+        nextUnified.push(mapLeadToStudent(lead));
+      }
+    });
+
+    saveUnifiedStudents(nextUnified);
   }, [leads]);
 
   // Selected Lead Details Modal
@@ -1197,35 +1265,14 @@ export default function SchoolCrmHub() {
 
   const handleSyncEnrolledStudents = () => {
     if (enrolledReadyToSyncLeads.length === 0) return;
-    const savedStudents = (() => {
-      try {
-        return JSON.parse(localStorage.getItem('mis_lms_students') || '[]');
-      } catch {
-        return [];
-      }
-    })();
-    const existingKeys = new Set(savedStudents.map((student: any) => student.crmLeadId || `${student.name}-${student.parentEmail}`));
-    const studentsToAdd = enrolledReadyToSyncLeads
-      .filter(lead => !existingKeys.has(lead.id) && !existingKeys.has(`${lead.studentName}-${lead.email}`))
-      .map(lead => ({
-        id: `std_crm_${lead.id}`,
-        crmLeadId: lead.id,
-        name: lead.studentName,
-        className: lead.grade || 'Lớp 10',
-        parentName: lead.parentName,
-        parentPhone: lead.phone,
-        parentEmail: lead.email || `parent_${lead.phone}@parent.mis.edu.vn`,
-        address: 'Chuyển từ CRM tuyển sinh',
-        emergencyContact: lead.phone,
-      }));
-
-    if (studentsToAdd.length === 0) {
-      window.alert('Các lead nhập học hiện tại đã được đồng bộ sang hồ sơ học sinh trước đó.');
+    const syncResult = syncEnrolledCrmLeadsToLifecycle(enrolledReadyToSyncLeads);
+    const newStudentCount = Math.max(syncResult.addedLmsStudentIds.length, syncResult.addedSisStudentIds.length);
+    if (newStudentCount === 0 && syncResult.addedInvoiceNos.length === 0) {
+      window.alert('Các lead nhập học hiện tại đã được đồng bộ sang LMS, Hồ sơ học sinh 360° và công nợ trước đó.');
       return;
     }
 
-    localStorage.setItem('mis_lms_students', JSON.stringify([...savedStudents, ...studentsToAdd]));
-    const syncedLeadIds = new Set(studentsToAdd.map((student: any) => student.crmLeadId));
+    const syncedLeadIds = new Set(syncResult.syncedLeadIds);
     setLeads(prev => prev.map(lead => {
       if (!syncedLeadIds.has(lead.id)) return lead;
       return {
@@ -1234,13 +1281,13 @@ export default function SchoolCrmHub() {
           ...lead.interactions,
           {
             date: new Date().toISOString().split('T')[0],
-            type: 'Automation: đồng bộ SIS',
-            content: 'Đã chuyển lead nhập học sang danh sách hồ sơ học sinh/LMS.',
+            type: 'Automation: đồng bộ vòng đời học sinh',
+            content: 'Đã chuyển lead nhập học sang LMS, Hồ sơ học sinh 360°, Cổng PHHS và công nợ học phí.',
           },
         ],
       };
     }));
-    window.alert(`Đã đồng bộ ${studentsToAdd.length} học sinh sang hồ sơ học sinh/LMS.`);
+    window.alert(`Đã đồng bộ ${newStudentCount} học sinh sang LMS/Hồ sơ 360° và tạo ${syncResult.addedInvoiceNos.length} hóa đơn học phí.`);
   };
 
   const handleCheckIntakeQueue = async () => {

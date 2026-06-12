@@ -29,6 +29,7 @@ import {
 import { UserProfile, AcademicYearRecord, HealthIncident, VaccinationRecord, BorrowLog } from '../types';
 import { encryptData, decryptData } from '../utils/security';
 import { normalizeStudentProfile, normalizeStudentProfiles } from '../utils/peopleDirectory';
+import { readCrmLeadsFromStorage, syncEnrolledCrmLeadsToLifecycle } from '../utils/crmStudentSync';
 
 interface ParentStudentPortalProps {
   currentUser: UserProfile;
@@ -108,7 +109,9 @@ export default function ParentStudentPortal({ currentUser, onLogout }: ParentStu
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Read data synced with SIS
-  const students = useMemo(() => normalizeStudentProfiles(readStored<any[]>('mis_sis_students_v3', [])), []);
+  const students = useMemo(() => {
+    return normalizeStudentProfiles(readStored<any[]>('mis_student_directory', []));
+  }, []);
   const [grades, setGrades] = useState<any[]>(() => readStored<any[]>('mis_sis_grades_v3', []));
   const attendance = useMemo(() => readStored<any[]>('mis_sis_attendance_v3', []), []);
   const notices = useMemo(() => readStored<any[]>('mis_sis_parent_notices_v3', []), []);
@@ -336,7 +339,13 @@ export default function ParentStudentPortal({ currentUser, onLogout }: ParentStu
 
   const studentTuition = useMemo(() => {
     if (!student) return [];
-    return tuitionFees.filter(t => t.student.toLowerCase().includes(student.name.toLowerCase()) || student.name.toLowerCase().includes(t.student.toLowerCase()));
+    return tuitionFees.filter(t => {
+      if (t.studentId && t.studentId === student.id) return true;
+      if (t.studentCode && student.code && t.studentCode === student.code) return true;
+      const tName = String(t.student || '').toLowerCase();
+      const sName = String(student.name || '').toLowerCase();
+      return tName.includes(sName) || sName.includes(tName);
+    });
   }, [tuitionFees, student]);
 
   // Calculate GPA

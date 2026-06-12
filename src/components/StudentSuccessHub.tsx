@@ -24,7 +24,8 @@ import { exportToCsv } from '../utils/exportUtils';
 import { UserProfile, AcademicYearRecord, HealthIncident, VaccinationRecord, SisAuditLog } from '../types';
 import { getGradeLevelFromClassName, getSubjectsForClassName } from '../utils/vietnameseCurriculum';
 import { encryptData, decryptData, generateBackupSignature } from '../utils/security';
-import { normalizeStudentProfile, normalizeStudentProfiles } from '../utils/peopleDirectory';
+import { normalizeStudentProfile, normalizeStudentProfiles, initializeUnifiedDatabase, getUnifiedStudents, saveUnifiedStudents, UnifiedStudent } from '../utils/peopleDirectory';
+import { readCrmLeadsFromStorage, syncEnrolledCrmLeadsToLifecycle } from '../utils/crmStudentSync';
 
 type ConductLevel = 'Tốt' | 'Khá' | 'Trung bình';
 type AttendanceStatus = 'PRESENT' | 'LATE' | 'ABSENT' | 'EXCUSED';
@@ -295,7 +296,10 @@ function statusColor(status: AttendanceStatus) {
 }
 
 export default function StudentSuccessHub({ currentUser }: { currentUser: UserProfile }) {
-  const [students, setStudents] = useState<StudentRecord[]>(() => normalizeStudentProfiles(readStored(STUDENT_STORAGE_KEY, initialStudents)) as StudentRecord[]);
+  const [students, setStudents] = useState<StudentRecord[]>(() => {
+    const unified = initializeUnifiedDatabase(initialStudents, []);
+    return unified.filter(s => s.enrollmentStatus === 'ENROLLED') as StudentRecord[];
+  });
   const [grades, setGrades] = useState<GradeEntry[]>(() => readStored(GRADE_STORAGE_KEY, initialGrades));
   const [attendance, setAttendance] = useState<AttendanceEntry[]>(() => readStored(ATTENDANCE_STORAGE_KEY, initialAttendance));
   const [notices, setNotices] = useState<ParentNotice[]>(() => readStored(NOTICE_STORAGE_KEY, []));
@@ -390,11 +394,40 @@ export default function StudentSuccessHub({ currentUser }: { currentUser: UserPr
     reason: '',
   });
 
-  useEffect(() => writeStored(STUDENT_STORAGE_KEY, students), [students]);
+  useEffect(() => {
+    const currentUnified = getUnifiedStudents();
+    const nextUnified = currentUnified.map(student => {
+      const match = students.find(s => s.id === student.id);
+      if (match) {
+        return {
+          ...student,
+          ...match,
+        };
+      }
+      return student;
+    });
+
+    students.forEach(student => {
+      const exists = nextUnified.some(s => s.id === student.id);
+      if (!exists) {
+        nextUnified.push({
+          ...student,
+          enrollmentStatus: 'ENROLLED',
+        } as UnifiedStudent);
+      }
+    });
+
+    saveUnifiedStudents(nextUnified);
+  }, [students]);
   useEffect(() => writeStored(GRADE_STORAGE_KEY, grades), [grades]);
   useEffect(() => writeStored(ATTENDANCE_STORAGE_KEY, attendance), [attendance]);
   useEffect(() => writeStored(NOTICE_STORAGE_KEY, notices), [notices]);
   useEffect(() => writeStored('mis_sis_audit_logs_v3', auditLogs), [auditLogs]);
+
+  useEffect(() => {
+    const unified = getUnifiedStudents();
+    setStudents(unified.filter(s => s.enrollmentStatus === 'ENROLLED') as StudentRecord[]);
+  }, []);
 
   const lastLoggedStudentRef = useRef<string | null>(null);
   useEffect(() => {

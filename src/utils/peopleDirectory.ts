@@ -169,3 +169,199 @@ export function normalizeTaskAssigneeRoles(tasks: Task[], users: UserProfile[]):
     };
   });
 }
+
+export interface UnifiedStudent {
+  id: string;
+  code?: string;
+  name: string;
+  className?: string;
+  gender: 'Nam' | 'Nữ';
+  birthDate: string;
+  avatar?: string;
+  address?: string;
+  phone?: string;
+  parentName?: string;
+  parentPhone?: string;
+  parentEmail?: string;
+  parentGender?: 'Nam' | 'Nữ';
+  emergencyContact?: string;
+  enrollmentStatus: 'CONSULTING' | 'TESTING' | 'RESERVED' | 'ENROLLED';
+  source?: string;
+  consultant?: string;
+  notes?: string;
+  testDate?: string;
+  testTime?: string;
+  testScore?: string | number;
+  scholarshipInfo?: string;
+  docChecklist?: {
+    hocBa: boolean;
+    khaiSinh: boolean;
+    anh3x4: boolean;
+  };
+  baseTuitionFee?: number;
+  tuitionDiscount?: number;
+  scholarshipDiscount?: number;
+  phaseEnrollmentDiscount?: number;
+  advancedFee?: number;
+  otherDiscount?: number;
+  conduct?: string;
+  scholarship?: string;
+  extracurriculars?: string[];
+  awards?: string[];
+  disciplineLogs?: string[];
+  healthInsurance?: string;
+  allergies?: string[];
+  conditions?: string[];
+  healthNote?: string;
+  healthIncidents?: any[];
+  vaccinations?: any[];
+  academicHistory?: any[];
+  transferHistory?: any[];
+  interactions?: any[];
+  interestLevel?: string;
+  leadOwner?: string;
+}
+
+export function initializeUnifiedDatabase(
+  defaultSisStudents: any[] = [],
+  defaultCrmLeads: any[] = []
+): UnifiedStudent[] {
+  if (typeof window === 'undefined') return [];
+  const stored = localStorage.getItem('mis_student_directory');
+  if (stored) {
+    try {
+      return JSON.parse(stored);
+    } catch (e) {
+      console.error('Failed to parse mis_student_directory', e);
+    }
+  }
+
+  // Migrate or initialize
+  const sisSaved = localStorage.getItem('mis_sis_students_v3');
+  let sisStudents = defaultSisStudents;
+  if (sisSaved) {
+    try {
+      sisStudents = JSON.parse(sisSaved);
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  const crmSaved = localStorage.getItem('school_crm_leads');
+  let crmLeads = defaultCrmLeads;
+  if (crmSaved) {
+    try {
+      crmLeads = JSON.parse(crmSaved);
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  // Merge leads and students into a unified list
+  const unifiedMap = new Map<string, any>();
+
+  // Add CRM leads first
+  crmLeads.forEach((lead) => {
+    const id = lead.id || `lead_${Math.random().toString(36).substr(2, 9)}`;
+    const studentName = lead.studentName || lead.name;
+    unifiedMap.set(id, {
+      id,
+      name: studentName,
+      parentName: lead.parentName,
+      parentPhone: lead.phone || lead.parentPhone,
+      parentEmail: lead.email || lead.parentEmail,
+      parentGender: lead.parentGender,
+      emergencyContact: lead.phone || lead.parentPhone,
+      enrollmentStatus: lead.stage || lead.enrollmentStatus || 'CONSULTING',
+      source: lead.source,
+      notes: lead.notes,
+      testDate: lead.testDate,
+      testTime: lead.testTime,
+      testScore: lead.testScore,
+      scholarshipInfo: lead.scholarshipInfo || lead.scholarship,
+      docChecklist: lead.docChecklist || lead.checklist || { hocBa: false, khaiSinh: false, anh3x4: false },
+      baseTuitionFee: lead.baseTuitionFee,
+      tuitionDiscount: lead.tuitionDiscount,
+      scholarshipDiscount: lead.scholarshipDiscount,
+      phaseEnrollmentDiscount: lead.phaseEnrollmentDiscount,
+      advancedFee: lead.advancedFee,
+      otherDiscount: lead.otherDiscount,
+      className: lead.className || '',
+      gender: lead.gender || 'Nam',
+      birthDate: lead.birthDate || '2010-09-05',
+    });
+  });
+
+  // Add/Merge SIS active students
+  sisStudents.forEach((student) => {
+    const id = student.id;
+    const existing = unifiedMap.get(id);
+    const crmStatus = student.enrollmentStatus || 'ENROLLED';
+    if (existing) {
+      unifiedMap.set(id, {
+        ...existing,
+        ...student,
+        enrollmentStatus: crmStatus,
+      });
+    } else {
+      unifiedMap.set(id, {
+        ...student,
+        enrollmentStatus: crmStatus,
+      });
+    }
+  });
+
+  const unifiedList = Array.from(unifiedMap.values()) as UnifiedStudent[];
+  localStorage.setItem('mis_student_directory', JSON.stringify(unifiedList));
+  
+  // Also sync the backward-compatible keys initially
+  const enrolledOnly = unifiedList.filter(s => s.enrollmentStatus === 'ENROLLED');
+  localStorage.setItem('mis_sis_students_v3', JSON.stringify(enrolledOnly));
+  localStorage.setItem('mis_lms_students', JSON.stringify(enrolledOnly));
+  
+  const leadsOnly = unifiedList.filter(s => s.enrollmentStatus !== 'ENROLLED').map(s => ({
+    ...s,
+    studentName: s.name,
+    stage: s.enrollmentStatus,
+    phone: s.parentPhone,
+    email: s.parentEmail,
+  }));
+  localStorage.setItem('school_crm_leads', JSON.stringify(leadsOnly));
+
+  return unifiedList;
+}
+
+export function getUnifiedStudents(): UnifiedStudent[] {
+  if (typeof window === 'undefined') return [];
+  const stored = localStorage.getItem('mis_student_directory');
+  if (stored) {
+    try {
+      return JSON.parse(stored);
+    } catch (e) {
+      console.error(e);
+    }
+  }
+  return [];
+}
+
+export function saveUnifiedStudents(students: UnifiedStudent[]) {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem('mis_student_directory', JSON.stringify(students));
+  
+  // Backward compatibility: keep mis_sis_students_v3 synced
+  const enrolledOnly = students.filter(s => s.enrollmentStatus === 'ENROLLED');
+  localStorage.setItem('mis_sis_students_v3', JSON.stringify(enrolledOnly));
+
+  // Backward compatibility: keep school_crm_leads synced
+  const leadsOnly = students.filter(s => s.enrollmentStatus !== 'ENROLLED').map(s => ({
+    ...s,
+    studentName: s.name,
+    stage: s.enrollmentStatus,
+    phone: s.parentPhone,
+    email: s.parentEmail,
+  }));
+  localStorage.setItem('school_crm_leads', JSON.stringify(leadsOnly));
+
+  // Backward compatibility: keep mis_lms_students synced
+  localStorage.setItem('mis_lms_students', JSON.stringify(enrolledOnly));
+}

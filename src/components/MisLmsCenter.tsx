@@ -37,7 +37,8 @@ import {
 import { Task, UserProfile } from '../types';
 import { exportToCsv } from '../utils/exportUtils';
 import { ALL_VIETNAM_SUBJECT_NAMES, VIETNAM_GRADE_LEVELS, getSubjectsForClassName } from '../utils/vietnameseCurriculum';
-import { normalizeStudentProfile, normalizeStudentProfiles } from '../utils/peopleDirectory';
+import { normalizeStudentProfile, normalizeStudentProfiles, getUnifiedStudents, saveUnifiedStudents, UnifiedStudent } from '../utils/peopleDirectory';
+import { syncEnrolledCrmLeadsToLifecycle } from '../utils/crmStudentSync';
 
 interface MisLmsCenterProps {
   currentUser: UserProfile;
@@ -158,20 +159,34 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
     currentUser.roleName?.toLowerCase().includes('ceo') ||
     currentUser.roleName?.toLowerCase().includes('kế toán');
   const [lmsStudents, setLmsStudents] = useState<LmsStudent[]>(() => {
-    const saved = localStorage.getItem('mis_lms_students');
-    if (saved) {
-      try { return normalizeStudentProfiles(JSON.parse(saved)) as LmsStudent[]; } catch (e) { console.error(e); }
-    }
-    return normalizeStudentProfiles([
-      { id: 'std1', name: 'Nguyễn Minh Quân', className: 'Lớp 10A1', gender: 'Nam', birthDate: '2010-03-15', phone: '0912345678', parentName: 'Nguyễn Văn Hải', parentPhone: '0987654321', parentEmail: 'hai.nguyen@parent.mis.edu.vn', parentGender: 'Nam', emergencyContact: '0987654321', address: 'Số 12, ngõ 4, Cầu Giấy, Hà Nội' },
-      { id: 'std2', name: 'Trần Mỹ Lệ', className: 'Lớp 11A2', gender: 'Nữ', birthDate: '2009-08-20', phone: '0922345678', parentName: 'Lê Thị Thu Trà', parentPhone: '0977654321', parentEmail: 'tra.le@parent.mis.edu.vn', parentGender: 'Nữ', emergencyContact: '0977654321', address: 'Số 45, ngõ 12, Thanh Xuân, Hà Nội' },
-      { id: 'std3', name: 'Phạm Hồng Thái', className: 'Lớp 12A1', gender: 'Nam', birthDate: '2008-11-05', phone: '0932345678', parentName: 'Phạm Hồng Sơn', parentPhone: '0967654321', parentEmail: 'son.pham@parent.mis.edu.vn', parentGender: 'Nam', emergencyContact: '0967654321', address: 'Số 8, ngõ 2, Ba Đình, Hà Nội' },
-      { id: 'std4', name: 'Hoàng Thùy Dương', className: 'Lớp 10A1', gender: 'Nữ', birthDate: '2010-05-12', phone: '0942345678', parentName: 'Hoàng Văn Thắng', parentPhone: '0957654321', parentEmail: 'thang.hoang@parent.mis.edu.vn', parentGender: 'Nam', emergencyContact: '0957654321', address: 'Số 22, ngõ 9, Đống Đa, Hà Nội' },
-    ]) as LmsStudent[];
+    const unified = getUnifiedStudents();
+    return unified.filter(s => s.enrollmentStatus === 'ENROLLED') as LmsStudent[];
   });
 
   useEffect(() => {
-    localStorage.setItem('mis_lms_students', JSON.stringify(lmsStudents));
+    const currentUnified = getUnifiedStudents();
+    const nextUnified = currentUnified.map(student => {
+      const match = lmsStudents.find(s => s.id === student.id);
+      if (match) {
+        return {
+          ...student,
+          ...match,
+        };
+      }
+      return student;
+    });
+
+    lmsStudents.forEach(student => {
+      const exists = nextUnified.some(s => s.id === student.id);
+      if (!exists) {
+        nextUnified.push({
+          ...student,
+          enrollmentStatus: 'ENROLLED',
+        } as UnifiedStudent);
+      }
+    });
+
+    saveUnifiedStudents(nextUnified);
   }, [lmsStudents]);
 
   // Helper to export Leads list to CSV
@@ -207,82 +222,62 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
 
   // Interactive state for CRM Leads (Persistent and synced with CRM key)
   const [leads, setLeads] = useState<any[]>(() => {
-    const saved = localStorage.getItem('school_crm_leads');
-    if (saved) {
-      try { return JSON.parse(saved); } catch (e) { console.error(e); }
-    }
-    return [
-      {
-        id: 'lead_1',
-        studentName: 'Nguyễn Minh Anh',
-        parentName: 'Nguyễn Văn Hải',
-        phone: '0912345678',
-        email: 'hai.nguyen@gmail.com',
-        stage: 'CONSULTING',
-        source: 'Social',
-        grade: 'Lớp 10',
-        notes: 'Đăng ký tìm hiểu lớp 10 chất lượng cao chuyên Anh.',
-        docChecklist: { hocBa: false, khaiSinh: false, anh3x4: false },
-        interactions: [
-          { date: '2026-06-09', type: 'Đăng ký Form', content: 'Quan tâm chính sách học bổng đầu vào' }
-        ]
-      },
-      {
-        id: 'lead_2',
-        studentName: 'Trần Bảo Nam',
-        parentName: 'Lê Thị Thu',
-        phone: '0987654321',
-        email: 'thu.le@gmail.com',
-        stage: 'CONSULTING',
-        source: 'Website',
-        grade: 'Lớp 10',
-        notes: 'Đăng ký tìm hiểu lớp 10 song bằng.',
-        docChecklist: { hocBa: false, khaiSinh: true, anh3x4: false },
-        interactions: [
-          { date: '2026-06-08', type: 'Gọi điện', content: 'Tư vấn biểu phí học tập' }
-        ]
-      },
-      {
-        id: 'lead_3',
-        studentName: 'Phạm Tiến Dũng',
-        parentName: 'Phạm Văn Thành',
-        phone: '0905123456',
-        email: 'thanh.pham@gmail.com',
-        stage: 'TESTING',
-        source: 'Referral',
-        grade: 'Lớp 10',
-        notes: 'Đăng ký kiểm tra năng lực môn Toán.',
-        docChecklist: { hocBa: false, khaiSinh: true, anh3x4: true },
-        testDate: '2026-06-15',
-        testTime: '09:00',
-        interactions: [
-          { date: '2026-06-07', type: 'Ghi nhận lịch', content: 'Sắp xếp lịch test đầu vào ngày 15/06' }
-        ]
-      },
-      {
-        id: 'lead_4',
-        studentName: 'Hoàng Thùy Dương',
-        parentName: 'Hoàng Văn Thắng',
-        phone: '0932112233',
-        email: 'thang.hoang@gmail.com',
-        stage: 'ENROLLED',
-        source: 'Website',
-        grade: 'Lớp 10',
-        notes: 'Học sinh đạt học bổng 30% và đã hoàn thành thủ tục nhập học.',
-        docChecklist: { hocBa: true, khaiSinh: true, anh3x4: true },
-        testScore: '9.0/10',
-        scholarshipInfo: 'Học bổng 30%',
-        baseTuitionFee: 15000000,
-        scholarshipDiscount: 4500000,
-        interactions: [
-          { date: '2026-06-06', type: 'Nhập học', content: 'Đã đóng học phí và phê duyệt nhập học' }
-        ]
-      }
-    ];
+    const unified = getUnifiedStudents();
+    return unified.map(s => ({
+      ...s,
+      studentName: s.name,
+      stage: s.enrollmentStatus,
+      phone: s.parentPhone,
+      email: s.parentEmail,
+    }));
   });
 
   useEffect(() => {
-    localStorage.setItem('school_crm_leads', JSON.stringify(leads));
+    const currentUnified = getUnifiedStudents();
+    const nextUnified = currentUnified.map(student => {
+      const match = leads.find(l => l.id === student.id);
+      if (match) {
+        return {
+          ...student,
+          name: match.studentName || student.name,
+          parentPhone: match.phone || match.parentPhone || student.parentPhone,
+          parentEmail: match.email || match.parentEmail || student.parentEmail,
+          parentName: match.parentName || student.parentName,
+          enrollmentStatus: match.stage || match.enrollmentStatus || student.enrollmentStatus,
+          notes: match.notes || student.notes,
+          testDate: match.testDate || student.testDate,
+          testTime: match.testTime || student.testTime,
+          testScore: match.testScore || student.testScore,
+          scholarshipInfo: match.scholarshipInfo || student.scholarshipInfo,
+          docChecklist: match.docChecklist || student.docChecklist,
+        };
+      }
+      return student;
+    });
+
+    leads.forEach(match => {
+      const exists = nextUnified.some(s => s.id === match.id);
+      if (!exists) {
+        nextUnified.push({
+          id: match.id,
+          name: match.studentName,
+          parentName: match.parentName,
+          parentPhone: match.phone || match.parentPhone,
+          parentEmail: match.email || match.parentEmail,
+          enrollmentStatus: match.stage || 'CONSULTING',
+          notes: match.notes,
+          testDate: match.testDate,
+          testTime: match.testTime,
+          testScore: match.testScore,
+          scholarshipInfo: match.scholarshipInfo,
+          docChecklist: match.docChecklist || { hocBa: false, khaiSinh: false, anh3x4: false },
+          gender: 'Nam',
+          birthDate: '2010-09-05',
+        });
+      }
+    });
+
+    saveUnifiedStudents(nextUnified);
   }, [leads]);
 
   // Filter and search active state for Leads
@@ -498,7 +493,15 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
   }, [tuitionFees]);
 
   const [showAddInvoiceForm, setShowAddInvoiceForm] = useState(false);
-  const [newInvoiceData, setNewInvoiceData] = useState({ student: '', amount: '12,500,000đ', deadline: '2026-06-20', status: 'CHO_DONG' });
+  const [newInvoiceData, setNewInvoiceData] = useState({
+    studentId: '',
+    studentName: '',
+    studentCode: '',
+    student: '',
+    amount: '12,500,000đ',
+    deadline: '2026-06-20',
+    status: 'CHO_DONG'
+  });
   const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
 
   // Personnel Payroll states
@@ -683,59 +686,18 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
     }));
   };
 
-  // Sync ENROLLED leads to LMS students and generate tuition invoices
+  // Sync ENROLLED leads to the shared student lifecycle stores.
   useEffect(() => {
     const enrolledLeads = leads.filter(l => l.stage === 'ENROLLED');
     if (enrolledLeads.length === 0) return;
 
-    enrolledLeads.forEach(lead => {
-      setLmsStudents(prevStudents => {
-        const studentExists = prevStudents.some(s => (s as any).crmLeadId === lead.id || s.name === lead.studentName);
-        if (studentExists) return prevStudents;
-
-        let className = '10A1';
-        if (lead.grade) {
-          if (lead.grade.includes('11')) className = '11A1';
-          else if (lead.grade.includes('12')) className = '12A1';
-        }
-
-        const newStudent = normalizeStudentProfile({
-          id: 'std_crm_' + lead.id,
-          name: lead.studentName,
-          className: className,
-          parentName: lead.parentName || 'Người liên hệ',
-          parentPhone: lead.phone,
-          parentEmail: lead.email || `parent_${lead.phone}@parent.mis.edu.vn`
-        }) as LmsStudent;
-        // Store crmLeadId dynamically
-        (newStudent as any).crmLeadId = lead.id;
-        return [...prevStudents, newStudent];
-      });
-
-      setTuitionFees(prevTuition => {
-        const invoiceNo = 'INV-CRM-' + lead.id;
-        const invoiceExists = prevTuition.some(t => t.invoiceNo === invoiceNo);
-        if (invoiceExists) return prevTuition;
-
-        const base = lead.baseTuitionFee || 15000000;
-        const tDisc = lead.tuitionDiscount || 0;
-        const sDisc = lead.scholarshipDiscount || 0;
-        const pDisc = lead.phaseEnrollmentDiscount || 0;
-        const oDisc = lead.otherDiscount || 0;
-        const adv = lead.advancedFee || 0;
-        const payable = base - (tDisc + sDisc + pDisc + oDisc) + adv;
-
-        const newInvoice = {
-          id: 'inv_crm_' + lead.id,
-          student: lead.studentName,
-          amount: payable.toLocaleString('vi-VN') + 'đ',
-          deadline: new Date(Date.now() + 15 * 24 * 3600 * 1000).toISOString().split('T')[0],
-          status: 'CHO_DONG',
-          invoiceNo: invoiceNo
-        };
-        return [...prevTuition, newInvoice];
-      });
-    });
+    const syncResult = syncEnrolledCrmLeadsToLifecycle(enrolledLeads);
+    if (syncResult.addedLmsStudentIds.length > 0 || syncResult.updatedLmsStudentIds.length > 0) {
+      setLmsStudents(syncResult.lmsStudents as LmsStudent[]);
+    }
+    if (syncResult.addedInvoiceNos.length > 0) {
+      setTuitionFees(syncResult.tuitionFees);
+    }
   }, [leads]);
 
   const campaignRecipientCount = leads.filter(lead => lead.email).length;
@@ -2370,11 +2332,13 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
                     <form
                       onSubmit={(e) => {
                         e.preventDefault();
-                        if (!newInvoiceData.student || !newInvoiceData.amount) return;
+                        if (!newInvoiceData.studentId || !newInvoiceData.amount) return;
                         const nextId = tuitionFees.length + 1;
                         const newInv = {
                           id: `HV00${nextId}`,
-                          student: newInvoiceData.student,
+                          studentId: newInvoiceData.studentId,
+                          studentCode: newInvoiceData.studentCode,
+                          student: newInvoiceData.studentName,
                           amount: newInvoiceData.amount,
                           deadline: newInvoiceData.deadline,
                           status: newInvoiceData.status,
@@ -2382,7 +2346,15 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
                           paidDate: newInvoiceData.status === 'DA_DONG' ? new Date().toISOString().substring(0, 10) : undefined
                         };
                         setTuitionFees([...tuitionFees, newInv]);
-                        setNewInvoiceData({ student: '', amount: '12,500,000đ', deadline: '2026-06-20', status: 'CHO_DONG' });
+                        setNewInvoiceData({
+                          studentId: '',
+                          studentName: '',
+                          studentCode: '',
+                          student: '',
+                          amount: '12,500,000đ',
+                          deadline: '2026-06-20',
+                          status: 'CHO_DONG'
+                        });
                         setShowAddInvoiceForm(false);
                       }}
                       className="bg-slate-50 p-4 rounded-xl border border-slate-200 mt-2 space-y-3 font-sans"
@@ -2390,15 +2362,40 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
                       <h4 className="text-xs font-bold text-slate-850">Lập phiếu yêu cầu học phí mới</h4>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div className="space-y-1">
-                          <label className="text-[10px] font-bold text-slate-450 block">Tên học sinh thụ hưởng</label>
-                          <input
-                            type="text"
-                            placeholder="Tống Khánh Đăng..."
-                            value={newInvoiceData.student}
-                            onChange={(e) => setNewInvoiceData({...newInvoiceData, student: e.target.value})}
-                            className="w-full bg-white border border-slate-200 rounded px-2 py-1.5 text-xs text-slate-850 font-medium"
+                          <label className="text-[10px] font-bold text-slate-450 block">Chọn học sinh thụ hưởng</label>
+                          <select
+                            value={newInvoiceData.studentId}
+                            onChange={(e) => {
+                              const selectedId = e.target.value;
+                              const matched = lmsStudents.find(s => s.id === selectedId);
+                              if (matched) {
+                                setNewInvoiceData({
+                                  ...newInvoiceData,
+                                  studentId: selectedId,
+                                  studentName: matched.name,
+                                  studentCode: matched.code || '',
+                                  student: matched.name
+                                });
+                              } else {
+                                setNewInvoiceData({
+                                  ...newInvoiceData,
+                                  studentId: '',
+                                  studentName: '',
+                                  studentCode: '',
+                                  student: ''
+                                });
+                              }
+                            }}
+                            className="w-full bg-white border border-slate-200 rounded px-2 py-1.5 text-xs text-slate-850 font-medium cursor-pointer"
                             required
-                          />
+                          >
+                            <option value="">-- Chọn học sinh --</option>
+                            {lmsStudents.map(s => (
+                              <option key={s.id} value={s.id}>
+                                {s.name} - {s.code || s.id} ({s.className || 'Không lớp'})
+                              </option>
+                            ))}
+                          </select>
                         </div>
                         <div className="grid grid-cols-2 gap-2">
                           <div className="space-y-1">
