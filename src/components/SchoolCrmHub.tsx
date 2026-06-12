@@ -2,14 +2,18 @@ import React, { useState, useMemo } from 'react';
 import { Target, Search, Plus, PhoneCall, Mail, Calendar, Sparkles, Megaphone, ArrowRight, Award, FileText, CheckCircle2, ClipboardList, Edit3, X, Download, Upload, Loader2, Clock, DollarSign } from 'lucide-react';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 
+type LeadStage = 'NEW' | 'CONSULTING' | 'TOUR' | 'TESTING' | 'OFFER' | 'RESERVED' | 'ENROLLED';
+type LeadSource = 'Social' | 'Website' | 'Referral' | 'Event' | 'Google' | 'Facebook' | 'TikTok';
+type InterestLevel = 'HOT' | 'WARM' | 'COLD';
+
 interface Lead {
   id: string;
   studentName: string;
   parentName: string;
   phone: string;
   email: string;
-  stage: 'CONSULTING' | 'TESTING' | 'RESERVED' | 'ENROLLED';
-  source: 'Social' | 'Website' | 'Referral' | 'Event';
+  stage: LeadStage;
+  source: LeadSource;
   notes: string;
   interactions: { date: string; type: string; content: string }[];
   testScore?: string;
@@ -19,7 +23,19 @@ interface Lead {
     hocBa: boolean;
     khaiSinh: boolean;
     anh3x4: boolean;
+    cccdParent?: boolean;
+    healthRecord?: boolean;
+    paymentProof?: boolean;
+    admissionForm?: boolean;
   };
+  campaignName?: string;
+  adChannel?: string;
+  leadOwner?: string;
+  interestLevel?: InterestLevel;
+  nextFollowUpDate?: string;
+  currentSchool?: string;
+  expectedRevenue?: number;
+  adCost?: number;
   // Financial fields
   tuitionDiscount?: number;
   scholarshipDiscount?: number;
@@ -31,6 +47,85 @@ interface Lead {
   testDate?: string;
   testTime?: string;
 }
+
+const leadStageOrder: LeadStage[] = ['NEW', 'CONSULTING', 'TOUR', 'TESTING', 'OFFER', 'RESERVED', 'ENROLLED'];
+const advancedStages: LeadStage[] = ['OFFER', 'RESERVED', 'ENROLLED'];
+const testedStages: LeadStage[] = ['TESTING', 'OFFER', 'RESERVED', 'ENROLLED'];
+const financialStages: LeadStage[] = ['RESERVED', 'ENROLLED'];
+
+const normalizeLeadStage = (stage: unknown): LeadStage => {
+  if (typeof stage !== 'string') return 'NEW';
+  const value = stage.toUpperCase();
+  if (leadStageOrder.includes(value as LeadStage)) return value as LeadStage;
+  if (value === 'LEAD' || value === 'ADS') return 'NEW';
+  if (value === 'OPEN_DAY' || value === 'VISIT') return 'TOUR';
+  if (value === 'SCHOLARSHIP' || value === 'OFFERED') return 'OFFER';
+  return 'CONSULTING';
+};
+
+const normalizeLeadSource = (source: unknown): LeadSource => {
+  const allowed: LeadSource[] = ['Social', 'Website', 'Referral', 'Event', 'Google', 'Facebook', 'TikTok'];
+  return allowed.includes(source as LeadSource) ? source as LeadSource : 'Website';
+};
+
+const inferInterestLevel = (lead: Partial<Lead>, stage: LeadStage): InterestLevel => {
+  if (lead.interestLevel) return lead.interestLevel;
+  if (['OFFER', 'RESERVED', 'ENROLLED'].includes(stage)) return 'HOT';
+  if (stage === 'TESTING' || stage === 'TOUR') return 'WARM';
+  return 'COLD';
+};
+
+const getDefaultFollowUpDate = (stage: LeadStage) => {
+  const days = stage === 'NEW' ? 0 : stage === 'CONSULTING' ? 1 : stage === 'TOUR' ? 2 : stage === 'TESTING' ? 1 : 3;
+  const date = new Date();
+  date.setDate(date.getDate() + days);
+  return date.toISOString().split('T')[0];
+};
+
+const normalizeLead = (raw: Partial<Lead>): Lead => {
+  const stage = normalizeLeadStage(raw.stage);
+  const source = normalizeLeadSource(raw.source);
+  const checklist = raw.docChecklist || { hocBa: false, khaiSinh: false, anh3x4: false };
+  return {
+    id: raw.id || `lead_${Date.now()}`,
+    studentName: raw.studentName || '',
+    parentName: raw.parentName || '',
+    phone: raw.phone || '',
+    email: raw.email || '',
+    stage,
+    source,
+    grade: raw.grade || 'Lớp 10',
+    notes: raw.notes || '',
+    interactions: Array.isArray(raw.interactions) ? raw.interactions : [],
+    testScore: raw.testScore,
+    scholarshipInfo: raw.scholarshipInfo,
+    docChecklist: {
+      hocBa: Boolean(checklist.hocBa),
+      khaiSinh: Boolean(checklist.khaiSinh),
+      anh3x4: Boolean(checklist.anh3x4),
+      cccdParent: Boolean(checklist.cccdParent),
+      healthRecord: Boolean(checklist.healthRecord),
+      paymentProof: Boolean(checklist.paymentProof),
+      admissionForm: Boolean(checklist.admissionForm),
+    },
+    campaignName: raw.campaignName || `${source} tuyển sinh 2026`,
+    adChannel: raw.adChannel || source,
+    leadOwner: raw.leadOwner || 'Phòng Tuyển sinh',
+    interestLevel: inferInterestLevel(raw, stage),
+    nextFollowUpDate: raw.nextFollowUpDate || (stage !== 'ENROLLED' ? getDefaultFollowUpDate(stage) : ''),
+    currentSchool: raw.currentSchool || 'Chưa cập nhật',
+    expectedRevenue: raw.expectedRevenue ?? raw.baseTuitionFee ?? 60000000,
+    adCost: raw.adCost ?? (source === 'Referral' ? 0 : 250000),
+    baseTuitionFee: raw.baseTuitionFee,
+    tuitionDiscount: raw.tuitionDiscount,
+    scholarshipDiscount: raw.scholarshipDiscount,
+    phaseEnrollmentDiscount: raw.phaseEnrollmentDiscount,
+    advancedFee: raw.advancedFee,
+    otherDiscount: raw.otherDiscount,
+    testDate: raw.testDate,
+    testTime: raw.testTime,
+  };
+};
 
 export default function SchoolCrmHub() {
   const defaultLeads: Lead[] = [
@@ -191,13 +286,13 @@ export default function SchoolCrmHub() {
       const saved = localStorage.getItem('school_crm_leads');
       if (saved) {
         try {
-          return JSON.parse(saved);
+          return JSON.parse(saved).map(normalizeLead);
         } catch (e) {
           console.error(e);
         }
       }
     }
-    return defaultLeads;
+    return defaultLeads.map(normalizeLead);
   });
 
   React.useEffect(() => {
@@ -214,8 +309,8 @@ export default function SchoolCrmHub() {
   const [editParentName, setEditParentName] = useState('');
   const [editPhone, setEditPhone] = useState('');
   const [editEmail, setEditEmail] = useState('');
-  const [editSource, setEditSource] = useState<'Social' | 'Website' | 'Referral' | 'Event'>('Social');
-  const [editStage, setEditStage] = useState<Lead['stage']>('CONSULTING');
+  const [editSource, setEditSource] = useState<LeadSource>('Social');
+  const [editStage, setEditStage] = useState<LeadStage>('CONSULTING');
   const [editGrade, setEditGrade] = useState('Lớp 10');
   const [editNotes, setEditNotes] = useState('');
   const [editTestScore, setEditTestScore] = useState('');
@@ -240,8 +335,8 @@ export default function SchoolCrmHub() {
   const [newParentName, setNewParentName] = useState('');
   const [newPhone, setNewPhone] = useState('');
   const [newEmail, setNewEmail] = useState('');
-  const [newSource, setNewSource] = useState<'Social' | 'Website' | 'Referral' | 'Event'>('Social');
-  const [newStage, setNewStage] = useState<Lead['stage']>('CONSULTING');
+  const [newSource, setNewSource] = useState<LeadSource>('Social');
+  const [newStage, setNewStage] = useState<LeadStage>('NEW');
   const [newGrade, setNewGrade] = useState('Lớp 10');
   const [newNotes, setNewNotes] = useState('');
   const [newTestScore, setNewTestScore] = useState('');
@@ -273,18 +368,29 @@ export default function SchoolCrmHub() {
   const [interactionType, setInteractionType] = useState('Gọi điện');
   const [interactionContent, setInteractionContent] = useState('');
 
-  const stages: { key: Lead['stage']; label: string; bg: string; text: string }[] = [
-    { key: 'CONSULTING', label: 'Đang tư vấn & Lead', bg: 'bg-blue-50/50 border-blue-150 dark:bg-blue-950/20 dark:border-blue-900', text: 'text-blue-700 dark:text-blue-300' },
-    { key: 'TESTING', label: 'Thi test & Đặt lịch', bg: 'bg-amber-50/50 border-amber-200 dark:bg-amber-950/20 dark:border-amber-900', text: 'text-amber-700 dark:text-amber-300' },
-    { key: 'RESERVED', label: 'Giữ chỗ & Hồ sơ', bg: 'bg-cyan-50/50 border-cyan-200 dark:bg-cyan-950/20 dark:border-cyan-900', text: 'text-cyan-700 dark:text-cyan-300' },
-    { key: 'ENROLLED', label: 'Đã nhập học', bg: 'bg-emerald-50/50 border-emerald-150 dark:bg-emerald-950/20 dark:border-emerald-900', text: 'text-emerald-700 dark:text-emerald-355' }
+  const stages: { key: LeadStage; label: string; shortLabel: string; bg: string; text: string }[] = [
+    { key: 'NEW', label: 'Lead quảng cáo mới', shortLabel: 'Lead mới', bg: 'bg-slate-50/80 border-slate-200 dark:bg-slate-950/20 dark:border-slate-800', text: 'text-slate-700 dark:text-slate-300' },
+    { key: 'CONSULTING', label: 'Tư vấn phụ huynh', shortLabel: 'Tư vấn', bg: 'bg-blue-50/50 border-blue-150 dark:bg-blue-950/20 dark:border-blue-900', text: 'text-blue-700 dark:text-blue-300' },
+    { key: 'TOUR', label: 'Open Day / School Tour', shortLabel: 'Tour', bg: 'bg-violet-50/50 border-violet-200 dark:bg-violet-950/20 dark:border-violet-900', text: 'text-violet-700 dark:text-violet-300' },
+    { key: 'TESTING', label: 'Kiểm tra năng lực', shortLabel: 'Test', bg: 'bg-amber-50/50 border-amber-200 dark:bg-amber-950/20 dark:border-amber-900', text: 'text-amber-700 dark:text-amber-300' },
+    { key: 'OFFER', label: 'Xét học bổng / Offer', shortLabel: 'Offer', bg: 'bg-orange-50/50 border-orange-200 dark:bg-orange-950/20 dark:border-orange-900', text: 'text-orange-700 dark:text-orange-300' },
+    { key: 'RESERVED', label: 'Giữ chỗ & Hồ sơ', shortLabel: 'Giữ chỗ', bg: 'bg-cyan-50/50 border-cyan-200 dark:bg-cyan-950/20 dark:border-cyan-900', text: 'text-cyan-700 dark:text-cyan-300' },
+    { key: 'ENROLLED', label: 'Đã nhập học', shortLabel: 'Nhập học', bg: 'bg-emerald-50/50 border-emerald-150 dark:bg-emerald-950/20 dark:border-emerald-900', text: 'text-emerald-700 dark:text-emerald-355' }
   ];
 
   // Helper to compute document processing status
   const getDocumentStatus = (lead: Lead) => {
-    const checklist = lead.docChecklist || { hocBa: false, khaiSinh: false, anh3x4: false };
-    const count = (checklist.hocBa ? 1 : 0) + (checklist.khaiSinh ? 1 : 0) + (checklist.anh3x4 ? 1 : 0);
-    if (count === 3) return { label: 'Đầy đủ', bg: 'bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-950/30 dark:text-emerald-300 dark:border-emerald-900/40', count };
+    const checklist = normalizeLead(lead).docChecklist!;
+    const count = [
+      checklist.hocBa,
+      checklist.khaiSinh,
+      checklist.anh3x4,
+      checklist.cccdParent,
+      checklist.healthRecord,
+      checklist.paymentProof,
+      checklist.admissionForm,
+    ].filter(Boolean).length;
+    if (count >= 7) return { label: 'Đầy đủ', bg: 'bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-950/30 dark:text-emerald-300 dark:border-emerald-900/40', count };
     if (count > 0) return { label: 'Thiếu hồ sơ', bg: 'bg-amber-50 text-amber-700 border-amber-100 dark:bg-amber-950/30 dark:text-amber-300 dark:border-amber-900/40', count };
     return { label: 'Chưa nộp', bg: 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700', count };
   };
@@ -298,9 +404,10 @@ export default function SchoolCrmHub() {
   // Dynamic calculations
   const enrolledCount = useMemo(() => leads.filter(l => l.stage === 'ENROLLED').length, [leads]);
   const reservedCount = useMemo(() => leads.filter(l => l.stage === 'RESERVED').length, [leads]);
-  const testedCount = useMemo(() => leads.filter(l => l.stage === 'TESTING').length, [leads]);
-  const registeredCount = useMemo(() => leads.filter(l => l.stage === 'RESERVED' && l.docChecklist?.hocBa && l.docChecklist?.khaiSinh && l.docChecklist?.anh3x4).length, [leads]);
-  const consultingCount = useMemo(() => leads.filter(l => l.stage === 'CONSULTING').length, [leads]);
+  const testedCount = useMemo(() => leads.filter(l => testedStages.includes(l.stage)).length, [leads]);
+  const registeredCount = useMemo(() => leads.filter(l => financialStages.includes(l.stage) && getDocumentStatus(l).count >= 7).length, [leads]);
+  const consultingCount = useMemo(() => leads.filter(l => ['NEW', 'CONSULTING', 'TOUR'].includes(l.stage)).length, [leads]);
+  const offerCount = useMemo(() => leads.filter(l => l.stage === 'OFFER').length, [leads]);
 
   // Duplicate check memos for Add Lead
   const isAddPhoneDuplicate = useMemo(() => {
@@ -326,19 +433,56 @@ export default function SchoolCrmHub() {
 
   // Source chart data
   const sourceChartData = useMemo(() => {
-    const counts = { Social: 0, Website: 0, Referral: 0, Event: 0 };
+    const counts: Record<LeadSource, number> = { Social: 0, Website: 0, Referral: 0, Event: 0, Google: 0, Facebook: 0, TikTok: 0 };
     leads.forEach(l => {
       counts[l.source] = (counts[l.source] || 0) + 1;
     });
-    return Object.entries(counts).map(([name, value]) => ({ name, value }));
+    return Object.entries(counts).filter(([, value]) => value > 0).map(([name, value]) => ({ name, value }));
+  }, [leads]);
+
+  const conversionDashboard = useMemo(() => {
+    return stages.map((stage, index) => {
+      const count = leads.filter(l => l.stage === stage.key).length;
+      const previousCount = index === 0 ? leads.length : leads.filter(l => stages.findIndex(s => s.key === l.stage) >= index - 1).length;
+      const conversion = previousCount > 0 ? Math.round((count / previousCount) * 100) : 0;
+      return { ...stage, count, conversion };
+    });
+  }, [leads, stages]);
+
+  const overdueFollowUps = useMemo(() => {
+    const today = new Date().toISOString().split('T')[0];
+    return leads
+      .filter(l => l.stage !== 'ENROLLED' && l.nextFollowUpDate && l.nextFollowUpDate <= today)
+      .sort((a, b) => (a.nextFollowUpDate || '').localeCompare(b.nextFollowUpDate || ''))
+      .slice(0, 6);
+  }, [leads]);
+
+  const upcomingTests = useMemo(() => {
+    return leads
+      .filter(l => l.testDate)
+      .sort((a, b) => (a.testDate || '').localeCompare(b.testDate || ''))
+      .slice(0, 6);
+  }, [leads]);
+
+  const marketingDashboard = useMemo(() => {
+    const bySource = new Map<LeadSource, { source: LeadSource; leads: number; enrolled: number; cost: number; revenue: number }>();
+    leads.forEach(lead => {
+      const current = bySource.get(lead.source) || { source: lead.source, leads: 0, enrolled: 0, cost: 0, revenue: 0 };
+      current.leads += 1;
+      current.enrolled += lead.stage === 'ENROLLED' ? 1 : 0;
+      current.cost += lead.adCost || 0;
+      current.revenue += lead.stage === 'ENROLLED' ? (lead.expectedRevenue || lead.baseTuitionFee || 0) : 0;
+      bySource.set(lead.source, current);
+    });
+    return Array.from(bySource.values()).sort((a, b) => b.leads - a.leads);
   }, [leads]);
 
   // Export CSV function
   const handleExportCsv = () => {
     const headers = [
       'ID', 'Tên Học Sinh', 'Tên Phụ Huynh', 'Số Điện Thoại', 'Email', 
-      'Trạng Thái Tuyển Sinh', 'Nguồn Tiếp Cận', 'Điểm Test', 'Học Bổng', 
-      'Học Bạ Gốc', 'Bản Sao Khai Sinh', 'Ảnh 3x4', 'Trạng Thái Hồ Sơ', 
+      'Trạng Thái Tuyển Sinh', 'Nguồn Tiếp Cận', 'Chiến Dịch', 'Tư Vấn Viên', 'Mức Quan Tâm', 'Chăm Sóc Tiếp Theo', 'Điểm Test', 'Học Bổng', 
+      'Học Bạ Gốc', 'Bản Sao Khai Sinh', 'Ảnh 3x4', 'CCCD Phụ Huynh', 'Hồ Sơ Y Tế', 'Xác Nhận Đóng Phí', 'Đơn Nhập Học', 'Trạng Thái Hồ Sơ', 
       'Học Phí Gốc', 'Ưu Đãi Học Phí', 'Ưu Đãi Học Bổng', 'Ưu Đãi Đóng Sớm', 
       'Phí Bổ Trợ', 'Ưu Đãi Khác', 'Tổng Ưu Đãi', 'Lịch Test', 'Ghi Chú'
     ];
@@ -355,11 +499,19 @@ export default function SchoolCrmHub() {
         l.email || '',
         stages.find(s => s.key === l.stage)?.label || l.stage,
         l.source,
+        l.campaignName || '',
+        l.leadOwner || '',
+        l.interestLevel || '',
+        l.nextFollowUpDate || '',
         l.testScore || '',
         l.scholarshipInfo || '',
         l.docChecklist?.hocBa ? 'Đã nộp' : 'Chưa nộp',
         l.docChecklist?.khaiSinh ? 'Đã nộp' : 'Chưa nộp',
         l.docChecklist?.anh3x4 ? 'Đã nộp' : 'Chưa nộp',
+        l.docChecklist?.cccdParent ? 'Đã nộp' : 'Chưa nộp',
+        l.docChecklist?.healthRecord ? 'Đã nộp' : 'Chưa nộp',
+        l.docChecklist?.paymentProof ? 'Đã nộp' : 'Chưa nộp',
+        l.docChecklist?.admissionForm ? 'Đã nộp' : 'Chưa nộp',
         docStatus.label,
         l.baseTuitionFee || 0,
         l.tuitionDiscount || 0,
@@ -401,11 +553,19 @@ export default function SchoolCrmHub() {
         email: l.email || 'Chưa cung cấp',
         stage: stages.find(s => s.key === l.stage)?.label || l.stage,
         source: l.source,
+        campaignName: l.campaignName || 'Chưa gắn chiến dịch',
+        leadOwner: l.leadOwner || 'Phòng Tuyển sinh',
+        interestLevel: l.interestLevel || 'WARM',
+        nextFollowUpDate: l.nextFollowUpDate || '',
         testScore: l.testScore || 'Chưa có',
         scholarshipInfo: l.scholarshipInfo || 'Không',
         hocBa: l.docChecklist?.hocBa ? 'Đã nộp' : 'Chưa nộp',
         khaiSinh: l.docChecklist?.khaiSinh ? 'Đã nộp' : 'Chưa nộp',
         anh3x4: l.docChecklist?.anh3x4 ? 'Đã nộp' : 'Chưa nộp',
+        cccdParent: l.docChecklist?.cccdParent ? 'Đã nộp' : 'Chưa nộp',
+        healthRecord: l.docChecklist?.healthRecord ? 'Đã nộp' : 'Chưa nộp',
+        paymentProof: l.docChecklist?.paymentProof ? 'Đã nộp' : 'Chưa nộp',
+        admissionForm: l.docChecklist?.admissionForm ? 'Đã nộp' : 'Chưa nộp',
         docStatus: docStatus.label,
         baseTuitionFee: l.baseTuitionFee || 0,
         tuitionDiscount: l.tuitionDiscount || 0,
@@ -450,11 +610,19 @@ export default function SchoolCrmHub() {
       ['email', 'Email'],
       ['stage', 'Trạng thái tuyển sinh'],
       ['source', 'Nguồn'],
+      ['campaignName', 'Chiến dịch'],
+      ['leadOwner', 'Tư vấn phụ trách'],
+      ['interestLevel', 'Mức quan tâm'],
+      ['nextFollowUpDate', 'Ngày chăm sóc tiếp theo'],
       ['testScore', 'Điểm test'],
       ['scholarshipInfo', 'Học bổng'],
       ['hocBa', 'Học bạ gốc'],
       ['khaiSinh', 'Khai sinh'],
       ['anh3x4', 'Ảnh 3x4'],
+      ['cccdParent', 'CCCD phụ huynh'],
+      ['healthRecord', 'Hồ sơ y tế'],
+      ['paymentProof', 'Xác nhận đóng phí'],
+      ['admissionForm', 'Đơn nhập học'],
       ['docStatus', 'Tình trạng hồ sơ'],
       ['baseTuitionFee', 'Học phí gốc'],
       ['tuitionDiscount', 'Ưu đãi học phí'],
@@ -590,9 +758,12 @@ export default function SchoolCrmHub() {
       const phone = cols[2].trim();
       const email = cols[3]?.trim() || '';
       
-      let source: Lead['source'] = 'Social';
+      let source: LeadSource = 'Social';
       const rawSource = cols[4]?.trim().toLowerCase();
       if (rawSource?.includes('web')) source = 'Website';
+      else if (rawSource?.includes('google')) source = 'Google';
+      else if (rawSource?.includes('facebook')) source = 'Facebook';
+      else if (rawSource?.includes('tiktok')) source = 'TikTok';
       else if (rawSource?.includes('refer') || rawSource?.includes('gioi thieu')) source = 'Referral';
       else if (rawSource?.includes('event') || rawSource?.includes('su kien')) source = 'Event';
 
@@ -605,10 +776,13 @@ export default function SchoolCrmHub() {
       else if (notes.includes('11')) grade = 'Lớp 11';
       else if (notes.includes('12')) grade = 'Lớp 12';
 
-      let stage: Lead['stage'] = 'CONSULTING';
+      let stage: LeadStage = 'NEW';
       const rawStage = cols[8]?.trim().toLowerCase();
-      if (rawStage?.includes('tu van') || rawStage?.includes('lead')) stage = 'CONSULTING';
+      if (rawStage?.includes('lead') || rawStage?.includes('quang cao')) stage = 'NEW';
+      else if (rawStage?.includes('tu van')) stage = 'CONSULTING';
+      else if (rawStage?.includes('tour') || rawStage?.includes('open day') || rawStage?.includes('tham quan')) stage = 'TOUR';
       else if (rawStage?.includes('test') || rawStage?.includes('lich')) stage = 'TESTING';
+      else if (rawStage?.includes('hoc bong') || rawStage?.includes('offer')) stage = 'OFFER';
       else if (rawStage?.includes('giu') || rawStage?.includes('ho so') || rawStage?.includes('nop')) stage = 'RESERVED';
       else if (rawStage?.includes('nhap hoc') || rawStage?.includes('enrolled')) stage = 'ENROLLED';
 
@@ -623,10 +797,18 @@ export default function SchoolCrmHub() {
         testScore,
         scholarshipInfo,
         grade,
+        campaignName: cols[9]?.trim() || `${source} tuyển sinh 2026`,
+        leadOwner: cols[10]?.trim() || 'Phòng Tuyển sinh',
+        interestLevel: stage === 'NEW' ? 'COLD' : stage === 'CONSULTING' ? 'WARM' : 'HOT',
+        nextFollowUpDate: stage !== 'ENROLLED' ? getDefaultFollowUpDate(stage) : '',
         docChecklist: {
-          hocBa: stage === 'RESERVED' || stage === 'ENROLLED',
-          khaiSinh: stage === 'RESERVED' || stage === 'ENROLLED',
-          anh3x4: stage === 'RESERVED' || stage === 'ENROLLED',
+          hocBa: financialStages.includes(stage),
+          khaiSinh: financialStages.includes(stage),
+          anh3x4: financialStages.includes(stage),
+          cccdParent: financialStages.includes(stage),
+          healthRecord: false,
+          paymentProof: stage === 'ENROLLED',
+          admissionForm: stage === 'ENROLLED',
         }
       });
     });
@@ -655,16 +837,16 @@ export default function SchoolCrmHub() {
       return;
     }
 
-    const newLeads: Lead[] = filteredPreview.map((item, idx) => ({
+    const newLeads: Lead[] = filteredPreview.map((item, idx) => normalizeLead({
       ...item,
       id: `import_${Date.now()}_${idx}`,
       interactions: [
-        { 
-          date: new Date().toISOString().split('T')[0], 
-          type: 'Import Excel', 
-          content: 'Khởi tạo hàng loạt từ file Excel/Sheets' 
-        }
-      ]
+        {
+          date: new Date().toISOString().split('T')[0],
+          type: 'Import Excel',
+          content: 'Khởi tạo hàng loạt từ file Excel/Sheets',
+        },
+      ],
     }));
 
     setLeads(prev => [...prev, ...newLeads]);
@@ -683,8 +865,8 @@ export default function SchoolCrmHub() {
     }
 
     const hasSchedulingFields = newStage === 'TESTING';
-    const hasScoreFields = ['TESTING', 'RESERVED', 'ENROLLED'].includes(newStage);
-    const hasFinancialFields = ['RESERVED', 'ENROLLED'].includes(newStage);
+    const hasScoreFields = testedStages.includes(newStage);
+    const hasFinancialFields = financialStages.includes(newStage);
 
     const newLead: Lead = {
       id: `lead_${Date.now()}`,
@@ -696,12 +878,23 @@ export default function SchoolCrmHub() {
       source: newSource,
       grade: newGrade,
       notes: newNotes.trim(),
+      campaignName: `${newSource} tuyển sinh 2026`,
+      leadOwner: 'Phòng Tuyển sinh',
+      interestLevel: newStage === 'NEW' ? 'COLD' : newStage === 'CONSULTING' ? 'WARM' : 'HOT',
+      nextFollowUpDate: newStage !== 'ENROLLED' ? getDefaultFollowUpDate(newStage) : '',
+      currentSchool: 'Chưa cập nhật',
+      expectedRevenue: hasFinancialFields && newBaseTuitionFee.trim() ? Number(newBaseTuitionFee) : 60000000,
+      adCost: newSource === 'Referral' ? 0 : 250000,
       testScore: hasScoreFields && newTestScore.trim() ? newTestScore.trim() : undefined,
       scholarshipInfo: hasScoreFields && newScholarshipInfo.trim() ? newScholarshipInfo.trim() : undefined,
       docChecklist: {
         hocBa: newDocHocBa,
         khaiSinh: newDocKhaiSinh,
-        anh3x4: newDocAnh3x4
+        anh3x4: newDocAnh3x4,
+        cccdParent: false,
+        healthRecord: false,
+        paymentProof: false,
+        admissionForm: false,
       },
       // Financial inputs
       baseTuitionFee: hasFinancialFields && newBaseTuitionFee.trim() ? Number(newBaseTuitionFee) : undefined,
@@ -728,7 +921,7 @@ export default function SchoolCrmHub() {
     setNewPhone('');
     setNewEmail('');
     setNewNotes('');
-    setNewStage('CONSULTING');
+    setNewStage('NEW');
     setNewGrade('Lớp 10');
     setNewTestScore('');
     setNewScholarshipInfo('');
@@ -778,6 +971,8 @@ export default function SchoolCrmHub() {
         return {
           ...l,
           stage: targetStage,
+          interestLevel: targetStage === 'NEW' ? 'COLD' : targetStage === 'CONSULTING' ? 'WARM' : 'HOT',
+          nextFollowUpDate: targetStage !== 'ENROLLED' ? getDefaultFollowUpDate(targetStage) : '',
           interactions: [
             ...l.interactions,
             {
@@ -966,17 +1161,29 @@ export default function SchoolCrmHub() {
   };
 
   // Toggle document checklist inside static view
-  const handleToggleDocStatic = (leadId: string, docType: 'hocBa' | 'khaiSinh' | 'anh3x4') => {
+  const handleToggleDocStatic = (leadId: string, docType: 'hocBa' | 'khaiSinh' | 'anh3x4' | 'cccdParent' | 'healthRecord' | 'paymentProof' | 'admissionForm') => {
     setLeads(prev => prev.map(l => {
       if (l.id === leadId) {
         const nextChecklist = {
           hocBa: l.docChecklist?.hocBa || false,
           khaiSinh: l.docChecklist?.khaiSinh || false,
           anh3x4: l.docChecklist?.anh3x4 || false,
+          cccdParent: l.docChecklist?.cccdParent || false,
+          healthRecord: l.docChecklist?.healthRecord || false,
+          paymentProof: l.docChecklist?.paymentProof || false,
+          admissionForm: l.docChecklist?.admissionForm || false,
           [docType]: !(l.docChecklist?.[docType] || false)
         };
 
-        const docLabels = { hocBa: 'Học bạ gốc', khaiSinh: 'Bản sao Khai sinh', anh3x4: 'Ảnh 3x4' };
+        const docLabels = {
+          hocBa: 'Học bạ gốc',
+          khaiSinh: 'Bản sao Khai sinh',
+          anh3x4: 'Ảnh 3x4',
+          cccdParent: 'CCCD phụ huynh',
+          healthRecord: 'Hồ sơ y tế',
+          paymentProof: 'Xác nhận đóng phí',
+          admissionForm: 'Đơn nhập học',
+        };
 
         return {
           ...l,
@@ -1018,8 +1225,8 @@ export default function SchoolCrmHub() {
         if (l.notes !== editNotes.trim()) changes.push(`Ghi chú cập nhật`);
         
         const hasSchedulingFields = editStage === 'TESTING';
-        const hasScoreFields = ['TESTING', 'RESERVED', 'ENROLLED'].includes(editStage);
-        const hasFinancialFields = ['RESERVED', 'ENROLLED'].includes(editStage);
+        const hasScoreFields = testedStages.includes(editStage);
+        const hasFinancialFields = financialStages.includes(editStage);
 
         const nextScore = hasScoreFields && editTestScore.trim() ? editTestScore.trim() : undefined;
         const nextScholarship = hasScoreFields && editScholarshipInfo.trim() ? editScholarshipInfo.trim() : undefined;
@@ -1068,12 +1275,19 @@ export default function SchoolCrmHub() {
           stage: editStage,
           grade: editGrade,
           notes: editNotes.trim(),
+          interestLevel: editStage === 'NEW' ? 'COLD' : editStage === 'CONSULTING' ? 'WARM' : 'HOT',
+          nextFollowUpDate: editStage !== 'ENROLLED' ? (l.nextFollowUpDate || getDefaultFollowUpDate(editStage)) : '',
+          expectedRevenue: nextBaseTuition || l.expectedRevenue,
           testScore: nextScore || undefined,
           scholarshipInfo: nextScholarship || undefined,
           docChecklist: {
             hocBa: editDocHocBa,
             khaiSinh: editDocKhaiSinh,
-            anh3x4: editDocAnh3x4
+            anh3x4: editDocAnh3x4,
+            cccdParent: l.docChecklist?.cccdParent || false,
+            healthRecord: l.docChecklist?.healthRecord || false,
+            paymentProof: l.docChecklist?.paymentProof || false,
+            admissionForm: l.docChecklist?.admissionForm || false,
           },
           // Save Financial Fields
           baseTuitionFee: nextBaseTuition,
@@ -1135,6 +1349,112 @@ export default function SchoolCrmHub() {
           <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block">Nộp hồ sơ / Đang tư vấn</span>
           <strong className="text-2xl font-display font-black text-purple-600 mt-1.5 block">{registeredCount} <span className="text-xs text-slate-455 font-bold font-sans">hồ sơ</span></strong>
           <span className="text-[10.5px] text-slate-500 mt-1 block">Đang tư vấn chuyên sâu: {consultingCount} HS</span>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+        <div className="xl:col-span-2 bg-white border border-slate-200 dark:border-slate-800/80 p-5 rounded-2xl shadow-xs space-y-4">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h3 className="font-display font-extrabold text-slate-900 dark:text-white text-sm">Bản đồ phễu tuyển sinh 7 bước</h3>
+              <p className="text-[11px] text-slate-500 mt-1">Theo dõi từ đầu vào quảng cáo đến nhập học, dùng để phát hiện bước đang nghẽn.</p>
+            </div>
+            <span className="px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-100 text-[10px] font-black">
+              CVR nhập học {leads.length ? Math.round((enrolledCount / leads.length) * 100) : 0}%
+            </span>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-2">
+            {conversionDashboard.map((step, index) => (
+              <div key={step.key} className="rounded-xl border border-slate-150 bg-slate-50/60 dark:bg-slate-900/60 dark:border-slate-800 p-3 min-h-24">
+                <div className="flex items-center justify-between">
+                  <span className="w-5 h-5 rounded-full bg-white border border-slate-200 text-[10px] font-black text-slate-500 flex items-center justify-center">
+                    {index + 1}
+                  </span>
+                  <span className={`text-[10px] font-black ${step.text}`}>{step.count}</span>
+                </div>
+                <p className="mt-2 text-[10.5px] font-extrabold text-slate-800 dark:text-slate-200 leading-snug">{step.shortLabel}</p>
+                <div className="mt-2 h-1.5 rounded-full bg-slate-200 overflow-hidden">
+                  <div className="h-full bg-indigo-500" style={{ width: `${leads.length ? Math.min(100, (step.count / leads.length) * 100) : 0}%` }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="bg-white border border-slate-200 dark:border-slate-800/80 p-5 rounded-2xl shadow-xs space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="font-display font-extrabold text-slate-900 dark:text-white text-sm">Cần chăm sóc ngay</h3>
+            <span className="px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 text-[10px] font-black border border-rose-100">{overdueFollowUps.length}</span>
+          </div>
+          <div className="space-y-2 max-h-56 overflow-y-auto">
+            {overdueFollowUps.length === 0 ? (
+              <p className="text-xs text-slate-500 bg-slate-50 border border-slate-100 rounded-xl p-3">Không có lead quá hạn chăm sóc trong hôm nay.</p>
+            ) : overdueFollowUps.map(lead => (
+              <button
+                key={lead.id}
+                type="button"
+                onClick={() => setSelectedLeadId(lead.id)}
+                className="w-full text-left rounded-xl border border-rose-100 bg-rose-50/40 p-3 hover:bg-rose-50 transition-colors"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <strong className="text-xs text-slate-900">{lead.studentName}</strong>
+                  <span className="text-[9px] font-mono text-rose-700">{lead.nextFollowUpDate}</span>
+                </div>
+                <p className="text-[10.5px] text-slate-500 mt-1">{lead.parentName} - {lead.phone}</p>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="bg-white border border-slate-200 dark:border-slate-800/80 p-5 rounded-2xl shadow-xs space-y-3">
+          <h3 className="font-display font-extrabold text-slate-900 dark:text-white text-sm">Lịch kiểm tra năng lực đầu vào</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {upcomingTests.length === 0 ? (
+              <p className="text-xs text-slate-500">Chưa có lịch kiểm tra nào.</p>
+            ) : upcomingTests.map(lead => (
+              <button
+                key={lead.id}
+                type="button"
+                onClick={() => setSelectedLeadId(lead.id)}
+                className="text-left rounded-xl border border-amber-100 bg-amber-50/35 p-3 hover:bg-amber-50 transition-colors"
+              >
+                <div className="flex items-center gap-2 text-amber-700 font-black text-[11px]">
+                  <Calendar className="w-3.5 h-3.5" />
+                  <span>{lead.testDate} {lead.testTime || ''}</span>
+                </div>
+                <p className="text-xs font-bold text-slate-900 mt-1">{lead.studentName}</p>
+                <p className="text-[10.5px] text-slate-500">{lead.grade} - {lead.testScore || 'Chưa nhập điểm'}</p>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="bg-white border border-slate-200 dark:border-slate-800/80 p-5 rounded-2xl shadow-xs space-y-3">
+          <h3 className="font-display font-extrabold text-slate-900 dark:text-white text-sm">Hiệu quả nguồn quảng cáo</h3>
+          <div className="overflow-x-auto">
+            <table className="w-full text-[11px]">
+              <thead>
+                <tr className="text-slate-400 uppercase font-mono border-b border-slate-100">
+                  <th className="text-left py-2">Nguồn</th>
+                  <th className="text-right py-2">Lead</th>
+                  <th className="text-right py-2">Nhập học</th>
+                  <th className="text-right py-2">Chi phí/lead</th>
+                </tr>
+              </thead>
+              <tbody>
+                {marketingDashboard.map(row => (
+                  <tr key={row.source} className="border-b border-slate-50">
+                    <td className="py-2 font-bold text-slate-800">{row.source}</td>
+                    <td className="py-2 text-right">{row.leads}</td>
+                    <td className="py-2 text-right text-emerald-700 font-bold">{row.enrolled}</td>
+                    <td className="py-2 text-right">{formatCurrency(row.leads ? Math.round(row.cost / row.leads) : 0)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
@@ -1250,10 +1570,13 @@ export default function SchoolCrmHub() {
                 <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 font-mono">Nguồn marketing</label>
                 <select
                   value={newSource}
-                  onChange={(e) => setNewSource(e.target.value as any)}
+                  onChange={(e) => setNewSource(e.target.value as LeadSource)}
                   className="w-full text-xs p-2 border border-slate-200 dark:border-slate-855 rounded-xl bg-white dark:bg-slate-800 text-slate-800 dark:text-white outline-none focus:border-indigo-400 font-semibold"
                 >
                   <option value="Social">Mạng xã hội (Social)</option>
+                  <option value="Facebook">Facebook Ads</option>
+                  <option value="Google">Google Ads</option>
+                  <option value="TikTok">TikTok Ads</option>
                   <option value="Website">Cổng thông tin (Website)</option>
                   <option value="Referral">Người giới thiệu (Referral)</option>
                   <option value="Event">Sự kiện tuyển sinh (Event)</option>
@@ -1263,7 +1586,7 @@ export default function SchoolCrmHub() {
                 <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 font-mono">Trạng thái hiện tại</label>
                 <select
                   value={newStage}
-                  onChange={(e) => setNewStage(e.target.value as Lead['stage'])}
+                  onChange={(e) => setNewStage(e.target.value as LeadStage)}
                   className="w-full text-xs p-2 border border-slate-200 dark:border-slate-855 rounded-xl bg-white dark:bg-slate-850 text-slate-800 dark:text-white font-bold outline-none focus:border-indigo-400"
                 >
                   {stages.map(s => (
@@ -1316,7 +1639,7 @@ export default function SchoolCrmHub() {
               )}
 
               {/* Dynamic inputs for Financial Details (RESERVED, ENROLLED stages) */}
-              {['RESERVED', 'ENROLLED'].includes(newStage) && (
+              {financialStages.includes(newStage) && (
                 <div className="md:col-span-2 p-3.5 bg-indigo-50/20 dark:bg-indigo-950/10 border border-indigo-100 dark:border-indigo-900 rounded-2xl space-y-3.5 animate-in fade-in slide-in-from-top-1 duration-200">
                   <span className="block text-[10.5px] font-bold text-indigo-700 dark:text-indigo-300 uppercase tracking-wider font-mono">Thông Tin Tài Chính & Ưu Đãi (Đã giữ chỗ)</span>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -1407,7 +1730,7 @@ export default function SchoolCrmHub() {
                 />
               </div>
 
-              {['TESTING', 'RESERVED', 'ENROLLED'].includes(newStage) && (
+              {testedStages.includes(newStage) && (
                 <>
                   <div className="animate-in fade-in slide-in-from-top-1 duration-200">
                     <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 font-mono">Điểm kiểm tra (testScore)</label>
@@ -1572,18 +1895,18 @@ export default function SchoolCrmHub() {
       )}
 
         {/* Kanban Board - Responsive Grid Layout (Fits screen on desktop) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pb-4 select-none">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-7 gap-3 pb-4 select-none">
           {stages.map(col => {
             const colLeads = leads.filter(l => l.stage === col.key);
 
             return (
               <div
                 key={col.key}
-                className={`p-4 rounded-2xl border ${col.bg} flex flex-col min-h-[480px] w-full transition-all duration-300`}
+                className={`p-3 rounded-2xl border ${col.bg} flex flex-col min-h-[460px] w-full transition-all duration-300`}
               >
                 {/* Column header */}
                 <div className="flex items-center justify-between pb-3 border-b border-slate-250/40 dark:border-slate-800/40 mb-3">
-                  <span className={`text-[12px] font-black ${col.text}`}>{col.label}</span>
+                  <span className={`text-[11px] font-black ${col.text}`}>{col.shortLabel}</span>
                   <span className="px-2 py-0.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full text-[9.5px] font-mono font-bold text-slate-500 dark:text-slate-400">
                     {colLeads.length}
                   </span>
@@ -1619,6 +1942,28 @@ export default function SchoolCrmHub() {
                           PH: {lead.parentName} • SĐT: {lead.phone}
                         </div>
 
+                        <div className="mt-2 grid grid-cols-2 gap-1.5 text-[8.5px]">
+                          <span className="px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-100 font-bold truncate">
+                            {lead.campaignName || lead.source}
+                          </span>
+                          <span className={`px-1.5 py-0.5 rounded border font-bold text-center ${
+                            lead.interestLevel === 'HOT'
+                              ? 'bg-rose-50 text-rose-700 border-rose-100'
+                              : lead.interestLevel === 'WARM'
+                                ? 'bg-amber-50 text-amber-700 border-amber-100'
+                                : 'bg-slate-50 text-slate-600 border-slate-150'
+                          }`}>
+                            {lead.interestLevel || 'WARM'}
+                          </span>
+                        </div>
+
+                        {lead.nextFollowUpDate && lead.stage !== 'ENROLLED' && (
+                          <div className="mt-2 p-1.5 bg-rose-500/10 border border-rose-100 dark:border-rose-900/20 text-rose-700 dark:text-rose-400 rounded-lg text-[9px] font-semibold flex items-center gap-1">
+                            <PhoneCall className="w-3 h-3 text-rose-500" />
+                            <span>Chăm sóc: {lead.nextFollowUpDate}</span>
+                          </div>
+                        )}
+
                         {/* Display scheduling parameters (TESTING stage) */}
                         {lead.stage === 'TESTING' && lead.testDate && (
                           <div className="mt-2 p-1.5 bg-amber-500/10 border border-amber-100 dark:border-amber-900/20 text-amber-700 dark:text-amber-400 rounded-lg text-[9px] font-semibold flex items-center gap-1">
@@ -1628,7 +1973,7 @@ export default function SchoolCrmHub() {
                         )}
 
                         {/* Display dynamic discount summary badge (RESERVED stage or later) */}
-                        {['RESERVED', 'ENROLLED'].includes(lead.stage) && totalDiscount > 0 && (
+                        {financialStages.includes(lead.stage) && totalDiscount > 0 && (
                           <div className="mt-2 p-1.5 bg-cyan-500/10 border border-cyan-100 dark:border-cyan-900/20 text-cyan-700 dark:text-cyan-400 rounded-lg text-[9px] font-bold flex items-center gap-1 justify-between">
                             <span className="flex items-center gap-1"><DollarSign className="w-3 h-3 text-cyan-500" /> Ưu đãi:</span>
                             <span>{formatCurrency(totalDiscount)}</span>
@@ -1639,7 +1984,7 @@ export default function SchoolCrmHub() {
                         <div className="mt-2 flex items-center justify-between text-[9.5px]">
                           <span className="text-slate-400 dark:text-slate-500">Hồ sơ bàn giao:</span>
                           <span className={`px-1.5 py-0.2 rounded border text-[8.5px] font-bold ${docStatus.bg}`}>
-                            {docStatus.label} ({docStatus.count}/3)
+                            {docStatus.label} ({docStatus.count}/7)
                           </span>
                         </div>
 
@@ -1813,10 +2158,13 @@ export default function SchoolCrmHub() {
                     <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 font-mono">Nguồn marketing</label>
                     <select
                       value={editSource}
-                      onChange={(e) => setEditSource(e.target.value as any)}
+                      onChange={(e) => setEditSource(e.target.value as LeadSource)}
                       className="w-full text-xs p-2 border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-800 text-slate-800 dark:text-white outline-none focus:border-indigo-400"
                     >
                       <option value="Social">Mạng xã hội (Social)</option>
+                      <option value="Facebook">Facebook Ads</option>
+                      <option value="Google">Google Ads</option>
+                      <option value="TikTok">TikTok Ads</option>
                       <option value="Website">Cổng thông tin (Website)</option>
                       <option value="Referral">Người giới thiệu (Referral)</option>
                       <option value="Event">Sự kiện tuyển sinh (Event)</option>
@@ -1826,7 +2174,7 @@ export default function SchoolCrmHub() {
                     <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 font-mono">Trạng thái tuyển sinh</label>
                     <select
                       value={editStage}
-                      onChange={(e) => setEditStage(e.target.value as Lead['stage'])}
+                      onChange={(e) => setEditStage(e.target.value as LeadStage)}
                       className="w-full text-xs p-2 border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-800 text-slate-800 dark:text-white font-semibold outline-none focus:border-indigo-400"
                     >
                       {stages.map(s => (
@@ -1879,7 +2227,7 @@ export default function SchoolCrmHub() {
                   )}
 
                   {/* Edit Financial Details (RESERVED, ENROLLED stages) */}
-                  {['RESERVED', 'ENROLLED'].includes(editStage) && (
+                  {financialStages.includes(editStage) && (
                     <div className="md:col-span-2 p-3 bg-indigo-50/20 dark:bg-indigo-950/10 border border-indigo-100 dark:border-indigo-900 rounded-xl space-y-3 animate-in fade-in duration-200">
                       <span className="block text-[10.5px] font-bold text-indigo-700 dark:text-indigo-300 uppercase tracking-wider font-mono">Thông Tin Tài Chính & Ưu Đãi</span>
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -1959,7 +2307,7 @@ export default function SchoolCrmHub() {
                     </div>
                   )}
 
-                  {['TESTING', 'RESERVED', 'ENROLLED'].includes(editStage) && (
+                  {testedStages.includes(editStage) && (
                     <>
                       <div>
                         <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 font-mono">Điểm kiểm tra</label>
@@ -2041,12 +2389,28 @@ export default function SchoolCrmHub() {
                       {stages.find(s => s.key === selectedLead.stage)?.label}
                     </span>
                   </div>
+                  <div>
+                    <span className="text-slate-400 dark:text-slate-500 font-medium block">Chiến dịch</span>
+                    <span className="font-bold text-slate-800 dark:text-slate-200 mt-0.5 block">{selectedLead.campaignName || 'Chưa gắn chiến dịch'}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 dark:text-slate-500 font-medium block">Tư vấn phụ trách</span>
+                    <span className="font-bold text-slate-800 dark:text-slate-200 mt-0.5 block">{selectedLead.leadOwner || 'Phòng Tuyển sinh'}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 dark:text-slate-500 font-medium block">Mức độ quan tâm</span>
+                    <span className="font-bold text-slate-800 dark:text-slate-200 mt-0.5 block">{selectedLead.interestLevel || 'WARM'}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 dark:text-slate-500 font-medium block">Chăm sóc tiếp theo</span>
+                    <span className="font-bold text-rose-600 dark:text-rose-300 mt-0.5 block">{selectedLead.nextFollowUpDate || 'Không còn lịch chăm sóc'}</span>
+                  </div>
                 </div>
 
                 {/* Display checklist status dynamically */}
                 <div className="p-3 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl">
                   <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 font-mono">Bàn giao hồ sơ (Nhấp để thay đổi nhanh)</span>
-                  <div className="flex gap-4 text-xs font-semibold text-slate-700 dark:text-slate-350">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-semibold text-slate-700 dark:text-slate-350">
                     <label className="flex items-center gap-1.5 cursor-pointer select-none">
                       <input 
                         type="checkbox" 
@@ -2073,6 +2437,42 @@ export default function SchoolCrmHub() {
                         className="rounded text-indigo-600 focus:ring-indigo-400" 
                       />
                       <span>Ảnh 3x4</span>
+                    </label>
+                    <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                      <input 
+                        type="checkbox" 
+                        checked={selectedLead.docChecklist?.cccdParent || false} 
+                        onChange={() => handleToggleDocStatic(selectedLead.id, 'cccdParent')}
+                        className="rounded text-indigo-600 focus:ring-indigo-400" 
+                      />
+                      <span>CCCD phụ huynh</span>
+                    </label>
+                    <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                      <input 
+                        type="checkbox" 
+                        checked={selectedLead.docChecklist?.healthRecord || false} 
+                        onChange={() => handleToggleDocStatic(selectedLead.id, 'healthRecord')}
+                        className="rounded text-indigo-600 focus:ring-indigo-400" 
+                      />
+                      <span>Hồ sơ y tế</span>
+                    </label>
+                    <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                      <input 
+                        type="checkbox" 
+                        checked={selectedLead.docChecklist?.paymentProof || false} 
+                        onChange={() => handleToggleDocStatic(selectedLead.id, 'paymentProof')}
+                        className="rounded text-indigo-600 focus:ring-indigo-400" 
+                      />
+                      <span>Xác nhận đóng phí</span>
+                    </label>
+                    <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                      <input 
+                        type="checkbox" 
+                        checked={selectedLead.docChecklist?.admissionForm || false} 
+                        onChange={() => handleToggleDocStatic(selectedLead.id, 'admissionForm')}
+                        className="rounded text-indigo-600 focus:ring-indigo-400" 
+                      />
+                      <span>Đơn nhập học</span>
                     </label>
                   </div>
                 </div>
@@ -2115,7 +2515,7 @@ export default function SchoolCrmHub() {
                 )}
 
                 {/* Display billing and discounts details inside Modal (RESERVED stage or later) */}
-                {['RESERVED', 'ENROLLED'].includes(selectedLead.stage) && (
+                {financialStages.includes(selectedLead.stage) && (
                   <div className="p-4 bg-indigo-50/30 dark:bg-indigo-950/15 border border-indigo-100 dark:border-indigo-900/50 rounded-xl space-y-3">
                     <span className="block text-[11px] font-bold text-indigo-700 dark:text-indigo-300 uppercase tracking-wider font-mono">Chi tiết biểu phí & ưu đãi học sinh</span>
                     <div className="grid grid-cols-2 gap-3 text-xs">
@@ -2177,7 +2577,7 @@ export default function SchoolCrmHub() {
                 )}
 
                 {/* Test score & Scholarship Display in Modal with Send Email Action */}
-                {['TESTING', 'RESERVED', 'ENROLLED'].includes(selectedLead.stage) && (
+                {testedStages.includes(selectedLead.stage) && (
                   <div className="p-3 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl space-y-3">
                     <div className="grid grid-cols-2 gap-3 text-xs">
                       <div>
@@ -2301,6 +2701,49 @@ export default function SchoolCrmHub() {
               <Bar dataKey="value" fill="#6366f1" radius={[4, 4, 0, 0]} isAnimationActive={false} />
             </BarChart>
           </ResponsiveContainer>
+        </div>
+      </div>
+
+      <div className="bg-white border border-slate-200 dark:border-slate-800/80 p-5 rounded-2xl shadow-xs space-y-4">
+        <div>
+          <h4 className="font-display font-extrabold text-slate-900 dark:text-white text-sm">Lộ trình tích hợp tuyển sinh</h4>
+          <p className="text-[11px] text-slate-500 mt-1">Các đầu nối đã được chuẩn hóa theo 3 giai đoạn để chuyển từ vận hành thủ công sang tự động hóa.</p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          {[
+            {
+              title: 'Giai đoạn 1 - CRM lõi',
+              status: 'Đã triển khai',
+              items: ['Pipeline 7 bước', 'Hồ sơ lead 360°', 'Lịch kiểm tra', 'Checklist nhập học', 'Báo cáo nguồn'],
+            },
+            {
+              title: 'Giai đoạn 2 - Tự động hóa',
+              status: 'Sẵn sàng cấu hình',
+              items: ['Nhắc chăm sóc lead', 'Email SMTP', 'Zalo OA Broadcast', 'Gửi thư mời test', 'Gửi kết quả học bổng'],
+            },
+            {
+              title: 'Giai đoạn 3 - Quảng cáo/web form',
+              status: 'Sẵn sàng nối API',
+              items: ['Import Excel/CSV', 'Nguồn Google/Facebook/TikTok', 'Chiến dịch quảng cáo', 'Chi phí/lead', 'Chuyển lead thành học sinh'],
+            },
+          ].map(section => (
+            <div key={section.title} className="rounded-2xl border border-slate-150 bg-slate-50/60 dark:bg-slate-900/60 dark:border-slate-800 p-4">
+              <div className="flex items-start justify-between gap-2">
+                <h5 className="text-xs font-black text-slate-900 dark:text-white">{section.title}</h5>
+                <span className="shrink-0 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100 px-2 py-0.5 text-[9px] font-black">
+                  {section.status}
+                </span>
+              </div>
+              <ul className="mt-3 space-y-1.5">
+                {section.items.map(item => (
+                  <li key={item} className="flex items-center gap-2 text-[11px] text-slate-600 dark:text-slate-350">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </div>
       </div>
     </div>
