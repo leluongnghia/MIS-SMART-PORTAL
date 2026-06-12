@@ -5,6 +5,7 @@ import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGri
 type LeadStage = 'NEW' | 'CONSULTING' | 'TOUR' | 'TESTING' | 'OFFER' | 'RESERVED' | 'ENROLLED';
 type LeadSource = 'Social' | 'Website' | 'Referral' | 'Event' | 'Google' | 'Facebook' | 'TikTok';
 type InterestLevel = 'HOT' | 'WARM' | 'COLD';
+type LeadPriority = 'A' | 'B' | 'C';
 
 interface Lead {
   id: string;
@@ -80,6 +81,55 @@ const getDefaultFollowUpDate = (stage: LeadStage) => {
   const date = new Date();
   date.setDate(date.getDate() + days);
   return date.toISOString().split('T')[0];
+};
+
+const addDays = (days: number) => {
+  const date = new Date();
+  date.setDate(date.getDate() + days);
+  return date.toISOString().split('T')[0];
+};
+
+const getChecklistCount = (lead: Partial<Lead>) => {
+  const checklist = lead.docChecklist || { hocBa: false, khaiSinh: false, anh3x4: false };
+  return [
+    checklist.hocBa,
+    checklist.khaiSinh,
+    checklist.anh3x4,
+    checklist.cccdParent,
+    checklist.healthRecord,
+    checklist.paymentProof,
+    checklist.admissionForm,
+  ].filter(Boolean).length;
+};
+
+const getLeadScore = (lead: Lead) => {
+  const stageIndex = leadStageOrder.indexOf(lead.stage);
+  const stageScore = Math.max(0, stageIndex) * 10;
+  const sourceScore = lead.source === 'Referral' ? 12 : lead.source === 'Event' ? 10 : lead.source === 'Website' ? 8 : 6;
+  const interactionScore = Math.min(18, (lead.interactions?.length || 0) * 3);
+  const testScore = lead.testScore ? 10 : 0;
+  const scholarshipScore = lead.scholarshipInfo ? 8 : 0;
+  const documentScore = Math.min(14, getChecklistCount(lead) * 2);
+  const financialScore = financialStages.includes(lead.stage) ? 12 : 0;
+  const interestScore = lead.interestLevel === 'HOT' ? 14 : lead.interestLevel === 'WARM' ? 8 : 2;
+  const emailScore = lead.email ? 4 : 0;
+  const rawScore = stageScore + sourceScore + interactionScore + testScore + scholarshipScore + documentScore + financialScore + interestScore + emailScore;
+  const score = Math.min(100, rawScore);
+  const priority: LeadPriority = score >= 80 ? 'A' : score >= 55 ? 'B' : 'C';
+  const reasons = [
+    stageScore >= 40 ? 'Đã tiến sâu trong pipeline' : 'Còn ở giai đoạn đầu',
+    lead.interestLevel === 'HOT' ? 'Mức quan tâm cao' : lead.interestLevel === 'WARM' ? 'Có tín hiệu quan tâm' : 'Cần nuôi dưỡng thêm',
+    lead.testScore ? 'Đã có kết quả kiểm tra' : 'Chưa có điểm kiểm tra',
+    getChecklistCount(lead) >= 5 ? 'Hồ sơ gần hoàn thiện' : 'Hồ sơ còn thiếu',
+    lead.source === 'Referral' ? 'Nguồn giới thiệu có độ tin cậy cao' : `Nguồn ${lead.source}`,
+  ];
+  return { score, priority, reasons };
+};
+
+const getPriorityClass = (priority: LeadPriority) => {
+  if (priority === 'A') return 'bg-rose-50 text-rose-700 border-rose-100';
+  if (priority === 'B') return 'bg-amber-50 text-amber-700 border-amber-100';
+  return 'bg-slate-50 text-slate-600 border-slate-150';
 };
 
 const normalizeLead = (raw: Partial<Lead>): Lead => {
@@ -477,11 +527,43 @@ export default function SchoolCrmHub() {
     return Array.from(bySource.values()).sort((a, b) => b.leads - a.leads);
   }, [leads]);
 
+  const scoredLeads = useMemo(() => {
+    return leads
+      .map(lead => ({ lead, scoring: getLeadScore(lead) }))
+      .sort((a, b) => b.scoring.score - a.scoring.score);
+  }, [leads]);
+
+  const averageLeadScore = useMemo(() => {
+    if (scoredLeads.length === 0) return 0;
+    return Math.round(scoredLeads.reduce((sum, item) => sum + item.scoring.score, 0) / scoredLeads.length);
+  }, [scoredLeads]);
+
+  const priorityALeads = useMemo(() => scoredLeads.filter(item => item.scoring.priority === 'A'), [scoredLeads]);
+
+  const slaTasks = useMemo(() => {
+    const today = new Date().toISOString().split('T')[0];
+    return leads
+      .filter(lead => lead.stage !== 'ENROLLED')
+      .map(lead => {
+        const dueDate = lead.nextFollowUpDate || getDefaultFollowUpDate(lead.stage);
+        const scoring = getLeadScore(lead);
+        const status = dueDate < today ? 'OVERDUE' : dueDate === today ? 'DUE_TODAY' : 'UPCOMING';
+        return { lead, dueDate, scoring, status };
+      })
+      .sort((a, b) => {
+        const statusOrder = { OVERDUE: 0, DUE_TODAY: 1, UPCOMING: 2 };
+        return statusOrder[a.status] - statusOrder[b.status] || a.dueDate.localeCompare(b.dueDate) || b.scoring.score - a.scoring.score;
+      });
+  }, [leads]);
+
+  const overdueSlaCount = useMemo(() => slaTasks.filter(task => task.status === 'OVERDUE').length, [slaTasks]);
+  const dueTodaySlaCount = useMemo(() => slaTasks.filter(task => task.status === 'DUE_TODAY').length, [slaTasks]);
+
   // Export CSV function
   const handleExportCsv = () => {
     const headers = [
       'ID', 'Tên Học Sinh', 'Tên Phụ Huynh', 'Số Điện Thoại', 'Email', 
-      'Trạng Thái Tuyển Sinh', 'Nguồn Tiếp Cận', 'Chiến Dịch', 'Tư Vấn Viên', 'Mức Quan Tâm', 'Chăm Sóc Tiếp Theo', 'Điểm Test', 'Học Bổng', 
+      'Trạng Thái Tuyển Sinh', 'Nguồn Tiếp Cận', 'Chiến Dịch', 'Tư Vấn Viên', 'Lead Score', 'Priority', 'Mức Quan Tâm', 'Chăm Sóc Tiếp Theo', 'Điểm Test', 'Học Bổng', 
       'Học Bạ Gốc', 'Bản Sao Khai Sinh', 'Ảnh 3x4', 'CCCD Phụ Huynh', 'Hồ Sơ Y Tế', 'Xác Nhận Đóng Phí', 'Đơn Nhập Học', 'Trạng Thái Hồ Sơ', 
       'Học Phí Gốc', 'Ưu Đãi Học Phí', 'Ưu Đãi Học Bổng', 'Ưu Đãi Đóng Sớm', 
       'Phí Bổ Trợ', 'Ưu Đãi Khác', 'Tổng Ưu Đãi', 'Lịch Test', 'Ghi Chú'
@@ -489,6 +571,7 @@ export default function SchoolCrmHub() {
     
     const rows = leads.map(l => {
       const docStatus = getDocumentStatus(l);
+      const scoring = getLeadScore(l);
       const totalDiscount = (l.tuitionDiscount || 0) + (l.scholarshipDiscount || 0) + (l.phaseEnrollmentDiscount || 0) + (l.otherDiscount || 0);
       const testSchedule = l.testDate ? `${l.testDate} ${l.testTime || ''}`.trim() : '';
       return [
@@ -501,6 +584,8 @@ export default function SchoolCrmHub() {
         l.source,
         l.campaignName || '',
         l.leadOwner || '',
+        scoring.score,
+        scoring.priority,
         l.interestLevel || '',
         l.nextFollowUpDate || '',
         l.testScore || '',
@@ -543,6 +628,7 @@ export default function SchoolCrmHub() {
   const buildCrmReportRows = () => {
     return leads.map(l => {
       const docStatus = getDocumentStatus(l);
+      const scoring = getLeadScore(l);
       const totalDiscount = (l.tuitionDiscount || 0) + (l.scholarshipDiscount || 0) + (l.phaseEnrollmentDiscount || 0) + (l.otherDiscount || 0);
       const testSchedule = l.testDate ? `${l.testDate} ${l.testTime || ''}`.trim() : 'Chưa xếp lịch';
       return {
@@ -555,6 +641,8 @@ export default function SchoolCrmHub() {
         source: l.source,
         campaignName: l.campaignName || 'Chưa gắn chiến dịch',
         leadOwner: l.leadOwner || 'Phòng Tuyển sinh',
+        leadScore: scoring.score,
+        priority: scoring.priority,
         interestLevel: l.interestLevel || 'WARM',
         nextFollowUpDate: l.nextFollowUpDate || '',
         testScore: l.testScore || 'Chưa có',
@@ -612,6 +700,8 @@ export default function SchoolCrmHub() {
       ['source', 'Nguồn'],
       ['campaignName', 'Chiến dịch'],
       ['leadOwner', 'Tư vấn phụ trách'],
+      ['leadScore', 'Lead Score'],
+      ['priority', 'Priority'],
       ['interestLevel', 'Mức quan tâm'],
       ['nextFollowUpDate', 'Ngày chăm sóc tiếp theo'],
       ['testScore', 'Điểm test'],
@@ -984,6 +1074,44 @@ export default function SchoolCrmHub() {
         };
       }
       return l;
+    }));
+  };
+
+  const handleCompleteFollowUp = (leadId: string) => {
+    setLeads(prev => prev.map(lead => {
+      if (lead.id !== leadId) return lead;
+      const nextDate = getDefaultFollowUpDate(lead.stage);
+      return {
+        ...lead,
+        nextFollowUpDate: nextDate,
+        interactions: [
+          ...lead.interactions,
+          {
+            date: new Date().toISOString().split('T')[0],
+            type: 'Hoàn thành chăm sóc',
+            content: `Đã xử lý SLA chăm sóc lead. Lịch chăm sóc tiếp theo: ${nextDate}`,
+          },
+        ],
+      };
+    }));
+  };
+
+  const handleSnoozeFollowUp = (leadId: string, days = 1) => {
+    setLeads(prev => prev.map(lead => {
+      if (lead.id !== leadId) return lead;
+      const nextDate = addDays(days);
+      return {
+        ...lead,
+        nextFollowUpDate: nextDate,
+        interactions: [
+          ...lead.interactions,
+          {
+            date: new Date().toISOString().split('T')[0],
+            type: 'Dời lịch chăm sóc',
+            content: `Dời lịch chăm sóc lead sang ngày ${nextDate}`,
+          },
+        ],
+      };
     }));
   };
 
@@ -1458,6 +1586,81 @@ export default function SchoolCrmHub() {
         </div>
       </div>
 
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+        <div className="bg-white border border-slate-200 dark:border-slate-800/80 p-5 rounded-2xl shadow-xs space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-display font-extrabold text-slate-900 dark:text-white text-sm">Lead scoring</h3>
+              <p className="text-[11px] text-slate-500 mt-1">Tự động chấm điểm để ưu tiên tư vấn.</p>
+            </div>
+            <span className="rounded-xl bg-indigo-50 text-indigo-700 border border-indigo-100 px-3 py-1 text-xs font-black">
+              AVG {averageLeadScore}/100
+            </span>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            <div className="rounded-xl border border-rose-100 bg-rose-50 p-3">
+              <span className="text-[10px] font-black text-rose-700">Ưu tiên A</span>
+              <strong className="block text-xl font-black text-rose-800">{priorityALeads.length}</strong>
+            </div>
+            <div className="rounded-xl border border-amber-100 bg-amber-50 p-3">
+              <span className="text-[10px] font-black text-amber-700">Đến hạn</span>
+              <strong className="block text-xl font-black text-amber-800">{dueTodaySlaCount}</strong>
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <span className="text-[10px] font-black text-slate-600">Quá hạn</span>
+              <strong className="block text-xl font-black text-slate-900">{overdueSlaCount}</strong>
+            </div>
+          </div>
+        </div>
+
+        <div className="xl:col-span-2 bg-white border border-slate-200 dark:border-slate-800/80 p-5 rounded-2xl shadow-xs space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="font-display font-extrabold text-slate-900 dark:text-white text-sm">Task/SLA chăm sóc lead</h3>
+            <span className="text-[10px] font-bold text-slate-400">Tự sinh từ ngày chăm sóc tiếp theo</span>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-72 overflow-y-auto">
+            {slaTasks.slice(0, 8).map(task => (
+              <div key={task.lead.id} className={`rounded-xl border p-3 ${
+                task.status === 'OVERDUE'
+                  ? 'bg-rose-50/60 border-rose-100'
+                  : task.status === 'DUE_TODAY'
+                    ? 'bg-amber-50/60 border-amber-100'
+                    : 'bg-slate-50/60 border-slate-150'
+              }`}>
+                <div className="flex items-start justify-between gap-2">
+                  <button type="button" onClick={() => setSelectedLeadId(task.lead.id)} className="text-left">
+                    <strong className="block text-xs text-slate-900">{task.lead.studentName}</strong>
+                    <span className="block text-[10.5px] text-slate-500 mt-0.5">{task.lead.parentName} - {task.lead.phone}</span>
+                  </button>
+                  <span className={`shrink-0 px-2 py-0.5 rounded-full border text-[9px] font-black ${getPriorityClass(task.scoring.priority)}`}>
+                    {task.scoring.priority} / {task.scoring.score}
+                  </span>
+                </div>
+                <div className="mt-2 flex items-center justify-between gap-2 text-[10px]">
+                  <span className="font-mono font-bold text-slate-500">SLA: {task.dueDate}</span>
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => handleCompleteFollowUp(task.lead.id)}
+                      className="px-2 py-1 rounded-lg bg-emerald-600 text-white font-bold hover:bg-emerald-700"
+                    >
+                      Đã chăm sóc
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleSnoozeFollowUp(task.lead.id, 1)}
+                      className="px-2 py-1 rounded-lg bg-white border border-slate-200 text-slate-600 font-bold hover:bg-slate-50"
+                    >
+                      +1 ngày
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
       {/* Main Admissions Pipeline Board */}
       <div className="space-y-4">
         <div className="flex items-center justify-between flex-wrap gap-2">
@@ -1917,6 +2120,7 @@ export default function SchoolCrmHub() {
                   {colLeads.map(lead => {
                     const docStatus = getDocumentStatus(lead);
                     const totalDiscount = (lead.tuitionDiscount || 0) + (lead.scholarshipDiscount || 0) + (lead.phaseEnrollmentDiscount || 0) + (lead.otherDiscount || 0);
+                    const leadScoring = getLeadScore(lead);
                     
                     return (
                       <div
@@ -1929,6 +2133,9 @@ export default function SchoolCrmHub() {
                             {lead.studentName}
                           </h4>
                           <div className="flex items-center gap-1 shrink-0">
+                            <span className={`px-1.5 py-0.5 text-[8.5px] font-black rounded border ${getPriorityClass(leadScoring.priority)}`}>
+                              {leadScoring.priority}{leadScoring.score}
+                            </span>
                             <span className="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-[8.5px] font-mono text-slate-500 dark:text-slate-455 rounded font-semibold">
                               {lead.grade || 'Lớp 10'}
                             </span>
@@ -2362,6 +2569,31 @@ export default function SchoolCrmHub() {
               </form>
             ) : (
               <>
+                {(() => {
+                  const selectedScoring = getLeadScore(selectedLead);
+                  return (
+                    <div className="rounded-xl border border-indigo-100 bg-indigo-50/50 p-3 text-xs">
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <span className="text-[10px] font-black uppercase tracking-wider text-indigo-600">Lead scoring tự động</span>
+                          <p className="mt-1 text-slate-600">Điểm dùng để ưu tiên chăm sóc và dự báo khả năng nhập học.</p>
+                        </div>
+                        <span className={`rounded-xl border px-3 py-1.5 text-sm font-black ${getPriorityClass(selectedScoring.priority)}`}>
+                          {selectedScoring.priority} - {selectedScoring.score}/100
+                        </span>
+                      </div>
+                      <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                        {selectedScoring.reasons.map(reason => (
+                          <div key={reason} className="flex items-center gap-1.5 text-[11px] text-slate-700">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                            <span>{reason}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
+
                 <div className="grid grid-cols-2 gap-4 text-xs">
                   <div>
                     <span className="text-slate-400 dark:text-slate-500 font-medium block">Tên phụ huynh</span>
