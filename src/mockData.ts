@@ -139,7 +139,7 @@ export const MOCK_USERS: UserProfile[] = [
   {
     id: 'user_triet',
     email: 'triet@mis.edu.vn',
-    name: 'Thầy Chưa Biết Chừng',
+    name: 'Thầy Nguyễn Minh Triết',
     role: 'ADMIN',
     roleName: 'Ban Giám hiệu',
     title: 'Hiệu trưởng (Trưởng ban Giám hiệu)',
@@ -192,7 +192,7 @@ export const MOCK_USERS: UserProfile[] = [
     name: 'Cô Hoàng Trúc Liên',
     role: 'MANAGER',
     roleName: 'Tổ trưởng Chức năng',
-    title: 'Tổ trưởng Tổ Ngữ văn phòng - Hành chính',
+    title: 'Tổ trưởng Tổ Văn phòng - Hành chính',
     avatar: 'https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?w=150&h=150&fit=crop&crop=face',
     workspaceId: 'HANH_CHINH'
   },
@@ -1245,13 +1245,13 @@ export const INITIAL_TASKS: Task[] = [
     status: 'CHO_DUYET',
     deadline: '2026-06-01',
     tag: 'Báo cáo',
-    createdBy: 'Thầy Chưa Biết Chừng',
+    createdBy: 'Thầy Nguyễn Minh Triết',
     reportEvidence: 'Đã tổng hợp đầy đủ hồ sơ biên bản dự giờ của 10 giáo viên trong tổ chuyên môn. Thống kê có 8 tiết đạt loại Xuất sắc, 2 tiết đạt loại Khá. Kính gửi Hiệu trưởng phê duyệt danh sách đề xuất thi đua.',
     comments: [],
     history: [
       {
         id: 'h1_t2',
-        userName: 'Thầy Chưa Biết Chừng',
+        userName: 'Thầy Nguyễn Minh Triết',
         userTitle: 'Hiệu trưởng',
         action: 'Đã giao việc cho Tổ trưởng Lê Thị Thanh Nhàn',
         createdAt: '2026-05-25 15:00'
@@ -1280,11 +1280,11 @@ export const INITIAL_TASKS: Task[] = [
     status: 'DANG_TIEN_HANH',
     deadline: '2026-06-15',
     tag: 'Hội họp',
-    createdBy: 'Thầy Chưa Biết Chừng',
+    createdBy: 'Thầy Nguyễn Minh Triết',
     comments: [
       {
         id: 'c1_t3',
-        userName: 'Thầy Chưa Biết Chừng',
+        userName: 'Thầy Nguyễn Minh Triết',
         userTitle: 'Hiệu trưởng',
         content: 'Nhớ kết hợp chặt chẽ với Đoàn thanh niên để trang trí maket và sắp xếp đội ngũ tiếp tân thật chu đáo.',
         createdAt: '2026-05-30 09:12'
@@ -1293,7 +1293,7 @@ export const INITIAL_TASKS: Task[] = [
     history: [
       {
         id: 'h1_t3',
-        userName: 'Thầy Chưa Biết Chừng',
+        userName: 'Thầy Nguyễn Minh Triết',
         userTitle: 'Hiệu trưởng',
         action: 'Đã khởi tạo công việc trọng tâm trường học',
         createdAt: '2026-05-29 11:00'
@@ -1330,7 +1330,7 @@ export const INITIAL_TASKS: Task[] = [
     description: 'Xác định chỉ tiêu tuyển sinh các lớp thường và lớp chuyên, phân bổ số phòng thi tuyển sinh, hồ sơ đăng ký dự tuyển và quy chế xét tuyển.',
     workspaceId: 'BGH',
     assignedId: 'user_triet',
-    assignedName: 'Thầy Chưa Biết Chừng',
+    assignedName: 'Thầy Nguyễn Minh Triết',
     assignedRole: 'Hiệu trưởng (Trưởng ban Giám hiệu)',
     priority: 'CAO',
     status: 'HOAN_THANH',
@@ -1341,7 +1341,7 @@ export const INITIAL_TASKS: Task[] = [
     history: [
       {
         id: 'h1_t5',
-        userName: 'Thầy Chưa Biết Chừng',
+        userName: 'Thầy Nguyễn Minh Triết',
         userTitle: 'Hiệu trưởng',
         action: 'Đã phê duyệt và phát hành bản cứng tới các tổ chuyên môn',
         createdAt: '2026-05-28 17:00'
@@ -1360,12 +1360,12 @@ export const INITIAL_TASKS: Task[] = [
     status: 'CHUA_BAT_DA',
     deadline: '2026-06-12',
     tag: 'Báo cáo',
-    createdBy: 'Thầy Chưa Biết Chừng',
+    createdBy: 'Thầy Nguyễn Minh Triết',
     comments: [],
     history: [
       {
         id: 'h1_t6',
-        userName: 'Thầy Chưa Biết Chừng',
+        userName: 'Thầy Nguyễn Minh Triết',
         userTitle: 'Hiệu trưởng',
         action: 'Đã giao việc ưu tiên kiểm tra hạ tầng mùa thi',
         createdAt: '2026-05-29 09:00'
@@ -1695,12 +1695,12 @@ export const INITIAL_TASKS: Task[] = [
     status: 'DANG_TIEN_HANH',
     deadline: '2026-06-25',
     tag: 'Chuyên môn',
-    createdBy: 'Thầy Chưa Biết Chừng',
+    createdBy: 'Thầy Nguyễn Minh Triết',
     comments: [],
     history: [
       {
         id: 'h1_t15',
-        userName: 'Thầy Chưa Biết Chừng',
+        userName: 'Thầy Nguyễn Minh Triết',
         userTitle: 'Hiệu trưởng',
         action: 'Giao Ban Quốc tế tuyển dụng bổ sung nhân lực chất lượng cao',
         createdAt: '2026-05-30 14:00'
@@ -1840,7 +1840,7 @@ export const INITIAL_TASKS: Task[] = [
     description: 'Chuẩn bị hồ sơ pháp chế gửi Sở Giáo dục Đào tạo đăng ký danh mục các khóa bồi dưỡng ngắn hạn Đa trí tuệ hè năm 2026.',
     workspaceId: 'BGH',
     assignedId: 'user_triet',
-    assignedName: 'Thầy Chưa Biết Chừng',
+    assignedName: 'Thầy Nguyễn Minh Triết',
     assignedRole: 'Hiệu trưởng',
     priority: 'CAO',
     status: 'CHO_DUYET',
@@ -2022,7 +2022,7 @@ export const INITIAL_TASKS: Task[] = [
     status: 'CHO_DUYET',
     deadline: '2026-06-06',
     tag: 'Báo cáo',
-    createdBy: 'Thầy Chưa Biết Chừng',
+    createdBy: 'Thầy Nguyễn Minh Triết',
     reportEvidence: 'Biên bản số 45 đã hoàn thành đối chiếu chéo số học sinh là 452 em khối 12, không lỗi trường thuộc tính định danh. Toàn bộ danh mục học viện đã sẵn sàng trình lãnh đạo ký đóng dấu số.',
     comments: [],
     history: []

@@ -226,12 +226,12 @@ export default function TeacherHrHub({ currentUser, users, onUpdateUsers }: Teac
                   <strong className="text-[11px] text-indigo-650 dark:text-indigo-400 block font-black uppercase tracking-wider font-mono">Ban Giám hiệu (BGH)</strong>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {/* Cấp THPT & Chung - Thầy Chưa Biết Chừng */}
+                  {/* Cấp THPT & Chung - Thầy Nguyễn Minh Triết */}
                   <div className="p-3.5 bg-indigo-50/50 dark:bg-indigo-900/10 border border-indigo-200 dark:border-indigo-800/80 rounded-xl text-center shadow-4xs flex flex-col justify-between items-center relative overflow-hidden group hover:border-indigo-500 transition-colors">
                     <div className="absolute top-0 left-0 right-0 h-1 bg-indigo-600"></div>
                     <div className="w-full">
                       <span className="px-2 py-0.5 bg-indigo-600 text-white text-[9px] font-black uppercase tracking-wide rounded font-mono">Cấp THPT</span>
-                      <strong className="text-xs text-slate-800 dark:text-white block font-bold mt-2.5">Thầy Chưa Biết Chừng</strong>
+                      <strong className="text-xs text-slate-800 dark:text-white block font-bold mt-2.5">Thầy Nguyễn Minh Triết</strong>
                     </div>
                     <span className="text-[9.5px] text-indigo-650 dark:text-indigo-400 block mt-1.5 font-mono font-bold">Hiệu trưởng điều hành chung</span>
                   </div>
@@ -280,15 +280,15 @@ export default function TeacherHrHub({ currentUser, users, onUpdateUsers }: Teac
                     </div>
                     <div className="p-3 bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-xl shadow-4xs text-left">
                       <strong className="text-[11px] text-slate-800 dark:text-white block font-bold">Phòng Khảo thí &amp; ĐBCL</strong>
-                      <span className="text-[9.5px] text-slate-450 block mt-0.5">Quản lý: Cô Hoàng Trúc Liên</span>
+                      <span className="text-[9.5px] text-slate-450 block mt-0.5">Trưởng phòng: Cô Đỗ Thùy Trang</span>
                     </div>
                     <div className="p-3 bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-xl shadow-4xs text-left">
                       <strong className="text-[11px] text-slate-800 dark:text-white block font-bold">Tổ Công tác Học sinh</strong>
-                      <span className="text-[9.5px] text-slate-450 block mt-0.5">Tổ trưởng: Thầy Phạm Đức Hải</span>
+                      <span className="text-[9.5px] text-slate-450 block mt-0.5">Tổ trưởng: Thầy Nguyễn Hoàng Hải</span>
                     </div>
                     <div className="p-3 bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-xl shadow-4xs text-left">
                       <strong className="text-[11px] text-slate-800 dark:text-white block font-bold">Dịch vụ &amp; Vận hành</strong>
-                      <span className="text-[9.5px] text-slate-450 block mt-0.5">Điều phối: Cô Trần Vân Anh</span>
+                      <span className="text-[9.5px] text-slate-450 block mt-0.5">Trưởng phòng: Thầy Phạm Thế Anh</span>
                     </div>
                   </div>
                 </div>
@@ -309,7 +309,7 @@ export default function TeacherHrHub({ currentUser, users, onUpdateUsers }: Teac
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       <div className="p-2.5 bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-xl shadow-4xs text-left">
                         <strong className="text-[10px] text-slate-850 dark:text-white block font-bold">Tổ Toán - Tin học (THPT)</strong>
-                        <span className="text-[8.5px] text-slate-450 block mt-0.5">Tổ trưởng: Thầy Nguyễn Minh Triết</span>
+                        <span className="text-[8.5px] text-slate-450 block mt-0.5">Tổ trưởng: Cô Lê Thị Thanh Nhàn</span>
                       </div>
                       <div className="p-2.5 bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-xl shadow-4xs text-left">
                         <strong className="text-[10px] text-slate-850 dark:text-white block font-bold">Tổ Ngữ văn (THPT)</strong>
@@ -343,7 +343,7 @@ export default function TeacherHrHub({ currentUser, users, onUpdateUsers }: Teac
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       <div className="p-2.5 bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-xl shadow-4xs text-left">
                         <strong className="text-[10px] text-slate-850 dark:text-white block font-bold">Tổ Toán - Tin học (THCS)</strong>
-                        <span className="text-[8.5px] text-slate-450 block mt-0.5">Tổ trưởng: Cô Lê Thị Thanh Nhàn</span>
+                        <span className="text-[8.5px] text-slate-450 block mt-0.5">Tổ phó: Thầy Trần Hoàng Nam</span>
                       </div>
                       <div className="p-2.5 bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-xl shadow-4xs text-left">
                         <strong className="text-[10px] text-slate-850 dark:text-white block font-bold">Tổ Khoa học Tự nhiên (THCS)</strong>

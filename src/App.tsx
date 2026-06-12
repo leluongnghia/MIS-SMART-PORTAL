@@ -128,7 +128,7 @@ const INITIAL_ANNOUNCEMENTS: Announcement[] = [
       },
       {
         userId: 'user_triet',
-        userName: 'Thầy Chưa Biết Chừng',
+        userName: 'Thầy Nguyễn Minh Triết',
         userTitle: 'Hiệu trưởng (Trưởng ban Giám hiệu)',
         status: 'DA_XAC_NHAN',
         note: 'Đã sẵn sàng kịch bản ôn tập và rà soát hạ tầng phòng chuyên môn'
@@ -139,7 +139,7 @@ const INITIAL_ANNOUNCEMENTS: Announcement[] = [
     id: 'annce_2',
     title: 'Thông báo phối hợp kiểm tra hồ sơ đổi mới phương pháp giảng dạy Ngữ văn',
     content: 'Ban Giám hiệu ghi nhận tinh thần đổi mới giảng dạy của Tổ Ngữ văn. Đề nghị Tổ trưởng Tổ Ngữ văn phối hợp kiểm tra hồ sơ giáo án mẫu tích hợp công nghệ để phổ biến rộng rãi trong toàn trường trong tuần tới.\n\nTrân trọng.',
-    senderName: 'Thầy Chưa Biết Chừng',
+    senderName: 'Thầy Nguyễn Minh Triết',
     senderTitle: 'Hiệu trưởng (Trưởng ban Giám hiệu)',
     senderAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
     createdAt: '2026-05-29 14:00',
@@ -164,7 +164,7 @@ const INITIAL_DIRECTIVES: BoardDirective[] = [
     implementations: [
       {
         userId: 'user_triet',
-        userName: 'Thầy Chưa Biết Chừng',
+        userName: 'Thầy Nguyễn Minh Triết',
         userTitle: 'Hiệu trưởng (Trưởng ban Giám hiệu)',
         status: 'DA_TIEP_THU',
         feedback: 'Ban Giám hiệu đã tiếp nhận ý kiến của Hội đồng Trường và bắt đầu thành lập hội đồng thẩm định ngân sách.',
@@ -186,7 +186,7 @@ const INITIAL_DIRECTIVES: BoardDirective[] = [
     implementations: [
       {
         userId: 'user_triet',
-        userName: 'Thầy Chưa Biết Chừng',
+        userName: 'Thầy Nguyễn Minh Triết',
         userTitle: 'Hiệu trưởng (Trưởng ban Giám hiệu)',
         status: 'DANG_TRIEN_KHAI',
         feedback: 'Đã lập biên bản kiểm tra đột xuất cùng cô Hoàng Kim Oanh lúc 15:00 hôm nay. Đang tổng hợp các điểm lưu ý mẫu thức ăn.',

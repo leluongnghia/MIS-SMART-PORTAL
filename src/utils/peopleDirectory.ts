@@ -42,6 +42,7 @@ export const inferVietnameseGender = (name = ''): GenderText => {
   const lower = name.normalize('NFC').toLowerCase();
   const ascii = stripVietnameseMarks(name);
 
+  if (lower === 'hvl' || lower.includes('hvl')) return 'Nam';
   if (lower.includes('cô ') || lower.includes(' thị ') || ascii.includes('co ') || ascii.includes(' thi ')) return 'Nữ';
   if (lower.includes('thầy ') || lower.includes(' văn ') || ascii.includes('thay ') || ascii.includes(' van ')) return 'Nam';
 

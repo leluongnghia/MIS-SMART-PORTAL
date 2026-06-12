@@ -250,7 +250,7 @@ export function translateUser(u: any, lang: 'vi' | 'en'): any {
     'Phó Hiệu trưởng chuyên môn': 'Vice Principal (Academics)',
     'Tổ trưởng Tổ Toán - Tin học': 'Math & IT Department Head',
     'Tổ trưởng Tổ Ngữ văn': 'Literature Department Head',
-    'Tổ trưởng Tổ Ngữ văn phòng - Hành chính': 'Administration Head',
+    'Tổ trưởng Tổ Văn phòng - Hành chính': 'Administration Head',
     'Giáo viên Tổ Toán - Tin học': 'Math & IT Teacher',
     'Giáo viên Tổ Ngữ văn': 'Literature Teacher',
     'Cán bộ Hành chính thiết bị': 'Facilities Officer',
