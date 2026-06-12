@@ -31,7 +31,7 @@ app.get('/api/health', (req, res) => {
   res.json({
     status: 'ok',
     hasGeminiKey: !!apiKey,
-    hasSmtpConfig: Boolean(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS),
+    hasSmtpConfig: hasSmtpConfig(),
   });
 });
 
@@ -269,6 +269,41 @@ const smtpConfig = {
   socketTimeout: 15000,
 };
 
+function hasSmtpConfig() {
+  return Boolean(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS);
+}
+
+function getNotificationConfigStatus() {
+  const smtpReady = hasSmtpConfig();
+  return {
+    gemini: {
+      configured: Boolean(apiKey),
+      requiredEnv: ['GEMINI_API_KEY'],
+    },
+    smtp: {
+      configured: smtpReady,
+      host: process.env.SMTP_HOST || '',
+      port: process.env.SMTP_PORT || '587',
+      secure: process.env.SMTP_SECURE === 'true',
+      userConfigured: Boolean(process.env.SMTP_USER),
+      passConfigured: Boolean(process.env.SMTP_PASS),
+      from: process.env.EMAIL_FROM || '"MIS Smart Portal" <noreply@mis.edu.vn>',
+      testReceiverConfigured: Boolean(process.env.TEST_RECEIVER_EMAIL),
+      requiredEnv: ['SMTP_HOST', 'SMTP_PORT', 'SMTP_SECURE', 'SMTP_USER', 'SMTP_PASS', 'EMAIL_FROM'],
+    },
+    zalo: {
+      configured: Boolean(process.env.ZALO_OA_ID && process.env.ZALO_ACCESS_TOKEN),
+      oaIdConfigured: Boolean(process.env.ZALO_OA_ID),
+      appIdConfigured: Boolean(process.env.ZALO_APP_ID),
+      appSecretConfigured: Boolean(process.env.ZALO_APP_SECRET),
+      accessTokenConfigured: Boolean(process.env.ZALO_ACCESS_TOKEN),
+      refreshTokenConfigured: Boolean(process.env.ZALO_REFRESH_TOKEN),
+      defaultAudience: process.env.ZALO_DEFAULT_AUDIENCE || 'Người quan tâm OA',
+      requiredEnv: ['ZALO_OA_ID', 'ZALO_APP_ID', 'ZALO_APP_SECRET', 'ZALO_ACCESS_TOKEN', 'ZALO_REFRESH_TOKEN'],
+    },
+  };
+}
+
 function withTimeout<T>(promise: Promise<T>, timeoutMs: number, label: string): Promise<T> {
   return Promise.race([
     promise,
@@ -277,6 +312,187 @@ function withTimeout<T>(promise: Promise<T>, timeoutMs: number, label: string): 
     }),
   ]);
 }
+
+app.get('/api/notification/config-status', (req, res) => {
+  res.json({
+    status: 'success',
+    config: getNotificationConfigStatus(),
+  });
+});
+
+app.post('/api/email/send-test', async (req, res) => {
+  const { to, subject, message } = req.body;
+  const receiver = process.env.TEST_RECEIVER_EMAIL || to;
+
+  if (!receiver) {
+    return res.status(400).json({ status: 'error', error: 'Missing recipient email.' });
+  }
+
+  const mailOptions = {
+    from: process.env.EMAIL_FROM || '"MIS Smart Portal" <noreply@mis.edu.vn>',
+    to: receiver,
+    subject: subject || 'MIS Smart Portal - Kiểm thử SMTP',
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 640px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+        <div style="background:#4f46e5;color:white;padding:20px;">
+          <h2 style="margin:0;">MIS Smart Portal</h2>
+          <p style="margin:6px 0 0;">Kiểm thử cấu hình SMTP</p>
+        </div>
+        <div style="padding:20px;color:#0f172a;">
+          <p>${message || 'Email kiểm thử được gửi từ phần Cài đặt hệ thống.'}</p>
+          <p style="font-size:13px;color:#64748b;">Nếu nhận được email này, SMTP đã hoạt động.</p>
+        </div>
+      </div>
+    `,
+  };
+
+  try {
+    if (hasSmtpConfig()) {
+      const transporter = nodemailer.createTransport(smtpConfig);
+      await withTimeout(transporter.verify(), 10000, 'SMTP verify');
+      const info = await withTimeout(transporter.sendMail(mailOptions), 15000, 'SMTP test email send');
+      return res.json({ status: 'success', provider: 'SMTP', messageId: info.messageId, to: receiver });
+    }
+
+    const testAccount = await withTimeout(nodemailer.createTestAccount(), 8000, 'Ethereal test account creation');
+    const transporter = nodemailer.createTransport({
+      host: 'smtp.ethereal.email',
+      port: 587,
+      secure: false,
+      auth: {
+        user: testAccount.user,
+        pass: testAccount.pass,
+      },
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 15000,
+    });
+    const info = await withTimeout(transporter.sendMail(mailOptions), 15000, 'Ethereal SMTP test send');
+    const previewUrl = nodemailer.getTestMessageUrl(info);
+    return res.json({
+      status: 'success',
+      provider: 'Ethereal',
+      previewUrl,
+      warning: 'SMTP thật chưa được cấu hình; hệ thống đã tạo email kiểm thử Ethereal.',
+    });
+  } catch (error: any) {
+    console.error('Email error in send-test:', error);
+    res.status(500).json({ status: 'error', error: error.message || 'Error sending SMTP test email' });
+  }
+});
+
+app.post('/api/email/send-campaign', async (req, res) => {
+  const { recipients, subject, html, text, campaignName } = req.body;
+
+  if (!Array.isArray(recipients) || recipients.length === 0) {
+    return res.status(400).json({ status: 'error', error: 'Recipients array is required.' });
+  }
+  if (!subject || (!html && !text)) {
+    return res.status(400).json({ status: 'error', error: 'Subject and email content are required.' });
+  }
+
+  const normalizedRecipients = recipients
+    .map((item: any) => ({
+      email: String(item.email || '').trim(),
+      name: String(item.name || item.parentName || '').trim(),
+    }))
+    .filter((item: any) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(item.email));
+
+  if (normalizedRecipients.length === 0) {
+    return res.status(400).json({ status: 'error', error: 'No valid recipient email found.' });
+  }
+
+  const maxPerRun = Math.max(1, parseInt(process.env.MAX_CAMPAIGN_EMAILS_PER_RUN || '20', 10));
+  const recipientsToSend = normalizedRecipients.slice(0, maxPerRun);
+
+  if (!hasSmtpConfig()) {
+    console.log('------------------------------------------------------------');
+    console.log(`[SMTP MOCK CAMPAIGN] ${campaignName || 'Email campaign'}`);
+    console.log(`Subject: ${subject}`);
+    console.log(`Recipients: ${recipientsToSend.map((item: any) => item.email).join(', ')}`);
+    console.log('------------------------------------------------------------');
+    return res.json({
+      status: 'success',
+      provider: 'ConsoleLogOnly',
+      processed: recipientsToSend.length,
+      remaining: Math.max(0, normalizedRecipients.length - recipientsToSend.length),
+      warning: 'SMTP is not configured. Campaign was logged on the server only.',
+      sent: [],
+      failed: [],
+    });
+  }
+
+  const sent: any[] = [];
+  const failed: any[] = [];
+
+  try {
+    const transporter = nodemailer.createTransport(smtpConfig);
+    await withTimeout(transporter.verify(), 10000, 'SMTP campaign verify');
+
+    for (const recipient of recipientsToSend) {
+      try {
+        const info = await withTimeout(
+          transporter.sendMail({
+            from: process.env.EMAIL_FROM || '"MIS Smart Portal" <noreply@mis.edu.vn>',
+            to: recipient.email,
+            subject,
+            html,
+            text,
+          }),
+          15000,
+          `SMTP campaign send to ${recipient.email}`
+        );
+        sent.push({ email: recipient.email, messageId: info.messageId });
+      } catch (error: any) {
+        failed.push({ email: recipient.email, error: error.message || String(error) });
+      }
+    }
+
+    res.json({
+      status: 'success',
+      provider: 'SMTP',
+      processed: recipientsToSend.length,
+      remaining: Math.max(0, normalizedRecipients.length - recipientsToSend.length),
+      sent,
+      failed,
+    });
+  } catch (error: any) {
+    console.error('Email error in send-campaign:', error);
+    res.status(500).json({ status: 'error', error: error.message || 'Error sending email campaign' });
+  }
+});
+
+app.post('/api/zalo/broadcast/prepare', async (req, res) => {
+  const { title, content, audience, labels, scheduledAt, articleUrl } = req.body;
+
+  if (!title || !content) {
+    return res.status(400).json({ status: 'error', error: 'Broadcast title and content are required.' });
+  }
+
+  const config = getNotificationConfigStatus().zalo;
+  const draftId = `zalo_broadcast_${Date.now()}`;
+  res.json({
+    status: 'success',
+    provider: 'ZaloOA-Broadcast-Manual',
+    configured: config.configured,
+    draft: {
+      id: draftId,
+      title,
+      content,
+      audience: audience || process.env.ZALO_DEFAULT_AUDIENCE || 'Người quan tâm OA',
+      labels: Array.isArray(labels) ? labels : [],
+      scheduledAt: scheduledAt || '',
+      articleUrl: articleUrl || '',
+      createdAt: new Date().toISOString(),
+    },
+    nextSteps: [
+      'Duyệt nội dung trong MIS Smart Portal.',
+      'Đăng bài viết hoặc nội dung tương ứng trên Zalo OA.',
+      'Vào Broadcast của Zalo OA, chọn nhóm người quan tâm/nhãn phù hợp và đặt lịch gửi.',
+      'Cập nhật lại log gửi trong MIS sau khi OA xác nhận.',
+    ],
+  });
+});
 
 // Helper function to send email notification
 async function sendEmailNotification({
@@ -350,7 +566,7 @@ async function sendEmailNotification({
     html: htmlContent,
   };
 
-  if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+  if (hasSmtpConfig()) {
     const transporter = nodemailer.createTransport(smtpConfig);
     const info = await transporter.sendMail(mailOptions);
     console.log(`[Email Service] Reminder sent via SMTP to ${receiver}. Message ID: ${info.messageId}`);
@@ -634,7 +850,7 @@ app.post('/api/email/send-admissions-result', async (req, res) => {
   };
 
   try {
-    if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+    if (hasSmtpConfig()) {
       const transporter = nodemailer.createTransport(smtpConfig);
       const info = await transporter.sendMail(mailOptions);
       console.log(`[Email Service] Admissions notice sent via SMTP to ${receiver}. Message ID: ${info.messageId}`);
@@ -751,7 +967,7 @@ app.post('/api/email/send-test-invite', async (req, res) => {
   };
 
   try {
-    if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+    if (hasSmtpConfig()) {
       const transporter = nodemailer.createTransport(smtpConfig);
       const info = await transporter.sendMail(mailOptions);
       console.log(`[Email Service] Test invitation sent via SMTP to ${receiver}. Message ID: ${info.messageId}`);

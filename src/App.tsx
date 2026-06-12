@@ -46,6 +46,7 @@ import DocumentCenter from './components/DocumentCenter';
 import MeetingCenter from './components/MeetingCenter';
 import KnowledgeBase from './components/KnowledgeBase';
 import EventManagement from './components/EventManagement';
+import SystemSettingsModal from './components/SystemSettingsModal';
 import RbacSettingsModal, { DEFAULT_RBAC_CONFIG } from './components/RbacSettingsModal';
 import GuideModal from './components/GuideModal';
 import { RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, ResponsiveContainer, Tooltip } from 'recharts';
@@ -428,6 +429,7 @@ export default function App() {
   const [groupByDepartment, setGroupByDepartment] = useState<boolean>(true);
   const [mobileActiveWorkspace, setMobileActiveWorkspace] = useState<string>('');
   const [isRbacModalOpen, setIsRbacModalOpen] = useState(false);
+  const [isSystemSettingsOpen, setIsSystemSettingsOpen] = useState(false);
   const [showPermissionsPopover, setShowPermissionsPopover] = useState(false);
 
   const saveRbacConfig = async (updatedConfig: RbacConfig) => {
@@ -2341,6 +2343,15 @@ export default function App() {
                       <Shield className="w-3.5 h-3.5 text-indigo-600 animate-pulse" />
                       <span>Phân quyền cán bộ (RBAC)</span>
                     </button>
+                    <button
+                      id="btn-system-settings"
+                      onClick={() => setIsSystemSettingsOpen(true)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 hover:border-slate-300 hover:text-slate-900 rounded-lg shadow-3xs transition-all cursor-pointer"
+                      title="Cài đặt SMTP, AI và Zalo OA Broadcast"
+                    >
+                      <Settings className="w-3.5 h-3.5 text-sky-600" />
+                      <span>Cài đặt hệ thống</span>
+                    </button>
                   </div>
                 )}
               </div>
@@ -3455,6 +3466,12 @@ export default function App() {
           onClose={() => setIsRbacModalOpen(false)}
           config={rbacConfig}
           onSaveConfig={saveRbacConfig}
+        />
+      )}
+
+      {isSystemSettingsOpen && (
+        <SystemSettingsModal
+          onClose={() => setIsSystemSettingsOpen(false)}
         />
       )}
 

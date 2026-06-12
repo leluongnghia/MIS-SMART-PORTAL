@@ -295,6 +295,7 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
   const [emailSubject, setEmailSubject] = useState('MIS Hà Nội: Thư mời tham dự Open Day - Khơi dậy tiềm năng cùng Đa Trí Tuệ');
   const [emailProgress, setEmailProgress] = useState<'IDLE' | 'SENDING' | 'SENT'>('IDLE');
   const [sentCount, setSentCount] = useState<number>(0);
+  const [emailResult, setEmailResult] = useState('');
 
   // Operations/E-Learning States (Persistent)
   const [zoomClasses, setZoomClasses] = useState<any[]>(() => {
@@ -735,20 +736,65 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
     });
   }, [leads]);
 
-  // Start sending emails simulation
-  const handleSendMassEmail = () => {
+  const campaignRecipientCount = leads.filter(lead => lead.email).length;
+
+  // Send real campaign through server SMTP when configured; otherwise the server logs a safe test run.
+  const handleSendMassEmail = async () => {
+    const recipients = leads
+      .filter(lead => lead.email)
+      .map(lead => ({
+        email: lead.email,
+        name: lead.parentName,
+      }));
+
+    if (recipients.length === 0) {
+      setEmailResult('Chưa có lead nào có email hợp lệ để gửi chiến dịch.');
+      return;
+    }
+
     setEmailProgress('SENDING');
     setSentCount(0);
-    const interval = setInterval(() => {
-      setSentCount(prev => {
-        if (prev >= 120) {
-          clearInterval(interval);
-          setEmailProgress('SENT');
-          return 120;
+    setEmailResult('');
+
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 640px; margin: 0 auto; color: #0f172a;">
+        <h2 style="color:#047857;">${emailSubject}</h2>
+        <p>Kính gửi Quý Phụ huynh,</p>
+        ${emailTemplate === 'OPEN_DAY'
+          ? '<p>Trường MIS trân trọng kính mời Quý Phụ huynh tham dự Open Day để tìm hiểu chương trình giáo dục Đa Trí Tuệ và định hướng học tập cá nhân hóa.</p><p><strong>Thời gian dự kiến:</strong> Thứ bảy, ngày 15/06/2026.</p>'
+          : '<p>MIS thông báo chương trình học bổng tìm kiếm tài năng Đa Trí Tuệ dành cho học sinh có năng lực nổi bật ở Toán học, Ngôn ngữ và Nghệ thuật.</p><p><strong>Giá trị học bổng:</strong> lên tới 70% học phí.</p>'
         }
-        return prev + 15;
+        <p>Trân trọng,<br/>Ban Tuyển sinh MIS</p>
+      </div>
+    `;
+
+    try {
+      const response = await fetch('/api/email/send-campaign', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          campaignName: emailTemplate,
+          recipients,
+          subject: emailSubject,
+          html,
+          text: emailSubject,
+        }),
       });
-    }, 200);
+      const data = await response.json();
+      if (!response.ok || data.status !== 'success') {
+        throw new Error(data.error || 'Không thể gửi chiến dịch email.');
+      }
+      setSentCount(data.processed || 0);
+      setEmailProgress('SENT');
+      setEmailResult(
+        data.provider === 'SMTP'
+          ? `Đã xử lý ${data.processed} email qua SMTP, thành công ${data.sent?.length || 0}, lỗi ${data.failed?.length || 0}, còn lại ${data.remaining || 0}.`
+          : `SMTP chưa cấu hình; server đã ghi log chiến dịch thử (${data.processed} email).`
+      );
+    } catch (error: any) {
+      setEmailProgress('IDLE');
+      setEmailResult(`Lỗi gửi chiến dịch: ${error.message || error}`);
+    }
   };
 
   // Quiz evaluation
@@ -1364,10 +1410,10 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
                           <RefreshCw className="w-3.5 h-3.5 text-emerald-600 animate-spin" />
                           API Đang đẩy thư hàng loạt...
                         </span>
-                        <strong className="font-mono text-emerald-700">{sentCount} / 120 Leads</strong>
+                        <strong className="font-mono text-emerald-700">{sentCount} / {campaignRecipientCount} Leads</strong>
                       </div>
                       <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
-                        <div className="h-full bg-emerald-500" style={{ width: `${(sentCount / 120) * 100}%` }} />
+                        <div className="h-full bg-emerald-500" style={{ width: `${Math.min(100, (sentCount / Math.max(1, campaignRecipientCount)) * 100)}%` }} />
                       </div>
                     </div>
                   ) : emailProgress === 'SENT' ? (
@@ -1375,7 +1421,7 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
                       <CheckCircle className="w-4 h-4 shrink-0 text-emerald-600 mt-0.5" />
                       <div className="text-xs">
                         <p className="font-bold">Gửi chiến dịch thư thành công!</p>
-                        <p className="text-[10px] text-emerald-700 mt-1">Tổng cộng 120 email tiềm năng đã được gửi thông qua các đối tác liên kết của MIS LMS.</p>
+                        <p className="text-[10px] text-emerald-700 mt-1">{emailResult || `Đã xử lý ${sentCount} email tiềm năng qua API gửi thư của MIS LMS.`}</p>
                       </div>
                     </div>
                   ) : (
@@ -1387,6 +1433,12 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
                       <Send className="w-3.5 h-3.5" />
                       Kích hoạt mass-email qua SMTP API
                     </button>
+                  )}
+
+                  {emailProgress !== 'SENT' && emailResult && (
+                    <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] font-semibold text-amber-800">
+                      {emailResult}
+                    </div>
                   )}
                 </div>
 

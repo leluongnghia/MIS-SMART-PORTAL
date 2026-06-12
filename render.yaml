@@ -24,5 +24,19 @@ services:
         sync: false  # Mật khẩu SMTP hoặc app password
       - key: EMAIL_FROM
         sync: false  # Tên/người gửi, ví dụ "MIS Smart Portal <noreply@mis.edu.vn>"
+      - key: ZALO_OA_ID
+        sync: false  # Zalo Official Account ID
+      - key: ZALO_APP_ID
+        sync: false  # Zalo app id dùng cho OA/OpenAPI
+      - key: ZALO_APP_SECRET
+        sync: false  # Zalo app secret, chỉ nhập trên Render
+      - key: ZALO_ACCESS_TOKEN
+        sync: false  # Access token OA/Zalo API
+      - key: ZALO_REFRESH_TOKEN
+        sync: false  # Refresh token để làm mới access token khi triển khai gửi tự động
+      - key: ZALO_DEFAULT_AUDIENCE
+        value: "Người quan tâm OA"
       - key: MAX_EMAIL_REMINDERS_PER_RUN
         value: "5"
+      - key: MAX_CAMPAIGN_EMAILS_PER_RUN
+        value: "20"
