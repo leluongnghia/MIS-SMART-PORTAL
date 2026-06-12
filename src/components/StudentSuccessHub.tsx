@@ -108,8 +108,6 @@ const todayIso = () => new Date().toISOString().slice(0, 10);
 // Generate mock students: 12 grades, 3 classes per grade, 30 students per class
 const generateMockData = () => {
   const firstNames = ['Nguyễn', 'Trần', 'Lê', 'Phạm', 'Hoàng', 'Huỳnh', 'Phan', 'Vũ', 'Võ', 'Đặng', 'Bùi', 'Đỗ', 'Hồ', 'Ngô', 'Dương', 'Lý'];
-  const middleNames = ['Văn', 'Thị', 'Minh', 'Anh', 'Gia', 'Đức', 'Quang', 'Xuân', 'Khánh', 'Phương', 'Thanh', 'Tiến', 'Thu', 'Ngọc', 'Hải'];
-  const lastNames = ['Lâm', 'Hằng', 'Đạt', 'Linh', 'Hải', 'Huy', 'Tuấn', 'Nam', 'Bình', 'Chi', 'Sơn', 'Trang', 'Vinh', 'Yến', 'Anh', 'Thảo'];
 
   const studentsList: StudentRecord[] = [];
   const gradesList: GradeEntry[] = [];
@@ -126,8 +124,20 @@ const generateMockData = () => {
       for (let s = 1; s <= 30; s++) {
         const gender = (studentCount % 2 === 0) ? 'Nữ' : 'Nam';
         const fn = firstNames[(studentCount + s) % firstNames.length];
-        const mn = middleNames[(studentCount * 3 + s) % middleNames.length];
-        const ln = lastNames[(studentCount * 7 + s) % lastNames.length];
+        
+        let mn = '';
+        let ln = '';
+        if (gender === 'Nữ') {
+          const femaleMiddle = ['Thị', 'Ngọc', 'Thu', 'Phương', 'Khánh', 'Minh', 'Thanh', 'Tuyết', 'Hồng', 'Kiều'];
+          const femaleLast = ['Hằng', 'Linh', 'Chi', 'Trang', 'Yến', 'Thảo', 'Vy', 'Mai', 'Lan', 'Hương', 'Hạnh', 'Oanh', 'Ngọc', 'Anh'];
+          mn = femaleMiddle[(studentCount * 3 + s) % femaleMiddle.length];
+          ln = femaleLast[(studentCount * 7 + s) % femaleLast.length];
+        } else {
+          const maleMiddle = ['Văn', 'Minh', 'Gia', 'Đức', 'Quang', 'Anh', 'Tiến', 'Hải', 'Thành', 'Hoàng'];
+          const maleLast = ['Lâm', 'Đạt', 'Hải', 'Huy', 'Tuấn', 'Nam', 'Bình', 'Sơn', 'Vinh', 'Phong', 'Hùng', 'Dũng', 'Quân', 'Khánh'];
+          mn = maleMiddle[(studentCount * 3 + s) % maleMiddle.length];
+          ln = maleLast[(studentCount * 7 + s) % maleLast.length];
+        }
         const name = `${fn} ${mn} ${ln}`;
         
         const birthYear = 2026 - (grade + 5);
@@ -145,7 +155,7 @@ const generateMockData = () => {
           gender: gender,
           birthDate: birthDate,
           avatar: avatar,
-          parentName: `${fn} ${lastNames[(studentCount + 2) % lastNames.length]}`,
+          parentName: `${fn} ${gender === 'Nữ' ? 'Thị' : 'Văn'} ${ln}`,
           parentPhone: `09${Math.floor(10000000 + Math.random() * 90000000)}`,
           parentEmail: `parent.${studentCount}@parent.mis.edu.vn`,
           emergencyContact: `09${Math.floor(10000000 + Math.random() * 90000000)}`,

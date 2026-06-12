@@ -1847,7 +1847,7 @@ export default function App() {
             <p className="text-[10px] uppercase tracking-widest font-black text-slate-400 mb-0.5 px-3 font-mono">School OS 2.0</p>
 
             {/* GROUP 1: STRATEGY */}
-            <div className="flex flex-col gap-0.5 border-b border-slate-100 dark:border-slate-800 pb-2.5">
+            <div className="flex flex-col gap-0.5 border-b border-slate-100 dark:border-slate-800 pb-2.5" style={{ order: 1 }}>
               <button 
                 onClick={() => toggleGroup('strategy')}
                 className="w-full flex items-center justify-between text-[10px] font-black tracking-wider text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 py-1.5 px-3 uppercase font-mono cursor-pointer transition-colors"
@@ -1927,15 +1927,15 @@ export default function App() {
               )}
             </div>
 
-            {/* GROUP 2: FOUNDATION */}
-            <div className="flex flex-col gap-0.5 border-b border-slate-100 dark:border-slate-800 pb-2.5">
+            {/* GROUP 3: FOUNDATION */}
+            <div className="flex flex-col gap-0.5 border-b border-slate-100 dark:border-slate-800 pb-2.5" style={{ order: 3 }}>
               <button 
                 onClick={() => toggleGroup('foundation')}
                 className="w-full flex items-center justify-between text-[10px] font-black tracking-wider text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 py-1.5 px-3 uppercase font-mono cursor-pointer transition-colors"
               >
                 <span className="flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
-                  <span className={expandedGroups.foundation ? 'text-indigo-600 dark:text-indigo-400 font-extrabold' : ''}>2. Nền tảng</span>
+                  <span className={expandedGroups.foundation ? 'text-indigo-600 dark:text-indigo-400 font-extrabold' : ''}>3. Nền tảng</span>
                 </span>
                 <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${expandedGroups.foundation ? 'text-indigo-600 dark:text-indigo-400' : '-rotate-90'}`} />
               </button>
@@ -1978,15 +1978,15 @@ export default function App() {
               )}
             </div>
 
-            {/* GROUP 3: OPERATION */}
-            <div className="flex flex-col gap-0.5 border-b border-slate-100 dark:border-slate-800 pb-2.5">
+            {/* GROUP 2: OPERATION */}
+            <div className="flex flex-col gap-0.5 border-b border-slate-100 dark:border-slate-800 pb-2.5" style={{ order: 2 }}>
               <button 
                 onClick={() => toggleGroup('operation')}
                 className="w-full flex items-center justify-between text-[10px] font-black tracking-wider text-slate-400 dark:text-slate-500 hover:text-violet-600 dark:hover:text-violet-400 py-1.5 px-3 uppercase font-mono cursor-pointer transition-colors"
               >
                 <span className="flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-violet-500"></span>
-                  <span className={expandedGroups.operation ? 'text-violet-600 dark:text-violet-400 font-extrabold' : ''}>3. Vận hành</span>
+                  <span className={expandedGroups.operation ? 'text-violet-600 dark:text-violet-400 font-extrabold' : ''}>2. Vận hành</span>
                 </span>
                 <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${expandedGroups.operation ? 'text-violet-600 dark:text-violet-400' : '-rotate-90'}`} />
               </button>
@@ -2060,7 +2060,7 @@ export default function App() {
             </div>
 
             {/* GROUP 4: BUSINESS */}
-            <div className="flex flex-col gap-0.5 border-b border-slate-100 dark:border-slate-800 pb-2.5">
+            <div className="flex flex-col gap-0.5 border-b border-slate-100 dark:border-slate-800 pb-2.5" style={{ order: 4 }}>
               <button 
                 onClick={() => toggleGroup('business')}
                 className="w-full flex items-center justify-between text-[10px] font-black tracking-wider text-slate-400 dark:text-slate-500 hover:text-emerald-600 dark:text-emerald-400 dark:hover:text-emerald-400 py-1.5 px-3 uppercase font-mono cursor-pointer transition-colors"
@@ -2177,7 +2177,7 @@ export default function App() {
             </div>
 
             {/* GROUP 5: CAMPUS */}
-            <div className="flex flex-col gap-0.5 border-b border-slate-100 dark:border-slate-800 pb-2.5">
+            <div className="flex flex-col gap-0.5 border-b border-slate-100 dark:border-slate-800 pb-2.5" style={{ order: 5 }}>
               <button 
                 onClick={() => toggleGroup('campus')}
                 className="w-full flex items-center justify-between text-[10px] font-black tracking-wider text-slate-400 dark:text-slate-500 hover:text-sky-600 dark:text-sky-400 dark:hover:text-sky-400 py-1.5 px-3 uppercase font-mono cursor-pointer transition-colors"
