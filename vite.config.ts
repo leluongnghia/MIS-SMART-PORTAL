@@ -12,12 +12,7 @@ export default defineConfig(() => {
       },
     },
     server: {
-      allowedHosts: [
-        'laptop-v72irknu',
-        'laptop-v72irknu.tailb6878a.ts.net',
-        '100.117.186.85',
-        '192.168.48.201',
-      ],
+      allowedHosts: true,
       proxy: {
         '/api': {
           target: 'http://localhost:3000',
