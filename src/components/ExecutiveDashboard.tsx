@@ -965,25 +965,6 @@ export default function ExecutiveDashboard({
             )}
           </section>
         )}
-      </div>font-bold text-rose-650 dark:text-rose-400">
-                          {dept.overdue}
-                        </td>
-                        <td className="py-2.5 text-center font-mono font-bold text-amber-650 dark:text-amber-400">
-                          {dept.pending}
-                        </td>
-                        <td className="py-2.5 text-right">
-                          <span className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider font-mono ${statusColor}`}>
-                            {dept.status}
-                          </span>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </section>
       </div>
 
       {/* LEVEL 6: Task Management (Simplified Card list) */}
