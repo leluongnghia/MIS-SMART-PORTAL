@@ -45,25 +45,25 @@ interface DashboardClientProps {
 }
 
 const statusBadgeStyles: Record<string, string> = {
-  new: 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800',
-  contacted: 'bg-cyan-50 text-cyan-700 border-cyan-200 dark:bg-cyan-950/40 dark:text-cyan-300 dark:border-cyan-800',
-  consultation_scheduled: 'bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-950/40 dark:text-yellow-300 dark:border-yellow-800',
-  application_submitted: 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-800',
+  received: 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800',
+  consulting: 'bg-cyan-50 text-cyan-700 border-cyan-200 dark:bg-cyan-950/40 dark:text-cyan-300 dark:border-cyan-800',
+  test_scheduled: 'bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-950/40 dark:text-yellow-300 dark:border-yellow-800',
+  test_participated: 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-800',
   seat_reserved: 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950/40 dark:text-orange-300 dark:border-orange-800',
-  payment_confirmed: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800',
+  docs_submitted: 'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800',
   enrolled: 'bg-green-50 text-green-700 border-green-200 dark:bg-green-950/40 dark:text-green-300 dark:border-green-800',
-  lost: 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800',
+  cancelled: 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800',
 };
 
 const statusLabels: Record<string, string> = {
-  new: 'Mới (New)',
-  contacted: 'Đã liên hệ',
-  consultation_scheduled: 'Hẹn tư vấn',
-  application_submitted: 'Nộp đơn học',
-  seat_reserved: 'Giữ chỗ',
-  payment_confirmed: 'Đóng phí',
-  enrolled: 'Nhập học',
-  lost: 'Từ chối',
+  received: 'Tiếp nhận Data',
+  consulting: 'Đang tư vấn',
+  test_scheduled: 'Đăng ký Test',
+  test_participated: 'Đã tham gia Test',
+  seat_reserved: 'Đã giữ chỗ',
+  docs_submitted: 'Đã nộp hồ sơ',
+  enrolled: 'Đã nhập học',
+  cancelled: 'Hủy/Rút hồ sơ',
 };
 
 export default function DashboardClient({ locale, stats }: DashboardClientProps) {
@@ -71,38 +71,38 @@ export default function DashboardClient({ locale, stats }: DashboardClientProps)
 
   const cards = [
     {
-      title: 'Mới (New Leads)',
+      title: 'Tiếp nhận Data',
       value: kpis.newLeads,
       icon: Users,
-      description: 'Học sinh mới đăng ký',
+      description: 'Học sinh mới tiếp nhận',
       color: 'from-blue-500/10 to-indigo-500/10 text-blue-600 dark:text-blue-400 border-blue-100/50 dark:border-blue-900/50',
     },
     {
-      title: 'Đang chăm sóc (Active Leads)',
+      title: 'Đang tư vấn',
       value: kpis.activeLeads,
       icon: UserCheck,
-      description: 'Học sinh đang trong quy trình',
+      description: 'Học sinh đang chăm sóc',
       color: 'from-cyan-500/10 to-teal-500/10 text-cyan-600 dark:text-cyan-400 border-cyan-100/50 dark:border-cyan-900/50',
     },
     {
-      title: 'Đã nộp hồ sơ (Applications)',
+      title: 'Đã nộp hồ sơ',
       value: kpis.appsSubmitted,
       icon: FileText,
-      description: 'Hồ sơ đã được gửi đi',
+      description: 'Hồ sơ đã nộp bàn giao',
       color: 'from-purple-500/10 to-pink-500/10 text-purple-600 dark:text-purple-400 border-purple-100/50 dark:border-purple-900/50',
     },
     {
-      title: 'Đã giữ chỗ (Seat Reserved)',
+      title: 'Đã giữ chỗ',
       value: kpis.seatReserved,
       icon: BookmarkCheck,
-      description: 'Học sinh đã giữ chỗ nhập học',
+      description: 'Học sinh đã đóng phí giữ chỗ',
       color: 'from-orange-500/10 to-amber-500/10 text-orange-600 dark:text-orange-400 border-orange-100/50 dark:border-orange-900/50',
     },
     {
-      title: 'Nhập học chính thức (Enrolled)',
+      title: 'Đã nhập học',
       value: kpis.enrolled,
       icon: GraduationCap,
-      description: 'Đã hoàn thành nhập học',
+      description: 'Học sinh đã nhập học chính thức',
       color: 'from-green-500/10 to-emerald-500/10 text-green-600 dark:text-green-400 border-green-100/50 dark:border-green-900/50',
     },
     {

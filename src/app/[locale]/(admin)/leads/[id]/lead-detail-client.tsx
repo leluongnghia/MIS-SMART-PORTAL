@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
@@ -21,6 +21,10 @@ import {
   History,
   Activity,
   Plus,
+  Send,
+  CheckCircle2,
+  AlertCircle,
+  FileSpreadsheet
 } from 'lucide-react';
 import { Button } from '@/src/components/ui/button';
 import { Input } from '@/src/components/ui/input';
@@ -33,25 +37,52 @@ import {
   updateLeadProfile,
   addConsultationActivity,
   updateLeadPipelineStatus,
+  sendLeadEmail,
 } from './actions';
 import { type LeadStatus } from '../actions';
 
 const leadProfileSchema = z.object({
   fullName: z.string().min(1, 'Họ và tên học sinh là bắt buộc'),
-  parentName: z.string().optional(),
+  parentName: z.string().optional().nullable(),
   phone: z.string().min(1, 'Số điện thoại là bắt buộc'),
-  email: z.string().email('Email không hợp lệ').optional().or(z.literal('')),
+  email: z.string().optional().nullable(),
   source: z.string().min(1, 'Nguồn là bắt buộc'),
   grade: z.string().min(1, 'Khối là bắt buộc'),
-  notes: z.string().optional(),
+  notes: z.string().optional().nullable(),
+  
+  // Student Details
+  dateOfBirth: z.string().optional().nullable(),
+  currentClass: z.string().optional().nullable(),
+  currentSchool: z.string().optional().nullable(),
+  address: z.string().optional().nullable(),
+  enrollmentSystem: z.string().optional().nullable(),
+
+  // Test Details
+  testDate: z.string().optional().nullable(),
+  testTime: z.string().optional().nullable(),
+  mathScore: z.coerce.number().optional().nullable(),
+  englishScore: z.coerce.number().optional().nullable(),
+  vietnameseScore: z.coerce.number().optional().nullable(),
+
+  // Financial & Discount Details
+  scholarshipPercent: z.coerce.number().optional().nullable(),
+  periodDiscountPercent: z.coerce.number().optional().nullable(),
+  siblingDiscountPercent: z.coerce.number().optional().nullable(),
+  staffDiscountPercent: z.coerce.number().optional().nullable(),
+  otherDiscountPercent: z.coerce.number().optional().nullable(),
+  finalTuition: z.coerce.number().optional().nullable(),
+  seatReservationFee: z.coerce.number().optional().nullable(),
+  additionalFee: z.coerce.number().optional().nullable(),
+  seatReservationDate: z.string().optional().nullable(),
+
+  // Post-Enrollment Details
+  nationalStudentId: z.string().optional().nullable(),
+  insuranceId: z.string().optional().nullable(),
+  moetStudentId: z.string().optional().nullable(),
+  siblingsInfo: z.any().optional().nullable(),
 });
 
 type LeadProfileValues = z.infer<typeof leadProfileSchema>;
-
-interface User {
-  id: string;
-  name: string;
-}
 
 interface Lead {
   id: string;
@@ -66,6 +97,33 @@ interface Lead {
   assignedUserId: string | null;
   notes: string | null;
   createdAt: Date;
+  
+  dateOfBirth: Date | null;
+  currentClass: string | null;
+  currentSchool: string | null;
+  address: string | null;
+  enrollmentSystem: string | null;
+
+  testDate: Date | null;
+  testTime: string | null;
+  mathScore: number | null;
+  englishScore: number | null;
+  vietnameseScore: number | null;
+
+  scholarshipPercent: number | null;
+  periodDiscountPercent: number | null;
+  siblingDiscountPercent: number | null;
+  staffDiscountPercent: number | null;
+  otherDiscountPercent: number | null;
+  finalTuition: number | null;
+  seatReservationFee: number | null;
+  additionalFee: number | null;
+  seatReservationDate: Date | null;
+
+  nationalStudentId: string | null;
+  insuranceId: string | null;
+  moetStudentId: string | null;
+  siblingsInfo: any | null;
 }
 
 interface LeadActivity {
@@ -111,25 +169,25 @@ interface LeadDetailClientProps {
 }
 
 const statusBadgeStyles: Record<LeadStatus, string> = {
-  new: 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800',
-  contacted: 'bg-cyan-50 text-cyan-700 border-cyan-200 dark:bg-cyan-950/40 dark:text-cyan-300 dark:border-cyan-800',
-  consultation_scheduled: 'bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-950/40 dark:text-yellow-300 dark:border-yellow-800',
-  application_submitted: 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-800',
+  received: 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800',
+  consulting: 'bg-cyan-50 text-cyan-700 border-cyan-200 dark:bg-cyan-950/40 dark:text-cyan-300 dark:border-cyan-800',
+  test_scheduled: 'bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-950/40 dark:text-yellow-300 dark:border-yellow-800',
+  test_participated: 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-800',
   seat_reserved: 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950/40 dark:text-orange-300 dark:border-orange-800',
-  payment_confirmed: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800',
+  docs_submitted: 'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800',
   enrolled: 'bg-green-50 text-green-700 border-green-200 dark:bg-green-950/40 dark:text-green-300 dark:border-green-800',
-  lost: 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800',
+  cancelled: 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800',
 };
 
 const statusLabels: Record<LeadStatus, string> = {
-  new: 'Mới (New)',
-  contacted: 'Đã liên hệ (Contacted)',
-  consultation_scheduled: 'Lên lịch tư vấn (Consultation)',
-  application_submitted: 'Nộp đơn học (Applied)',
-  seat_reserved: 'Giữ chỗ (Reserved)',
-  payment_confirmed: 'Đóng phí (Paid)',
-  enrolled: 'Nhập học (Enrolled)',
-  lost: 'Từ chối (Lost)',
+  received: 'Tiếp nhận Data',
+  consulting: 'Đang tư vấn',
+  test_scheduled: 'Đăng ký Test',
+  test_participated: 'Đã tham gia Test',
+  seat_reserved: 'Đã giữ chỗ',
+  docs_submitted: 'Đã nộp hồ sơ',
+  enrolled: 'Đã nhập học',
+  cancelled: 'Hủy/Rút hồ sơ',
 };
 
 const leadSources = ['Website', 'Facebook', 'TikTok', 'Google', 'Referral', 'Event', 'Other'];
@@ -149,6 +207,9 @@ const gradeLevels = [
   'Lớp 12',
 ];
 
+const ENROLLMENT_SYSTEMS = ['Hệ Chất lượng cao', 'Hệ Song ngữ', 'Hệ Quốc tế'];
+const BASE_TUITION_FEE = 60000000; // 60 Triệu VND
+
 export default function LeadDetailClient({
   locale,
   lead,
@@ -167,13 +228,21 @@ export default function LeadDetailClient({
   const [activityDesc, setActivityDesc] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
+  // Email modal / editor state
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [emailSubject, setEmailSubject] = useState('');
+  const [emailBody, setEmailBody] = useState('');
+  const [sendingEmail, setSendingEmail] = useState(false);
+
   // Form setup
   const {
     register,
     handleSubmit,
+    watch,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<LeadProfileValues>({
-    resolver: zodResolver(leadProfileSchema),
+    resolver: zodResolver(leadProfileSchema) as any,
     defaultValues: {
       fullName: lead.fullName,
       parentName: lead.parentName || '',
@@ -182,13 +251,82 @@ export default function LeadDetailClient({
       source: lead.source,
       grade: lead.grade,
       notes: lead.notes || '',
+      
+      dateOfBirth: lead.dateOfBirth ? new Date(lead.dateOfBirth).toISOString().split('T')[0] : '',
+      currentClass: lead.currentClass || '',
+      currentSchool: lead.currentSchool || '',
+      address: lead.address || '',
+      enrollmentSystem: lead.enrollmentSystem || ENROLLMENT_SYSTEMS[0],
+
+      testDate: lead.testDate ? new Date(lead.testDate).toISOString().split('T')[0] : '',
+      testTime: lead.testTime || '',
+      mathScore: lead.mathScore ?? null,
+      englishScore: lead.englishScore ?? null,
+      vietnameseScore: lead.vietnameseScore ?? null,
+
+      scholarshipPercent: lead.scholarshipPercent ?? 0,
+      periodDiscountPercent: lead.periodDiscountPercent ?? 0,
+      siblingDiscountPercent: lead.siblingDiscountPercent ?? 0,
+      staffDiscountPercent: lead.staffDiscountPercent ?? 0,
+      otherDiscountPercent: lead.otherDiscountPercent ?? 0,
+      finalTuition: lead.finalTuition ?? BASE_TUITION_FEE,
+      seatReservationFee: lead.seatReservationFee ?? 5000000,
+      additionalFee: lead.additionalFee ?? 0,
+      seatReservationDate: lead.seatReservationDate ? new Date(lead.seatReservationDate).toISOString().split('T')[0] : '',
+
+      nationalStudentId: lead.nationalStudentId || '',
+      insuranceId: lead.insuranceId || '',
+      moetStudentId: lead.moetStudentId || '',
+      siblingsInfo: lead.siblingsInfo || { hasSiblings: false, siblingName: '', siblingClass: '' },
     },
   });
 
+  // Watch fields for tuition fee calculation
+  const scholarshipPercent = watch('scholarshipPercent') || 0;
+  const periodDiscountPercent = watch('periodDiscountPercent') || 0;
+  const siblingDiscountPercent = watch('siblingDiscountPercent') || 0;
+  const staffDiscountPercent = watch('staffDiscountPercent') || 0;
+  const otherDiscountPercent = watch('otherDiscountPercent') || 0;
+  const additionalFee = watch('additionalFee') || 0;
+  const parentEmail = watch('email') || '';
+  const fullName = watch('fullName') || '';
+  const parentName = watch('parentName') || '';
+
+  // Calculate final tuition dynamically on changes
+  useEffect(() => {
+    const totalDiscountPercent =
+      Number(scholarshipPercent) +
+      Number(periodDiscountPercent) +
+      Number(siblingDiscountPercent) +
+      Number(staffDiscountPercent) +
+      Number(otherDiscountPercent);
+    
+    const discountedTuition = BASE_TUITION_FEE * (1 - Math.min(totalDiscountPercent, 100) / 100);
+    const finalCalculated = discountedTuition + Number(additionalFee);
+    
+    setValue('finalTuition', finalCalculated);
+  }, [
+    scholarshipPercent,
+    periodDiscountPercent,
+    siblingDiscountPercent,
+    staffDiscountPercent,
+    otherDiscountPercent,
+    additionalFee,
+    setValue
+  ]);
+
   const handleUpdateProfile = async (values: LeadProfileValues) => {
-    const res = await updateLeadProfile(lead.id, values);
+    const formattedValues = {
+      ...values,
+      dateOfBirth: values.dateOfBirth ? new Date(values.dateOfBirth) : null,
+      testDate: values.testDate ? new Date(values.testDate) : null,
+      seatReservationDate: values.seatReservationDate ? new Date(values.seatReservationDate) : null,
+    };
+
+    const res = await updateLeadProfile(lead.id, formattedValues as any);
     if (res.success) {
       setSuccessMsg('🎉 Cập nhật hồ sơ thành công!');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       setTimeout(() => setSuccessMsg(''), 5000);
       router.refresh();
     }
@@ -213,16 +351,113 @@ export default function LeadDetailClient({
     const nextStatus = e.target.value as LeadStatus;
     if (nextStatus === lead.status) return;
 
-    if (window.confirm(`Xác nhận chuyển trạng thái lead sang: ${statusLabels[nextStatus]}?`)) {
+    if (window.confirm(`Xác nhận chuyển trạng thái tuyển sinh sang: ${statusLabels[nextStatus]}?`)) {
       const res = await updateLeadPipelineStatus(lead.id, nextStatus, statusNote);
       if (res.success) {
         setStatusNote('');
-        setSuccessMsg('🎉 Đã cập nhật trạng thái phễu!');
+        setSuccessMsg('🎉 Đã cập nhật trạng thái phễu tuyển sinh!');
         setTimeout(() => setSuccessMsg(''), 5000);
         router.refresh();
       }
     }
   };
+
+  // Generate Email Templates based on pipeline steps
+  const openEmailTemplate = (templateType: 'test_notice' | 'test_result' | 'reservation' | 'enrolled') => {
+    if (!parentEmail) {
+      alert('Vui lòng nhập Email phụ huynh trước khi gửi thông báo!');
+      return;
+    }
+
+    const todayStr = new Date().toLocaleDateString('vi-VN');
+    let subject = '';
+    let body = '';
+
+    if (templateType === 'test_notice') {
+      const testDate = watch('testDate') || '...';
+      const testTime = watch('testTime') || '...';
+      subject = `Thông báo lịch thi test đánh giá năng lực đầu vào - Học sinh ${fullName}`;
+      body = `<p>Kính gửi quý phụ huynh <b>${parentName || 'Phụ huynh'}</b>,</p>
+<p>Ban tuyển sinh Trường Phổ thông Liên cấp Đa Trí Tuệ (MIS) xin thông báo lịch đánh giá năng lực đầu vào của con <b>${fullName}</b> như sau:</p>
+<ul>
+  <li><b>Ngày thi:</b> ${testDate}</li>
+  <li><b>Giờ tập trung:</b> ${testTime}</li>
+  <li><b>Địa điểm:</b> Văn phòng Tuyển sinh, Tòa nhà Tiểu học MIS, Cầu Giấy, Hà Nội.</li>
+</ul>
+<p>Quý phụ huynh vui lòng cho con đến đúng giờ để làm thủ tục thi test. Mọi thắc mắc vui lòng liên hệ hotline: 024.6027.8666.</p>
+<br/>
+<p>Trân trọng,<br/><b>Ban Tuyển sinh Trường Đa Trí Tuệ MIS</b></p>`;
+    } else if (templateType === 'test_result') {
+      const math = watch('mathScore') ?? 'Chưa có';
+      const eng = watch('englishScore') ?? 'Chưa có';
+      const viet = watch('vietnameseScore') ?? 'Chưa có';
+      const scholarship = watch('scholarshipPercent') || 0;
+      subject = `Thông báo kết quả thi test đánh giá đầu vào - Học sinh ${fullName}`;
+      body = `<p>Kính gửi quý phụ huynh <b>${parentName || 'Phụ huynh'}</b>,</p>
+<p>Trường Đa Trí Tuệ (MIS) xin chúc mừng học sinh <b>${fullName}</b> đã hoàn thành kỳ kiểm tra năng lực đầu vào. Kết quả kiểm tra của con cụ thể:</p>
+<ul>
+  <li><b>Môn Toán/Tư duy:</b> ${math} điểm</li>
+  <li><b>Môn Tiếng Anh:</b> ${eng} điểm</li>
+  <li><b>Môn Tiếng Việt:</b> ${viet} điểm</li>
+  ${scholarship > 0 ? `<li><b>Mức học bổng ưu tiên đạt được:</b> <span style="color: #16a34a; font-weight: bold;">${scholarship}%</span></li>` : ''}
+</ul>
+<p>Dựa trên kết quả này, con đã đủ điều kiện nhập học. Kính mời quý phụ huynh hoàn thành đóng phí giữ chỗ <b>5.000.000 VND</b> để chính thức giữ chỗ cho con vào khối lớp học đăng ký.</p>
+<br/>
+<p>Trân trọng,<br/><b>Ban Tuyển sinh Trường Đa Trí Tuệ MIS</b></p>`;
+    } else if (templateType === 'reservation') {
+      const fee = Number(watch('seatReservationFee') || 5000000).toLocaleString('vi-VN');
+      const discount = Number(scholarshipPercent) + Number(periodDiscountPercent) + Number(siblingDiscountPercent);
+      subject = `Thư xác nhận giữ chỗ và đóng phí thành công - Học sinh ${fullName}`;
+      body = `<p>Kính gửi quý phụ huynh <b>${parentName || 'Phụ huynh'}</b>,</p>
+<p>Nhà trường xác nhận đã nhận thành công khoản phí giữ chỗ nhập học trị giá <b>${fee} VND</b> của học sinh <b>${fullName}</b>.</p>
+<p>Hồ sơ của con đã được đưa vào diện ưu tiên xếp lớp với mức ưu đãi học phí áp dụng là <b>${discount}%</b>.</p>
+<p>Văn phòng sẽ liên hệ thông báo lịch nộp hồ sơ nhập học bản cứng và đồng phục khi đến thời gian quy định.</p>
+<br/>
+<p>Trân trọng,<br/><b>Văn phòng Tuyển sinh Trường Đa Trí Tuệ MIS</b></p>`;
+    } else if (templateType === 'enrolled') {
+      const code = lead.leadCode;
+      subject = `Xác nhận nộp hồ sơ & Chào mừng học sinh nhập học - Học sinh ${fullName}`;
+      body = `<p>Kính gửi quý phụ huynh <b>${parentName || 'Phụ huynh'}</b>,</p>
+<p>Nhà trường xác nhận đã tiếp nhận đầy đủ hồ sơ nhập học bản cứng của con <b>${fullName}</b>.</p>
+<p>Mã định danh hồ sơ học sinh trên hệ thống của con là: <b>${code}</b>.</p>
+<p>Chào mừng con chính thức gia nhập ngôi nhà chung Trường Phổ thông Liên cấp Đa Trí Tuệ MIS!</p>
+<br/>
+<p>Trân trọng,<br/><b>Văn phòng Tuyển sinh & Ban Giám Hiệu MIS</b></p>`;
+    }
+
+    setEmailSubject(subject);
+    setEmailBody(body);
+    setShowEmailModal(true);
+  };
+
+  const handleSendEmail = async () => {
+    setSendingEmail(true);
+    try {
+      const res = await sendLeadEmail(lead.id, {
+        subject: emailSubject,
+        body: emailBody,
+        toEmail: parentEmail,
+      });
+      if (res.success) {
+        setShowEmailModal(false);
+        setSuccessMsg(res.sentReal ? '📧 Đã gửi email thông báo thành công!' : '📧 Đã lưu và giả lập gửi email thành công (Chưa cấu hình SMTP)!');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        setTimeout(() => setSuccessMsg(''), 5000);
+        router.refresh();
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Gửi email thất bại.');
+    } finally {
+      setSendingEmail(false);
+    }
+  };
+
+  // Logic to determine showing/hiding sections based on status
+  const currentStatus = lead.status;
+  const showTestSection = ['test_scheduled', 'test_participated', 'seat_reserved', 'docs_submitted', 'enrolled', 'cancelled'].includes(currentStatus);
+  const showFinanceSection = ['seat_reserved', 'docs_submitted', 'enrolled', 'cancelled'].includes(currentStatus);
+  const showEnrollmentLockedSection = ['docs_submitted', 'enrolled', 'cancelled'].includes(currentStatus);
 
   return (
     <div className="space-y-6">
@@ -246,7 +481,7 @@ export default function LeadDetailClient({
         {/* Status quick select */}
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <Input
-            placeholder="Lý do/ghi chú chuyển bước..."
+            placeholder="Ghi chú chuyển bước..."
             className="h-9 w-full sm:w-56 text-xs"
             value={statusNote}
             onChange={e => setStatusNote(e.target.value)}
@@ -266,7 +501,8 @@ export default function LeadDetailClient({
       </div>
 
       {successMsg && (
-        <div className="rounded-lg bg-emerald-50 border border-emerald-200 p-4 text-sm font-bold text-emerald-800 dark:bg-emerald-950/40 dark:border-emerald-900 dark:text-emerald-300">
+        <div className="rounded-lg bg-emerald-50 border border-emerald-200 p-4 text-sm font-bold text-emerald-800 dark:bg-emerald-950/40 dark:border-emerald-900 dark:text-emerald-300 flex items-center gap-2">
+          <CheckCircle2 className="h-4 w-4 shrink-0" />
           {successMsg}
         </div>
       )}
@@ -281,7 +517,7 @@ export default function LeadDetailClient({
             Lịch sử chăm sóc ({activities.length})
           </TabsTrigger>
           <TabsTrigger active={activeTab === 'pipeline'} onClick={() => setActiveTab('pipeline')}>
-            Lịch sử bước phễu ({pipeline.length})
+            Hành trình phễu ({pipeline.length})
           </TabsTrigger>
           <TabsTrigger active={activeTab === 'documents'} onClick={() => setActiveTab('documents')}>
             Hồ sơ bàn giao ({documents.length})
@@ -291,16 +527,17 @@ export default function LeadDetailClient({
           </TabsTrigger>
         </TabsList>
 
-        {/* Tab 1: Profile & Contact information */}
+        {/* Tab 1: Profile & Details */}
         {activeTab === 'profile' && (
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-            <Card className="lg:col-span-2">
-              <CardHeader>
-                <CardTitle>Chỉnh sửa Hồ sơ Lead</CardTitle>
-                <CardDescription>Cập nhật thông tin học sinh và thông tin liên hệ phụ huynh.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSubmit(handleUpdateProfile)} className="space-y-4 font-sans text-slate-900 dark:text-slate-50">
+          <form onSubmit={handleSubmit(handleUpdateProfile as any)} className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+            <div className="lg:col-span-2 space-y-6">
+              {/* Card A: Core profile fields */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Hồ sơ học sinh & Phụ huynh</CardTitle>
+                  <CardDescription>Các thông tin liên hệ và thông tin học tập cơ bản.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4 font-sans text-slate-900 dark:text-slate-50">
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div className="space-y-1.5">
                       <label className="text-xs font-bold text-slate-600 dark:text-slate-400">Họ và tên học sinh *</label>
@@ -310,31 +547,24 @@ export default function LeadDetailClient({
                       )}
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-xs font-bold text-slate-600 dark:text-slate-400">Họ và tên phụ huynh</label>
-                      <Input placeholder="Nguyễn Văn B" {...register('parentName')} />
+                      <label className="text-xs font-bold text-slate-600 dark:text-slate-400">Ngày sinh học sinh</label>
+                      <Input type="date" {...register('dateOfBirth')} />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div className="space-y-1.5">
-                      <label className="text-xs font-bold text-slate-600 dark:text-slate-400">Số điện thoại liên hệ *</label>
-                      <Input placeholder="0912345678" {...register('phone')} />
-                      {errors.phone && (
-                        <p className="text-xs text-rose-600 font-bold">{errors.phone.message}</p>
-                      )}
+                      <label className="text-xs font-bold text-slate-600 dark:text-slate-400">Học hệ nào / Hệ đăng ký *</label>
+                      <Select {...register('enrollmentSystem')}>
+                        {ENROLLMENT_SYSTEMS.map(sys => (
+                          <option key={sys} value={sys}>
+                            {sys}
+                          </option>
+                        ))}
+                      </Select>
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-xs font-bold text-slate-600 dark:text-slate-400">Email phụ huynh</label>
-                      <Input placeholder="parent@example.com" {...register('email')} />
-                      {errors.email && (
-                        <p className="text-xs text-rose-600 font-bold">{errors.email.message}</p>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-bold text-slate-600 dark:text-slate-400">Khối lớp đăng ký *</label>
+                      <label className="text-xs font-bold text-slate-600 dark:text-slate-400">Khối lớp quan tâm *</label>
                       <Select {...register('grade')}>
                         {gradeLevels.map(g => (
                           <option key={g} value={g}>
@@ -342,6 +572,31 @@ export default function LeadDetailClient({
                           </option>
                         ))}
                       </Select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-slate-600 dark:text-slate-400">Trường đang học cũ</label>
+                      <Input placeholder="Tiểu học Nghĩa Tân" {...register('currentSchool')} />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-slate-600 dark:text-slate-400">Lớp đang học cũ</label>
+                      <Input placeholder="Lớp 5A" {...register('currentClass')} />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-600 dark:text-slate-400">Địa chỉ cư trú hiện tại</label>
+                    <Input placeholder="Số 10 Ngõ 102 Cầu Giấy, Hà Nội" {...register('address')} />
+                  </div>
+
+                  <hr className="border-slate-100 dark:border-slate-900 my-4" />
+
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-slate-600 dark:text-slate-400">Họ và tên phụ huynh *</label>
+                      <Input placeholder="Nguyễn Văn B" {...register('parentName')} />
                     </div>
                     <div className="space-y-1.5">
                       <label className="text-xs font-bold text-slate-600 dark:text-slate-400">Nguồn thông tin *</label>
@@ -355,85 +610,337 @@ export default function LeadDetailClient({
                     </div>
                   </div>
 
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-slate-600 dark:text-slate-400">Số điện thoại phụ huynh *</label>
+                      <Input placeholder="0912345678" {...register('phone')} />
+                      {errors.phone && (
+                        <p className="text-xs text-rose-600 font-bold">{errors.phone.message}</p>
+                      )}
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-slate-600 dark:text-slate-400">Email liên hệ phụ huynh</label>
+                      <Input placeholder="parent@example.com" {...register('email')} />
+                    </div>
+                  </div>
+
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold text-slate-600 dark:text-slate-400">Ghi chú chi tiết</label>
-                    <Textarea placeholder="Nhu cầu tư vấn, học bổng mong muốn..." {...register('notes')} />
+                    <Textarea placeholder="Các yêu cầu chăm sóc đặc biệt..." {...register('notes')} />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Card B: Đăng ký & Điểm thi Test (Hiển thị khi ở trạng thái test) */}
+              {showTestSection ? (
+                <Card className="border-amber-100 dark:border-amber-950/40">
+                  <CardHeader className="bg-amber-50/20 dark:bg-amber-950/10">
+                    <CardTitle className="text-amber-800 dark:text-amber-300 flex items-center gap-2">
+                      <FileText className="h-5 w-5" />
+                      Đăng ký & Kết quả Test Đầu Vào
+                    </CardTitle>
+                    <CardDescription>Nhập lịch hẹn test năng lực và kết quả điểm số thi 3 môn.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4 pt-4 text-slate-900 dark:text-slate-50">
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-slate-600 dark:text-slate-400">Ngày thi hẹn test</label>
+                        <Input type="date" {...register('testDate')} />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-slate-600 dark:text-slate-400">Giờ thi hẹn test</label>
+                        <Input placeholder="08:30" {...register('testTime')} />
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openEmailTemplate('test_notice')}
+                        className="text-xs font-bold flex items-center gap-1 border-amber-200 text-amber-800 hover:bg-amber-50"
+                      >
+                        <Send className="h-3 w-3" />
+                        Gửi Email thông báo Lịch Test
+                      </Button>
+                    </div>
+
+                    <hr className="border-slate-100 dark:border-slate-900 my-4" />
+
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-slate-600 dark:text-slate-400">Điểm Toán / Tư duy</label>
+                        <Input type="number" step="0.5" placeholder="8.5" {...register('mathScore')} />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-slate-600 dark:text-slate-400">Điểm Tiếng Anh</label>
+                        <Input type="number" step="0.5" placeholder="9.0" {...register('englishScore')} />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-slate-600 dark:text-slate-400">Điểm Tiếng Việt</label>
+                        <Input type="number" step="0.5" placeholder="7.5" {...register('vietnameseScore')} />
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openEmailTemplate('test_result')}
+                        className="text-xs font-bold flex items-center gap-1 border-purple-200 text-purple-800 hover:bg-purple-50"
+                      >
+                        <Send className="h-3 w-3" />
+                        Gửi Email kết quả & HD đóng phí
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : null}
+
+              {/* Card C: Tài chính & Ưu đãi học phí (Hiển thị từ bước đóng phí giữ chỗ) */}
+              {showFinanceSection ? (
+                <Card className="border-emerald-100 dark:border-emerald-950/40">
+                  <CardHeader className="bg-emerald-50/20 dark:bg-emerald-950/10">
+                    <CardTitle className="text-emerald-800 dark:text-emerald-300 flex items-center gap-2">
+                      <CreditCard className="h-5 w-5" />
+                      Chi tiết Ưu đãi & Học phí Áp dụng
+                    </CardTitle>
+                    <CardDescription>Nhập tỷ lệ ưu đãi % giảm trừ học phí và chi phí giữ chỗ nhập học.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4 pt-4 text-slate-900 dark:text-slate-50">
+                    <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-bold text-slate-600">Học bổng (%)</label>
+                        <Input type="number" placeholder="20" {...register('scholarshipPercent')} />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-bold text-slate-600">Đợt đóng (%)</label>
+                        <Input type="number" placeholder="5" {...register('periodDiscountPercent')} />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-bold text-slate-600">Anh/chị/em (%)</label>
+                        <Input type="number" placeholder="0" {...register('siblingDiscountPercent')} />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-bold text-slate-600">Con CBNV (%)</label>
+                        <Input type="number" placeholder="0" {...register('staffDiscountPercent')} />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-bold text-slate-600">Khác (%)</label>
+                        <Input type="number" placeholder="0" {...register('otherDiscountPercent')} />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-slate-600 dark:text-slate-400">Phí bổ trợ / Phí phát sinh (VND)</label>
+                        <Input type="number" placeholder="0" {...register('additionalFee')} />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-slate-600 dark:text-slate-400">Phí giữ chỗ (VND)</label>
+                        <Input type="number" placeholder="5000000" {...register('seatReservationFee')} />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-slate-600 dark:text-slate-400">Ngày đóng phí giữ chỗ</label>
+                        <Input type="date" {...register('seatReservationDate')} />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-slate-600 dark:text-slate-400">Tổng học phí áp dụng thực tế</label>
+                        <div className="h-10 px-3 flex items-center font-black text-base text-emerald-700 bg-emerald-50 dark:bg-emerald-950/30 rounded-lg border border-emerald-250">
+                          {Number(watch('finalTuition') || BASE_TUITION_FEE).toLocaleString('vi-VN')} VND
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openEmailTemplate('reservation')}
+                        className="text-xs font-bold flex items-center gap-1 border-emerald-200 text-emerald-800 hover:bg-emerald-50"
+                      >
+                        <Send className="h-3 w-3" />
+                        Gửi Email Xác nhận Giữ chỗ
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : null}
+
+              {/* Card D: Mở khóa Hồ sơ Nhập học (Chỉ cho phép ở Bước nộp hồ sơ trở đi) */}
+              {showEnrollmentLockedSection ? (
+                <Card className="border-indigo-150 dark:border-indigo-950/40">
+                  <CardHeader className="bg-indigo-50/20 dark:bg-indigo-950/10">
+                    <CardTitle className="text-indigo-800 dark:text-indigo-300 flex items-center gap-2">
+                      <CheckCircle2 className="h-5 w-5" />
+                      Mở khóa: Hồ sơ Bàn giao Nhập học
+                    </CardTitle>
+                    <CardDescription>
+                      Chỉ mở khóa ở giai đoạn Đã nộp hồ sơ trở đi. Nhập mã số học sinh, định danh và anh/chị/em.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4 pt-4 text-slate-900 dark:text-slate-50">
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-slate-600 dark:text-slate-400">Mã định danh cá nhân HS</label>
+                        <Input placeholder="001209012345" {...register('nationalStudentId')} />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-slate-600 dark:text-slate-400">Mã học sinh BGD cấp</label>
+                        <Input placeholder="HS-2026-BGD-11" {...register('moetStudentId')} />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-slate-600 dark:text-slate-400">Mã bảo hiểm y tế BHYT</label>
+                        <Input placeholder="GD4012345678" {...register('insuranceId')} />
+                      </div>
+                    </div>
+
+                    <div className="border border-slate-100 dark:border-slate-800 p-3 rounded-lg bg-slate-50/50 dark:bg-slate-900/50 space-y-3">
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          id="hasSiblings"
+                          checked={watch('siblingsInfo.hasSiblings') || false}
+                          onChange={(e) => setValue('siblingsInfo.hasSiblings', e.target.checked)}
+                          className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
+                        />
+                        <label htmlFor="hasSiblings" className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                          Có anh/chị/em ruột đang học tại hệ thống trường MIS
+                        </label>
+                      </div>
+
+                      {watch('siblingsInfo.hasSiblings') && (
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 pt-1">
+                          <div className="space-y-1.5">
+                            <label className="text-[10px] font-bold text-slate-500">Họ và tên anh/chị/em ruột</label>
+                            <Input
+                              placeholder="Nguyễn Văn C"
+                              value={watch('siblingsInfo.siblingName') || ''}
+                              onChange={(e) => setValue('siblingsInfo.siblingName', e.target.value)}
+                            />
+                          </div>
+                          <div className="space-y-1.5">
+                            <label className="text-[10px] font-bold text-slate-500">Khối lớp đang học</label>
+                            <Input
+                              placeholder="Lớp 9A2"
+                              value={watch('siblingsInfo.siblingClass') || ''}
+                              onChange={(e) => setValue('siblingsInfo.siblingClass', e.target.value)}
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openEmailTemplate('enrolled')}
+                        className="text-xs font-bold flex items-center gap-1 border-indigo-200 text-indigo-800 hover:bg-indigo-50"
+                      >
+                        <Send className="h-3 w-3" />
+                        Gửi Email Xác nhận Nộp hồ sơ
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : null}
+            </div>
+
+            {/* Right sidebar: Overview & Submission */}
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Tổng quan Tuyển sinh</CardTitle>
+                  <CardDescription>Trạng thái phễu hiện tại của lead.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40">
+                      <User className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-slate-450">Học sinh</div>
+                      <div className="text-sm font-black text-slate-900 dark:text-white">{fullName}</div>
+                    </div>
                   </div>
 
-                  <div className="flex justify-end pt-3">
-                    <Button
-                      type="submit"
-                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
-                      disabled={isSubmitting}
-                    >
-                      Cập nhật hồ sơ
-                    </Button>
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 dark:bg-indigo-950/40">
+                      <Phone className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-slate-450">Điện thoại</div>
+                      <div className="text-sm font-black text-slate-900 dark:text-white">{watch('phone')}</div>
+                    </div>
                   </div>
-                </form>
-              </CardContent>
-            </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Thông tin Tuyển sinh</CardTitle>
-                <CardDescription>Tổng quan trạng thái tuyển sinh hiện tại của học sinh.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40">
-                    <User className="h-4 w-4" />
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-purple-50 text-purple-600 dark:bg-purple-950/40">
+                      <Mail className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-slate-450">Email liên hệ</div>
+                      <div className="text-sm font-black text-slate-900 dark:text-white">{parentEmail || '-'}</div>
+                    </div>
                   </div>
-                  <div>
-                    <div className="text-[10px] font-bold uppercase tracking-wider text-slate-450">Học sinh</div>
-                    <div className="text-sm font-black text-slate-900 dark:text-white">{lead.fullName}</div>
-                  </div>
-                </div>
 
-                <div className="flex items-center gap-3">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 dark:bg-indigo-950/40">
-                    <Phone className="h-4 w-4" />
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-cyan-50 text-cyan-600 dark:bg-cyan-950/40">
+                      <MapPin className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-slate-450">Khối tuyển sinh</div>
+                      <div className="text-sm font-black text-slate-900 dark:text-white">{watch('grade')}</div>
+                    </div>
                   </div>
-                  <div>
-                    <div className="text-[10px] font-bold uppercase tracking-wider text-slate-450">Điện thoại</div>
-                    <div className="text-sm font-black text-slate-900 dark:text-white">{lead.phone}</div>
-                  </div>
-                </div>
 
-                <div className="flex items-center gap-3">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-purple-50 text-purple-600 dark:bg-purple-950/40">
-                    <Mail className="h-4 w-4" />
+                  <div className="border-t border-slate-100 pt-4 dark:border-slate-800">
+                    <div className="text-xs font-bold text-slate-600 dark:text-slate-400">Ngày tạo lead</div>
+                    <div className="text-xs text-slate-500 mt-1">
+                      {new Date(lead.createdAt).toLocaleDateString('vi-VN', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </div>
                   </div>
-                  <div>
-                    <div className="text-[10px] font-bold uppercase tracking-wider text-slate-450">Email phụ huynh</div>
-                    <div className="text-sm font-black text-slate-900 dark:text-white">{lead.email || '-'}</div>
-                  </div>
-                </div>
 
-                <div className="flex items-center gap-3">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-cyan-50 text-cyan-600 dark:bg-cyan-950/40">
-                    <MapPin className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <div className="text-[10px] font-bold uppercase tracking-wider text-slate-450">Khối tuyển sinh</div>
-                    <div className="text-sm font-black text-slate-900 dark:text-white">{lead.grade}</div>
-                  </div>
-                </div>
+                  <Button
+                    type="submit"
+                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold mt-2"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? 'Đang lưu...' : 'Cập nhật toàn bộ hồ sơ'}
+                  </Button>
+                </CardContent>
+              </Card>
 
-                <div className="border-t border-slate-100 pt-4 dark:border-slate-800">
-                  <div className="text-xs font-bold text-slate-600 dark:text-slate-400">Ngày tạo lead</div>
-                  <div className="text-xs text-slate-500 mt-1">
-                    {new Date(lead.createdAt).toLocaleDateString('vi-VN', {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+              {/* Quick warning card if email is missing */}
+              {!parentEmail && (
+                <Card className="border-rose-100 dark:border-rose-950 bg-rose-50/20 dark:bg-rose-950/10">
+                  <CardContent className="pt-4 flex gap-2">
+                    <AlertCircle className="h-5 w-5 text-rose-500 shrink-0" />
+                    <div className="text-xs">
+                      <p className="font-bold text-rose-700 dark:text-rose-300">Không có Email liên lạc!</p>
+                      <p className="text-slate-550 dark:text-slate-400 mt-1 leading-normal">
+                        Vui lòng cập nhật Email phụ huynh ở thẻ Hồ sơ để gửi được thông báo lịch thi test, kết quả hoặc giữ chỗ.
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </form>
         )}
 
-        {/* Tab 2: Activities & Logs */}
+        {/* Tab 2: Activities logs */}
         {activeTab === 'activities' && (
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
             <Card className="lg:col-span-2">
@@ -457,16 +964,16 @@ export default function LeadDetailClient({
                           </span>
                         </div>
                         {act.description && (
-                          <p className="text-xs font-medium text-slate-600 dark:text-slate-400 mt-1 bg-slate-50 dark:bg-slate-900 p-2.5 rounded-lg border border-slate-100 dark:border-slate-850">
+                          <pre className="text-xs font-sans font-medium text-slate-600 dark:text-slate-400 mt-1 bg-slate-50 dark:bg-slate-900 p-2.5 rounded-lg border border-slate-100 dark:border-slate-850 whitespace-pre-wrap leading-relaxed">
                             {act.description}
-                          </p>
+                          </pre>
                         )}
                       </div>
                     ))}
                   </div>
                 ) : (
                   <p className="text-sm font-semibold text-slate-400 text-center py-6">
-                    Chưa có nhật ký trao đổi nào được ghi nhận cho lead này.
+                    Chưa có nhật ký chăm sóc nào cho học sinh này.
                   </p>
                 )}
               </CardContent>
@@ -483,7 +990,6 @@ export default function LeadDetailClient({
                     <label className="text-xs font-bold text-slate-600 dark:text-slate-400">Hình thức trao đổi</label>
                     <Select value={activityTitle} onChange={e => setActivityTitle(e.target.value)}>
                       <option value="Gọi điện thoại tư vấn">📞 Gọi điện thoại tư vấn</option>
-                      <option value="Gửi email thông tin">📧 Gửi email thông tin</option>
                       <option value="Gặp mặt trực tiếp tại trường">🏫 Gặp mặt trực tiếp</option>
                       <option value="Nhắn tin qua Zalo/Viber">💬 Nhắn tin Zalo/Viber</option>
                       <option value="Tham quan trường (School Tour)">🏛️ Tham quan trường</option>
@@ -516,8 +1022,8 @@ export default function LeadDetailClient({
         {activeTab === 'pipeline' && (
           <Card>
             <CardHeader>
-              <CardTitle>Lịch sử thay đổi bước phễu tuyển sinh</CardTitle>
-              <CardDescription>Theo dõi hành trình của lead qua các giai đoạn trong quy trình tuyển sinh.</CardDescription>
+              <CardTitle>Lịch sử chuyển đổi bước phễu tuyển sinh</CardTitle>
+              <CardDescription>Theo dõi hành trình đổi trạng thái của học sinh.</CardDescription>
             </CardHeader>
             <CardContent>
               {pipeline.length ? (
@@ -561,19 +1067,19 @@ export default function LeadDetailClient({
                 </div>
               ) : (
                 <p className="text-sm font-semibold text-slate-400 text-center py-6">
-                  Chưa ghi nhận lịch sử chuyển trạng thái.
+                  Chưa có lịch sử trạng thái phễu.
                 </p>
               )}
             </CardContent>
           </Card>
         )}
 
-        {/* Tab 4: Documents list placeholder */}
+        {/* Tab 4: Documents list */}
         {activeTab === 'documents' && (
           <Card>
             <CardHeader>
               <CardTitle>Danh mục hồ sơ học sinh bàn giao</CardTitle>
-              <CardDescription>Bàn giao học bạ, khai sinh, ảnh thẻ từ CRM phục vụ nhập học.</CardDescription>
+              <CardDescription>Bàn giao học bạ, khai sinh, ảnh thẻ phục vụ nhập học.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               {documents.length ? (
@@ -600,23 +1106,20 @@ export default function LeadDetailClient({
                   </div>
                   <h4 className="mt-3 text-sm font-black text-slate-900 dark:text-white">Chưa có hồ sơ học sinh bàn giao</h4>
                   <p className="mt-1 text-xs text-slate-550 max-w-sm mx-auto">
-                    Quy trình thu thập tài liệu đang chờ. Khi phụ huynh nộp học bạ gốc, khai sinh hoặc ảnh 3x4, các tài liệu sẽ tự động đồng bộ tại đây.
+                    Quy trình thu thập tài liệu đang chờ. Khi phụ huynh nộp học bạ gốc, khai sinh hoặc ảnh 3x4, các tài liệu sẽ tự động hiển thị tại đây.
                   </p>
-                  <Button variant="outline" className="mt-4 font-bold border-slate-200 text-slate-700 dark:border-slate-800 dark:text-slate-200">
-                    Thêm hồ sơ minh chứng
-                  </Button>
                 </div>
               )}
             </CardContent>
           </Card>
         )}
 
-        {/* Tab 5: Payments list placeholder */}
+        {/* Tab 5: Payments list */}
         {activeTab === 'payments' && (
           <Card>
             <CardHeader>
               <CardTitle>Lịch sử giao dịch đóng phí</CardTitle>
-              <CardDescription>Danh sách hóa đơn phí giữ chỗ, học phí tuyển sinh của học sinh.</CardDescription>
+              <CardDescription>Danh sách hóa đơn phí giữ chỗ, học phí của học sinh.</CardDescription>
             </CardHeader>
             <CardContent>
               {payments.length ? (
@@ -642,7 +1145,7 @@ export default function LeadDetailClient({
                           {pay.amount.toLocaleString('vi-VN')} VND
                         </div>
                         <Badge className="mt-1 bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase font-bold text-[9px] tracking-wide">
-                          {pay.status}
+                           {pay.status === 'paid' ? 'Đã đóng' : pay.status}
                         </Badge>
                       </div>
                     </div>
@@ -655,19 +1158,74 @@ export default function LeadDetailClient({
                   </div>
                   <h4 className="mt-3 text-sm font-black text-slate-900 dark:text-white">Chưa ghi nhận giao dịch đóng học phí</h4>
                   <p className="mt-1 text-xs text-slate-550 max-w-sm mx-auto">
-                    Chưa có bất kỳ hóa đơn nào được phát hành cho học sinh này qua phân hệ kế toán tài chính.
+                    Chưa có bất kỳ hóa đơn nào được phát hành cho học sinh này.
                   </p>
-                  <Link href={`/${locale}/payments`}>
-                    <Button className="mt-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold">
-                      Phát hành hóa đơn học phí
-                    </Button>
-                  </Link>
                 </div>
               )}
             </CardContent>
           </Card>
         )}
       </Tabs>
+
+      {/* Email Editor Modal Popup */}
+      {showEmailModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="p-5 border-b border-slate-150 dark:border-slate-850 bg-slate-50/50 dark:bg-slate-900/50 flex items-center justify-between">
+              <div>
+                <h3 className="font-black text-base text-slate-900 dark:text-white">Soạn thảo & Chỉnh sửa Thư mẫu</h3>
+                <p className="text-xs text-slate-500 mt-0.5">Người nhận: {parentEmail}</p>
+              </div>
+              <Badge className="bg-blue-50 text-blue-800 border border-blue-200 text-[10px]">Tập tin đính kèm: Không</Badge>
+            </div>
+            
+            <div className="p-5 flex-1 overflow-y-auto space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-600 dark:text-slate-400">Tiêu đề Thư (Subject) *</label>
+                <Input
+                  value={emailSubject}
+                  onChange={(e) => setEmailSubject(e.target.value)}
+                  className="font-bold border-slate-250"
+                  required
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-600 dark:text-slate-400">Nội dung Thư (HTML body) *</label>
+                <Textarea
+                  value={emailBody}
+                  onChange={(e) => setEmailBody(e.target.value)}
+                  rows={12}
+                  className="font-mono text-xs leading-relaxed border-slate-250 p-4 min-h-[300px]"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="p-4 border-t border-slate-150 dark:border-slate-850 bg-slate-50/50 dark:bg-slate-900/50 flex items-center justify-between shrink-0">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowEmailModal(false)}
+                className="font-bold border-slate-300 dark:border-slate-800"
+              >
+                Hủy bỏ
+              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  onClick={handleSendEmail}
+                  disabled={sendingEmail}
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold flex items-center gap-2"
+                >
+                  <Send className="h-4 w-4" />
+                  {sendingEmail ? 'Đang gửi...' : 'Gửi Email thông báo'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

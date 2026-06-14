@@ -22,6 +22,8 @@ import {
   ChevronLeft,
   ChevronRight,
   MoreVertical,
+  FileSpreadsheet,
+  Upload
 } from 'lucide-react';
 import { Button } from '@/src/components/ui/button';
 import { Input } from '@/src/components/ui/input';
@@ -30,14 +32,7 @@ import { Badge } from '@/src/components/ui/badge';
 import { Card, CardContent } from '@/src/components/ui/card';
 import { Dialog } from '@/src/components/ui/dialog';
 import { Textarea } from '@/src/components/ui/textarea';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/src/components/ui/table';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/src/components/ui/table';
 import {
   createLead,
   updateLead,
@@ -47,23 +42,23 @@ import {
 
 const leadFormSchema = z.object({
   fullName: z.string().min(1, 'Họ và tên học sinh là bắt buộc'),
-  parentName: z.string().optional(),
+  parentName: z.string().optional().nullable(),
   phone: z.string().min(1, 'Số điện thoại là bắt buộc'),
-  email: z.string().email('Email không hợp lệ').optional().or(z.literal('')),
+  email: z.string().email('Email không hợp lệ').optional().or(z.literal('')).nullable(),
   source: z.string().min(1, 'Nguồn là bắt buộc'),
   grade: z.string().min(1, 'Khối/Lớp đăng ký là bắt buộc'),
   status: z.enum([
-    'new',
-    'contacted',
-    'consultation_scheduled',
-    'application_submitted',
+    'received',
+    'consulting',
+    'test_scheduled',
+    'test_participated',
     'seat_reserved',
-    'payment_confirmed',
+    'docs_submitted',
     'enrolled',
-    'lost',
+    'cancelled',
   ]),
   assignedUserId: z.string().nullable().optional(),
-  notes: z.string().optional(),
+  notes: z.string().optional().nullable(),
 });
 
 type LeadFormValues = z.infer<typeof leadFormSchema>;
@@ -86,6 +81,24 @@ interface Lead {
   assignedUserId: string | null;
   notes: string | null;
   createdAt: Date;
+  
+  dateOfBirth?: Date | null;
+  currentClass?: string | null;
+  currentSchool?: string | null;
+  address?: string | null;
+  enrollmentSystem?: string | null;
+  testDate?: Date | null;
+  testTime?: string | null;
+  mathScore?: number | null;
+  englishScore?: number | null;
+  vietnameseScore?: number | null;
+  scholarshipPercent?: number | null;
+  finalTuition?: number | null;
+  seatReservationFee?: number | null;
+  seatReservationDate?: Date | null;
+  nationalStudentId?: string | null;
+  insuranceId?: string | null;
+  moetStudentId?: string | null;
 }
 
 interface LeadsClientProps {
@@ -109,25 +122,25 @@ interface LeadsClientProps {
 }
 
 const statusBadgeStyles: Record<LeadStatus, string> = {
-  new: 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800',
-  contacted: 'bg-cyan-50 text-cyan-700 border-cyan-200 dark:bg-cyan-950/40 dark:text-cyan-300 dark:border-cyan-800',
-  consultation_scheduled: 'bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-950/40 dark:text-yellow-300 dark:border-yellow-800',
-  application_submitted: 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-800',
+  received: 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800',
+  consulting: 'bg-cyan-50 text-cyan-700 border-cyan-200 dark:bg-cyan-950/40 dark:text-cyan-300 dark:border-cyan-800',
+  test_scheduled: 'bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-950/40 dark:text-yellow-300 dark:border-yellow-800',
+  test_participated: 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-800',
   seat_reserved: 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950/40 dark:text-orange-300 dark:border-orange-800',
-  payment_confirmed: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800',
+  docs_submitted: 'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800',
   enrolled: 'bg-green-50 text-green-700 border-green-200 dark:bg-green-950/40 dark:text-green-300 dark:border-green-800',
-  lost: 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800',
+  cancelled: 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800',
 };
 
 const statusLabels: Record<LeadStatus, string> = {
-  new: 'Mới (New)',
-  contacted: 'Đã liên hệ (Contacted)',
-  consultation_scheduled: 'Lên lịch tư vấn (Consultation)',
-  application_submitted: 'Nộp đơn học (Applied)',
-  seat_reserved: 'Giữ chỗ (Reserved)',
-  payment_confirmed: 'Đóng phí (Paid)',
-  enrolled: 'Nhập học (Enrolled)',
-  lost: 'Từ chối (Lost)',
+  received: 'Tiếp nhận Data',
+  consulting: 'Đang tư vấn',
+  test_scheduled: 'Đăng ký Test',
+  test_participated: 'Đã tham gia Test',
+  seat_reserved: 'Đã giữ chỗ',
+  docs_submitted: 'Đã nộp hồ sơ',
+  enrolled: 'Đã nhập học',
+  cancelled: 'Hủy/Rút hồ sơ',
 };
 
 const leadSources = ['Website', 'Facebook', 'TikTok', 'Google', 'Referral', 'Event', 'Other'];
@@ -179,7 +192,7 @@ export default function LeadsClient({
       email: '',
       source: 'Website',
       grade: 'Lớp 10',
-      status: 'new',
+      status: 'received',
       assignedUserId: '',
       notes: '',
     },
@@ -222,7 +235,7 @@ export default function LeadsClient({
 
   // Mutations
   const onSubmitCreate = async (values: LeadFormValues) => {
-    const result = await createLead(values);
+    const result = await createLead(values as any);
     if (result.success) {
       setCreateOpen(false);
       createForm.reset();
@@ -232,7 +245,7 @@ export default function LeadsClient({
 
   const onSubmitEdit = async (values: LeadFormValues) => {
     if (!activeLead) return;
-    const result = await updateLead(activeLead.id, values);
+    const result = await updateLead(activeLead.id, values as any);
     if (result.success) {
       setEditOpen(false);
       setActiveLead(null);
@@ -248,6 +261,158 @@ export default function LeadsClient({
       setActiveLead(null);
       router.refresh();
     }
+  };
+
+  // Excel / CSV Export function
+  const handleExportCSV = () => {
+    const data = initialData.data;
+    if (!data.length) {
+      alert('Không có dữ liệu để xuất!');
+      return;
+    }
+
+    const headers = [
+      'Mã Lead',
+      'Tên Học Sinh',
+      'Ngày Sinh',
+      'Lớp Đăng Ký',
+      'Hệ Đăng Ký',
+      'Nguồn',
+      'Số Điện Thoại Phụ Huynh',
+      'Họ Tên Phụ Huynh',
+      'Email Phụ Huynh',
+      'Lớp Đang Học Cũ',
+      'Trường Đang Học Cũ',
+      'Địa Chỉ',
+      'Trạng Thái',
+      'Mã Định Danh Cá Nhân',
+      'Mã BHYT',
+      'Mã BGD Cấp',
+      'Ghi Chú',
+    ];
+
+    const rows = data.map(l => [
+      l.leadCode,
+      l.fullName,
+      l.dateOfBirth ? new Date(l.dateOfBirth).toLocaleDateString('vi-VN') : '',
+      l.grade,
+      l.enrollmentSystem || '',
+      l.source,
+      l.phone,
+      l.parentName || '',
+      l.email || '',
+      l.currentClass || '',
+      l.currentSchool || '',
+      l.address || '',
+      statusLabels[l.status] || l.status,
+      l.nationalStudentId || '',
+      l.insuranceId || '',
+      l.moetStudentId || '',
+      l.notes || '',
+    ]);
+
+    let csvContent = '\uFEFF'; // UTF-8 BOM
+    csvContent += headers.map(h => `"${h.replace(/"/g, '""')}"`).join(',') + '\n';
+    rows.forEach(row => {
+      csvContent += row.map(val => `"${String(val || '').replace(/"/g, '""')}"`).join(',') + '\n';
+    });
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `MIS_CRM_Leads_Tuyensinh_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // Excel / CSV Import function
+  const handleImportCSV = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const text = event.target?.result as string;
+      if (!text) return;
+
+      const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+      if (lines.length <= 1) {
+        alert('Tệp CSV trống hoặc không có dữ liệu!');
+        return;
+      }
+
+      // Simple CSV line parser that handles quotes
+      const parseCsvLine = (line: string) => {
+        const result = [];
+        let current = '';
+        let inQuotes = false;
+        for (let i = 0; i < line.length; i++) {
+          const char = line[i];
+          if (char === '"') {
+            inQuotes = !inQuotes;
+          } else if (char === ',' && !inQuotes) {
+            result.push(current.replace(/^"|"$/g, '').trim());
+            current = '';
+          } else {
+            current += char;
+          }
+        }
+        result.push(current.replace(/^"|"$/g, '').trim());
+        return result;
+      };
+
+      const headers = lines[0].replace(/^\uFEFF/, '').split(',').map(h => h.replace(/^"|"$/g, '').trim());
+
+      let count = 0;
+      let successCount = 0;
+
+      for (let i = 1; i < lines.length; i++) {
+        const values = parseCsvLine(lines[i]);
+        if (values.length < 3) continue;
+
+        const rowData: any = {};
+        headers.forEach((header, idx) => {
+          rowData[header] = values[idx] || '';
+        });
+
+        // Map columns dynamically
+        const fullNameVal = rowData['Tên Học Sinh'] || rowData['fullName'] || '';
+        const phoneVal = rowData['Số Điện Thoại Phụ Huynh'] || rowData['phone'] || '';
+        const gradeVal = rowData['Lớp Đăng Ký'] || rowData['grade'] || 'Lớp 10';
+        const sourceVal = rowData['Nguồn'] || rowData['source'] || 'Website';
+        const parentNameVal = rowData['Họ Tên Phụ Huynh'] || rowData['parentName'] || '';
+        const emailVal = rowData['Email Phụ Huynh'] || rowData['email'] || '';
+        const notesVal = rowData['Ghi Chú'] || rowData['notes'] || '';
+
+        if (!fullNameVal || !phoneVal) continue;
+
+        count++;
+        try {
+          const res = await createLead({
+            fullName: fullNameVal,
+            parentName: parentNameVal,
+            phone: phoneVal,
+            email: emailVal,
+            source: sourceVal,
+            grade: gradeVal,
+            status: 'received', // default to received
+            notes: notesVal,
+          });
+          if (res.success) {
+            successCount++;
+          }
+        } catch (err) {
+          console.error('Error importing row:', err);
+        }
+      }
+
+      alert(`Đã xử lý: ${count} dòng. Nhập thành công: ${successCount} Leads tuyển sinh mới!`);
+      router.refresh();
+    };
+
+    reader.readAsText(file, 'utf-8');
   };
 
   // Table setup
@@ -377,12 +542,40 @@ export default function LeadsClient({
             Quản lý thông tin học sinh đăng ký tư vấn tuyển sinh và quy trình tiếp nhận.
           </p>
         </div>
-        <Button
-          onClick={() => setCreateOpen(true)}
-          className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
-        >
-          <Plus className="mr-2 h-4 w-4" /> Thêm Lead Mới
-        </Button>
+        
+        <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
+          {/* Export Excel Button */}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleExportCSV}
+            className="w-full sm:w-auto text-xs font-bold border-slate-200 hover:bg-slate-50 text-slate-700 dark:border-slate-800 dark:text-slate-200"
+          >
+            <FileSpreadsheet className="mr-1.5 h-4 w-4 text-emerald-600" />
+            Xuất Excel (CSV)
+          </Button>
+
+          {/* Import Excel Button */}
+          <label className="w-full sm:w-auto">
+            <span className="h-10 px-4 rounded-md border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-900 cursor-pointer flex items-center justify-center text-xs font-bold gap-1.5 bg-white dark:bg-slate-950">
+              <Upload className="h-4 w-4 text-blue-500" />
+              Nhập từ Excel (CSV)
+            </span>
+            <input
+              type="file"
+              accept=".csv"
+              onChange={handleImportCSV}
+              className="hidden"
+            />
+          </label>
+
+          <Button
+            onClick={() => setCreateOpen(true)}
+            className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
+          >
+            <Plus className="mr-2 h-4 w-4" /> Thêm Lead Mới
+          </Button>
+        </div>
       </div>
 
       {/* Filter Toolbar */}
@@ -568,9 +761,6 @@ export default function LeadsClient({
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-slate-600 dark:text-slate-400">Email liên hệ</label>
               <Input type="email" placeholder="parent@example.com" {...createForm.register('email')} />
-              {createForm.formState.errors.email && (
-                <p className="text-xs text-rose-600 font-bold">{createForm.formState.errors.email.message}</p>
-              )}
             </div>
           </div>
 
@@ -679,9 +869,6 @@ export default function LeadsClient({
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-slate-600 dark:text-slate-400">Email liên hệ</label>
               <Input type="email" placeholder="parent@example.com" {...editForm.register('email')} />
-              {editForm.formState.errors.email && (
-                <p className="text-xs text-rose-600 font-bold">{editForm.formState.errors.email.message}</p>
-              )}
             </div>
           </div>
 

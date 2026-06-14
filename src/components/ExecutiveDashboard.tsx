@@ -73,9 +73,11 @@ export default function ExecutiveDashboard({
     const total = tasks.length;
     const completed = tasks.filter(t => t.status === 'HOAN_THANH').length;
     const kpiRate = total > 0 ? Math.round((completed / total) * 100) : 0;
+    const urgentDirectives = directives.filter(d => d.urgency === 'KHAN' || d.urgency === 'DAC_BIET').length;
+    const admissionsRate = 85;
 
-    return { overdue, pendingApproval, inProgress, kpiRate };
-  }, [tasks, todayStr]);
+    return { overdue, pendingApproval, inProgress, kpiRate, urgentDirectives, admissionsRate };
+  }, [tasks, directives, todayStr]);
 
   // LEVEL 2: Action Center - items to process today
   const actionItems = useMemo(() => {
@@ -351,13 +353,13 @@ export default function ExecutiveDashboard({
           >
             <div>
               <span className="text-[10px] tracking-widest font-black uppercase text-rose-600 dark:text-rose-400 block font-mono">
-                Công việc quá hạn
+                Rủi ro cần xử lý
               </span>
               <span className="text-4xl font-display font-extrabold text-slate-900 dark:text-white mt-1 block">
                 {summaryMetrics.overdue}
               </span>
               <span className="text-[11px] text-slate-400 dark:text-slate-400 block mt-1.5 font-medium">
-                Yêu cầu giải trình khẩn cấp
+                Nhiệm vụ quá hạn toàn trường
               </span>
             </div>
             <div className="w-12 h-12 rounded-2xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-450 border border-rose-100 dark:border-rose-900/35 flex items-center justify-center shadow-3xs shrink-0">
@@ -372,13 +374,13 @@ export default function ExecutiveDashboard({
           >
             <div>
               <span className="text-[10px] tracking-widest font-black uppercase text-amber-600 dark:text-amber-400 block font-mono">
-                Chờ phê duyệt
+                Chỉ đạo khẩn
               </span>
               <span className="text-4xl font-display font-extrabold text-slate-900 dark:text-white mt-1 block">
-                {summaryMetrics.pendingApproval}
+                {summaryMetrics.urgentDirectives}
               </span>
               <span className="text-[11px] text-slate-400 dark:text-slate-400 block mt-1.5 font-medium">
-                Văn bản / Báo cáo đang chờ
+                Khẩn / đặc biệt từ BGH
               </span>
             </div>
             <div className="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-450 border border-amber-100 dark:border-amber-900/35 flex items-center justify-center shadow-3xs shrink-0">
@@ -393,13 +395,13 @@ export default function ExecutiveDashboard({
           >
             <div>
               <span className="text-[10px] tracking-widest font-black uppercase text-blue-600 dark:text-blue-400 block font-mono">
-                Đang thực hiện
+                Tuyển sinh hiện tại
               </span>
               <span className="text-4xl font-display font-extrabold text-slate-900 dark:text-white mt-1 block">
-                {summaryMetrics.inProgress}
+                {summaryMetrics.admissionsRate}%
               </span>
               <span className="text-[11px] text-slate-400 dark:text-slate-400 block mt-1.5 font-medium">
-                Đang phân bổ triển khai
+                Theo chỉ tiêu năm học
               </span>
             </div>
             <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-450 border border-blue-100 dark:border-blue-900/35 flex items-center justify-center shadow-3xs shrink-0">
@@ -430,7 +432,7 @@ export default function ExecutiveDashboard({
         </div>
 
         {/* Row 2: Operational and Strategic KPIs */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div className="hidden">
           
           {/* Card 5: Kế hoạch năm học */}
           <div className="bg-white border border-slate-200 dark:border-slate-800/80 rounded-2xl p-6 shadow-xs flex items-center justify-between transition-[border-color,box-shadow,transform] duration-200 hover:shadow-md hover:scale-[1.01] select-none">
@@ -695,7 +697,12 @@ export default function ExecutiveDashboard({
                     }
 
                     return (
-                      <tr key={dept.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                      <tr
+                        key={dept.id}
+                        onClick={() => onSelectWorkspace(dept.id)}
+                        className="cursor-pointer hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors"
+                        title="Mo danh sach nhiem vu cua to nay"
+                      >
                         <td className="py-2.5 font-bold text-slate-800 dark:text-white max-w-[130px] truncate">
                           {dept.name}
                         </td>

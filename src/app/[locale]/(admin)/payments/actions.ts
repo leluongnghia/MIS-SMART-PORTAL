@@ -137,7 +137,7 @@ export async function confirmPayment(paymentId: string) {
     if (payment.type === 'seat_reservation') {
       newStatus = 'seat_reserved';
     } else if (payment.type === 'tuition') {
-      newStatus = 'payment_confirmed';
+      newStatus = 'enrolled';
     }
 
     if (newStatus !== lead.status) {

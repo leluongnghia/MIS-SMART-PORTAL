@@ -4,7 +4,7 @@ import { db, schema } from '@/src/libs/server/db';
 import { eq, like, or, and, desc, asc, count } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 
-export type LeadStatus = 'new' | 'contacted' | 'consultation_scheduled' | 'application_submitted' | 'seat_reserved' | 'payment_confirmed' | 'enrolled' | 'lost';
+export type LeadStatus = 'received' | 'consulting' | 'test_scheduled' | 'test_participated' | 'seat_reserved' | 'docs_submitted' | 'enrolled' | 'cancelled';
 
 export interface GetLeadsParams {
   search?: string;
@@ -89,6 +89,33 @@ export async function createLead(data: {
   status: LeadStatus;
   assignedUserId?: string | null;
   notes?: string;
+  // Student Details
+  dateOfBirth?: Date | null;
+  currentClass?: string | null;
+  currentSchool?: string | null;
+  address?: string | null;
+  enrollmentSystem?: string | null;
+  // Test Details
+  testDate?: Date | null;
+  testTime?: string | null;
+  mathScore?: number | null;
+  englishScore?: number | null;
+  vietnameseScore?: number | null;
+  // Financial & Discount Details
+  scholarshipPercent?: number | null;
+  periodDiscountPercent?: number | null;
+  siblingDiscountPercent?: number | null;
+  staffDiscountPercent?: number | null;
+  otherDiscountPercent?: number | null;
+  finalTuition?: number | null;
+  seatReservationFee?: number | null;
+  additionalFee?: number | null;
+  seatReservationDate?: Date | null;
+  // Post-Enrollment Details
+  nationalStudentId?: string | null;
+  insuranceId?: string | null;
+  moetStudentId?: string | null;
+  siblingsInfo?: any | null;
 }) {
   const id = `lead_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
   const leadCode = `LD-${Date.now().toString(36).toUpperCase()}`;
@@ -105,6 +132,37 @@ export async function createLead(data: {
     status: data.status,
     assignedUserId: data.assignedUserId || null,
     notes: data.notes || null,
+    
+    // Student Details
+    dateOfBirth: data.dateOfBirth || null,
+    currentClass: data.currentClass || null,
+    currentSchool: data.currentSchool || null,
+    address: data.address || null,
+    enrollmentSystem: data.enrollmentSystem || null,
+
+    // Test Details
+    testDate: data.testDate || null,
+    testTime: data.testTime || null,
+    mathScore: data.mathScore || null,
+    englishScore: data.englishScore || null,
+    vietnameseScore: data.vietnameseScore || null,
+
+    // Financial & Discount Details
+    scholarshipPercent: data.scholarshipPercent || null,
+    periodDiscountPercent: data.periodDiscountPercent || null,
+    siblingDiscountPercent: data.siblingDiscountPercent || null,
+    staffDiscountPercent: data.staffDiscountPercent || null,
+    otherDiscountPercent: data.otherDiscountPercent || null,
+    finalTuition: data.finalTuition || null,
+    seatReservationFee: data.seatReservationFee || null,
+    additionalFee: data.additionalFee || null,
+    seatReservationDate: data.seatReservationDate || null,
+
+    // Post-Enrollment Details
+    nationalStudentId: data.nationalStudentId || null,
+    insuranceId: data.insuranceId || null,
+    moetStudentId: data.moetStudentId || null,
+    siblingsInfo: data.siblingsInfo || null,
     payload: {},
   };
 
@@ -148,6 +206,33 @@ export async function updateLead(
     status: LeadStatus;
     assignedUserId?: string | null;
     notes?: string;
+    // Student Details
+    dateOfBirth?: Date | null;
+    currentClass?: string | null;
+    currentSchool?: string | null;
+    address?: string | null;
+    enrollmentSystem?: string | null;
+    // Test Details
+    testDate?: Date | null;
+    testTime?: string | null;
+    mathScore?: number | null;
+    englishScore?: number | null;
+    vietnameseScore?: number | null;
+    // Financial & Discount Details
+    scholarshipPercent?: number | null;
+    periodDiscountPercent?: number | null;
+    siblingDiscountPercent?: number | null;
+    staffDiscountPercent?: number | null;
+    otherDiscountPercent?: number | null;
+    finalTuition?: number | null;
+    seatReservationFee?: number | null;
+    additionalFee?: number | null;
+    seatReservationDate?: Date | null;
+    // Post-Enrollment Details
+    nationalStudentId?: string | null;
+    insuranceId?: string | null;
+    moetStudentId?: string | null;
+    siblingsInfo?: any | null;
   }
 ) {
   // Get existing lead to check status changes
@@ -170,6 +255,37 @@ export async function updateLead(
       status: data.status,
       assignedUserId: data.assignedUserId || null,
       notes: data.notes || null,
+      
+      // Student Details
+      dateOfBirth: data.dateOfBirth || null,
+      currentClass: data.currentClass || null,
+      currentSchool: data.currentSchool || null,
+      address: data.address || null,
+      enrollmentSystem: data.enrollmentSystem || null,
+
+      // Test Details
+      testDate: data.testDate || null,
+      testTime: data.testTime || null,
+      mathScore: data.mathScore || null,
+      englishScore: data.englishScore || null,
+      vietnameseScore: data.vietnameseScore || null,
+
+      // Financial & Discount Details
+      scholarshipPercent: data.scholarshipPercent || null,
+      periodDiscountPercent: data.periodDiscountPercent || null,
+      siblingDiscountPercent: data.siblingDiscountPercent || null,
+      staffDiscountPercent: data.staffDiscountPercent || null,
+      otherDiscountPercent: data.otherDiscountPercent || null,
+      finalTuition: data.finalTuition || null,
+      seatReservationFee: data.seatReservationFee || null,
+      additionalFee: data.additionalFee || null,
+      seatReservationDate: data.seatReservationDate || null,
+
+      // Post-Enrollment Details
+      nationalStudentId: data.nationalStudentId || null,
+      insuranceId: data.insuranceId || null,
+      moetStudentId: data.moetStudentId || null,
+      siblingsInfo: data.siblingsInfo || null,
       updatedAt: new Date(),
     })
     .where(eq(schema.leads.id, id));

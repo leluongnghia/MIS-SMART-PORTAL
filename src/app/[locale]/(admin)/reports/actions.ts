@@ -4,14 +4,14 @@ import { db, schema } from '@/src/libs/server/db';
 import { eq } from 'drizzle-orm';
 
 const statusLabels: Record<string, string> = {
-  new: 'Mới (New)',
-  contacted: 'Đã liên hệ',
-  consultation_scheduled: 'Hẹn tư vấn',
-  application_submitted: 'Nộp đơn học',
-  seat_reserved: 'Giữ chỗ',
-  payment_confirmed: 'Đóng phí',
-  enrolled: 'Nhập học',
-  lost: 'Từ chối (Lost)',
+  received: 'Tiếp nhận Data',
+  consulting: 'Đang tư vấn',
+  test_scheduled: 'Đăng ký Test',
+  test_participated: 'Đã tham gia Test',
+  seat_reserved: 'Đã giữ chỗ',
+  docs_submitted: 'Đã nộp hồ sơ',
+  enrolled: 'Đã nhập học',
+  cancelled: 'Hủy/Rút hồ sơ',
 };
 
 const typeLabels: Record<string, string> = {
@@ -49,47 +49,22 @@ export async function getReportsData() {
   }));
 
   // 3. Conversion funnel
-  // Funnel stages in logical order:
-  // 1. Mới (New) -> 2. Đã liên hệ (Contacted) -> 3. Lên lịch tư vấn (Consultation) -> 4. Nộp đơn học (Applied) -> 5. Giữ chỗ (Reserved) -> 6. Nhập học (Enrolled)
-  const funnelStages = [
-    { key: 'new', label: '1. Đăng ký mới' },
-    { key: 'contacted', label: '2. Đã liên hệ' },
-    { key: 'consultation_scheduled', label: '3. Hẹn tư vấn' },
-    { key: 'application_submitted', label: '4. Nộp đơn học' },
-    { key: 'seat_reserved', label: '5. Đã giữ chỗ' },
-    { key: 'enrolled', label: '6. Nhập học' },
-  ];
-
-  // For each stage, we calculate the number of candidates who reached this stage or further.
-  // In a CRM pipeline:
-  // Anyone contacted must have been new.
-  // Anyone in consultation scheduled must have been contacted.
-  // Anyone in applied must have had consultation.
-  // Anyone in seat reserved must have applied.
-  // Anyone enrolled must have reserved.
-  // So cumulative funnel:
-  let cumulative = 0;
-  const funnelData: { name: string; count: number }[] = [];
-  
-  // We can also calculate standard stage counts, but a funnel chart looks best with cumulative/progression.
-  // Let's compute both or just logical funnel progression:
-  // e.g. Count of leads currently in that stage or beyond.
   const enrolledCount = allLeads.filter(l => l.status === 'enrolled').length;
-  const paymentConfirmedCount = allLeads.filter(l => l.status === 'payment_confirmed').length;
+  const docsSubmittedCount = allLeads.filter(l => l.status === 'docs_submitted').length;
   const seatReservedCount = allLeads.filter(l => l.status === 'seat_reserved').length;
-  const appSubmittedCount = allLeads.filter(l => l.status === 'application_submitted').length;
-  const consultationCount = allLeads.filter(l => l.status === 'consultation_scheduled').length;
-  const contactedCount = allLeads.filter(l => l.status === 'contacted').length;
-  const newCount = allLeads.filter(l => l.status === 'new').length;
-  const lostCount = allLeads.filter(l => l.status === 'lost').length;
+  const testParticipatedCount = allLeads.filter(l => l.status === 'test_participated').length;
+  const testScheduledCount = allLeads.filter(l => l.status === 'test_scheduled').length;
+  const consultingCount = allLeads.filter(l => l.status === 'consulting').length;
+  const receivedCount = allLeads.filter(l => l.status === 'received').length;
 
   const funnel = [
-    { name: '1. Đăng ký mới', count: allLeads.length },
-    { name: '2. Đã liên hệ', count: allLeads.length - newCount },
-    { name: '3. Hẹn tư vấn', count: contactedCount + consultationCount + appSubmittedCount + seatReservedCount + paymentConfirmedCount + enrolledCount },
-    { name: '4. Nộp đơn học', count: appSubmittedCount + seatReservedCount + paymentConfirmedCount + enrolledCount },
-    { name: '5. Đã giữ chỗ', count: seatReservedCount + paymentConfirmedCount + enrolledCount },
-    { name: '6. Nhập học', count: enrolledCount },
+    { name: '1. Tiếp nhận Data', count: allLeads.length },
+    { name: '2. Đang tư vấn', count: consultingCount + testScheduledCount + testParticipatedCount + seatReservedCount + docsSubmittedCount + enrolledCount },
+    { name: '3. Đăng ký Test', count: testScheduledCount + testParticipatedCount + seatReservedCount + docsSubmittedCount + enrolledCount },
+    { name: '4. Đã tham gia Test', count: testParticipatedCount + seatReservedCount + docsSubmittedCount + enrolledCount },
+    { name: '5. Đã giữ chỗ', count: seatReservedCount + docsSubmittedCount + enrolledCount },
+    { name: '6. Đã nộp hồ sơ', count: docsSubmittedCount + enrolledCount },
+    { name: '7. Đã nhập học', count: enrolledCount },
   ];
 
   // 4. Revenue by payment type

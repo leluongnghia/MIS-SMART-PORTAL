@@ -33,7 +33,6 @@ import StrategyOkrHub from './components/StrategyOkrHub';
 import WorkflowBuilder from './components/WorkflowBuilder';
 import SchoolCrmHub from './components/SchoolCrmHub';
 import StudentSuccessHub from './components/StudentSuccessHub';
-import TeacherHrHub from './components/TeacherHrHub';
 import RiskManagementCenter from './components/RiskManagementCenter';
 import ReportingAnalyticsBuilder from './components/ReportingAnalyticsBuilder';
 import AcademicOperations from './components/AcademicOperations';
@@ -51,7 +50,7 @@ import EventManagement from './components/EventManagement';
 import SystemSettingsModal from './components/SystemSettingsModal';
 import RbacSettingsModal, { DEFAULT_RBAC_CONFIG } from './components/RbacSettingsModal';
 import GuideModal from './components/GuideModal';
-import { RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, ResponsiveContainer, Tooltip } from 'recharts';
+import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Tooltip } from 'recharts';
 import { 
   School, 
   Search, 
@@ -230,6 +229,72 @@ function writeLocalJson<T>(key: string, value: T) {
     console.warn(`[Local fallback] Cannot write ${key}:`, error);
   }
 }
+
+type OverviewTab = 'DASHBOARD' | 'STRATEGY_OKRS' | 'TASKS' | 'WORKFLOW_APPROVALS' | 'CRM_ADMISSIONS' | 'STUDENT_SUCCESS' | 'PARENT_PORTAL' | 'TEACHER_HR' | 'RISK_CENTER' | 'ANALYTICS' | 'BOARD_DIRECTIVES' | 'ACADEMIC_OPS' | 'LOGISTICS' | 'REQUESTS' | 'HRM' | 'LMS' | 'GOOGLE_SHEETS' | 'DOCUMENT' | 'MEETING' | 'KNOWLEDGE' | 'EVENTS';
+
+const canDisplayTabWithWorkspace = (tab: OverviewTab, role: Role, workspaceId?: string) => {
+  if (tab === 'TEACHER_HR') return false;
+  if (role === 'ADMIN' || workspaceId === 'BGH') return true;
+
+  switch (tab) {
+    case 'DASHBOARD':
+    case 'BOARD_DIRECTIVES':
+      return role === 'MANAGER' || workspaceId === 'HANH_CHINH' || workspaceId === 'TUYEN_SINH_PR';
+    
+    case 'STRATEGY_OKRS':
+    case 'RISK_CENTER':
+    case 'ANALYTICS':
+    case 'GOOGLE_SHEETS':
+      return false;
+
+    case 'TASKS':
+    case 'KNOWLEDGE':
+      return true;
+
+    case 'WORKFLOW_APPROVALS':
+      return workspaceId === 'HANH_CHINH' || role === 'MANAGER';
+
+    case 'CRM_ADMISSIONS':
+      return workspaceId === 'TUYEN_SINH_PR';
+
+    case 'STUDENT_SUCCESS':
+      return workspaceId === 'CTHS_TAM_LY';
+
+    case 'ACADEMIC_OPS':
+      return true;
+
+    case 'LOGISTICS':
+      return workspaceId === 'HANH_CHINH' || workspaceId === 'DICH_VU_HOC_DUONG';
+
+    case 'REQUESTS':
+      return role === 'STAFF' || workspaceId === 'HANH_CHINH';
+
+    case 'HRM':
+      return true;
+
+    case 'LMS':
+      return role === 'STAFF' || workspaceId === 'QUOC_TE';
+
+    case 'DOCUMENT':
+      return workspaceId === 'HANH_CHINH';
+
+    case 'MEETING':
+      return workspaceId === 'HANH_CHINH' || role === 'MANAGER';
+
+    case 'EVENTS':
+      return workspaceId === 'TUYEN_SINH_PR';
+
+    case 'PARENT_PORTAL':
+      return false;
+
+    default:
+      return false;
+  }
+};
+
+const canRoleAccessTab = (role: Role, workspaceId: string | undefined, tab: OverviewTab) => {
+  return canDisplayTabWithWorkspace(tab, role, workspaceId);
+};
 
 export default function App() {
   const { lang, setLang, t } = useLanguage();
@@ -511,6 +576,41 @@ export default function App() {
   };
 
   const [selectedWorkspace, setSelectedWorkspace] = useState<string>('ALL');
+
+  const canDisplayTab = (tab: any) => {
+    return canDisplayTabWithWorkspace(tab, currentUser.role, currentUser.workspaceId);
+  };
+
+  const hasCapability = (capability: string, action: string = 'read', resourceOwnerId?: string) => {
+    if (!currentUser) return false;
+    const role = currentUser.role;
+    const ws = currentUser.workspaceId;
+
+    if (role === 'ADMIN' || ws === 'BGH') return true;
+
+    if (resourceOwnerId && currentUser.id === resourceOwnerId) {
+      return true;
+    }
+
+    switch (capability) {
+      case 'CRM_ADMISSIONS':
+        return ws === 'TUYEN_SINH_PR';
+      
+      case 'PAYROLL':
+      case 'ATTENDANCE':
+      case 'SENSITIVE_PROFILE':
+        return ws === 'HANH_CHINH';
+
+      case 'LESSON_PLAN_APPROVAL':
+        return role === 'MANAGER' && ws !== 'HANH_CHINH';
+
+      case 'DEPARTMENT_HR':
+        return role === 'MANAGER';
+
+      default:
+        return false;
+    }
+  };
   const [searchQuery, setSearchQuery] = useState('');
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [commandQuery, setCommandQuery] = useState('');
@@ -1868,7 +1968,7 @@ export default function App() {
                   {/* Dashboard */}
                   <button 
                     onClick={() => { setOverviewTab('DASHBOARD'); setIsSidebarOpen(false); }}
-                    className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
+                    className={`${!canDisplayTab('DASHBOARD') ? 'hidden' : ''} w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
                       overviewTab === 'DASHBOARD' 
                         ? 'bg-rose-50 dark:bg-rose-950/45 text-rose-700 dark:text-rose-300 font-extrabold border-l-4 border-rose-600 shadow-3xs scale-[1.01]' 
                         : 'text-slate-600 dark:text-slate-350 hover:bg-rose-50/35 hover:text-rose-700 dark:hover:bg-slate-800 dark:hover:text-rose-400 font-semibold border-l-4 border-transparent'
@@ -1883,7 +1983,7 @@ export default function App() {
                   {/* Chỉ đạo BGH */}
                   <button 
                     onClick={() => { setOverviewTab('BOARD_DIRECTIVES'); setIsSidebarOpen(false); }}
-                    className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
+                    className={`${!canDisplayTab('BOARD_DIRECTIVES') ? 'hidden' : ''} w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
                       overviewTab === 'BOARD_DIRECTIVES' 
                         ? 'bg-rose-50 dark:bg-rose-950/45 text-rose-700 dark:text-rose-300 font-extrabold border-l-4 border-rose-600 shadow-3xs scale-[1.01]' 
                         : 'text-slate-600 dark:text-slate-350 hover:bg-rose-50/35 hover:text-rose-700 dark:hover:bg-slate-800 dark:hover:text-rose-400 font-semibold border-l-4 border-transparent'
@@ -1901,7 +2001,7 @@ export default function App() {
                   {/* Báo cáo */}
                   <button 
                     onClick={() => { setOverviewTab('ANALYTICS'); setIsSidebarOpen(false); }}
-                    className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
+                    className={`${!canDisplayTab('ANALYTICS') ? 'hidden' : ''} w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
                       overviewTab === 'ANALYTICS' 
                         ? 'bg-rose-50 dark:bg-rose-950/45 text-rose-700 dark:text-rose-300 font-extrabold border-l-4 border-rose-600 shadow-3xs scale-[1.01]' 
                         : 'text-slate-600 dark:text-slate-350 hover:bg-rose-50/35 hover:text-rose-700 dark:hover:bg-slate-800 dark:hover:text-rose-400 font-semibold border-l-4 border-transparent'
@@ -1916,7 +2016,7 @@ export default function App() {
                   {/* Rủi ro */}
                   <button 
                     onClick={() => { setOverviewTab('RISK_CENTER'); setIsSidebarOpen(false); }}
-                    className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
+                    className={`${!canDisplayTab('RISK_CENTER') ? 'hidden' : ''} w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
                       overviewTab === 'RISK_CENTER' 
                         ? 'bg-rose-50 dark:bg-rose-950/45 text-rose-700 dark:text-rose-300 font-extrabold border-l-4 border-rose-600 shadow-3xs scale-[1.01]' 
                         : 'text-slate-600 dark:text-slate-350 hover:bg-rose-50/35 hover:text-rose-700 dark:hover:bg-slate-800 dark:hover:text-rose-400 font-semibold border-l-4 border-transparent'
@@ -1949,7 +2049,7 @@ export default function App() {
                   {/* Định hướng & OKRs */}
                   <button 
                     onClick={() => { setOverviewTab('STRATEGY_OKRS'); setIsSidebarOpen(false); }}
-                    className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
+                    className={`${!canDisplayTab('STRATEGY_OKRS') ? 'hidden' : ''} w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
                       overviewTab === 'STRATEGY_OKRS' 
                         ? 'bg-indigo-50 dark:bg-indigo-950/45 text-indigo-700 dark:text-indigo-300 font-extrabold border-l-4 border-indigo-600 shadow-3xs scale-[1.01]' 
                         : 'text-slate-600 dark:text-slate-350 hover:bg-indigo-50/35 hover:text-indigo-700 dark:hover:bg-slate-800 dark:hover:text-indigo-400 font-semibold border-l-4 border-transparent'
@@ -1964,7 +2064,7 @@ export default function App() {
                   {/* Văn bản */}
                   <button 
                     onClick={() => { setOverviewTab('DOCUMENT'); setIsSidebarOpen(false); }}
-                    className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
+                    className={`${!canDisplayTab('DOCUMENT') ? 'hidden' : ''} w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
                       overviewTab === 'DOCUMENT' 
                         ? 'bg-indigo-50 dark:bg-indigo-950/45 text-indigo-700 dark:text-indigo-300 font-extrabold border-l-4 border-indigo-600 shadow-3xs scale-[1.01]' 
                         : 'text-slate-600 dark:text-slate-350 hover:bg-indigo-50/35 hover:text-indigo-700 dark:hover:bg-slate-800 dark:hover:text-indigo-400 font-semibold border-l-4 border-transparent'
@@ -2000,7 +2100,7 @@ export default function App() {
                   {/* Nhiệm vụ & Dự án */}
                   <button 
                     onClick={() => { setOverviewTab('TASKS'); handleSelectViewOnMobile('KANBAN'); }}
-                    className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
+                    className={`${!canDisplayTab('TASKS') ? 'hidden' : ''} w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
                       overviewTab === 'TASKS' 
                         ? 'bg-violet-50 dark:bg-violet-950/45 text-violet-700 dark:text-violet-300 font-extrabold border-l-4 border-violet-600 shadow-3xs scale-[1.01]' 
                         : 'text-slate-600 dark:text-slate-350 hover:bg-violet-50/35 hover:text-violet-750 dark:hover:bg-slate-800 dark:hover:text-violet-400 font-semibold border-l-4 border-transparent'
@@ -2015,7 +2115,7 @@ export default function App() {
                   {/* Quy trình & Phê duyệt */}
                   <button 
                     onClick={() => { setOverviewTab('WORKFLOW_APPROVALS'); setIsSidebarOpen(false); }}
-                    className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
+                    className={`${!canDisplayTab('WORKFLOW_APPROVALS') ? 'hidden' : ''} w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
                       overviewTab === 'WORKFLOW_APPROVALS' 
                         ? 'bg-violet-50 dark:bg-violet-950/45 text-violet-700 dark:text-violet-300 font-extrabold border-l-4 border-violet-600 shadow-3xs scale-[1.01]' 
                         : 'text-slate-600 dark:text-slate-350 hover:bg-violet-50/35 hover:text-violet-750 dark:hover:bg-slate-800 dark:hover:text-violet-400 font-semibold border-l-4 border-transparent'
@@ -2030,7 +2130,7 @@ export default function App() {
                   {/* Cuộc họp */}
                   <button 
                     onClick={() => { setOverviewTab('MEETING'); setIsSidebarOpen(false); }}
-                    className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
+                    className={`${!canDisplayTab('MEETING') ? 'hidden' : ''} w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
                       overviewTab === 'MEETING' 
                         ? 'bg-violet-50 dark:bg-violet-950/45 text-violet-700 dark:text-violet-300 font-extrabold border-l-4 border-violet-600 shadow-3xs scale-[1.01]' 
                         : 'text-slate-600 dark:text-slate-350 hover:bg-violet-50/35 hover:text-violet-750 dark:hover:bg-slate-800 dark:hover:text-violet-400 font-semibold border-l-4 border-transparent'
@@ -2048,7 +2148,7 @@ export default function App() {
                   {/* Kho tri thức */}
                   <button 
                     onClick={() => { setOverviewTab('KNOWLEDGE'); setIsSidebarOpen(false); }}
-                    className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
+                    className={`${!canDisplayTab('KNOWLEDGE') ? 'hidden' : ''} w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
                       overviewTab === 'KNOWLEDGE' 
                         ? 'bg-violet-50 dark:bg-violet-950/45 text-violet-700 dark:text-violet-300 font-extrabold border-l-4 border-violet-600 shadow-3xs scale-[1.01]' 
                         : 'text-slate-600 dark:text-slate-350 hover:bg-violet-50/35 hover:text-violet-750 dark:hover:bg-slate-800 dark:hover:text-violet-400 font-semibold border-l-4 border-transparent'
@@ -2081,7 +2181,7 @@ export default function App() {
                   {/* Tuyển sinh & CRM */}
                   <button 
                     onClick={() => { setOverviewTab('CRM_ADMISSIONS'); setIsSidebarOpen(false); }}
-                    className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
+                    className={`${!canDisplayTab('CRM_ADMISSIONS') ? 'hidden' : ''} w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
                       overviewTab === 'CRM_ADMISSIONS' 
                         ? 'bg-emerald-50 dark:bg-emerald-950/45 text-emerald-700 dark:text-emerald-300 font-extrabold border-l-4 border-emerald-600 shadow-3xs scale-[1.01]' 
                         : 'text-slate-600 dark:text-slate-350 hover:bg-emerald-50/35 hover:text-emerald-750 dark:hover:bg-slate-800 dark:hover:text-emerald-400 font-semibold border-l-4 border-transparent'
@@ -2096,7 +2196,7 @@ export default function App() {
                   {/* Học sinh 360 */}
                   <button 
                     onClick={() => { setOverviewTab('STUDENT_SUCCESS'); setIsSidebarOpen(false); }}
-                    className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
+                    className={`${!canDisplayTab('STUDENT_SUCCESS') ? 'hidden' : ''} w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
                       overviewTab === 'STUDENT_SUCCESS' 
                         ? 'bg-emerald-50 dark:bg-emerald-950/45 text-emerald-700 dark:text-emerald-300 font-extrabold border-l-4 border-emerald-600 shadow-3xs scale-[1.01]' 
                         : 'text-slate-600 dark:text-slate-350 hover:bg-emerald-50/35 hover:text-emerald-700 dark:hover:bg-slate-800 dark:hover:text-emerald-400 font-semibold border-l-4 border-transparent'
@@ -2111,7 +2211,7 @@ export default function App() {
                   {/* Cổng PHHS / Học sinh */}
                   <button
                     onClick={() => { setOverviewTab('PARENT_PORTAL'); setIsSidebarOpen(false); }}
-                    className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
+                    className={`${!canDisplayTab('PARENT_PORTAL') ? 'hidden' : ''} w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
                       overviewTab === 'PARENT_PORTAL'
                         ? 'bg-emerald-50 dark:bg-emerald-950/45 text-emerald-700 dark:text-emerald-300 font-extrabold border-l-4 border-emerald-600 shadow-3xs scale-[1.01]'
                         : 'text-slate-600 dark:text-slate-350 hover:bg-emerald-50/35 hover:text-emerald-700 dark:hover:bg-slate-800 dark:hover:text-emerald-400 font-semibold border-l-4 border-transparent'
@@ -2126,25 +2226,11 @@ export default function App() {
                     }`}>NEW</span>
                   </button>
 
-                  {/* Nhân sự & Giáo viên */}
-                  <button 
-                    onClick={() => { setOverviewTab('TEACHER_HR'); setIsSidebarOpen(false); }}
-                    className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
-                      overviewTab === 'TEACHER_HR' 
-                        ? 'bg-emerald-50 dark:bg-emerald-950/45 text-emerald-700 dark:text-emerald-300 font-extrabold border-l-4 border-emerald-600 shadow-3xs scale-[1.01]' 
-                        : 'text-slate-600 dark:text-slate-350 hover:bg-emerald-50/35 hover:text-emerald-750 dark:hover:bg-slate-800 dark:hover:text-emerald-400 font-semibold border-l-4 border-transparent'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <Users className={`w-4 h-4 transition-colors ${overviewTab === 'TEACHER_HR' ? 'text-emerald-600 dark:text-emerald-400' : 'text-emerald-400 dark:text-emerald-550'}`} />
-                      <span>Nhân sự &amp; Giáo viên</span>
-                    </div>
-                  </button>
 
                   {/* HRM */}
                   <button 
                     onClick={() => { setOverviewTab('HRM'); setIsSidebarOpen(false); }}
-                    className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
+                    className={`${!canDisplayTab('HRM') ? 'hidden' : ''} w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
                       overviewTab === 'HRM' 
                         ? 'bg-emerald-50 dark:bg-emerald-950/45 text-emerald-700 dark:text-emerald-300 font-extrabold border-l-4 border-emerald-600 shadow-3xs scale-[1.01]' 
                         : 'text-slate-600 dark:text-slate-350 hover:bg-emerald-50/35 hover:text-emerald-700 dark:hover:bg-slate-800 dark:hover:text-emerald-400 font-semibold border-l-4 border-transparent'
@@ -2162,7 +2248,7 @@ export default function App() {
                   {/* LMS */}
                   <button 
                     onClick={() => { setOverviewTab('LMS'); setIsSidebarOpen(false); }}
-                    className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
+                    className={`${!canDisplayTab('LMS') ? 'hidden' : ''} w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
                       overviewTab === 'LMS' 
                         ? 'bg-emerald-50 dark:bg-emerald-950/45 text-emerald-700 dark:text-emerald-300 font-extrabold border-l-4 border-emerald-600 shadow-3xs scale-[1.01]' 
                         : 'text-slate-600 dark:text-slate-350 hover:bg-emerald-50/35 hover:text-emerald-750 dark:hover:bg-slate-800 dark:hover:text-emerald-400 font-semibold border-l-4 border-transparent'
@@ -2198,7 +2284,7 @@ export default function App() {
                   {/* Sự kiện */}
                   <button 
                     onClick={() => { setOverviewTab('EVENTS'); setIsSidebarOpen(false); }}
-                    className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
+                    className={`${!canDisplayTab('EVENTS') ? 'hidden' : ''} w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
                       overviewTab === 'EVENTS' 
                         ? 'bg-sky-50 dark:bg-sky-950/45 text-sky-700 dark:text-sky-300 font-extrabold border-l-4 border-sky-600 shadow-3xs scale-[1.01]' 
                         : 'text-slate-600 dark:text-slate-350 hover:bg-sky-50/35 hover:text-sky-750 dark:hover:bg-slate-800 dark:hover:text-sky-400 font-semibold border-l-4 border-transparent'
@@ -2216,7 +2302,7 @@ export default function App() {
                   {/* Vận hành Học thuật */}
                   <button 
                     onClick={() => { setOverviewTab('ACADEMIC_OPS'); setIsSidebarOpen(false); }}
-                    className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
+                    className={`${!canDisplayTab('ACADEMIC_OPS') ? 'hidden' : ''} w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
                       overviewTab === 'ACADEMIC_OPS' 
                         ? 'bg-sky-50/80 dark:bg-sky-950/40 text-sky-600 dark:text-sky-400 dark:text-sky-400 font-bold border-l-2 border-sky-500 shadow-3xs scale-[1.01]' 
                         : 'text-slate-600 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-sky-600 dark:text-sky-400 dark:hover:text-sky-400 font-semibold border-l-2 border-transparent'
@@ -2234,7 +2320,7 @@ export default function App() {
                   {/* Logistics */}
                   <button 
                     onClick={() => { setOverviewTab('LOGISTICS'); setIsSidebarOpen(false); }}
-                    className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
+                    className={`${!canDisplayTab('LOGISTICS') ? 'hidden' : ''} w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
                       overviewTab === 'LOGISTICS' 
                         ? 'bg-sky-50/80 dark:bg-sky-950/40 text-sky-600 dark:text-sky-400 dark:text-sky-400 font-bold border-l-2 border-sky-500 shadow-3xs scale-[1.01]' 
                         : 'text-slate-600 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-sky-600 dark:text-sky-400 dark:hover:text-sky-400 font-semibold border-l-2 border-transparent'
@@ -2252,7 +2338,7 @@ export default function App() {
                   {/* Yêu cầu */}
                   <button 
                     onClick={() => { setOverviewTab('REQUESTS'); setIsSidebarOpen(false); }}
-                    className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
+                    className={`${!canDisplayTab('REQUESTS') ? 'hidden' : ''} w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
                       overviewTab === 'REQUESTS' 
                         ? 'bg-sky-50/80 dark:bg-sky-950/40 text-sky-600 dark:text-sky-400 dark:text-sky-400 font-bold border-l-2 border-sky-500 shadow-3xs scale-[1.01]' 
                         : 'text-slate-600 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-sky-600 dark:text-sky-400 dark:hover:text-sky-400 font-semibold border-l-2 border-transparent'
@@ -2270,7 +2356,7 @@ export default function App() {
                   {/* Sheets Sync */}
                   <button 
                     onClick={() => { setOverviewTab('GOOGLE_SHEETS'); setIsSidebarOpen(false); }}
-                    className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
+                    className={`${!canDisplayTab('GOOGLE_SHEETS') ? 'hidden' : ''} w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
                       overviewTab === 'GOOGLE_SHEETS' 
                         ? 'bg-sky-50/80 dark:bg-sky-950/40 text-sky-600 dark:text-sky-400 dark:text-sky-400 font-bold border-l-2 border-sky-500 shadow-3xs scale-[1.01]' 
                         : 'text-slate-600 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-sky-600 dark:text-sky-400 dark:hover:text-sky-400 font-semibold border-l-2 border-transparent'
@@ -2430,13 +2516,7 @@ export default function App() {
             />
           )}
 
-          {overviewTab === 'TEACHER_HR' && (
-            <TeacherHrHub 
-              currentUser={currentUser}
-              users={users}
-              onUpdateUsers={saveUsers}
-            />
-          )}
+
 
           {overviewTab === 'RISK_CENTER' && (
             <RiskManagementCenter />
@@ -2471,6 +2551,7 @@ export default function App() {
               currentUser={currentUser} 
               users={users} 
               onUpdateUsers={saveUsers} 
+              hasCapability={hasCapability}
             />
           )}
 

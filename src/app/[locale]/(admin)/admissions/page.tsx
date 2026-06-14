@@ -15,6 +15,7 @@ export default async function AdmissionsPage({
       initialLeads={data.leads as any}
       users={data.users as any}
       activities={data.activities as any}
+      documents={data.documents as any}
     />
   );
 }

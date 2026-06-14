@@ -12,13 +12,13 @@ export async function getDashboardStats() {
 
   const totalLeadsCount = allLeads.length;
 
-  const newLeads = allLeads.filter(l => l.status === 'new').length;
+  const newLeads = allLeads.filter(l => l.status === 'received').length;
   
-  // Active leads: contacted, consultation_scheduled, application_submitted, seat_reserved, payment_confirmed
-  const activeStatuses = ['contacted', 'consultation_scheduled', 'application_submitted', 'seat_reserved', 'payment_confirmed'];
+  // Active leads: consulting, test_scheduled, test_participated, seat_reserved, docs_submitted
+  const activeStatuses = ['consulting', 'test_scheduled', 'test_participated', 'seat_reserved', 'docs_submitted'];
   const activeLeads = allLeads.filter(l => activeStatuses.includes(l.status)).length;
   
-  const appsSubmitted = allLeads.filter(l => l.status === 'application_submitted').length;
+  const appsSubmitted = allLeads.filter(l => l.status === 'docs_submitted').length;
   const seatReserved = allLeads.filter(l => l.status === 'seat_reserved').length;
   const enrolled = allLeads.filter(l => l.status === 'enrolled').length;
 

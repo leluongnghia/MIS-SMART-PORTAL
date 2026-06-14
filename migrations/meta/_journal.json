@@ -15,6 +15,13 @@
       "when": 1781410995502,
       "tag": "0001_chunky_squadron_sinister",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1781419899726,
+      "tag": "0002_wise_newton_destine",
+      "breakpoints": true
     }
   ]
 }

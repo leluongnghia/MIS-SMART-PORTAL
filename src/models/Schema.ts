@@ -145,14 +145,14 @@ export const tuitionFees = pgTable('tuition_fees', {
 });
 
 export const leadStatus = pgEnum('lead_status', [
-  'new',
-  'contacted',
-  'consultation_scheduled',
-  'application_submitted',
+  'received',
+  'consulting',
+  'test_scheduled',
+  'test_participated',
   'seat_reserved',
-  'payment_confirmed',
+  'docs_submitted',
   'enrolled',
-  'lost',
+  'cancelled',
 ]);
 
 export const paymentStatus = pgEnum('payment_status', [
@@ -177,9 +177,41 @@ export const leads = pgTable('leads', {
   email: text('email'),
   source: text('source').notNull().default('website'),
   grade: text('grade').notNull(),
-  status: leadStatus('status').notNull().default('new'),
+  status: leadStatus('status').notNull().default('received'),
   assignedUserId: text('assigned_user_id').references(() => users.id, { onDelete: 'set null' }),
   notes: text('notes'),
+  
+  // Student Details
+  dateOfBirth: timestamp('date_of_birth', { withTimezone: true }),
+  currentClass: text('current_class'),
+  currentSchool: text('current_school'),
+  address: text('address'),
+  enrollmentSystem: text('enrollment_system'),
+
+  // Test Details
+  testDate: timestamp('test_date', { withTimezone: true }),
+  testTime: text('test_time'),
+  mathScore: integer('math_score'),
+  englishScore: integer('english_score'),
+  vietnameseScore: integer('vietnamese_score'),
+
+  // Financial & Discount Details
+  scholarshipPercent: integer('scholarship_percent'),
+  periodDiscountPercent: integer('period_discount_percent'),
+  siblingDiscountPercent: integer('sibling_discount_percent'),
+  staffDiscountPercent: integer('staff_discount_percent'),
+  otherDiscountPercent: integer('other_discount_percent'),
+  finalTuition: integer('final_tuition'),
+  seatReservationFee: integer('seat_reservation_fee'),
+  additionalFee: integer('additional_fee'),
+  seatReservationDate: timestamp('seat_reservation_date', { withTimezone: true }),
+
+  // Post-Enrollment Details
+  nationalStudentId: text('national_student_id'),
+  insuranceId: text('insurance_id'),
+  moetStudentId: text('moet_student_id'),
+  siblingsInfo: jsonb('siblings_info'),
+
   payload: jsonb('payload').notNull().default({}),
   ...timestamps,
 }, table => [
@@ -343,3 +375,197 @@ export const documentsRelations = relations(documents, ({ one }) => ({
     references: [students.id],
   }),
 }));
+
+export const departments = pgTable('departments', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  code: text('code').notNull().unique(), // e.g., BGH, HANH_CHINH, TOAN_TIN, etc.
+  description: text('description'),
+  managerId: text('manager_id'), // User ID of the department head
+  payload: jsonb('payload').notNull().default({}),
+  ...timestamps,
+});
+
+export const positions = pgTable('positions', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(), // e.g., Hiệu trưởng, Tổ trưởng chuyên môn, Giáo viên
+  code: text('code').notNull().unique(),
+  departmentId: text('department_id').references(() => departments.id, { onDelete: 'cascade' }),
+  payload: jsonb('payload').notNull().default({}),
+  ...timestamps,
+});
+
+export const employeeProfiles = pgTable('employee_profiles', {
+  id: text('id').primaryKey(), // matches users.id
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  employeeCode: text('employee_code').notNull().unique(),
+  identityCard: text('identity_card'), // CCCD (nhạy cảm)
+  socialInsurance: text('social_insurance'), // BHXH (nhạy cảm)
+  phoneNumber: text('phone_number'),
+  gender: text('gender'),
+  dateOfBirth: timestamp('date_of_birth', { withTimezone: true }),
+  address: text('address'),
+  bankAccount: text('bank_account'),
+  bankName: text('bank_name'),
+  reportsTo: text('reports_to'), // ID của người quản lý trực tiếp
+  status: text('status').notNull().default('active'), // active, probation, terminated
+  joinDate: timestamp('join_date', { withTimezone: true }),
+  payload: jsonb('payload').notNull().default({}),
+  ...timestamps,
+});
+
+export const employmentContracts = pgTable('employment_contracts', {
+  id: text('id').primaryKey(),
+  employeeProfileId: text('employee_profile_id').notNull().references(() => employeeProfiles.id, { onDelete: 'cascade' }),
+  contractNumber: text('contract_number').notNull().unique(),
+  type: text('type').notNull(), // thử việc, xác định thời hạn 1 năm, 3 năm, không xác định thời hạn
+  status: text('status').notNull().default('active'), // active, expired, terminated
+  startDate: timestamp('start_date', { withTimezone: true }).notNull(),
+  endDate: timestamp('end_date', { withTimezone: true }),
+  baseSalary: integer('base_salary').notNull(), // Lương cơ bản (nhạy cảm)
+  payload: jsonb('payload').notNull().default({}),
+  ...timestamps,
+});
+
+export const leaveRequests = pgTable('leave_requests', {
+  id: text('id').primaryKey(),
+  employeeProfileId: text('employee_profile_id').notNull().references(() => employeeProfiles.id, { onDelete: 'cascade' }),
+  type: text('type').notNull(), // phép năm, ốm, thai sản, không lương...
+  startDate: timestamp('start_date', { withTimezone: true }).notNull(),
+  endDate: timestamp('end_date', { withTimezone: true }).notNull(),
+  reason: text('reason').notNull(),
+  status: text('status').notNull().default('pending'), // pending, approved, rejected, cancelled
+  approvedById: text('approved_by_id').references(() => users.id, { onDelete: 'set null' }),
+  substituteTeacherId: text('substitute_teacher_id').references(() => users.id, { onDelete: 'set null' }), // giáo viên dạy thay
+  payload: jsonb('payload').notNull().default({}),
+  ...timestamps,
+});
+
+export const attendanceRecords = pgTable('attendance_records', {
+  id: text('id').primaryKey(),
+  employeeProfileId: text('employee_profile_id').notNull().references(() => employeeProfiles.id, { onDelete: 'cascade' }),
+  date: timestamp('date', { withTimezone: true }).notNull(),
+  checkIn: text('check_in'),
+  checkOut: text('check_out'),
+  status: text('status').notNull().default('present'), // present, absent, late, half_day
+  payload: jsonb('payload').notNull().default({}),
+  ...timestamps,
+});
+
+export const payrollRecords = pgTable('payroll_records', {
+  id: text('id').primaryKey(),
+  employeeProfileId: text('employee_profile_id').notNull().references(() => employeeProfiles.id, { onDelete: 'cascade' }),
+  month: text('month').notNull(), // định dạng YYYY-MM
+  baseSalary: integer('base_salary').notNull(),
+  allowances: integer('allowances').default(0).notNull(),
+  deductions: integer('deductions').default(0).notNull(),
+  netSalary: integer('net_salary').notNull(),
+  status: text('status').notNull().default('draft'), // draft, approved, paid
+  paidAt: timestamp('paid_at', { withTimezone: true }),
+  payload: jsonb('payload').notNull().default({}),
+  ...timestamps,
+});
+
+export const certifications = pgTable('certifications', {
+  id: text('id').primaryKey(),
+  employeeProfileId: text('employee_profile_id').notNull().references(() => employeeProfiles.id, { onDelete: 'cascade' }),
+  name: text('name').notNull(),
+  issuingOrganization: text('issuing_organization').notNull(),
+  issueDate: timestamp('issue_date', { withTimezone: true }),
+  expiryDate: timestamp('expiry_date', { withTimezone: true }),
+  certificateUrl: text('certificate_url'),
+  payload: jsonb('payload').notNull().default({}),
+  ...timestamps,
+});
+
+export const approvalFlows = pgTable('approval_flows', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  entityType: text('entity_type').notNull(), // leave_request, contract...
+  steps: jsonb('steps').notNull(), // định nghĩa các bước duyệt [{ step: 1, role: 'MANAGER' }]
+  payload: jsonb('payload').notNull().default({}),
+  ...timestamps,
+});
+
+export const permissionPolicies = pgTable('permission_policies', {
+  id: text('id').primaryKey(),
+  role: text('role').notNull(),
+  workspaceId: text('workspace_id'),
+  capability: text('capability').notNull(), // e.g., CRM_ADMISSIONS, PAYROLL, etc.
+  action: text('action').notNull(), // read, write, approve
+  effect: text('effect').notNull().default('allow'),
+  payload: jsonb('payload').notNull().default({}),
+  ...timestamps,
+});
+
+// Relationships
+export const departmentsRelations = relations(departments, ({ one, many }) => ({
+  manager: one(users, {
+    fields: [departments.managerId],
+    references: [users.id],
+  }),
+  positions: many(positions),
+}));
+
+export const positionsRelations = relations(positions, ({ one }) => ({
+  department: one(departments, {
+    fields: [positions.departmentId],
+    references: [departments.id],
+  }),
+}));
+
+export const employeeProfilesRelations = relations(employeeProfiles, ({ one, many }) => ({
+  user: one(users, {
+    fields: [employeeProfiles.userId],
+    references: [users.id],
+  }),
+  contracts: many(employmentContracts),
+  leaveRequests: many(leaveRequests),
+  attendanceRecords: many(attendanceRecords),
+  payrollRecords: many(payrollRecords),
+  certifications: many(certifications),
+}));
+
+export const employmentContractsRelations = relations(employmentContracts, ({ one }) => ({
+  employeeProfile: one(employeeProfiles, {
+    fields: [employmentContracts.employeeProfileId],
+    references: [employeeProfiles.id],
+  }),
+}));
+
+export const leaveRequestsRelations = relations(leaveRequests, ({ one }) => ({
+  employeeProfile: one(employeeProfiles, {
+    fields: [leaveRequests.employeeProfileId],
+    references: [employeeProfiles.id],
+  }),
+  approvedBy: one(users, {
+    fields: [leaveRequests.approvedById],
+    references: [users.id],
+  }),
+  substituteTeacher: one(users, {
+    fields: [leaveRequests.substituteTeacherId],
+    references: [users.id],
+  }),
+}));
+
+export const attendanceRecordsRelations = relations(attendanceRecords, ({ one }) => ({
+  employeeProfile: one(employeeProfiles, {
+    fields: [attendanceRecords.employeeProfileId],
+    references: [employeeProfiles.id],
+  }),
+}));
+
+export const payrollRecordsRelations = relations(payrollRecords, ({ one }) => ({
+  employeeProfile: one(employeeProfiles, {
+    fields: [payrollRecords.employeeProfileId],
+    references: [employeeProfiles.id],
+  }),
+}));
+
+export const certificationsRelations = relations(certifications, ({ one }) => ({
+  employeeProfile: one(employeeProfiles, {
+    fields: [certifications.employeeProfileId],
+    references: [employeeProfiles.id],
+  }),
+}));
+
