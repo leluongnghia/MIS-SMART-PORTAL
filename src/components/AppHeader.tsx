@@ -12,8 +12,8 @@ interface AppHeaderProps {
   searchQuery: string;
   setSearchQuery: (val: string) => void;
   openCommandPalette: (initialQuery?: string) => void;
-  selectedCampus: string;
-  setSelectedCampus: (val: string) => void;
+  selectedCampus: 'ALL' | 'CAMPUS_HN' | 'CAMPUS_HCM';
+  setSelectedCampus: (val: 'ALL' | 'CAMPUS_HN' | 'CAMPUS_HCM') => void;
   notificationPermission: string;
   requestNotificationPermission: () => void;
   workspaces: any[];
