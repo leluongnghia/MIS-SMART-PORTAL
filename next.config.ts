@@ -1,0 +1,15 @@
+import createNextIntlPlugin from 'next-intl/plugin';
+import type { NextConfig } from 'next';
+
+const withNextIntl = createNextIntlPlugin('./src/libs/I18n.ts');
+
+const nextConfig: NextConfig = {
+  devIndicators: {
+    position: 'bottom-right',
+  },
+  poweredByHeader: false,
+  reactStrictMode: true,
+  transpilePackages: ['recharts', 'lucide-react', 'motion'],
+};
+
+export default withNextIntl(nextConfig);
