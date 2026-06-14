@@ -2034,7 +2034,52 @@ function AppInner() {
                 <button
                   onClick={() => {
                     setIsLoggedIn(false);
-                    localStorage.removeIt        <aside 
+                    localStorage.removeItem('mis_edutask_logged_in');
+                    localStorage.removeItem('mis_edutask_logged_in_user_id');
+                  }}
+                  id="btn-header-logout"
+                  className="text-[11px] font-bold text-rose-600 hover:text-rose-700 hover:underline cursor-pointer focus:outline-none transition-colors"
+                >
+                  Đăng xuất
+                </button>
+              </div>
+            </div>
+            
+            {/* Mobile logout option helper */}
+            <div className="flex flex-col items-center gap-1 sm:hidden">
+              <img
+                src={getSafeAvatar(currentUser.avatar, displayCurrentUser.name)}
+                alt={displayCurrentUser.name}
+                referrerPolicy="no-referrer"
+                className="w-9 h-9 rounded-xl bg-slate-200 border-2 border-slate-200 shadow-sm object-cover"
+              />
+              <button
+                onClick={() => {
+                  setIsLoggedIn(false);
+                  localStorage.removeItem('mis_edutask_logged_in');
+                  localStorage.removeItem('mis_edutask_logged_in_user_id');
+                }}
+                className="text-[9px] font-extrabold text-rose-600 active:underline leading-none"
+              >
+                Đăng xuất
+              </button>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      {/* Sidebar Mobile Backdrop Overlay */}
+      {isSidebarOpen && (
+        <div 
+          onClick={() => setIsSidebarOpen(false)}
+          className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-39 md:hidden transition-all animate-fade-in"
+          id="sidebar-backdrop-mobile"
+        />
+      )}
+
+      {/* Flex Layout Container with Sidebar + Main Workspace */}
+      <div className="flex flex-1 min-h-0 relative">
+        <aside 
           role="navigation" 
           aria-label="Menu chính"
           className={`fixed inset-y-0 left-0 z-40 w-64 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 flex flex-col shrink-0 border-r border-slate-200/80 dark:border-slate-800/80 min-h-full transition-transform duration-300 md:static md:translate-x-0 ${
