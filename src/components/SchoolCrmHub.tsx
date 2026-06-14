@@ -942,7 +942,7 @@ export default function SchoolCrmHub() {
                     ...selectedLead.interactions.map(item => ({
                       id: item.id,
                       name: item.content,
-                      channel: (item.type === 'Intake' ? 'SYSTEM' : 'Call') as WorkflowLog['channel'],
+                      channel: 'SYSTEM' as const,
                       status: 'SENT' as const,
                       createdAt: item.date,
                     })),
@@ -952,7 +952,7 @@ export default function SchoolCrmHub() {
                       let icon = '⚙️';
                       if (item.channel === 'EMAIL') icon = '📧';
                       else if (item.channel === 'ZALO') icon = '💬';
-                      else if (item.channel === 'Call' || item.name.toLowerCase().includes('gọi')) icon = '📞';
+                      else if (item.name.toLowerCase().includes('gọi') || item.name.toLowerCase().includes('call')) icon = '📞';
                       else if (item.name.toLowerCase().includes('zalo') || item.name.toLowerCase().includes('tin nhắn')) icon = '💬';
                       
                       return (
