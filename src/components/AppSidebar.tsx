@@ -14,7 +14,7 @@ interface AppSidebarProps {
   sidebarSearchQuery: string;
   setSidebarSearchQuery: (val: string) => void;
   overviewTab: string;
-  setOverviewTab: (val: string) => void;
+  setOverviewTab: (val: any) => void;
   completionRate: number;
   isGroupOpen: (group: string) => boolean;
   toggleGroup: (group: string) => void;
