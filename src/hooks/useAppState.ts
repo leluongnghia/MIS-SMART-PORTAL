@@ -26,6 +26,8 @@ export function useAppState() {
   const [isRbacModalOpen, setIsRbacModalOpen] = useState(false);
   const [isSystemSettingsOpen, setIsSystemSettingsOpen] = useState(false);
   const [showPermissionsPopover, setShowPermissionsPopover] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [isActionCenterOpen, setIsActionCenterOpen] = useState(false);
 
   const [visiblePanels, setVisiblePanels] = useState<Record<string, boolean>>(() => {
     if (typeof window !== 'undefined') {
@@ -108,6 +110,8 @@ export function useAppState() {
     isRbacModalOpen, setIsRbacModalOpen,
     isSystemSettingsOpen, setIsSystemSettingsOpen,
     showPermissionsPopover, setShowPermissionsPopover,
+    isNotificationsOpen, setIsNotificationsOpen,
+    isActionCenterOpen, setIsActionCenterOpen,
     visiblePanels, setVisiblePanels, togglePanel,
     expandedBranches, setExpandedBranches, toggleBranch,
     expandedGroups, setExpandedGroups, toggleGroup

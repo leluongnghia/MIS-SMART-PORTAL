@@ -652,6 +652,8 @@ function AppInner() {
     isRbacModalOpen, setIsRbacModalOpen,
     isSystemSettingsOpen, setIsSystemSettingsOpen,
     showPermissionsPopover, setShowPermissionsPopover,
+    isNotificationsOpen, setIsNotificationsOpen,
+    isActionCenterOpen, setIsActionCenterOpen,
     visiblePanels, setVisiblePanels, togglePanel,
     expandedBranches, setExpandedBranches, toggleBranch,
     expandedGroups, setExpandedGroups, toggleGroup
