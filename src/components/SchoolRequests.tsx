@@ -36,6 +36,9 @@ export interface SchoolRequestItem {
   status: 'CHO_DUYET' | 'DA_DUYET' | 'TU_CHOI';
   feedback?: string;
   createdAt: string;
+  approvalFlowType?: 'SINGLE' | '3_LEVEL';
+  currentStepIndex?: number;
+  steps?: { role: 'TO_TRUONG' | 'KE_TOAN' | 'BGH'; status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'WAITING'; approvedBy?: string; feedback?: string; timestamp?: string }[];
 }
 
 const REQUEST_TYPES = [
@@ -48,6 +51,17 @@ const REQUEST_TYPES = [
 
 export default function SchoolRequests({ currentUser }: SchoolRequestsProps) {
   const { lang, t } = useLanguage();
+
+  const isApproverForStep = (user: UserProfile, stepRole: 'TO_TRUONG' | 'KE_TOAN' | 'BGH') => {
+    if (user.role === 'ADMIN') return true;
+    if (stepRole === 'TO_TRUONG') return user.role === 'MANAGER';
+    if (stepRole === 'KE_TOAN') {
+      return user.role === 'MANAGER' && (user.workspaceId === 'HANH_CHINH' || user.title?.toLowerCase().includes('kế toán') || user.title?.toLowerCase().includes('accountant'));
+    }
+    if (stepRole === 'BGH') return user.role === 'ADMIN';
+    return false;
+  };
+
   // LocalStorage State
   const [requests, setRequests] = useState<SchoolRequestItem[]>(() => {
     const saved = localStorage.getItem('mis_school_requests');
@@ -78,7 +92,14 @@ export default function SchoolRequests({ currentUser }: SchoolRequestsProps) {
         description: 'Kế hoạch tổ chức cuộc thi hùng biện tiếng Anh cấp trường cho học sinh lớp 10 vào chiều thứ Sáu tuần sau. Kinh phí bao gồm: thuê âm thanh, mua quà thưởng cho 3 đội xuất sắc và nước uống cho ban giám khảo.',
         approverRole: 'BGH',
         status: 'CHO_DUYET',
-        createdAt: '2026-06-06'
+        createdAt: '2026-06-06',
+        approvalFlowType: '3_LEVEL',
+        currentStepIndex: 0,
+        steps: [
+          { role: 'TO_TRUONG', status: 'PENDING' },
+          { role: 'KE_TOAN', status: 'WAITING' },
+          { role: 'BGH', status: 'WAITING' }
+        ]
       },
       {
         id: 'RQ003',
@@ -122,7 +143,8 @@ export default function SchoolRequests({ currentUser }: SchoolRequestsProps) {
     type: 'VAN_PHONG_PHAM' as SchoolRequestItem['type'],
     amount: '',
     description: '',
-    approverRole: 'BGH' as SchoolRequestItem['approverRole']
+    approverRole: 'BGH' as SchoolRequestItem['approverRole'],
+    approvalFlowType: 'SINGLE' as 'SINGLE' | '3_LEVEL'
   });
 
   // Approver notes
@@ -142,7 +164,14 @@ export default function SchoolRequests({ currentUser }: SchoolRequestsProps) {
       description: newReq.description,
       approverRole: newReq.approverRole,
       status: 'CHO_DUYET',
-      createdAt: new Date().toISOString().substring(0, 10)
+      createdAt: new Date().toISOString().substring(0, 10),
+      approvalFlowType: newReq.approvalFlowType,
+      currentStepIndex: newReq.approvalFlowType === '3_LEVEL' ? 0 : undefined,
+      steps: newReq.approvalFlowType === '3_LEVEL' ? [
+        { role: 'TO_TRUONG', status: 'PENDING' },
+        { role: 'KE_TOAN', status: 'WAITING' },
+        { role: 'BGH', status: 'WAITING' }
+      ] : undefined
     };
 
     setRequests([request, ...requests]);
@@ -151,7 +180,8 @@ export default function SchoolRequests({ currentUser }: SchoolRequestsProps) {
       type: 'VAN_PHONG_PHAM',
       amount: '',
       description: '',
-      approverRole: 'BGH'
+      approverRole: 'BGH',
+      approvalFlowType: 'SINGLE'
     });
     setShowAddForm(false);
   };
@@ -160,11 +190,64 @@ export default function SchoolRequests({ currentUser }: SchoolRequestsProps) {
     const feedback = decisionNotes[id] || '';
     setRequests(prev => prev.map(r => {
       if (r.id === id) {
-        return {
-          ...r,
-          status,
-          feedback: feedback.trim() ? feedback.trim() : (status === 'DA_DUYET' ? (lang === 'vi' ? 'Đã phê duyệt đạt yêu cầu.' : 'Approved.') : (lang === 'vi' ? 'Từ chối đề xuất.' : 'Rejected.'))
-        };
+        if (r.approvalFlowType === '3_LEVEL' && r.steps) {
+          const updatedSteps = [...r.steps];
+          const currIdx = r.currentStepIndex ?? 0;
+          
+          if (status === 'DA_DUYET') {
+            updatedSteps[currIdx] = {
+              ...updatedSteps[currIdx],
+              status: 'APPROVED',
+              approvedBy: currentUser.name,
+              feedback: feedback || 'Phê duyệt bước này.',
+              timestamp: new Date().toISOString().substring(0, 10)
+            };
+            
+            const nextIdx = currIdx + 1;
+            if (nextIdx < updatedSteps.length) {
+              updatedSteps[nextIdx] = {
+                ...updatedSteps[nextIdx],
+                status: 'PENDING'
+              };
+              return {
+                ...r,
+                steps: updatedSteps,
+                currentStepIndex: nextIdx,
+                feedback: `Phê duyệt bước ${currIdx + 1}/3 thành công. Chờ cấp tiếp theo duyệt.`
+              };
+            } else {
+              // All steps approved
+              return {
+                ...r,
+                steps: updatedSteps,
+                status: 'DA_DUYET',
+                feedback: feedback || 'Đã phê duyệt thông qua toàn bộ quy trình 3 cấp.'
+              };
+            }
+          } else {
+            // Rejected at current step
+            updatedSteps[currIdx] = {
+              ...updatedSteps[currIdx],
+              status: 'REJECTED',
+              approvedBy: currentUser.name,
+              feedback: feedback || 'Từ chối bước này.',
+              timestamp: new Date().toISOString().substring(0, 10)
+            };
+            return {
+              ...r,
+              steps: updatedSteps,
+              status: 'TU_CHOI',
+              feedback: feedback || `Bị từ chối tại bước ${currIdx + 1} bởi ${currentUser.name}`
+            };
+          }
+        } else {
+          // Single level approval
+          return {
+            ...r,
+            status,
+            feedback: feedback.trim() ? feedback.trim() : (status === 'DA_DUYET' ? (lang === 'vi' ? 'Đã phê duyệt đạt yêu cầu.' : 'Approved.') : (lang === 'vi' ? 'Từ chối đề xuất.' : 'Rejected.'))
+          };
+        }
       }
       return r;
     }));
@@ -335,7 +418,7 @@ export default function SchoolRequests({ currentUser }: SchoolRequestsProps) {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="text-[10px] font-bold uppercase text-slate-450 block mb-1">{lang === 'vi' ? 'Kinh phí ước tính (VNĐ) - không bắt buộc' : 'Estimated Budget (VND) - optional'}</label>
                 <input
@@ -348,16 +431,53 @@ export default function SchoolRequests({ currentUser }: SchoolRequestsProps) {
               </div>
 
               <div>
-                <label className="text-[10px] font-bold uppercase text-slate-450 block mb-1">{lang === 'vi' ? 'Cấp phê duyệt yêu cầu' : 'Approval Authority'}</label>
-                <select
-                  value={newReq.approverRole}
-                  onChange={(e: any) => setNewReq({ ...newReq, approverRole: e.target.value })}
-                  className="w-full text-xs p-2.5 border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-350 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                >
-                  <option value="BGH">{lang === 'vi' ? 'Ban Giám hiệu (BGH)' : 'School Board (BGH)'}</option>
-                  <option value="TO_TRUONG">{lang === 'vi' ? 'Tổ trưởng bộ môn' : 'Department Head'}</option>
-                  <option value="KE_TOAN">{lang === 'vi' ? 'Phòng Kế toán (Tài chính)' : 'Accounting Department'}</option>
-                </select>
+                <label className="text-[10px] font-bold uppercase text-slate-450 block mb-1">{lang === 'vi' ? 'Quy trình phê duyệt' : 'Approval Process'}</label>
+                <div className="flex gap-2 p-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl">
+                  <button
+                    type="button"
+                    onClick={() => setNewReq({ ...newReq, approvalFlowType: 'SINGLE' })}
+                    className={`flex-1 text-center py-2 text-[10px] font-bold rounded-lg transition-all ${newReq.approvalFlowType === 'SINGLE' ? 'bg-indigo-650 text-white shadow-3xs' : 'text-slate-500 hover:bg-slate-55 dark:hover:bg-slate-800'}`}
+                  >
+                    {lang === 'vi' ? '1 Cấp (Đơn lẻ)' : 'Single Stage'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setNewReq({ ...newReq, approvalFlowType: '3_LEVEL' })}
+                    className={`flex-1 text-center py-2 text-[10px] font-bold rounded-lg transition-all ${newReq.approvalFlowType === '3_LEVEL' ? 'bg-indigo-650 text-white shadow-3xs' : 'text-slate-500 hover:bg-slate-55 dark:hover:bg-slate-800'}`}
+                  >
+                    {lang === 'vi' ? '3 Cấp (Tuần tự)' : '3-Level Flow'}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="md:col-span-2">
+                {newReq.approvalFlowType === 'SINGLE' ? (
+                  <>
+                    <label className="text-[10px] font-bold uppercase text-slate-450 block mb-1">{lang === 'vi' ? 'Cấp phê duyệt yêu cầu' : 'Approval Authority'}</label>
+                    <select
+                      value={newReq.approverRole}
+                      onChange={(e: any) => setNewReq({ ...newReq, approverRole: e.target.value })}
+                      className="w-full text-xs p-2.5 border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-350 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    >
+                      <option value="BGH">{lang === 'vi' ? 'Ban Giám hiệu (BGH)' : 'School Board (BGH)'}</option>
+                      <option value="TO_TRUONG">{lang === 'vi' ? 'Tổ trưởng bộ môn' : 'Department Head'}</option>
+                      <option value="KE_TOAN">{lang === 'vi' ? 'Phòng Kế toán (Tài chính)' : 'Accounting Department'}</option>
+                    </select>
+                  </>
+                ) : (
+                  <>
+                    <label className="text-[10px] font-bold uppercase text-slate-450 block mb-1">{lang === 'vi' ? 'Quy trình phê duyệt tuần tự' : 'Sequential Approval Order'}</label>
+                    <div className="text-[10.5px] p-2.5 bg-indigo-50/50 dark:bg-indigo-950/20 text-indigo-700 dark:text-indigo-300 rounded-xl border border-indigo-100 dark:border-indigo-900/30 flex items-center justify-between font-semibold">
+                      <span>Tổ trưởng chuyên môn</span>
+                      <span className="text-slate-400">➔</span>
+                      <span>Kế toán trưởng (Ngân sách)</span>
+                      <span className="text-slate-400">➔</span>
+                      <span>Ban Giám hiệu (Chung cuộc)</span>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 
@@ -415,7 +535,15 @@ export default function SchoolRequests({ currentUser }: SchoolRequestsProps) {
                 KE_TOAN: lang === 'vi' ? 'Phòng Kế toán' : 'Accounting Dept'
               };
 
-              const canApprove = currentUser.role === 'ADMIN' && req.status === 'CHO_DUYET';
+              const activeStep = req.approvalFlowType === '3_LEVEL' && req.steps && req.currentStepIndex !== undefined
+                ? req.steps[req.currentStepIndex]
+                : null;
+
+              const canApprove = req.status === 'CHO_DUYET' && (
+                activeStep 
+                  ? isApproverForStep(currentUser, activeStep.role)
+                  : (currentUser.role === 'ADMIN' || isApproverForStep(currentUser, req.approverRole))
+              );
 
               return (
                 <div 
@@ -432,6 +560,11 @@ export default function SchoolRequests({ currentUser }: SchoolRequestsProps) {
                           <span className="text-[10px] font-black uppercase text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 px-1.5 py-0.5 rounded tracking-wider">
                             {req.id}
                           </span>
+                          {req.approvalFlowType === '3_LEVEL' && (
+                            <span className="text-[9px] font-extrabold uppercase text-indigo-700 bg-indigo-100 dark:text-indigo-300 dark:bg-indigo-950/70 px-1.5 py-0.5 rounded tracking-wider border border-indigo-200/40 font-mono">
+                              3 CẤP
+                            </span>
+                          )}
                           <span className="text-[10px] text-slate-450 font-medium">
                             {lang === 'vi' ? 'Phân loại:' : 'Category:'} <strong>{lang === 'vi' ? reqType.label : reqType.labelEn}</strong>
                           </span>
@@ -453,6 +586,82 @@ export default function SchoolRequests({ currentUser }: SchoolRequestsProps) {
                       )}
                     </div>
                   </div>
+
+                  {/* 3-Level Visual Approval Timeline */}
+                  {req.approvalFlowType === '3_LEVEL' && req.steps && (
+                    <div className="bg-slate-50/50 dark:bg-slate-950/40 border border-slate-150 dark:border-slate-800/70 p-4 rounded-xl space-y-3 font-sans">
+                      <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-2">
+                        <span className="text-[9.5px] font-extrabold uppercase text-indigo-600 dark:text-indigo-400 tracking-wider flex items-center gap-1">
+                          <Clock className="w-3.5 h-3.5 text-indigo-500 animate-pulse" />
+                          {lang === 'vi' ? 'TIẾN TRÌNH PHÊ DUYỆT TUẦN TỰ' : 'SEQUENTIAL APPROVAL PROGRESS'}
+                        </span>
+                        {req.status === 'CHO_DUYET' && (
+                          <span className="text-[9.5px] font-bold text-amber-600 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded border border-amber-200/50">
+                            {lang === 'vi' ? `Chờ duyệt ở Cấp ${req.currentStepIndex !== undefined ? req.currentStepIndex + 1 : 1}` : `Awaiting Level ${req.currentStepIndex !== undefined ? req.currentStepIndex + 1 : 1}`}
+                          </span>
+                        )}
+                      </div>
+                      
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative pt-1">
+                        {/* Connecting Line */}
+                        <div className="hidden sm:block absolute left-4 right-4 top-[16px] h-0.5 bg-slate-200 dark:bg-slate-800 z-0"></div>
+                        
+                        {req.steps.map((step, idx) => {
+                          const stepLabels = {
+                            TO_TRUONG: lang === 'vi' ? 'Cấp 1: Tổ trưởng' : 'L1: Dept Head',
+                            KE_TOAN: lang === 'vi' ? 'Cấp 2: Kế toán' : 'L2: Finance',
+                            BGH: lang === 'vi' ? 'Cấp 3: BGH' : 'L3: Board'
+                          };
+                          
+                          let stepStatusColor = 'text-slate-400 bg-slate-100 border-slate-200 dark:bg-slate-900 dark:border-slate-800';
+                          let stepLabelColor = 'text-slate-400 dark:text-slate-500';
+                          let StepIcon = Clock;
+                          let pulseClass = '';
+
+                          if (step.status === 'APPROVED') {
+                            stepStatusColor = 'text-emerald-600 bg-emerald-50 border-emerald-250 dark:bg-emerald-950/40 dark:border-emerald-900/50';
+                            stepLabelColor = 'text-emerald-700 dark:text-emerald-400 font-bold';
+                            StepIcon = Check;
+                          } else if (step.status === 'PENDING') {
+                            stepStatusColor = 'text-amber-600 bg-amber-50 border-amber-250 dark:bg-amber-950/40 dark:border-amber-900/50';
+                            stepLabelColor = 'text-amber-750 dark:text-amber-400 font-black';
+                            StepIcon = Clock;
+                            pulseClass = 'animate-pulse scale-105';
+                          } else if (step.status === 'REJECTED') {
+                            stepStatusColor = 'text-rose-600 bg-rose-50 border-rose-250 dark:bg-rose-950/40 dark:border-rose-900/50';
+                            stepLabelColor = 'text-rose-700 dark:text-rose-400 font-bold';
+                            StepIcon = X;
+                          }
+
+                          return (
+                            <div key={idx} className="flex items-center sm:flex-col sm:items-center gap-3 sm:gap-1.5 flex-1 relative z-10">
+                              <div className={`w-8 h-8 rounded-full border flex items-center justify-center shrink-0 ${stepStatusColor} ${pulseClass} shadow-2xs`}>
+                                <StepIcon className="w-4 h-4" />
+                              </div>
+                              <div className="text-left sm:text-center space-y-0.5">
+                                <div className={`text-[10px] ${stepLabelColor}`}>{stepLabels[step.role]}</div>
+                                <div className="text-[8.5px] text-slate-450 font-medium">
+                                  {step.status === 'APPROVED' && (
+                                    <span className="text-emerald-600 font-semibold">
+                                      {step.approvedBy} {step.timestamp && `(${step.timestamp})`}
+                                    </span>
+                                  )}
+                                  {step.status === 'PENDING' && <span className="text-amber-600 font-semibold">{lang === 'vi' ? 'Đang duyệt' : 'Awaiting'}</span>}
+                                  {step.status === 'REJECTED' && <span className="text-rose-600 font-semibold">{lang === 'vi' ? 'Từ chối bởi' : 'Rejected by'} {step.approvedBy}</span>}
+                                  {step.status === 'WAITING' && <span>{lang === 'vi' ? 'Chờ lượt' : 'Queueing'}</span>}
+                                </div>
+                                {step.feedback && (
+                                  <div className="text-[9px] italic text-slate-500 max-w-[150px] overflow-hidden text-ellipsis whitespace-nowrap" title={step.feedback}>
+                                    "{step.feedback}"
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
 
                   <div className="text-[11px] leading-relaxed text-slate-650 dark:text-slate-350 bg-slate-50/50 dark:bg-slate-950/60 p-3.5 rounded-xl border border-slate-100 dark:border-transparent font-medium">
                     <p className="whitespace-pre-line">{req.description}</p>
@@ -476,10 +685,14 @@ export default function SchoolRequests({ currentUser }: SchoolRequestsProps) {
                   {/* Approver Panel */}
                   {canApprove && (
                     <div className="border-t border-slate-100 dark:border-slate-850 pt-3 space-y-2 no-print font-sans">
-                      <label className="text-[9.5px] font-bold uppercase text-slate-400 block">{lang === 'vi' ? 'Ý kiến của người phê duyệt (Ban giám hiệu)' : 'Approver Comments (School Board)'}</label>
+                      <label className="text-[9.5px] font-bold uppercase text-slate-400 block">
+                        {lang === 'vi' 
+                          ? `Ý kiến phê duyệt (${activeStep ? roleLabels[activeStep.role] : roleLabels[req.approverRole]})`
+                          : `Approver Comments (${activeStep ? roleLabels[activeStep.role] : roleLabels[req.approverRole]})`}
+                      </label>
                       <input
                         type="text"
-                        placeholder={lang === 'vi' ? 'Nhập lý do duyệt cấp/lý do từ chối cụ thể để hướng dẫn người đề xuất...' : 'Enter approval/rejection details to guide the requester...'}
+                        placeholder={lang === 'vi' ? 'Nhập ý kiến phê duyệt hoặc lý do từ chối cụ thể...' : 'Enter approval or rejection feedback details...'}
                         value={decisionNotes[req.id] || ''}
                         onChange={(e) => setDecisionNotes({ ...decisionNotes, [req.id]: e.target.value })}
                         className="w-full text-[10.5px] border border-slate-200 dark:border-slate-800 rounded-xl p-2 bg-white dark:bg-slate-955 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
@@ -487,17 +700,17 @@ export default function SchoolRequests({ currentUser }: SchoolRequestsProps) {
                       <div className="flex justify-end gap-2">
                         <button
                           onClick={() => handleUpdateStatus(req.id, 'TU_CHOI')}
-                          className="px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white font-bold text-[10.5px] rounded-lg cursor-pointer flex items-center gap-1 shadow-3xs"
+                          className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-[10.5px] rounded-lg cursor-pointer flex items-center gap-1 shadow-3xs"
                         >
                           <XCircle className="w-3.5 h-3.5" />
-                          <span>{lang === 'vi' ? 'Từ chối duyệt' : 'Reject Request'}</span>
+                          <span>{lang === 'vi' ? 'Từ chối duyệt' : 'Reject'}</span>
                         </button>
                         <button
                           onClick={() => handleUpdateStatus(req.id, 'DA_DUYET')}
-                          className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10.5px] rounded-lg cursor-pointer flex items-center gap-1 shadow-3xs"
+                          className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10.5px] rounded-lg cursor-pointer flex items-center gap-1 shadow-3xs"
                         >
                           <CheckCircle2 className="w-3.5 h-3.5" />
-                          <span>{lang === 'vi' ? 'Phê duyệt ngay' : 'Approve Request'}</span>
+                          <span>{lang === 'vi' ? (activeStep && req.currentStepIndex !== 2 ? 'Duyệt cấp này' : 'Phê duyệt chung cuộc') : (activeStep && req.currentStepIndex !== 2 ? 'Approve Step' : 'Final Approve')}</span>
                         </button>
                       </div>
                     </div>

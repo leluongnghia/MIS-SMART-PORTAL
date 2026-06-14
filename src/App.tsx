@@ -334,8 +334,18 @@ export default function App() {
     }
   }, [darkMode]);
 
+  // Multi-campus state
+  const [selectedCampus, setSelectedCampus] = useState<'ALL' | 'CAMPUS_HN' | 'CAMPUS_HCM'>('ALL');
+  const [showCampusDropdown, setShowCampusDropdown] = useState(false);
+
   // Persistence state
-  const [tasks, setTasks] = useState<Task[]>(() => normalizeTaskAssigneeRoles(readLocalJson<Task[]>(LOCAL_TASKS_KEY, INITIAL_TASKS), normalizeUserProfiles(MOCK_USERS)));
+  const [tasks, setTasks] = useState<Task[]>(() => {
+    const rawTasks = normalizeTaskAssigneeRoles(readLocalJson<Task[]>(LOCAL_TASKS_KEY, INITIAL_TASKS), normalizeUserProfiles(MOCK_USERS));
+    return rawTasks.map((t, idx) => ({
+      ...t,
+      campusId: t.campusId || (t.workspaceId === 'BGH' ? 'ALL' : (idx % 2 === 0 ? 'CAMPUS_HN' : 'CAMPUS_HCM'))
+    }));
+  });
   const [workspaces, setWorkspaces] = useState<Workspace[]>(() => readLocalJson<Workspace[]>(LOCAL_WORKSPACES_KEY, INITIAL_WORKSPACES));
   const [isWorkspaceModalOpen, setIsWorkspaceModalOpen] = useState(false);
 
@@ -1437,7 +1447,27 @@ export default function App() {
     return tasks.filter(t => t.assignedId === currentUser.id);
   };
 
-  const roleFilteredTasks = getTasksByRoleLimit().map(t => translateTask(t, lang));
+  // Dynamically assign campusId to tasks and filter based on selectedCampus
+  const roleFilteredTasks = getTasksByRoleLimit().map((t, idx) => {
+    const tCampusId = t.workspaceId === 'BGH' ? 'ALL' : (t.campusId || (idx % 2 === 0 ? 'CAMPUS_HN' : 'CAMPUS_HCM'));
+    return { ...translateTask(t, lang), campusId: tCampusId };
+  }).filter(t => {
+    if (selectedCampus === 'ALL') return true;
+    if (t.campusId === 'ALL') return true;
+    return t.campusId === selectedCampus;
+  });
+
+  // Dynamically assign campusId to users and filter based on selectedCampus
+  const campusFilteredUsers = users.map((u, idx) => {
+    const uCampusId = u.id === 'user_chutich' || u.id === 'user_ceo' || u.id === 'user_triet'
+      ? 'ALL'
+      : (u.campusId || (idx % 2 === 0 ? 'CAMPUS_HN' : 'CAMPUS_HCM'));
+    return { ...u, campusId: uCampusId };
+  }).filter(u => {
+    if (selectedCampus === 'ALL') return true;
+    if (u.campusId === 'ALL') return true;
+    return u.campusId === selectedCampus;
+  });
 
   const visibleWorkspaces = (currentUser?.role === 'STAFF'
     ? workspaces.filter(w => w.id === currentUser.workspaceId)
@@ -1725,6 +1755,69 @@ export default function App() {
           <div className="hidden xl:flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-200/60 dark:border-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded-xl text-[10.5px] font-semibold animate-fade-in no-print">
             <Cloud className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 animate-pulse" />
             <span className="hidden 2xl:inline">Đã kết nối đám mây</span>
+          </div>
+
+          {/* Campus Switcher Dropdown */}
+          <div className="relative no-print" id="campus-switcher-container">
+            <button
+              onClick={() => setShowCampusDropdown(!showCampusDropdown)}
+              className="px-2.5 py-1.5 bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-200/50 dark:border-indigo-900/50 text-indigo-800 dark:text-indigo-350 rounded-xl hover:bg-indigo-100/50 dark:hover:bg-indigo-900/40 transition-all cursor-pointer shadow-3xs flex items-center gap-1.5 text-xs font-bold focus:outline-none"
+              title="Chuyển đổi Cơ sở"
+              type="button"
+            >
+              <School className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+              <span>
+                {selectedCampus === 'ALL' 
+                  ? 'Tất cả cơ sở' 
+                  : selectedCampus === 'CAMPUS_HN' 
+                  ? 'Cơ sở Hà Nội' 
+                  : 'Cơ sở TP.HCM'}
+              </span>
+              <ChevronDown className="w-3 h-3" />
+            </button>
+            {showCampusDropdown && (
+              <div className="absolute right-0 mt-2.5 w-48 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg py-1 text-xs z-50">
+                <button
+                  onClick={() => {
+                    setSelectedCampus('ALL');
+                    setShowCampusDropdown(false);
+                  }}
+                  className={`w-full text-left px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center justify-between text-slate-700 dark:text-slate-200 ${
+                    selectedCampus === 'ALL' ? 'font-bold bg-indigo-50/50 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-450' : ''
+                  }`}
+                  type="button"
+                >
+                  <span>Tất cả cơ sở (Tập đoàn)</span>
+                  {selectedCampus === 'ALL' && <Check className="w-3 h-3 text-indigo-600 dark:text-indigo-400" />}
+                </button>
+                <button
+                  onClick={() => {
+                    setSelectedCampus('CAMPUS_HN');
+                    setShowCampusDropdown(false);
+                  }}
+                  className={`w-full text-left px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center justify-between text-slate-700 dark:text-slate-200 ${
+                    selectedCampus === 'CAMPUS_HN' ? 'font-bold bg-indigo-50/50 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-450' : ''
+                  }`}
+                  type="button"
+                >
+                  <span>Cơ sở Hà Nội (HN)</span>
+                  {selectedCampus === 'CAMPUS_HN' && <Check className="w-3 h-3 text-indigo-600 dark:text-indigo-400" />}
+                </button>
+                <button
+                  onClick={() => {
+                    setSelectedCampus('CAMPUS_HCM');
+                    setShowCampusDropdown(false);
+                  }}
+                  className={`w-full text-left px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center justify-between text-slate-700 dark:text-slate-200 ${
+                    selectedCampus === 'CAMPUS_HCM' ? 'font-bold bg-indigo-50/50 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-450' : ''
+                  }`}
+                  type="button"
+                >
+                  <span>Cơ sở TP.HCM (HCM)</span>
+                  {selectedCampus === 'CAMPUS_HCM' && <Check className="w-3 h-3 text-indigo-600 dark:text-indigo-400" />}
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Language Toggle */}
@@ -2467,7 +2560,7 @@ export default function App() {
             <ExecutiveDashboard
               tasks={roleFilteredTasks}
               workspaces={workspaces}
-              users={users}
+              users={campusFilteredUsers}
               directives={directives}
               currentUser={currentUser}
               onViewDetails={setSelectedTaskForDetail}
@@ -2480,11 +2573,17 @@ export default function App() {
                 setSelectedWorkspace('ALL');
                 setActiveStatsTaskType(type);
               }}
+              selectedCampus={selectedCampus}
             />
           )}
 
           {overviewTab === 'STRATEGY_OKRS' && (
-            <StrategyOkrHub />
+            <IntelligenceAndOkrHub 
+              tasks={tasks}
+              users={campusFilteredUsers}
+              currentUser={currentUser}
+              onAddTask={handleCreateTask}
+            />
           )}
 
           {overviewTab === 'WORKFLOW_APPROVALS' && (
@@ -2529,7 +2628,7 @@ export default function App() {
           {overviewTab === 'ACADEMIC_OPS' && (
             <AcademicOperations 
               currentUser={currentUser} 
-              users={users} 
+              users={campusFilteredUsers} 
               onNavigateTab={(tab) => setOverviewTab(tab as typeof overviewTab)}
             />
           )}
@@ -2549,7 +2648,7 @@ export default function App() {
           {overviewTab === 'HRM' && (
             <HrmCenter 
               currentUser={currentUser} 
-              users={users} 
+              users={campusFilteredUsers} 
               onUpdateUsers={saveUsers} 
               hasCapability={hasCapability}
             />

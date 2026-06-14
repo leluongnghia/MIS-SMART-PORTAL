@@ -54,6 +54,7 @@ export interface UserProfile {
   insuranceCode?: string;
   parentEmail?: string;
   studentCode?: string;
+  campusId?: 'ALL' | 'CAMPUS_HN' | 'CAMPUS_HCM';
 }
 
 export type TaskPriority = 'CAO' | 'TRUNG_BINH' | 'THAP';
@@ -109,6 +110,7 @@ export interface Task {
   overdueReminderSent?: boolean;
   lastNearDeadlineReminderDate?: string;
   lastOverdueReminderDate?: string;
+  campusId?: 'ALL' | 'CAMPUS_HN' | 'CAMPUS_HCM';
 }
 
 export interface Project {

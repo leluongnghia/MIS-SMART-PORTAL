@@ -274,6 +274,8 @@ export default function ParentStudentPortal({ currentUser, onLogout }: ParentStu
   const [cardExpiry, setCardExpiry] = useState('');
   const [cardCvv, setCardCvv] = useState('');
   const [paymentSuccess, setPaymentSuccess] = useState('');
+  const [webhookSimStatus, setWebhookSimStatus] = useState<'IDLE' | 'PROCESSING' | 'SUCCESS'>('IDLE');
+  const [webhookLogs, setWebhookLogs] = useState<string[]>([]);
 
   // Surveys & Feedback states
   const [surveys, setSurveys] = useState<any[]>(() => {
@@ -387,6 +389,68 @@ export default function ParentStudentPortal({ currentUser, onLogout }: ParentStu
       };
       syncInvoiceToCloud();
     }
+  };
+
+  const handleSimulateBankWebhook = () => {
+    if (!selectedInvoice) return;
+    setWebhookSimStatus('PROCESSING');
+    setWebhookLogs([
+      '📡 [0.0s] Đang giả lập hệ thống Bank API gửi webhook đến MIS Portal...',
+      '🌐 [0.2s] Method: POST /api/webhooks/bank-transfer'
+    ]);
+    
+    setTimeout(() => {
+      setWebhookLogs(prev => [...prev, `📦 [0.5s] Payload nhận được: { transactionId: "TXN${Math.floor(100000 + Math.random() * 900000)}", invoiceNo: "${selectedInvoice.invoiceNo}", amount: "${selectedInvoice.amount.replace(/[^0-9]/g, '')}" }`]);
+    }, 500);
+
+    setTimeout(() => {
+      setWebhookLogs(prev => [...prev, `🔍 [0.9s] Đối soát mã hóa đơn: Tìm kiếm "${selectedInvoice.invoiceNo}" trong cơ sở dữ liệu...`]);
+    }, 900);
+
+    setTimeout(() => {
+      setWebhookLogs(prev => [...prev, `✅ [1.2s] Khớp hóa đơn! Trạng thái hiện tại: CHO_DONG. Số tiền chuyển khoản chính xác.`]);
+    }, 1200);
+
+    setTimeout(() => {
+      setWebhookLogs(prev => [...prev, `💵 [1.6s] Tiến hành gạch nợ học phí, chuyển trạng thái sang DA_DONG.`]);
+      
+      // Update local state and firestore
+      let updatedInvoice: any = null;
+      const updatedTuition = tuitionFees.map(t => {
+        if (t.id === selectedInvoice.id) {
+          updatedInvoice = {
+            ...t,
+            status: 'DA_DONG',
+            paidDate: new Date().toISOString().split('T')[0]
+          };
+          return updatedInvoice;
+        }
+        return t;
+      });
+
+      setTuitionFees(updatedTuition);
+      writeStored('mis_lms_tuition_fees', updatedTuition);
+      
+      if (updatedInvoice) {
+        const syncInvoiceToCloud = async () => {
+          try {
+            await setDoc(doc(db, 'mis_lms_tuition_fees', selectedInvoice.id), updatedInvoice);
+          } catch (err) {
+            console.warn('Failed to sync invoice payment to Firestore: ', err);
+          }
+        };
+        syncInvoiceToCloud();
+      }
+    }, 1600);
+
+    setTimeout(() => {
+      setWebhookLogs(prev => [...prev, `⚙️ [2.0s] Đang đồng bộ hóa dữ liệu trực tuyến với SIS & vnEdu...`]);
+    }, 2000);
+
+    setTimeout(() => {
+      setWebhookLogs(prev => [...prev, `🎉 [2.4s] Hoàn tất đối soát! Cổng thông tin phụ huynh cập nhật thành công.`]);
+      setWebhookSimStatus('SUCCESS');
+    }, 2400);
   };
 
   const handleSurveySubmit = (e: React.FormEvent) => {
@@ -1918,9 +1982,39 @@ export default function ParentStudentPortal({ currentUser, onLogout }: ParentStu
                 </div>
 
                 {/* Content area */}
-                <div className="p-5 space-y-4">
+                <div className="p-5 space-y-4 font-sans">
                   
-                  {paymentSuccess ? (
+                  {webhookSimStatus !== 'IDLE' ? (
+                    <div className="space-y-4">
+                      <div className="bg-slate-900 text-slate-200 p-4 rounded-2xl font-mono text-[10.5px] leading-relaxed space-y-1.5 h-64 overflow-y-auto border border-slate-800 shadow-inner">
+                        {webhookLogs.map((log, index) => (
+                          <div key={index} className={log.includes('✅') || log.includes('🎉') ? 'text-emerald-450 font-bold' : log.includes('📡') ? 'text-indigo-400' : 'text-slate-350'}>
+                            {log}
+                          </div>
+                        ))}
+                        {webhookSimStatus === 'PROCESSING' && (
+                          <div className="flex items-center gap-1.5 text-indigo-400 animate-pulse mt-2 text-[10px]">
+                            <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-ping shrink-0"></span>
+                            <span>Đang đối soát sao kê...</span>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {webhookSimStatus === 'SUCCESS' && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setWebhookSimStatus('IDLE');
+                            setWebhookLogs([]);
+                            setSelectedInvoice(null);
+                          }}
+                          className="w-full py-2.5 bg-emerald-650 hover:bg-emerald-700 text-white rounded-xl font-bold transition-all text-center cursor-pointer text-xs"
+                        >
+                          Hoàn tất &amp; Đóng
+                        </button>
+                      )}
+                    </div>
+                  ) : paymentSuccess ? (
                     <div className="text-center py-8 space-y-4">
                       <div className="inline-flex items-center justify-center w-14 h-14 bg-emerald-55/15 rounded-full border border-emerald-250 text-emerald-600 mb-2 animate-bounce">
                         <CheckCircle2 className="w-7 h-7" />
@@ -2027,13 +2121,23 @@ export default function ParentStudentPortal({ currentUser, onLogout }: ParentStu
                             </div>
                           </div>
 
-                          <button
-                            type="button"
-                            onClick={handleSimulatePayment}
-                            className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold transition-all shadow-md text-center cursor-pointer"
-                          >
-                            Tôi đã chuyển khoản thành công
-                          </button>
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              onClick={handleSimulatePayment}
+                              className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold transition-all shadow-md text-center cursor-pointer text-xs"
+                            >
+                              Tôi đã chuyển khoản thành công
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleSimulateBankWebhook}
+                              className="px-3 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold transition-all shadow-md text-center cursor-pointer text-xs flex items-center justify-center gap-1.5"
+                              title="Giả lập đối soát tự động qua Webhook Ngân hàng"
+                            >
+                              🧪 Webhook Bank
+                            </button>
+                          </div>
                         </div>
                       ) : (
                         <form onSubmit={handleSimulatePayment} className="space-y-4 text-xs">

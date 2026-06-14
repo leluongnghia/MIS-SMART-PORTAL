@@ -165,6 +165,63 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
     return unified.filter(s => s.enrollmentStatus === 'ENROLLED') as LmsStudent[];
   });
 
+  // EMIS / vnEdu Integration States
+  const [showSyncModal, setShowSyncModal] = useState(false);
+  const [syncProgress, setSyncProgress] = useState(0);
+  const [syncStatus, setSyncStatus] = useState<'IDLE' | 'SYNCING' | 'SUCCESS'>('IDLE');
+  const [syncLogs, setSyncLogs] = useState<string[]>([]);
+  const [syncHistory, setSyncHistory] = useState<{ id: string; date: string; operator: string; records: number; status: 'SUCCESS' | 'FAILED' }[]>(() => {
+    const defaultHistory = [
+      { id: 'SYNC001', date: '2026-06-02 08:30', operator: 'Thầy Trần Hoàng Nam', records: 425, status: 'SUCCESS' as const },
+      { id: 'SYNC002', date: '2026-05-15 14:20', operator: 'Cô Lê Thị Thanh Nhàn', records: 418, status: 'SUCCESS' as const }
+    ];
+    const saved = localStorage.getItem('mis_emis_sync_history');
+    return saved ? JSON.parse(saved) : defaultHistory;
+  });
+
+  const handleStartSync = () => {
+    setSyncStatus('SYNCING');
+    setSyncProgress(0);
+    setSyncLogs([
+      '📡 [0.0s] Đang khởi tạo kết nối bảo mật SSL đến máy chủ cổng EMIS Bộ GD&ĐT...',
+      '🔐 [0.2s] Xác thực tài khoản nhà trường (MIS_HN_2026) thành công.'
+    ]);
+    setShowSyncModal(true);
+
+    const steps = [
+      { progress: 15, log: '📦 [0.5s] Quét dữ liệu học vụ: Phát hiện 15 lớp học và 425 hồ sơ học sinh mới/cập nhật.' },
+      { progress: 30, log: '🧬 [1.0s] Tiến hành mã hóa dữ liệu đầu ra theo chuẩn XML/JSON của Bộ GD&ĐT...' },
+      { progress: 50, log: '📤 [1.5s] Đang truyền tải gói tin mã hóa hồ sơ học sinh lên hệ thống vnEdu...' },
+      { progress: 70, log: '📤 [2.2s] Đang đồng bộ sổ điểm học bạ điện tử và điểm danh chuyên cần của học kỳ II...' },
+      { progress: 85, log: '📥 [3.0s] Nhận phản hồi đối chiếu từ máy chủ vnEdu: 425/425 bản ghi hợp lệ.' },
+      { progress: 95, log: '⚙️ [3.5s] Đang ghi nhận nhật ký đồng bộ cục bộ và cập nhật hệ thống...' },
+      { progress: 100, log: '✅ [4.0s] Đồng bộ liên thông dữ liệu hoàn tất thành công 100%! Hệ thống học bạ đã khớp.' }
+    ];
+
+    steps.forEach((step, idx) => {
+      setTimeout(() => {
+        setSyncProgress(step.progress);
+        setSyncLogs(prev => [...prev, step.log]);
+
+        if (step.progress === 100) {
+          setSyncStatus('SUCCESS');
+          const newRecord = {
+            id: `SYNC${Date.now().toString().slice(-3)}`,
+            date: new Date().toISOString().replace('T', ' ').substring(0, 16),
+            operator: currentUser.name || 'Hệ thống',
+            records: 425,
+            status: 'SUCCESS' as const
+          };
+          setSyncHistory(prev => {
+            const updated = [newRecord, ...prev];
+            localStorage.setItem('mis_emis_sync_history', JSON.stringify(updated));
+            return updated;
+          });
+        }
+      }, (idx + 1) * 600);
+    });
+  };
+
   // Real-time Firestore Sync for Student Directory
   useEffect(() => {
     const unsub = onSnapshot(collection(db, 'mis_student_directory'), (snapshot) => {
@@ -1494,7 +1551,36 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
 
         {/* TAB 2: OPERATIONS, ZOOM CLASSROOM, MCQ & MATH/CHEMISTRY FORMULA EDITOR */}
         {activeTab === 'OPERATIONS' && (
-          <div className="space-y-6">
+          <div className="space-y-6 font-sans">
+            
+            {/* Phân hệ Liên thông dữ liệu quốc gia EMIS & vnEdu */}
+            <div className="bg-gradient-to-r from-emerald-700 via-teal-800 to-indigo-900 text-white rounded-2xl border border-emerald-500/20 shadow-lg p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 animate-fade-in">
+              <div className="space-y-1.5 max-w-3xl">
+                <span className="px-2.5 py-0.5 bg-white/10 backdrop-blur-md rounded-full text-teal-200 text-[10px] font-extrabold uppercase tracking-wider border border-white/10">
+                  🌐 LIÊN THÔNG CƠ SỞ DỮ LIỆU QUỐC GIA
+                </span>
+                <h3 className="font-display font-black text-white text-base">
+                  Cổng Đồng bộ Dữ liệu Học bạ EMIS / vnEdu
+                </h3>
+                <p className="text-xs text-emerald-100/80 leading-relaxed font-light">
+                  Đồng bộ hóa tức thời thông tin hồ sơ lớp học, sổ điểm số điện tử học bạ và chuyên cần chuyên môn với hệ thống CSDL của Bộ Giáo dục &amp; Đào tạo.
+                </p>
+                {syncHistory.length > 0 && (
+                  <div className="text-[10px] text-teal-200 flex items-center gap-2 mt-1">
+                    <span>🔄 Lần đồng bộ cuối: <strong>{syncHistory[0].date}</strong> bởi <strong>{syncHistory[0].operator}</strong> ({syncHistory[0].records} bản ghi).</span>
+                  </div>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={handleStartSync}
+                className="w-full md:w-auto px-5 py-3 bg-white hover:bg-emerald-50 text-emerald-800 font-bold text-xs rounded-xl shadow-md shrink-0 flex items-center justify-center gap-2 cursor-pointer transition-all hover:scale-[1.02] active:scale-95"
+              >
+                <RefreshCw className={`w-4 h-4 text-emerald-700 ${syncStatus === 'SYNCING' ? 'animate-spin' : ''}`} />
+                <span>Bắt đầu đồng bộ ngay</span>
+              </button>
+            </div>
+
             <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
               
               {/* E-Learning, Scheduled Class hours & Attendance Tracker */}
@@ -2997,6 +3083,120 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
         )}
 
       </div>
+
+      {/* EMIS / vnEdu Sync Simulator Modal */}
+      {showSyncModal && (
+        <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-xl w-full overflow-hidden shadow-2xl text-slate-800 dark:text-slate-100 font-sans">
+            
+            {/* Modal Header */}
+            <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-900">
+              <div>
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <RefreshCw className={`w-4 h-4 text-emerald-600 ${syncStatus === 'SYNCING' ? 'animate-spin' : ''}`} />
+                  Đang đồng bộ cơ sở dữ liệu EMIS / vnEdu
+                </h3>
+                <p className="text-[10px] text-slate-400 mt-0.5">Tiến trình liên thông dữ liệu trực tuyến với Cổng Bộ Giáo dục &amp; Đào tạo</p>
+              </div>
+              {syncStatus !== 'SYNCING' && (
+                <button 
+                  onClick={() => setShowSyncModal(false)}
+                  className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-400 hover:text-slate-200 cursor-pointer text-xs"
+                >
+                  Đóng
+                </button>
+              )}
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-5 space-y-4">
+              {/* Progress bar and details */}
+              <div className="space-y-2">
+                <div className="flex justify-between items-center text-xs">
+                  <span className="font-semibold text-slate-600 dark:text-slate-400">Tiến độ đồng bộ:</span>
+                  <span className="font-mono font-bold text-indigo-650 dark:text-indigo-400">{syncProgress}%</span>
+                </div>
+                <div className="w-full h-3 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden border border-slate-200/50 dark:border-transparent">
+                  <div 
+                    className="h-full bg-gradient-to-r from-emerald-500 via-teal-500 to-indigo-600 transition-all duration-300 rounded-full"
+                    style={{ width: `${syncProgress}%` }}
+                  ></div>
+                </div>
+              </div>
+
+              {/* Streaming console-like logs */}
+              <div className="bg-slate-950 text-slate-200 p-4 rounded-2xl font-mono text-[10.5px] leading-relaxed space-y-2 h-72 overflow-y-auto border border-slate-800 shadow-inner">
+                {syncLogs.map((log, index) => {
+                  let logColor = 'text-slate-300';
+                  if (log.includes('✅') || log.includes('100%')) {
+                    logColor = 'text-emerald-450 font-bold';
+                  } else if (log.includes('📡') || log.includes('🔐')) {
+                    logColor = 'text-indigo-400';
+                  } else if (log.includes('📦')) {
+                    logColor = 'text-teal-400';
+                  } else if (log.includes('📤')) {
+                    logColor = 'text-amber-400';
+                  }
+                  return (
+                    <div key={index} className={logColor}>
+                      {log}
+                    </div>
+                  );
+                })}
+                {syncStatus === 'SYNCING' && (
+                  <div className="flex items-center gap-2 text-indigo-400 animate-pulse mt-2 text-[10px]">
+                    <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-ping shrink-0"></span>
+                    <span>Hệ thống đang đồng bộ dữ liệu...</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Sync History list within modal */}
+              <div className="space-y-2">
+                <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Lịch sử đồng bộ gần đây</h4>
+                <div className="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden bg-slate-50/50 dark:bg-slate-950/20 text-xs">
+                  <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                    {syncHistory.slice(0, 3).map((item) => (
+                      <div key={item.id} className="p-2.5 flex justify-between items-center">
+                        <div className="space-y-0.5">
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-mono text-[9px] font-bold text-slate-500 bg-slate-100 dark:bg-slate-850 px-1 py-0.2 rounded">{item.id}</span>
+                            <span className="font-semibold text-slate-700 dark:text-slate-350">{item.operator}</span>
+                          </div>
+                          <span className="text-[9.5px] text-slate-450">{item.date}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-[10.5px]">
+                          <span className="text-slate-500">Đồng bộ {item.records} hồ sơ</span>
+                          <span className="px-1.5 py-0.5 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-650 dark:text-emerald-400 border border-emerald-105 dark:border-emerald-900/40 text-[9px] font-bold rounded">
+                            Thành công
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex justify-end bg-slate-50 dark:bg-slate-900">
+              <button
+                type="button"
+                disabled={syncStatus === 'SYNCING'}
+                onClick={() => setShowSyncModal(false)}
+                className={`px-5 py-2 rounded-xl font-bold text-xs shadow-3xs transition-all cursor-pointer ${
+                  syncStatus === 'SYNCING'
+                    ? 'bg-slate-200 text-slate-400 border border-slate-200 dark:bg-slate-800 dark:text-slate-600 dark:border-transparent'
+                    : 'bg-emerald-650 hover:bg-emerald-700 text-white'
+                }`}
+              >
+                Đóng cửa sổ
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
 
     </div>
   );

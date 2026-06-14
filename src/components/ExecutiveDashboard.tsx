@@ -41,6 +41,7 @@ interface ExecutiveDashboardProps {
   onUpdateStatus: (taskId: string, newStatus: any) => void;
   onSelectWorkspace: (workspaceId: string) => void;
   onShowTaskList?: (type: 'COMPLETED' | 'PENDING' | 'IN_PROGRESS' | 'OVERDUE') => void;
+  selectedCampus?: 'ALL' | 'CAMPUS_HN' | 'CAMPUS_HCM';
 }
 
 export default function ExecutiveDashboard({
@@ -52,7 +53,8 @@ export default function ExecutiveDashboard({
   onViewDetails,
   onUpdateStatus,
   onSelectWorkspace,
-  onShowTaskList
+  onShowTaskList,
+  selectedCampus = 'ALL'
 }: ExecutiveDashboardProps) {
   const [selectedDirective, setSelectedDirective] = useState<BoardDirective | null>(null);
 
@@ -61,7 +63,6 @@ export default function ExecutiveDashboard({
     return new Date().toISOString().split('T')[0];
   }, []);
 
-  // LEVEL 1: Executive Summary calculations
   const summaryMetrics = useMemo(() => {
     // 1. Overdue Tasks
     const overdue = tasks.filter(t => t.status !== 'HOAN_THANH' && t.deadline < todayStr).length;
@@ -343,6 +344,76 @@ export default function ExecutiveDashboard({
 
   return (
     <div className="space-y-6 p-1">
+      {selectedCampus === 'ALL' && (
+        <div className="bg-gradient-to-br from-indigo-50/70 to-blue-50/70 dark:from-slate-850 dark:to-slate-900 border border-indigo-150/40 dark:border-slate-800 rounded-3xl p-6 shadow-3xs space-y-6">
+          <div className="flex items-center justify-between">
+            <h3 className="font-display font-extrabold text-indigo-950 dark:text-indigo-400 text-sm flex items-center gap-2">
+              <Layers className="w-5 h-5 text-indigo-600" />
+              Báo cáo so sánh chéo Liên cơ sở (Tập đoàn)
+            </h3>
+            <span className="text-[10px] font-black uppercase text-indigo-600 bg-indigo-100/60 dark:bg-indigo-950/40 px-3 py-1 rounded-full font-mono">HQ View</span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/80 rounded-2xl p-4 space-y-2">
+              <span className="text-[9.5px] font-black uppercase text-slate-400 block font-mono">Tuyển sinh (Lead Intake)</span>
+              <div className="flex items-baseline justify-between">
+                <div>
+                  <span className="text-xs text-slate-500 font-bold block">Hà Nội (HN):</span>
+                  <span className="text-lg font-extrabold text-slate-800 dark:text-white">125 <span className="text-xs text-slate-400 font-normal">(87% convert)</span></span>
+                </div>
+                <div className="border-l border-slate-100 dark:border-slate-800 pl-4">
+                  <span className="text-xs text-slate-500 font-bold block">TP.HCM:</span>
+                  <span className="text-lg font-extrabold text-slate-800 dark:text-white">98 <span className="text-xs text-slate-400 font-normal">(83% convert)</span></span>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/80 rounded-2xl p-4 space-y-2">
+              <span className="text-[9.5px] font-black uppercase text-slate-400 block font-mono">Tài chính (Học phí thu)</span>
+              <div className="flex items-baseline justify-between">
+                <div>
+                  <span className="text-xs text-slate-500 font-bold block">Hà Nội (HN):</span>
+                  <span className="text-lg font-extrabold text-emerald-600">3.2 Tỷ <span className="text-xs text-slate-400 font-normal">(Đạt 88%)</span></span>
+                </div>
+                <div className="border-l border-slate-100 dark:border-slate-800 pl-4">
+                  <span className="text-xs text-slate-500 font-bold block">TP.HCM:</span>
+                  <span className="text-lg font-extrabold text-emerald-600">2.5 Tỷ <span className="text-xs text-slate-400 font-normal">(Đạt 85%)</span></span>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/80 rounded-2xl p-4 space-y-2">
+              <span className="text-[9.5px] font-black uppercase text-slate-400 block font-mono">Học vụ & LMS (Chuyên cần)</span>
+              <div className="flex items-baseline justify-between">
+                <div>
+                  <span className="text-xs text-slate-500 font-bold block">Hà Nội (HN):</span>
+                  <span className="text-base font-extrabold text-slate-800 dark:text-white">7.8 GPA <span className="text-[10px] text-emerald-500 font-bold">(96.5%)</span></span>
+                </div>
+                <div className="border-l border-slate-100 dark:border-slate-800 pl-4">
+                  <span className="text-xs text-slate-500 font-bold block">TP.HCM:</span>
+                  <span className="text-base font-extrabold text-slate-800 dark:text-white">7.6 GPA <span className="text-[10px] text-emerald-500 font-bold">(95.2%)</span></span>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/80 rounded-2xl p-4 space-y-2">
+              <span className="text-[9.5px] font-black uppercase text-slate-400 block font-mono">Nhân sự (HRM & KPI)</span>
+              <div className="flex items-baseline justify-between">
+                <div>
+                  <span className="text-xs text-slate-500 font-bold block">Hà Nội (HN):</span>
+                  <span className="text-lg font-extrabold text-slate-800 dark:text-white">42 GV <span className="text-xs text-slate-400 font-normal">(KPI: 84%)</span></span>
+                </div>
+                <div className="border-l border-slate-100 dark:border-slate-800 pl-4">
+                  <span className="text-xs text-slate-500 font-bold block">TP.HCM:</span>
+                  <span className="text-lg font-extrabold text-slate-800 dark:text-white">36 GV <span className="text-xs text-slate-400 font-normal">(KPI: 82%)</span></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <section className="space-y-5">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           
