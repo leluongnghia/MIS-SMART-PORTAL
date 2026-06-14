@@ -55,7 +55,7 @@ export default function NotificationDrawer({
         return true;
       }
       // Task của bản thân sắp đến hạn hoặc trễ hạn
-      const isMyTask = t.assignedId === currentUser?.id || t.collaboratorIds?.includes(currentUser?.id);
+      const isMyTask = t.assignedId === currentUser?.id;
       if (isMyTask && (t.status === 'CHUA_BAT_DA' || t.status === 'DANG_TIEN_HANH')) {
         // Kiểm tra xem có trễ hạn hoặc sắp đến hạn không (VD: trong vòng 2 ngày)
         if (t.deadline) {
