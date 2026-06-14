@@ -1478,7 +1478,8 @@ function AppInner() {
         }
       />
 
-      <AppSidebar
+      <div className="flex-1 flex overflow-hidden">
+        <AppSidebar
         isSidebarOpen={isSidebarOpen}
         setIsSidebarOpen={setIsSidebarOpen}
         sidebarSearchQuery={sidebarSearchQuery}
