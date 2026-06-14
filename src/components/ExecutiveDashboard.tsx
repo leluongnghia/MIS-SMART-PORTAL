@@ -434,658 +434,749 @@ export default function ExecutiveDashboard({
 
   return (
     <div className="space-y-6 p-1">
-      {dashboardView === 'DIEU_HANH' && selectedCampus === 'ALL' && (
-        <div className="bg-gradient-to-br from-indigo-50/70 to-blue-50/70 dark:from-slate-850 dark:to-slate-900 border border-indigo-150/40 dark:border-slate-800 rounded-3xl p-6 shadow-3xs space-y-6">
-          <div className="flex items-center justify-between">
-            <h3 className="font-display font-extrabold text-indigo-950 dark:text-indigo-400 text-sm flex items-center gap-2">
-              <Layers className="w-5 h-5 text-indigo-600" />
-              Báo cáo so sánh chéo Liên cơ sở (Tập đoàn)
-            </h3>
-            <span className="text-[10px] font-black uppercase text-indigo-600 bg-indigo-100/60 dark:bg-indigo-950/40 px-3 py-1 rounded-full font-mono">HQ View</span>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/80 rounded-2xl p-4 space-y-2">
-              <span className="text-[9.5px] font-black uppercase text-slate-400 block font-mono">Tuyển sinh (Lead Intake)</span>
-              <div className="flex items-baseline justify-between">
-                <div>
-                  <span className="text-xs text-slate-500 font-bold block">Hà Nội (HN):</span>
-                  <span className="text-lg font-extrabold text-slate-800 dark:text-white">125 <span className="text-xs text-slate-400 font-normal">(87% convert)</span></span>
-                </div>
-                <div className="border-l border-slate-100 dark:border-slate-800 pl-4">
-                  <span className="text-xs text-slate-500 font-bold block">TP.HCM:</span>
-                  <span className="text-lg font-extrabold text-slate-800 dark:text-white">98 <span className="text-xs text-slate-400 font-normal">(83% convert)</span></span>
-                </div>
-              </div>
-            </div>
+      {/* ═══════════════════════════════════════════════════════════════
+          SECTION 1 — EXECUTIVE ALERT BANNER (Glassmorphism)
+      ═══════════════════════════════════════════════════════════════ */}
+      <section
+        className="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white/80 backdrop-blur-sm shadow-sm"
+        style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.95) 100%)' }}
+      >
+        {/* Subtle top accent line */}
+        <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-rose-500 via-amber-400 to-blue-500 opacity-60" />
 
-            <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/80 rounded-2xl p-4 space-y-2">
-              <span className="text-[9.5px] font-black uppercase text-slate-400 block font-mono">Tài chính (Học phí thu)</span>
-              <div className="flex items-baseline justify-between">
-                <div>
-                  <span className="text-xs text-slate-500 font-bold block">Hà Nội (HN):</span>
-                  <span className="text-lg font-extrabold text-emerald-600">3.2 Tỷ <span className="text-xs text-slate-400 font-normal">(Đạt 88%)</span></span>
-                </div>
-                <div className="border-l border-slate-100 dark:border-slate-800 pl-4">
-                  <span className="text-xs text-slate-500 font-bold block">TP.HCM:</span>
-                  <span className="text-lg font-extrabold text-emerald-600">2.5 Tỷ <span className="text-xs text-slate-400 font-normal">(Đạt 85%)</span></span>
-                </div>
-              </div>
-            </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-slate-100">
 
-            <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/80 rounded-2xl p-4 space-y-2">
-              <span className="text-[9.5px] font-black uppercase text-slate-400 block font-mono">Học vụ & LMS (Chuyên cần)</span>
-              <div className="flex items-baseline justify-between">
-                <div>
-                  <span className="text-xs text-slate-500 font-bold block">Hà Nội (HN):</span>
-                  <span className="text-base font-extrabold text-slate-800 dark:text-white">7.8 GPA <span className="text-[10px] text-emerald-500 font-bold">(96.5%)</span></span>
-                </div>
-                <div className="border-l border-slate-100 dark:border-slate-800 pl-4">
-                  <span className="text-xs text-slate-500 font-bold block">TP.HCM:</span>
-                  <span className="text-base font-extrabold text-slate-800 dark:text-white">7.6 GPA <span className="text-[10px] text-emerald-500 font-bold">(95.2%)</span></span>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/80 rounded-2xl p-4 space-y-2">
-              <span className="text-[9.5px] font-black uppercase text-slate-400 block font-mono">Nhân sự (HRM & KPI)</span>
-              <div className="flex items-baseline justify-between">
-                <div>
-                  <span className="text-xs text-slate-500 font-bold block">Hà Nội (HN):</span>
-                  <span className="text-lg font-extrabold text-slate-800 dark:text-white">42 GV <span className="text-xs text-slate-400 font-normal">(KPI: 84%)</span></span>
-                </div>
-                <div className="border-l border-slate-100 dark:border-slate-800 pl-4">
-                  <span className="text-xs text-slate-500 font-bold block">TP.HCM:</span>
-                  <span className="text-lg font-extrabold text-slate-800 dark:text-white">36 GV <span className="text-xs text-slate-400 font-normal">(KPI: 82%)</span></span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <section className="space-y-5">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          
-          {/* Card 1: Overdue (Critical red) */}
-          <div 
+          {/* Alert 1 — Overdue Tasks */}
+          <div
             onClick={() => onShowTaskList && onShowTaskList('OVERDUE')}
-            className="cursor-pointer bg-white border-2 border-rose-500/80 rounded-2xl p-6 shadow-xs flex items-center justify-between transition-[border-color,box-shadow,transform] duration-200 hover:shadow-md hover:scale-[1.01] select-none"
+            className="group relative flex items-center gap-4 p-5 cursor-pointer hover:bg-rose-50/40 transition-colors duration-200"
           >
-            <div>
-              <span className="text-[10px] tracking-widest font-black uppercase text-rose-600 dark:text-rose-400 block font-mono">
-                {dashboardView === 'NHAN_SU' ? 'Quá hạn học vụ' : 'Rủi ro cần xử lý'}
-              </span>
-              <span className="text-4xl font-display font-extrabold text-slate-900 dark:text-white mt-1 block">
-                {summaryMetrics.overdue}
-              </span>
-              <span className="text-[11px] text-slate-400 dark:text-slate-400 block mt-1.5 font-medium">
-                {dashboardView === 'DIEU_HANH' 
-                  ? 'Nhiệm vụ quá hạn toàn trường' 
-                  : dashboardView === 'TRUONG_PHONG' 
-                  ? 'Nhiệm vụ quá hạn tổ chuyên môn' 
-                  : 'Nhiệm vụ quá hạn của tôi'}
-              </span>
+            <div className="absolute left-0 inset-y-0 w-1 bg-rose-500 rounded-r-full opacity-80" />
+            <div className="ml-3 flex items-center justify-center w-11 h-11 rounded-xl bg-rose-50 border border-rose-100 shrink-0">
+              <svg className="w-5 h-5 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+              </svg>
             </div>
-            <div className="w-12 h-12 rounded-2xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-450 border border-rose-100 dark:border-rose-900/35 flex items-center justify-center shadow-3xs shrink-0">
-              <AlertTriangle className="w-6 h-6 animate-pulse" />
+            <div className="min-w-0 flex-1">
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl font-extrabold text-slate-900 leading-none">{summaryMetrics.overdue}</span>
+                <span className="text-xs font-semibold text-rose-600 bg-rose-50 border border-rose-100 px-2 py-0.5 rounded-full">Cần xử lý ngay</span>
+              </div>
+              <p className="text-sm font-medium text-slate-500 mt-1 truncate">Công việc quá hạn toàn trường</p>
             </div>
+            <ArrowUpRight className="w-4 h-4 text-slate-300 group-hover:text-rose-500 transition-colors shrink-0" />
           </div>
 
-          {/* Card 2: Pending Approval */}
-          <div 
+          {/* Alert 2 — Pending Approvals */}
+          <div
             onClick={() => onShowTaskList && onShowTaskList('PENDING')}
-            className="cursor-pointer bg-white border border-slate-200 dark:border-slate-800/80 rounded-2xl p-6 shadow-xs flex items-center justify-between transition-[border-color,box-shadow,transform] duration-200 hover:shadow-md hover:scale-[1.01] select-none"
+            className="group relative flex items-center gap-4 p-5 cursor-pointer hover:bg-amber-50/40 transition-colors duration-200"
           >
-            <div>
-              <span className="text-[10px] tracking-widest font-black uppercase text-amber-600 dark:text-amber-400 block font-mono">
-                {dashboardView === 'DIEU_HANH' ? 'Chỉ đạo khẩn' : 'Chỉ thị BGH'}
-              </span>
-              <span className="text-4xl font-display font-extrabold text-slate-900 dark:text-white mt-1 block">
-                {summaryMetrics.urgentDirectives}
-              </span>
-              <span className="text-[11px] text-slate-400 dark:text-slate-400 block mt-1.5 font-medium">
-                {dashboardView === 'DIEU_HANH' ? 'Khẩn / đặc biệt từ BGH' : 'Yêu cầu phản hồi/thực hiện'}
-              </span>
+            <div className="absolute left-0 inset-y-0 w-1 bg-amber-400 rounded-r-full opacity-80" />
+            <div className="ml-3 flex items-center justify-center w-11 h-11 rounded-xl bg-amber-50 border border-amber-100 shrink-0">
+              <svg className="w-5 h-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
             </div>
-            <div className="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-450 border border-amber-100 dark:border-amber-900/35 flex items-center justify-center shadow-3xs shrink-0">
-              <Hourglass className="w-6 h-6" />
+            <div className="min-w-0 flex-1">
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl font-extrabold text-slate-900 leading-none">{summaryMetrics.pendingApproval}</span>
+                <span className="text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-100 px-2 py-0.5 rounded-full">Chờ bạn phê duyệt</span>
+              </div>
+              <p className="text-sm font-medium text-slate-500 mt-1 truncate">Phê duyệt đang chờ xử lý</p>
             </div>
+            <ArrowUpRight className="w-4 h-4 text-slate-300 group-hover:text-amber-500 transition-colors shrink-0" />
           </div>
 
-          {/* Card 3: In Progress */}
-          <div 
+          {/* Alert 3 — Enrollment Warning */}
+          <div
             onClick={() => onShowTaskList && onShowTaskList('IN_PROGRESS')}
-            className="cursor-pointer bg-white border border-slate-200 dark:border-slate-800/80 rounded-2xl p-6 shadow-xs flex items-center justify-between transition-[border-color,box-shadow,transform] duration-200 hover:shadow-md hover:scale-[1.01] select-none"
+            className="group relative flex items-center gap-4 p-5 cursor-pointer hover:bg-blue-50/40 transition-colors duration-200"
           >
-            <div>
-              <span className="text-[10px] tracking-widest font-black uppercase text-blue-600 dark:text-blue-400 block font-mono">
-                {dashboardView === 'DIEU_HANH' ? 'Tuyển sinh hiện tại' : 'Đang triển khai'}
-              </span>
-              <span className="text-4xl font-display font-extrabold text-slate-900 dark:text-white mt-1 block">
-                {dashboardView === 'DIEU_HANH' ? `${summaryMetrics.admissionsRate}%` : summaryMetrics.inProgress}
-              </span>
-              <span className="text-[11px] text-slate-400 dark:text-slate-400 block mt-1.5 font-medium">
-                {dashboardView === 'DIEU_HANH' ? 'Theo chỉ tiêu năm học' : 'Công việc đang thực hiện'}
-              </span>
+            <div className="absolute left-0 inset-y-0 w-1 bg-blue-500 rounded-r-full opacity-80" />
+            <div className="ml-3 flex items-center justify-center w-11 h-11 rounded-xl bg-blue-50 border border-blue-100 shrink-0">
+              <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" />
+              </svg>
             </div>
-            <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-450 border border-blue-100 dark:border-blue-900/35 flex items-center justify-center shadow-3xs shrink-0">
-              <Clock className="w-6 h-6" />
+            <div className="min-w-0 flex-1">
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl font-extrabold text-slate-900 leading-none">{summaryMetrics.admissionsRate}%</span>
+                <span className="text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-full">
+                  {summaryMetrics.admissionsRate < 90 ? 'Cảnh báo tuyển sinh' : 'Đạt mục tiêu'}
+                </span>
+              </div>
+              <p className="text-sm font-medium text-slate-500 mt-1 truncate">KPI tuyển sinh năm học</p>
             </div>
+            <ArrowUpRight className="w-4 h-4 text-slate-300 group-hover:text-blue-500 transition-colors shrink-0" />
           </div>
-
-          {/* Card 4: Overall Completion Rate */}
-          <div 
-            onClick={() => onShowTaskList && onShowTaskList('COMPLETED')}
-            className="cursor-pointer bg-white border border-slate-200 dark:border-slate-800/80 rounded-2xl p-6 shadow-xs flex items-center justify-between transition-[border-color,box-shadow,transform] duration-200 hover:shadow-md hover:scale-[1.01] select-none"
-          >
-            <div>
-              <span className="text-[10px] tracking-widest font-black uppercase text-emerald-600 dark:text-emerald-400 block font-mono">
-                {dashboardView === 'DIEU_HANH' 
-                  ? 'KPI Toàn Trường' 
-                  : dashboardView === 'TRUONG_PHONG' 
-                  ? 'Hiệu suất tổ' 
-                  : 'KPI Cá Nhân'}
-              </span>
-              <span className="text-4xl font-display font-extrabold text-emerald-600 dark:text-emerald-450 mt-1 block">
-                {summaryMetrics.kpiRate}%
-              </span>
-              <span className="text-[11px] text-slate-400 dark:text-slate-400 block mt-1.5 font-medium">
-                {dashboardView === 'DIEU_HANH' 
-                  ? 'Chỉ tiêu hoàn thành học vụ' 
-                  : dashboardView === 'TRUONG_PHONG' 
-                  ? 'Tỷ lệ hoàn thành của tổ chuyên môn' 
-                  : 'Tỷ lệ hoàn thành công việc của tôi'}
-              </span>
-            </div>
-            <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-450 border border-emerald-100 dark:border-emerald-900/35 flex items-center justify-center shadow-3xs shrink-0">
-              <CheckCircle2 className="w-6 h-6" />
-            </div>
-          </div>
-        </div>
-
-        {/* Row 2: Operational and Strategic KPIs */}
-        <div className="hidden">
-          
-          {/* Card 5: Kế hoạch năm học */}
-          <div className="bg-white border border-slate-200 dark:border-slate-800/80 rounded-2xl p-6 shadow-xs flex items-center justify-between transition-[border-color,box-shadow,transform] duration-200 hover:shadow-md hover:scale-[1.01] select-none">
-            <div>
-              <span className="text-[10px] tracking-widest font-black uppercase text-indigo-600 dark:text-indigo-400 block font-mono">
-                Kế Hoạch Năm Học
-              </span>
-              <span className="text-4xl font-display font-extrabold text-slate-900 dark:text-white mt-1 block">
-                78%
-              </span>
-              <span className="text-[11px] text-slate-400 dark:text-slate-400 block mt-1.5 font-medium">
-                Tiến độ mốc học kỳ II
-              </span>
-            </div>
-            <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-450 border border-indigo-100 dark:border-indigo-900/35 flex items-center justify-center shadow-3xs shrink-0">
-              <Calendar className="w-6 h-6" />
-            </div>
-          </div>
-
-          {/* Card 6: Mục tiêu chiến lược */}
-          <div className="bg-white border border-slate-200 dark:border-slate-800/80 rounded-2xl p-6 shadow-xs flex items-center justify-between transition-[border-color,box-shadow,transform] duration-200 hover:shadow-md hover:scale-[1.01] select-none">
-            <div>
-              <span className="text-[10px] tracking-widest font-black uppercase text-purple-600 dark:text-purple-400 block font-mono">
-                Mục Tiêu Chiến Lược
-              </span>
-              <span className="text-4xl font-display font-extrabold text-slate-900 dark:text-white mt-1 block">
-                82%
-              </span>
-              <span className="text-[11px] text-slate-400 dark:text-slate-400 block mt-1.5 font-medium">
-                Tiến độ chỉ tiêu OKRs chung
-              </span>
-            </div>
-            <div className="w-12 h-12 rounded-2xl bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-450 border border-purple-100 dark:border-purple-900/35 flex items-center justify-center shadow-3xs shrink-0">
-              <Sparkles className="w-6 h-6 animate-pulse" />
-            </div>
-          </div>
-
-          {/* Card 7: Tuyển sinh */}
-          <div className="bg-white border border-slate-200 dark:border-slate-800/80 rounded-2xl p-6 shadow-xs flex items-center justify-between transition-[border-color,box-shadow,transform] duration-200 hover:shadow-md hover:scale-[1.01] select-none">
-            <div>
-              <span className="text-[10px] tracking-widest font-black uppercase text-orange-600 dark:text-orange-400 block font-mono">
-                Tuyển sinh CRM
-              </span>
-              <span className="text-2xl font-display font-extrabold text-slate-900 dark:text-white mt-1 block">
-                1,280 / 1,500
-              </span>
-              <span className="text-[11px] text-slate-450 dark:text-slate-400 block mt-1.5 font-medium">
-                Đạt 85.3% chỉ tiêu tuyển sinh
-              </span>
-            </div>
-            <div className="w-12 h-12 rounded-2xl bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-450 border border-orange-100 dark:border-orange-900/35 flex items-center justify-center shadow-3xs shrink-0">
-              <TrendingUp className="w-6 h-6" />
-            </div>
-          </div>
-
-          {/* Card 8: Tình hình nhân sự */}
-          <div className="bg-white border border-slate-200 dark:border-slate-800/80 rounded-2xl p-6 shadow-xs flex items-center justify-between transition-[border-color,box-shadow,transform] duration-200 hover:shadow-md hover:scale-[1.01] select-none">
-            <div>
-              <span className="text-[10px] tracking-widest font-black uppercase text-sky-600 dark:text-sky-450 block font-mono">
-                Tải lực nhân sự
-              </span>
-              <span className="text-4xl font-display font-extrabold text-slate-900 dark:text-white mt-1 block">
-                48
-              </span>
-              <span className="text-[11px] text-slate-400 dark:text-slate-400 block mt-1.5 font-medium">
-                Cán bộ / Giáo viên hoạt động
-              </span>
-            </div>
-            <div className="w-12 h-12 rounded-2xl bg-sky-50 dark:bg-sky-950/40 text-sky-600 dark:text-sky-450 border border-sky-100 dark:border-sky-900/35 flex items-center justify-center shadow-3xs shrink-0">
-              <User className="w-6 h-6" />
-            </div>
-          </div>
-
         </div>
       </section>
 
-      {/* Grid for Actions + Risks */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        
-        {/* LEVEL 2: Action Center */}
-        <section className="lg:col-span-8 bg-white border border-slate-200 dark:border-slate-800/80 rounded-2xl p-5 shadow-xs">
-          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/60 pb-3 mb-4">
-            <div className="flex items-center gap-2">
-              <span className="p-1.5 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 rounded-lg">
-                <Bell className="w-4.5 h-4.5" />
-              </span>
-              <h3 className="font-display font-extrabold text-slate-900 dark:text-white text-sm">
-                Cần xử lý hôm nay
-              </h3>
+      {/* ═══════════════════════════════════════════════════════════════
+          SECTION 2 — SIX KPI CARDS
+      ═══════════════════════════════════════════════════════════════ */}
+      <section className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+
+        {/* KPI 1 — School KPI */}
+        <div
+          onClick={() => onShowTaskList && onShowTaskList('COMPLETED')}
+          className="group cursor-pointer bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs hover:shadow-md hover:border-blue-200 transition-all duration-200 hover:-translate-y-0.5 select-none"
+        >
+          <div className="flex items-center justify-between mb-3">
+            <div className="w-9 h-9 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center">
+              <svg className="w-4.5 h-4.5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />
+              </svg>
             </div>
-            <span className="text-[11px] text-slate-400 dark:text-slate-400 font-mono font-bold">
-              {actionItems.length} công việc khẩn
-            </span>
+          </div>
+          <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">KPI Toàn Trường</p>
+          <p className="text-2xl font-extrabold text-slate-900 leading-none">{summaryMetrics.kpiRate}%</p>
+          <div className="flex items-center gap-1 mt-2">
+            <TrendingUp className="w-3 h-3 text-emerald-500" />
+            <span className="text-[11px] font-semibold text-emerald-600">+5% tuần trước</span>
+          </div>
+        </div>
+
+        {/* KPI 2 — Enrollment Rate */}
+        <div
+          onClick={() => onShowTaskList && onShowTaskList('IN_PROGRESS')}
+          className="group cursor-pointer bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs hover:shadow-md hover:border-orange-200 transition-all duration-200 hover:-translate-y-0.5 select-none"
+        >
+          <div className="flex items-center justify-between mb-3">
+            <div className="w-9 h-9 rounded-xl bg-orange-50 border border-orange-100 flex items-center justify-center">
+              <svg className="w-4.5 h-4.5 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
+              </svg>
+            </div>
+          </div>
+          <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Tuyển Sinh</p>
+          <p className="text-2xl font-extrabold text-slate-900 leading-none">{summaryMetrics.admissionsRate}%</p>
+          <div className="flex items-center gap-1 mt-2">
+            <TrendingDown className="w-3 h-3 text-rose-500" />
+            <span className="text-[11px] font-semibold text-rose-600">−8% tháng trước</span>
+          </div>
+        </div>
+
+        {/* KPI 3 — Teacher Count */}
+        <div
+          className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs hover:shadow-md hover:border-violet-200 transition-all duration-200 hover:-translate-y-0.5 select-none"
+        >
+          <div className="flex items-center justify-between mb-3">
+            <div className="w-9 h-9 rounded-xl bg-violet-50 border border-violet-100 flex items-center justify-center">
+              <svg className="w-4.5 h-4.5 text-violet-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zm0 0v-3.675A55.378 55.378 0 0112 8.443m-7.007 11.55A5.981 5.981 0 006.75 15.75v-1.5" />
+              </svg>
+            </div>
+          </div>
+          <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Giáo Viên</p>
+          <p className="text-2xl font-extrabold text-slate-900 leading-none">312</p>
+          <div className="flex items-center gap-1 mt-2">
+            <TrendingUp className="w-3 h-3 text-emerald-500" />
+            <span className="text-[11px] font-semibold text-emerald-600">+12 tháng trước</span>
+          </div>
+        </div>
+
+        {/* KPI 4 — Student Count */}
+        <div
+          className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs hover:shadow-md hover:border-emerald-200 transition-all duration-200 hover:-translate-y-0.5 select-none"
+        >
+          <div className="flex items-center justify-between mb-3">
+            <div className="w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center">
+              <svg className="w-4.5 h-4.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path d="M12 14l9-5-9-5-9 5 9 5z" /><path d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
+              </svg>
+            </div>
+          </div>
+          <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Học Sinh</p>
+          <p className="text-2xl font-extrabold text-slate-900 leading-none">2,415</p>
+          <div className="flex items-center gap-1 mt-2">
+            <TrendingUp className="w-3 h-3 text-emerald-500" />
+            <span className="text-[11px] font-semibold text-emerald-600">+38 tháng trước</span>
+          </div>
+        </div>
+
+        {/* KPI 5 — Revenue */}
+        <div
+          className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs hover:shadow-md hover:border-teal-200 transition-all duration-200 hover:-translate-y-0.5 select-none"
+        >
+          <div className="flex items-center justify-between mb-3">
+            <div className="w-9 h-9 rounded-xl bg-teal-50 border border-teal-100 flex items-center justify-center">
+              <svg className="w-4.5 h-4.5 text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+          </div>
+          <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Doanh Thu</p>
+          <p className="text-2xl font-extrabold text-slate-900 leading-none">12.45<span className="text-base font-bold text-slate-500 ml-0.5">tỷ</span></p>
+          <div className="flex items-center gap-1 mt-2">
+            <TrendingUp className="w-3 h-3 text-emerald-500" />
+            <span className="text-[11px] font-semibold text-emerald-600">+15% tháng trước</span>
+          </div>
+        </div>
+
+        {/* KPI 6 — Attendance */}
+        <div
+          className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs hover:shadow-md hover:border-sky-200 transition-all duration-200 hover:-translate-y-0.5 select-none"
+        >
+          <div className="flex items-center justify-between mb-3">
+            <div className="w-9 h-9 rounded-xl bg-sky-50 border border-sky-100 flex items-center justify-center">
+              <svg className="w-4.5 h-4.5 text-sky-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5m.75-9l3-3 2.148 2.148A12.061 12.061 0 0116.5 7.605" />
+              </svg>
+            </div>
+          </div>
+          <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Chuyên Cần TB</p>
+          <p className="text-2xl font-extrabold text-slate-900 leading-none">98.2%</p>
+          <div className="flex items-center gap-1 mt-2">
+            <TrendingUp className="w-3 h-3 text-emerald-500" />
+            <span className="text-[11px] font-semibold text-emerald-600">+2.1% tuần trước</span>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════════
+          SECTION 3 — THREE-COLUMN: Action Center / Chart / Timeline
+      ═══════════════════════════════════════════════════════════════ */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+
+        {/* LEFT — Action Center */}
+        <section className="lg:col-span-4 bg-white border border-slate-200/80 rounded-2xl shadow-xs flex flex-col overflow-hidden">
+          {/* Header */}
+          <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center">
+                <Bell className="w-4 h-4 text-blue-600" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-slate-900">Action Center</h3>
+                <p className="text-[11px] text-slate-400 font-medium">Cần xử lý hôm nay</p>
+              </div>
+            </div>
+            {actionItems.length > 0 && (
+              <span className="inline-flex items-center justify-center min-w-[22px] h-[22px] px-1.5 text-[10px] font-black text-white bg-rose-500 rounded-full">
+                {actionItems.length}
+              </span>
+            )}
           </div>
 
-          {actionItems.length === 0 ? (
-            <div className="py-8 text-center">
-              <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto mb-2" />
-              <p className="text-xs text-slate-500">Tất cả chỉ đạo của bạn đã được giải quyết hoặc nghiệm thu sạch sẽ!</p>
-            </div>
-          ) : (
-            <div className="divide-y divide-slate-100 dark:divide-slate-800/60">
-              {actionItems.map(item => (
-                <div key={item.id} className="py-3 flex items-center justify-between gap-4 first:pt-0 last:pb-0">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase font-mono tracking-wider ${getActionBadgeClass(item.type)}`}>
-                        {getActionLabel(item.type)}
-                      </span>
-                      <h4 className="text-[12.5px] font-bold text-slate-900 dark:text-white truncate">
-                        {item.title}
-                      </h4>
+          {/* Action items list */}
+          <div className="flex-1 divide-y divide-slate-50">
+            {actionItems.length === 0 ? (
+              <div className="py-10 text-center">
+                <CheckCircle2 className="w-9 h-9 text-emerald-400 mx-auto mb-2.5" />
+                <p className="text-xs font-semibold text-slate-500">Tất cả đã được xử lý!</p>
+                <p className="text-[11px] text-slate-400 mt-0.5">Không có công việc khẩn nào</p>
+              </div>
+            ) : (
+              actionItems.map((item, idx) => {
+                let dotColor = 'bg-slate-300';
+                let badgeColor = 'bg-slate-100 text-slate-600';
+                let badgeLabel = item.type;
+                if (item.type === 'quá_hạn') {
+                  dotColor = 'bg-rose-500';
+                  badgeColor = 'bg-rose-50 text-rose-700 border border-rose-100';
+                  badgeLabel = 'Quá hạn';
+                } else if (item.type === 'duyệt') {
+                  dotColor = 'bg-amber-400';
+                  badgeColor = 'bg-amber-50 text-amber-700 border border-amber-100';
+                  badgeLabel = 'Chờ duyệt';
+                } else if (item.type === 'hạn_chót') {
+                  dotColor = 'bg-orange-400';
+                  badgeColor = 'bg-orange-50 text-orange-700 border border-orange-100';
+                  badgeLabel = 'Sắp hết hạn';
+                } else if (item.type === 'chỉ_thị') {
+                  dotColor = 'bg-blue-500';
+                  badgeColor = 'bg-blue-50 text-blue-700 border border-blue-100';
+                  badgeLabel = 'Chỉ thị BGH';
+                }
+
+                return (
+                  <div key={item.id} className="flex items-center gap-3 px-5 py-3.5 hover:bg-slate-50/60 transition-colors">
+                    <div className={`w-2 h-2 rounded-full shrink-0 ${dotColor}`} />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
+                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${badgeColor}`}>{badgeLabel}</span>
+                      </div>
+                      <p className="text-[12.5px] font-semibold text-slate-800 truncate">{item.title}</p>
+                      <p className="text-[11px] text-slate-400 truncate mt-0.5">{item.sub}</p>
                     </div>
-                    <p className="text-[11px] text-slate-400 dark:text-slate-400 mt-1 truncate">
-                      {item.sub}
-                    </p>
+                    <button
+                      onClick={() => {
+                        if (item.originalTask) {
+                          onViewDetails(item.originalTask);
+                        } else if (item.originalDirective) {
+                          setSelectedDirective(item.originalDirective);
+                        }
+                      }}
+                      className="shrink-0 px-3 py-1.5 text-[11px] font-bold text-blue-600 bg-blue-50 hover:bg-blue-600 hover:text-white border border-blue-100 hover:border-blue-600 rounded-lg cursor-pointer transition-all duration-150 flex items-center gap-1 active:scale-95"
+                    >
+                      Xử lý
+                      <ArrowRight className="w-3 h-3" />
+                    </button>
                   </div>
-                  <button
-                    onClick={() => {
-                      if (item.originalTask) {
-                        onViewDetails(item.originalTask);
-                      } else if (item.originalDirective) {
-                        setSelectedDirective(item.originalDirective);
-                      }
-                    }}
-                    className="shrink-0 px-3 py-1.5 text-[11px] font-bold text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 rounded-lg shadow-3xs cursor-pointer transition-all flex items-center gap-1 active:scale-95"
-                  >
-                    <span>Xử lý ngay</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
+                );
+              })
+            )}
+          </div>
+
+          {/* Footer */}
+          <div className="px-5 py-3 border-t border-slate-100">
+            <button className="text-[12px] font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1 transition-colors">
+              Xem tất cả ({actionItems.length + 7})
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </section>
 
-        {/* LEVEL 3: Risk & Alert Center */}
-        <section className="lg:col-span-4 bg-white border border-slate-200 dark:border-slate-800/80 rounded-2xl p-5 shadow-xs">
-          <div className="flex items-center gap-2 border-b border-slate-100 dark:border-slate-800/60 pb-3 mb-4">
-            <span className="p-1.5 bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-450 rounded-lg">
-              <ShieldAlert className="w-4.5 h-4.5" />
-            </span>
-            <h3 className="font-display font-extrabold text-slate-900 dark:text-white text-sm">
-              Risk & Alert Center
-            </h3>
+        {/* CENTER — Interactive Line Chart */}
+        <section className="lg:col-span-5 bg-white border border-slate-200/80 rounded-2xl shadow-xs overflow-hidden">
+          {/* Header */}
+          <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center">
+                <TrendingUp className="w-4 h-4 text-indigo-600" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-slate-900">Biểu Đồ Xu Hướng</h3>
+                <p className="text-[11px] text-slate-400 font-medium">Actual vs Target KPI</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="flex items-center gap-1 text-[10.5px] font-semibold text-emerald-600 bg-emerald-50 border border-emerald-100 px-2 py-1 rounded-lg">
+                <TrendingUp className="w-3 h-3" />+4% tuần
+              </span>
+              <span className="flex items-center gap-1 text-[10.5px] font-semibold text-emerald-600 bg-emerald-50 border border-emerald-100 px-2 py-1 rounded-lg">
+                +12% tháng
+              </span>
+            </div>
           </div>
 
-          <div className="space-y-3">
-            {riskAlerts.map((alert, idx) => {
-              let colorClasses = '';
-              let badgeText = '';
-              if (alert.type === 'critical') {
-                colorClasses = 'bg-rose-50 border border-rose-200 text-rose-800 dark:bg-rose-950/25 dark:border-rose-900/40 dark:text-rose-300';
-                badgeText = '🚨 critical';
-              } else if (alert.type === 'warning') {
-                colorClasses = 'bg-amber-50 border border-amber-200/60 text-amber-800 dark:bg-amber-950/20 dark:border-amber-900/30 dark:text-amber-300';
-                badgeText = '⚠️ warning';
-              } else {
-                colorClasses = 'bg-blue-50 border border-blue-200/50 text-blue-800 dark:bg-blue-950/20 dark:border-amber-900/30 dark:text-blue-300';
-                badgeText = 'ℹ️ info';
+          {/* Legend */}
+          <div className="flex items-center gap-4 px-5 pt-3 pb-1">
+            <div className="flex items-center gap-1.5">
+              <div className="w-5 h-0.5 bg-blue-500 rounded-full" />
+              <span className="text-[11px] font-medium text-slate-500">Thực tế</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-5 h-0.5 bg-amber-400 rounded-full opacity-70" style={{ backgroundImage: 'repeating-linear-gradient(to right, #f59e0b 0, #f59e0b 4px, transparent 4px, transparent 7px)' }} />
+              <span className="text-[11px] font-medium text-slate-500">Mục tiêu (80%)</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-5 h-0.5 bg-rose-400 rounded-full opacity-60" style={{ backgroundImage: 'repeating-linear-gradient(to right, #f87171 0, #f87171 4px, transparent 4px, transparent 7px)' }} />
+              <span className="text-[11px] font-medium text-slate-500">Target line</span>
+            </div>
+          </div>
+
+          {/* Chart */}
+          <div className="h-52 w-full px-3 pb-3">
+            <ResponsiveContainer width="100%" height="100%">
+              <ComposedChart data={chartData} margin={{ top: 8, right: 8, left: -28, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="kpiAreaGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.15} />
+                    <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.01} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="2 4" vertical={false} stroke="rgba(148,163,184,0.12)" />
+                <XAxis
+                  dataKey="name"
+                  stroke="#94a3b8"
+                  fontSize={10}
+                  tickLine={false}
+                  axisLine={false}
+                  dy={8}
+                  tick={{ fill: '#94a3b8', fontWeight: 600 }}
+                />
+                <YAxis
+                  stroke="#94a3b8"
+                  fontSize={10}
+                  tickLine={false}
+                  axisLine={false}
+                  domain={[0, 100]}
+                  tickFormatter={(v) => `${v}%`}
+                  tick={{ fill: '#94a3b8', fontWeight: 600 }}
+                />
+                <Tooltip
+                  contentStyle={{
+                    background: 'rgba(255,255,255,0.95)',
+                    backdropFilter: 'blur(12px)',
+                    border: '1px solid rgba(226,232,240,0.8)',
+                    borderRadius: '12px',
+                    boxShadow: '0 8px 24px rgba(15,23,42,0.1)',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    padding: '8px 12px',
+                  }}
+                  cursor={{ stroke: '#3b82f6', strokeWidth: 1, strokeDasharray: '3 3' }}
+                />
+                <ReferenceLine
+                  y={80}
+                  stroke="#f87171"
+                  strokeDasharray="4 4"
+                  strokeWidth={1.5}
+                  strokeOpacity={0.6}
+                  label={{ value: 'Target 80%', fill: '#f87171', fontSize: 9.5, fontWeight: 700, position: 'insideTopRight' }}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="Hiện tại (Actual)"
+                  fill="url(#kpiAreaGrad)"
+                  stroke="#3b82f6"
+                  strokeWidth={2.5}
+                  dot={{ r: 3.5, fill: '#3b82f6', strokeWidth: 2, stroke: '#fff' }}
+                  activeDot={{ r: 5, fill: '#3b82f6', strokeWidth: 2, stroke: '#fff', filter: 'drop-shadow(0 2px 4px rgba(59,130,246,0.4))' }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="Mục tiêu (Target)"
+                  stroke="#f59e0b"
+                  strokeWidth={1.5}
+                  dot={false}
+                  strokeDasharray="4 4"
+                  strokeOpacity={0.65}
+                />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Footer */}
+          <div className="px-5 py-3 border-t border-slate-100">
+            <button className="text-[12px] font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1 transition-colors">
+              Xem báo cáo chi tiết
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </section>
+
+        {/* RIGHT — Activity Timeline */}
+        <section className="lg:col-span-3 bg-white border border-slate-200/80 rounded-2xl shadow-xs flex flex-col overflow-hidden">
+          {/* Header */}
+          <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-violet-50 border border-violet-100 flex items-center justify-center">
+                <Activity className="w-4 h-4 text-violet-600" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-slate-900">Hoạt Động</h3>
+                <p className="text-[11px] text-slate-400 font-medium">Gần đây nhất</p>
+              </div>
+            </div>
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+          </div>
+
+          {/* Timeline */}
+          <div className="flex-1 px-5 py-4 space-y-4 overflow-y-auto">
+            {recentActivities.length === 0 ? (
+              <p className="text-[12px] text-slate-400 text-center py-6">Chưa có hoạt động nào</p>
+            ) : (
+              recentActivities.map((log, idx) => {
+                const colors = ['bg-blue-500', 'bg-emerald-500', 'bg-violet-500', 'bg-amber-400', 'bg-rose-500'];
+                const dotColor = colors[idx % colors.length];
+                const timeStr = log.createdAt.split(' ')[1]?.substring(0, 5) || log.createdAt.substring(0, 5);
+
+                return (
+                  <div key={log.id} className="flex items-start gap-3">
+                    {/* Avatar dot */}
+                    <div className={`w-8 h-8 rounded-full ${dotColor} flex items-center justify-center text-white text-[11px] font-black shrink-0`}>
+                      {log.userName.charAt(0)}
+                    </div>
+                    <div className="min-w-0 flex-1 pt-0.5">
+                      <div className="flex items-center justify-between gap-1 mb-0.5">
+                        <span className="text-[12px] font-bold text-slate-800 truncate">{log.userName}</span>
+                        <span className="text-[10px] font-mono font-semibold text-slate-400 shrink-0">{timeStr}</span>
+                      </div>
+                      <p className="text-[11px] text-slate-500 leading-relaxed line-clamp-2">{log.action}</p>
+                      <p className="text-[10.5px] text-blue-600 font-semibold mt-0.5 truncate">📌 {log.taskTitle}</p>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          {/* Footer */}
+          <div className="px-5 py-3 border-t border-slate-100">
+            <button className="text-[12px] font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1 transition-colors">
+              Xem tất cả hoạt động
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </section>
+      </div>
+
+      {/* ═══════════════════════════════════════════════════════════════
+          SECTION 4 — BOTTOM ROW: Schedule / Risk Table / Docs
+      ═══════════════════════════════════════════════════════════════ */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+
+        {/* LEFT — Today's Schedule */}
+        <section className="lg:col-span-4 bg-white border border-slate-200/80 rounded-2xl shadow-xs overflow-hidden">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center">
+                <Calendar className="w-4 h-4 text-blue-600" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-slate-900">Lịch Hôm Nay</h3>
+                <p className="text-[11px] text-slate-400 font-medium">
+                  {new Date().toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'long' })}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="px-5 py-3 space-y-3">
+            {[
+              { time: '08:00 – 09:00', title: 'Họp giao ban Ban Giám hiệu', room: 'Phòng họp 1', color: 'bg-blue-500' },
+              { time: '10:00 – 11:00', title: 'Làm việc với Phòng Tuyển sinh', room: 'Phòng họp 2', color: 'bg-violet-500' },
+              { time: '14:00 – 15:30', title: 'Ký duyệt hồ sơ nhân sự', room: 'Phòng làm việc', color: 'bg-amber-400' },
+            ].map((event, idx) => (
+              <div key={idx} className="flex items-start gap-3 p-3 rounded-xl bg-slate-50/60 hover:bg-slate-50 transition-colors cursor-pointer border border-slate-100/60 hover:border-slate-200">
+                <div className={`w-1 self-stretch rounded-full ${event.color} shrink-0`} />
+                <div className="min-w-0 flex-1">
+                  <p className="text-[11px] font-bold text-slate-400 font-mono">{event.time}</p>
+                  <p className="text-[13px] font-semibold text-slate-800 mt-0.5 truncate">{event.title}</p>
+                  <p className="text-[11px] text-slate-400 mt-0.5">{event.room}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="px-5 py-3 border-t border-slate-100">
+            <button className="text-[12px] font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1 transition-colors">
+              Xem lịch đầy đủ
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </section>
+
+        {/* CENTER — Top Risk Departments Table */}
+        <section className="lg:col-span-5 bg-white border border-slate-200/80 rounded-2xl shadow-xs overflow-hidden">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-rose-50 border border-rose-100 flex items-center justify-center">
+                <ShieldAlert className="w-4 h-4 text-rose-600" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-slate-900">Top Phòng Ban Có Vấn Đề</h3>
+                <p className="text-[11px] text-slate-400 font-medium">Rủi ro theo bộ phận</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-slate-100">
+                  <th className="px-5 py-2.5 text-left text-[10px] font-black uppercase tracking-wider text-slate-400">Phòng ban</th>
+                  <th className="px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-wider text-slate-400">Vấn đề</th>
+                  <th className="px-3 py-2.5 text-center text-[10px] font-black uppercase tracking-wider text-slate-400">Mức độ</th>
+                  <th className="px-3 py-2.5 text-center text-[10px] font-black uppercase tracking-wider text-slate-400">Xu hướng</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {dashboardView === 'DIEU_HANH' ? (
+                  departmentPerformance.slice(0, 5).map((dept) => {
+                    const isRisk = dept.status === 'Nguy cơ';
+                    const isWarn = dept.status === 'Cảnh báo';
+                    return (
+                      <tr
+                        key={dept.id}
+                        onClick={() => onSelectWorkspace(dept.id)}
+                        className="hover:bg-slate-50/60 cursor-pointer transition-colors"
+                      >
+                        <td className="px-5 py-3">
+                          <span className="text-[12.5px] font-semibold text-slate-800 truncate max-w-[120px] block">{dept.name}</span>
+                        </td>
+                        <td className="px-3 py-3">
+                          <span className="text-[11.5px] text-slate-500">{isRisk ? 'KPI giảm mạnh' : isWarn ? 'Chậm tiến độ' : 'Đang theo dõi'}</span>
+                        </td>
+                        <td className="px-3 py-3 text-center">
+                          <span className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                            isRisk ? 'bg-rose-50 text-rose-700 border border-rose-100' :
+                            isWarn ? 'bg-amber-50 text-amber-700 border border-amber-100' :
+                            'bg-emerald-50 text-emerald-700 border border-emerald-100'
+                          }`}>{dept.status === 'An toàn' ? 'Thấp' : dept.status === 'Cảnh báo' ? 'Trung bình' : 'Cao'}</span>
+                        </td>
+                        <td className="px-3 py-3 text-center">
+                          {isRisk ? (
+                            <TrendingDown className="w-4 h-4 text-rose-500 mx-auto" />
+                          ) : isWarn ? (
+                            <svg className="w-4 h-4 text-amber-400 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14" /></svg>
+                          ) : (
+                            <TrendingUp className="w-4 h-4 text-emerald-500 mx-auto" />
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })
+                ) : (
+                  [
+                    { name: 'Tuyển sinh', issue: 'KPI giảm 8%', severity: 'Cao', trend: 'down' },
+                    { name: 'Học vụ', issue: 'Chậm nhập điểm', severity: 'Trung bình', trend: 'neutral' },
+                    { name: 'Thiết bị', issue: 'Cơ sở vật chất cũ', severity: 'Trung bình', trend: 'neutral' },
+                    { name: 'Kế toán', issue: 'Công nợ quá hạn', severity: 'Cao', trend: 'down' },
+                  ].map((row, idx) => (
+                    <tr key={idx} className="hover:bg-slate-50/60 transition-colors">
+                      <td className="px-5 py-3"><span className="text-[12.5px] font-semibold text-slate-800">{row.name}</span></td>
+                      <td className="px-3 py-3"><span className="text-[11.5px] text-slate-500">{row.issue}</span></td>
+                      <td className="px-3 py-3 text-center">
+                        <span className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                          row.severity === 'Cao' ? 'bg-rose-50 text-rose-700 border border-rose-100' :
+                          'bg-amber-50 text-amber-700 border border-amber-100'
+                        }`}>{row.severity}</span>
+                      </td>
+                      <td className="px-3 py-3 text-center">
+                        {row.trend === 'down'
+                          ? <TrendingDown className="w-4 h-4 text-rose-500 mx-auto" />
+                          : <svg className="w-4 h-4 text-amber-400 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14" /></svg>
+                        }
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="px-5 py-3 border-t border-slate-100">
+            <button className="text-[12px] font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1 transition-colors">
+              Xem chi tiết
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </section>
+
+        {/* RIGHT — Documents & Announcements */}
+        <section className="lg:col-span-3 bg-white border border-slate-200/80 rounded-2xl shadow-xs overflow-hidden">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center">
+                <Layers className="w-4 h-4 text-indigo-600" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-slate-900">Tài Liệu & Thông Báo</h3>
+                <p className="text-[11px] text-slate-400 font-medium">Mới nhất</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="px-5 py-3 space-y-0 divide-y divide-slate-50">
+            {[
+              { title: 'Thông báo nghỉ lễ 30/4 – 1/5', time: '1 giờ trước', type: 'notice', color: 'text-rose-500' },
+              { title: 'Quyết định bổ nhiệm giáo viên', time: '3 giờ trước', type: 'decision', color: 'text-blue-500' },
+              { title: 'Kế hoạch tổ chức thi cuối kỳ', time: '5 giờ trước', type: 'plan', color: 'text-violet-500' },
+              { title: 'Hướng dẫn sử dụng LMS mới', time: '1 ngày trước', type: 'guide', color: 'text-emerald-500' },
+            ].map((doc, idx) => (
+              <div key={idx} className="flex items-center gap-3 py-3 hover:bg-slate-50/50 -mx-5 px-5 cursor-pointer transition-colors">
+                <div className={`w-8 h-8 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0`}>
+                  <svg className={`w-4 h-4 ${doc.color}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                  </svg>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[12.5px] font-semibold text-slate-800 leading-tight truncate">{doc.title}</p>
+                  <p className="text-[10.5px] text-slate-400 mt-0.5">{doc.time}</p>
+                </div>
+                <ArrowUpRight className="w-3.5 h-3.5 text-slate-300 shrink-0" />
+              </div>
+            ))}
+          </div>
+
+          <div className="px-5 py-3 border-t border-slate-100">
+            <button className="text-[12px] font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1 transition-colors">
+              Xem tất cả tài liệu
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </section>
+      </div>
+
+      {/* ═══════════════════════════════════════════════════════════════
+          SECTION 5 — TASK MANAGEMENT CARDS (below if in executive view)
+      ═══════════════════════════════════════════════════════════════ */}
+      {simplifiedTasks.length > 0 && (
+        <section className="bg-white border border-slate-200/80 rounded-2xl shadow-xs overflow-hidden">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center">
+                <Activity className="w-4 h-4 text-indigo-600" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-slate-900">Công Việc Đang Điều Hành</h3>
+                <p className="text-[11px] text-slate-400 font-medium">Tiến độ thực tế</p>
+              </div>
+            </div>
+          </div>
+          <div className="p-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {simplifiedTasks.map(task => {
+              const isTaskOverdue = task.deadline < todayStr;
+              const progress = task.status === 'HOAN_THANH' ? 100 : task.status === 'CHO_DUYET' ? 75 : task.status === 'DANG_TIEN_HANH' ? 50 : 25;
+
+              let priorityBadge = 'bg-slate-100 text-slate-600 border border-slate-200';
+              if (task.priority === 'CAO') {
+                priorityBadge = 'bg-rose-50 text-rose-700 border border-rose-100';
+              } else if (task.priority === 'TRUNG_BINH') {
+                priorityBadge = 'bg-amber-50 text-amber-700 border border-amber-100';
               }
 
+              let accentColor = 'border-l-blue-500';
+              if (isTaskOverdue) accentColor = 'border-l-rose-500';
+              else if (task.priority === 'CAO') accentColor = 'border-l-orange-400';
+
               return (
-                <div key={idx} className={`p-3 rounded-xl flex items-start gap-2.5 ${colorClasses}`}>
-                  <span className="text-[9px] font-black uppercase font-mono tracking-wider shrink-0 mt-0.5 opacity-90">
-                    {badgeText}
-                  </span>
-                  <p className="text-[11px] leading-relaxed font-semibold">
-                    {alert.text}
-                  </p>
+                <div
+                  key={task.id}
+                  onClick={() => onViewDetails(task)}
+                  className={`group cursor-pointer p-4 rounded-xl border border-slate-200/80 bg-white hover:border-blue-300 hover:shadow-md transition-all duration-200 border-l-4 ${accentColor} flex flex-col gap-3 select-none`}
+                >
+                  <div>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">{task.tag}</span>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${priorityBadge}`}>{task.priority}</span>
+                    </div>
+                    <h4 className="text-[13px] font-semibold text-slate-900 mt-1.5 line-clamp-2 group-hover:text-blue-600 transition-colors">{task.title}</h4>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div>
+                      <div className="flex items-center justify-between text-[10px] text-slate-400 font-bold uppercase tracking-wide mb-1">
+                        <span>Tiến độ</span>
+                        <span className="font-mono">{progress}%</span>
+                      </div>
+                      <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all ${
+                            progress === 100 ? 'bg-emerald-500' : progress >= 75 ? 'bg-amber-400' : 'bg-blue-500'
+                          }`}
+                          style={{ width: `${progress}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between border-t border-slate-100 pt-2 text-[11px] text-slate-500">
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center text-[9px] font-black text-slate-600 border border-slate-200">
+                          {task.assignedName.charAt(0)}
+                        </div>
+                        <span className="truncate max-w-[80px]">{task.assignedName}</span>
+                      </div>
+                      <span className={`font-mono text-[10.5px] flex items-center gap-1 ${isTaskOverdue ? 'text-rose-600 font-bold' : 'text-slate-400'}`}>
+                        <Calendar className="w-3 h-3" />
+                        {task.deadline}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               );
             })}
           </div>
         </section>
-      </div>
+      )}
 
-      {/* Grid for Chart + Department table */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-        
-        {/* LEVEL 4: KPI & Analytics */}
-        <section className={`${dashboardView === 'NHAN_SU' ? 'lg:col-span-12' : 'lg:col-span-6'} bg-white border border-slate-200 dark:border-slate-800/80 rounded-2xl p-5 shadow-xs flex flex-col justify-between`}>
-          <div>
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800/60 pb-3 mb-4">
-              <div className="flex items-center gap-2">
-                <span className="p-1.5 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 rounded-lg">
-                  <TrendingUp className="w-4.5 h-4.5" />
-                </span>
-                <h3 className="font-display font-extrabold text-slate-900 dark:text-white text-sm">
-                  {dashboardView === 'NHAN_SU' ? 'Hiệu suất công việc cá nhân' : 'Hiệu suất giáo dục (Actual vs Target)'}
-                </h3>
-              </div>
-
-              {/* Weekly/Monthly Comparison badges */}
-              <div className="flex items-center gap-2 text-[10.5px]">
-                <span className="flex items-center gap-0.5 text-emerald-600 dark:text-emerald-450 font-bold bg-emerald-50 dark:bg-emerald-950/30 px-2 py-0.5 rounded-lg">
-                  <TrendingUp className="w-3 h-3" />
-                  +4% tuần trước
-                </span>
-                <span className="flex items-center gap-0.5 text-emerald-600 dark:text-emerald-450 font-bold bg-emerald-50 dark:bg-emerald-950/30 px-2 py-0.5 rounded-lg">
-                  <TrendingUp className="w-3 h-3" />
-                  +12% tháng trước
-                </span>
-              </div>
-            </div>
-
-            <div className="text-xs text-slate-500 mb-4 font-sans leading-relaxed">
-              Mục tiêu hoàn thành KPI đặt ra là <strong className="text-slate-800 dark:text-white">80%</strong>. 
-              Tỷ lệ hoàn thành thực tế hiện tại đạt <strong className="text-indigo-650 dark:text-indigo-400 font-extrabold">{summaryMetrics.kpiRate}%</strong>.
-            </div>
-          </div>
-
-          {/* Recharts Composed Chart with target ReferenceLine */}
-          <div className="h-56 w-full mt-2 relative">
-            <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(148, 163, 184, 0.1)" />
-                <XAxis dataKey="name" stroke="#94a3b8" fontSize={9.5} tickLine={false} axisLine={false} dy={8} />
-                <YAxis stroke="#94a3b8" fontSize={9.5} tickLine={false} axisLine={false} domain={[0, 100]} tickFormatter={(v) => `${v}%`} />
-                <Tooltip />
-                <ReferenceLine y={80} stroke="#EF4444" strokeDasharray="4 4" label={{ value: 'Target: 80%', fill: '#EF4444', fontSize: 9, position: 'top' }} />
-                
-                {/* Area under Actual */}
-                <Area type="monotone" dataKey="Hiện tại (Actual)" fill="rgba(59, 130, 246, 0.08)" stroke="#3B82F6" strokeWidth={2.5} />
-                {/* Target Line */}
-                <Line type="monotone" dataKey="Mục tiêu (Target)" stroke="rgba(245, 158, 11, 0.5)" strokeWidth={1.5} dot={false} strokeDasharray="3 3" />
-              </ComposedChart>
-            </ResponsiveContainer>
-          </div>
-        </section>
-
-        {/* LEVEL 5: Department Performance or Member Performance */}
-        {dashboardView !== 'NHAN_SU' && (
-          <section className="lg:col-span-6 bg-white border border-slate-200 dark:border-slate-800/80 rounded-2xl p-5 shadow-xs flex flex-col justify-between">
-            {dashboardView === 'DIEU_HANH' ? (
-              <div>
-                <div className="flex items-center gap-2 border-b border-slate-100 dark:border-slate-800/60 pb-3 mb-4">
-                  <span className="p-1.5 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-450 rounded-lg">
-                    <Layers className="w-4.5 h-4.5" />
-                  </span>
-                  <h3 className="font-display font-extrabold text-slate-900 dark:text-white text-sm">
-                    Xếp hạng bộ phận theo rủi ro học vụ
-                  </h3>
-                </div>
-
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-[11.5px]">
-                    <thead>
-                      <tr className="text-slate-400 dark:text-slate-400 border-b border-slate-100 dark:border-slate-800/60 font-bold uppercase tracking-wider font-mono text-[9px] pb-2">
-                        <th className="pb-2 font-bold">Tên đơn vị</th>
-                        <th className="pb-2 text-center font-bold">KPI %</th>
-                        <th className="pb-2 text-center font-bold">Quá hạn</th>
-                        <th className="pb-2 text-center font-bold">Chờ duyệt</th>
-                        <th className="pb-2 text-right font-bold">Trạng thái</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 font-medium">
-                      {departmentPerformance.map(dept => {
-                        let statusColor = 'text-emerald-600 bg-emerald-50 dark:text-emerald-450 dark:bg-emerald-950/30';
-                        if (dept.status === 'Nguy cơ') {
-                          statusColor = 'text-rose-600 bg-rose-50 dark:text-rose-450 dark:bg-rose-950/30';
-                        } else if (dept.status === 'Cảnh báo') {
-                          statusColor = 'text-amber-600 bg-amber-50 dark:text-amber-450 dark:bg-amber-950/30';
-                        }
-
-                        return (
-                          <tr
-                            key={dept.id}
-                            onClick={() => onSelectWorkspace(dept.id)}
-                            className="cursor-pointer hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors"
-                            title="Mở danh sách nhiệm vụ của tổ này"
-                          >
-                            <td className="py-2.5 font-bold text-slate-800 dark:text-white max-w-[130px] truncate">
-                              {dept.name}
-                            </td>
-                            <td className="py-2.5 text-center font-mono font-bold text-slate-750 dark:text-slate-200">
-                              {dept.kpi}%
-                            </td>
-                            <td className="py-2.5 text-center font-mono font-bold text-rose-655 text-rose-600 dark:text-rose-400">
-                              {dept.overdue}
-                            </td>
-                            <td className="py-2.5 text-center font-mono font-bold text-amber-655 text-amber-600 dark:text-amber-400">
-                              {dept.pending}
-                            </td>
-                            <td className="py-2.5 text-right">
-                              <span className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider font-mono ${statusColor}`}>
-                                {dept.status}
-                              </span>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            ) : (
-              <div>
-                <div className="flex items-center gap-2 border-b border-slate-100 dark:border-slate-800/60 pb-3 mb-4">
-                  <span className="p-1.5 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-450 rounded-lg">
-                    <Users className="w-4.5 h-4.5" />
-                  </span>
-                  <h3 className="font-display font-extrabold text-slate-900 dark:text-white text-sm">
-                    Hiệu suất &amp; Rủi ro thành viên tổ chuyên môn
-                  </h3>
-                </div>
-
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-[11.5px]">
-                    <thead>
-                      <tr className="text-slate-400 dark:text-slate-400 border-b border-slate-100 dark:border-slate-800/60 font-bold uppercase tracking-wider font-mono text-[9px] pb-2">
-                        <th className="pb-2 font-bold">Nhân viên</th>
-                        <th className="pb-2 text-center font-bold">KPI %</th>
-                        <th className="pb-2 text-center font-bold">Quá hạn</th>
-                        <th className="pb-2 text-center font-bold">Chờ duyệt</th>
-                        <th className="pb-2 text-right font-bold">Đánh giá</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 font-medium">
-                      {memberPerformance.map(member => {
-                        let statusColor = 'text-emerald-600 bg-emerald-50 dark:text-emerald-450 dark:bg-emerald-950/30';
-                        if (member.status === 'Nguy cơ') {
-                          statusColor = 'text-rose-600 bg-rose-50 dark:text-rose-450 dark:bg-rose-950/30';
-                        } else if (member.status === 'Cảnh báo') {
-                          statusColor = 'text-amber-600 bg-amber-50 dark:text-amber-450 dark:bg-amber-950/30';
-                        }
-
-                        return (
-                          <tr
-                            key={member.id}
-                            className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors"
-                          >
-                            <td className="py-2.5 font-bold text-slate-800 dark:text-white max-w-[130px] truncate">
-                              <div>{member.name}</div>
-                              <div className="text-[9px] text-slate-400 font-normal">{member.title}</div>
-                            </td>
-                            <td className="py-2.5 text-center font-mono font-bold text-slate-750 dark:text-slate-200">
-                              {member.kpi}%
-                            </td>
-                            <td className="py-2.5 text-center font-mono font-bold text-rose-600 dark:text-rose-450">
-                              {member.overdue}
-                            </td>
-                            <td className="py-2.5 text-center font-mono font-bold text-amber-600 dark:text-amber-450">
-                              {member.pending}
-                            </td>
-                            <td className="py-2.5 text-right">
-                              <span className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider font-mono ${statusColor}`}>
-                                {member.status}
-                              </span>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-          </section>
-        )}
-      </div>
-
-      {/* LEVEL 6: Task Management (Simplified Card list) */}
-      <section className="bg-white border border-slate-200 dark:border-slate-800/80 rounded-2xl p-5 shadow-xs">
-        <div className="flex items-center gap-2 border-b border-slate-100 dark:border-slate-800/60 pb-3 mb-4">
-          <span className="p-1.5 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 rounded-lg">
-            <Activity className="w-4.5 h-4.5" />
-          </span>
-          <h3 className="font-display font-extrabold text-slate-900 dark:text-white text-sm">
-            Công việc đang điều hành (Trực quan hóa tối giản)
-          </h3>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {simplifiedTasks.map(task => {
-            const isTaskOverdue = task.deadline < todayStr;
-            const progress = task.status === 'HOAN_THANH' ? 100 : task.status === 'CHO_DUYET' ? 75 : task.status === 'DANG_TIEN_HANH' ? 50 : 25;
-            
-            // Priority colors
-            let priorityBadge = 'bg-slate-150 text-slate-700 dark:bg-slate-800 dark:text-slate-350 border border-slate-200/50';
-            if (task.priority === 'CAO') {
-              priorityBadge = 'bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400 border border-rose-200/40';
-            } else if (task.priority === 'TRUNG_BINH') {
-              priorityBadge = 'bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400 border border-amber-200/40';
-            }
-
-            return (
-              <div 
-                key={task.id}
-                onClick={() => onViewDetails(task)}
-                className={`group cursor-pointer p-4 rounded-xl border border-slate-200/80 dark:border-slate-800/80 bg-white hover:border-blue-400 dark:hover:border-blue-400 transition-[border-color,box-shadow] duration-200 hover:shadow-md flex flex-col justify-between gap-3 select-none ${
-                  isTaskOverdue ? 'border-l-4 border-l-rose-500' : 'border-l-4 border-l-blue-500'
-                }`}
-              >
-                <div>
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-[9px] font-black uppercase text-slate-400 font-mono tracking-wider">
-                      {task.tag}
-                    </span>
-                    <span className={`px-2 py-0.5 rounded text-[8.5px] font-black font-mono uppercase tracking-wider ${priorityBadge}`}>
-                      {task.priority}
-                    </span>
-                  </div>
-                  <h4 className="text-[12.5px] font-bold text-slate-900 dark:text-white mt-1.5 line-clamp-2 group-hover:text-blue-600 transition-colors">
-                    {task.title}
-                  </h4>
-                </div>
-
-                <div className="space-y-2.5">
-                  {/* Progress Bar */}
-                  <div>
-                    <div className="flex items-center justify-between text-[9.5px] text-slate-400 font-bold uppercase tracking-wider mb-1">
-                      <span>Tiến độ</span>
-                      <span className="font-mono">{progress}%</span>
-                    </div>
-                    <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
-                      <div 
-                        className={`h-full rounded-full ${
-                          progress === 100 ? 'bg-emerald-550' : progress === 75 ? 'bg-amber-500' : 'bg-blue-600'
-                        }`}
-                        style={{ width: `${progress}%` }}
-                      ></div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between gap-2 border-t border-slate-100 dark:border-slate-800/40 pt-2.5 text-[11px] text-slate-500 dark:text-slate-400 font-medium">
-                    <div className="flex items-center gap-1.5 truncate">
-                      <div className="w-5 h-5 rounded-full bg-slate-100 dark:bg-slate-850 flex items-center justify-center border border-slate-200 dark:border-slate-800 font-bold text-[9px] text-slate-600 dark:text-slate-300 shrink-0">
-                        {task.assignedName.charAt(0)}
-                      </div>
-                      <span className="truncate">{task.assignedName}</span>
-                    </div>
-                    <span className={`font-mono text-[10.5px] shrink-0 flex items-center gap-1 ${isTaskOverdue ? 'text-rose-650 font-bold' : ''}`}>
-                      <Calendar className="w-3 h-3" />
-                      {task.deadline}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* ACTIVITY FEED */}
-      <section className="bg-white border border-slate-200 dark:border-slate-800/80 rounded-2xl p-5 shadow-xs">
-        <div className="flex items-center gap-2 border-b border-slate-100 dark:border-slate-800/60 pb-3 mb-4">
-          <span className="p-1.5 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-450 rounded-lg">
-            <Activity className="w-4.5 h-4.5 animate-pulse" />
-          </span>
-          <h3 className="font-display font-extrabold text-slate-900 dark:text-white text-sm uppercase tracking-wide">
-            Nhật Ký Hoạt Động & Tiến Trình Xử Lý
-          </h3>
-        </div>
-
-        <div className="relative border-l border-slate-150 dark:border-slate-800/80 pl-4 ml-2.5 space-y-4 py-2">
-          {recentActivities.map((log, idx) => (
-            <div key={log.id} className="relative">
-              {/* Timeline dot */}
-              <span className="absolute -left-[22.5px] top-1.5 block w-2 h-2 rounded-full bg-blue-500 ring-4 ring-white dark:ring-slate-900"></span>
-              
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                <span className="text-[9.5px] text-slate-400 dark:text-slate-400 font-mono font-bold">
-                  {log.createdAt}
-                </span>
-              </div>
-              <p className="text-[12px] text-slate-700 dark:text-slate-200 mt-1 leading-normal font-medium">
-                <strong className="text-slate-900 dark:text-white">{log.userName}</strong> ({log.userTitle}): {log.action}
-              </p>
-              <div className="text-[11px] italic text-indigo-650 dark:text-indigo-400 mt-0.5 flex items-center gap-1 font-semibold">
-                <span>📌 Chỉ đạo:</span>
-                <span className="truncate max-w-[280px] sm:max-w-sm md:max-w-md lg:max-w-lg" title={log.taskTitle}>
-                  {log.taskTitle}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
+      {/* Directive Detail Modal */}
       {selectedDirective && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm">
           <div
@@ -1155,4 +1246,3 @@ export default function ExecutiveDashboard({
     </div>
   );
 }
-

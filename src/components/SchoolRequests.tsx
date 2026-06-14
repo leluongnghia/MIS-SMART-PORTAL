@@ -58,7 +58,7 @@ export default function SchoolRequests({ currentUser }: SchoolRequestsProps) {
     if (stepRole === 'KE_TOAN') {
       return user.role === 'MANAGER' && (user.workspaceId === 'HANH_CHINH' || user.title?.toLowerCase().includes('kế toán') || user.title?.toLowerCase().includes('accountant'));
     }
-    if (stepRole === 'BGH') return user.role === 'ADMIN';
+    if (stepRole === 'BGH') return false; // ADMIN already handled above
     return false;
   };
 

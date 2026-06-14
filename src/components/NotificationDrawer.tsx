@@ -109,7 +109,7 @@ export default function NotificationDrawer({
           type: 'task' as const,
           title,
           content,
-          time: t.createdAt,
+          time: t.deadline,
           sender: 'Hệ thống',
           senderTitle: 'Hệ thống tự động',
           isMeeting: false,

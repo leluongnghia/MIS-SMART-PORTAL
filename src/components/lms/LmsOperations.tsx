@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { 
-  Video, Plus, RefreshCw, BookOpenCheck, FileSpreadsheet, BookOpen, Calculator, Bookmark, ChevronRight
+  Video, Plus, RefreshCw, BookOpenCheck, FileSpreadsheet, BookOpen, Calculator, Bookmark, ChevronRight, Calendar
 } from 'lucide-react';
 import { UserProfile } from '../../types';
 import { ALL_VIETNAM_SUBJECT_NAMES, VIETNAM_GRADE_LEVELS, getSubjectsForClassName } from '../../utils/vietnameseCurriculum';
