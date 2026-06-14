@@ -55,11 +55,11 @@ export default function NotificationDrawer({
         return true;
       }
       // Task của bản thân sắp đến hạn hoặc trễ hạn
-      const isMyTask = t.assigneeId === currentUser?.id || t.collaboratorIds?.includes(currentUser?.id);
+      const isMyTask = t.assignedId === currentUser?.id || t.collaboratorIds?.includes(currentUser?.id);
       if (isMyTask && (t.status === 'CHUA_BAT_DA' || t.status === 'DANG_TIEN_HANH')) {
         // Kiểm tra xem có trễ hạn hoặc sắp đến hạn không (VD: trong vòng 2 ngày)
-        if (t.dueDate) {
-          const due = new Date(t.dueDate).getTime();
+        if (t.deadline) {
+          const due = new Date(t.deadline).getTime();
           const now = Date.now();
           const diff = due - now;
           return diff < 2 * 24 * 60 * 60 * 1000; // trễ hạn hoặc < 2 ngày
