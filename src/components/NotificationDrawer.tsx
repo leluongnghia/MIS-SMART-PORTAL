@@ -43,7 +43,7 @@ export default function NotificationDrawer({
     return directives.filter(d => {
       if (currentUser?.role === 'ADMIN') return true;
       // Trưởng phòng hoặc giáo viên liên quan
-      return d.senderId === currentUser?.id || d.assigneeIds?.includes(currentUser?.id);
+      return d.senderId === currentUser?.id || d.implementations?.some(imp => imp.userId === currentUser?.id);
     });
   }, [directives, currentUser]);
 
