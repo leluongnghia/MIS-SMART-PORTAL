@@ -1,0 +1,33 @@
+name: Deploy to VPS (Self-Hosted Runner)
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Deploy & Build App
+        run: |
+          # Sync files from the GitHub runner workspace to the production folder
+          # Excluding .git, node_modules, and .next/cache to keep sync fast and clean
+          rsync -a --delete --exclude='.git' --exclude='node_modules' --exclude='.next/cache' ./ ~/duong-node-app/
+
+          # Navigate to production directory and deploy
+          cd ~/duong-node-app
+          
+          # Clean build cache
+          rm -rf .next dist
+          
+          # Install dependencies and build
+          npm install --legacy-peer-deps
+          npm run build
+          
+          # Restart application via PM2
+          pm2 restart duong-node-app || pm2 restart all
+          pm2 save
