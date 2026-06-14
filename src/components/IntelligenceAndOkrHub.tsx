@@ -592,7 +592,7 @@ export default function IntelligenceAndOkrHub({
                           return null;
                         }}
                       />
-                      <Legend verticalAlign="top" height={32} wrapperStyle={{ fontSize: '10px', wrapperStyle: { fontWeight: 650 } }} />
+                      <Legend verticalAlign="top" height={32} wrapperStyle={{ fontSize: '10px', fontWeight: 650 }} />
                       
                       <Bar dataKey="combinedScore" radius={[4, 4, 0, 0]} name="Chỉ số hiệu suất học thuật học kỳ" fill="#8b5cf6" isAnimationActive={false}>
                         <LabelList 

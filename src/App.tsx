@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useLanguage } from './context/LanguageContext';
 import { translateWorkspace, translateUser, translateTask, translateAnnouncement, translateDirective } from './utils/translations';
@@ -2448,7 +2450,7 @@ export default function App() {
             <AcademicOperations 
               currentUser={currentUser} 
               users={users} 
-              onNavigateTab={(tab) => setOverviewTab(tab)}
+              onNavigateTab={(tab) => setOverviewTab(tab as typeof overviewTab)}
             />
           )}
 
@@ -3780,7 +3782,7 @@ export default function App() {
                                   <span className={`px-2 py-0.5 rounded font-bold font-mono text-[9px] shrink-0 ${
                                     isTaskCompleted 
                                       ? 'bg-emerald-50 text-emerald-700' 
-                                      : t.status === 'TIEN_TRINH' 
+                                      : t.status === 'DANG_TIEN_HANH' 
                                       ? 'bg-blue-50 text-blue-700' 
                                       : 'bg-slate-100 text-slate-600'
                                   }`}>

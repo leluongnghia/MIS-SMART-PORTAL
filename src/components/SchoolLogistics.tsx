@@ -289,11 +289,16 @@ export default function SchoolLogistics({ currentUser }: SchoolLogisticsProps) {
   const [showBookingForm, setShowBookingForm] = useState(false);
 
   // Form Báo hỏng States
-  const [newIssue, setNewIssue] = useState({
+  const [newIssue, setNewIssue] = useState<{
+    roomName: string;
+    category: MaintenanceReport['category'];
+    description: string;
+    urgency: MaintenanceReport['urgency'];
+  }>({
     roomName: '',
-    category: 'DIEN_LANH' as const,
+    category: 'DIEN_LANH',
     description: '',
-    urgency: 'THUONG' as const
+    urgency: 'THUONG'
   });
   const [showIssueForm, setShowIssueForm] = useState(false);
 

@@ -5,7 +5,26 @@ export const LMS_STUDENTS_STORAGE_KEY = 'mis_lms_students';
 export const SIS_STUDENTS_STORAGE_KEY = 'mis_sis_students_v3';
 export const LMS_TUITION_STORAGE_KEY = 'mis_lms_tuition_fees';
 
-type LeadStage = 'NEW' | 'CONSULTING' | 'TOUR' | 'TESTING' | 'OFFER' | 'RESERVED' | 'ENROLLED';
+type LeadStage =
+  | 'NEW'
+  | 'CONSULTING'
+  | 'TOUR'
+  | 'TESTING'
+  | 'OFFER'
+  | 'RESERVED'
+  | 'NEW_LEAD'
+  | 'CONTACTED'
+  | 'APPOINTMENT_BOOKED'
+  | 'ENTRANCE_TEST_REGISTERED'
+  | 'TEST_COMPLETED'
+  | 'SCHOLARSHIP_REVIEW'
+  | 'OFFER_SENT'
+  | 'SEAT_RESERVATION_PAYMENT'
+  | 'SEAT_RESERVED'
+  | 'ENROLLMENT_PAYMENT'
+  | 'DOCUMENTS_PENDING'
+  | 'ENROLLED'
+  | 'LOST';
 
 export interface CrmLifecycleLead {
   id: string;
@@ -23,6 +42,12 @@ export interface CrmLifecycleLead {
   phaseEnrollmentDiscount?: number;
   advancedFee?: number;
   otherDiscount?: number;
+  scholarshipPercent?: number;
+  phaseDiscountPercent?: number;
+  siblingDiscountPercent?: number;
+  staffChildDiscountPercent?: number;
+  otherDiscountPercent?: number;
+  supportFee?: number;
   docChecklist?: {
     healthRecord?: boolean;
   };
@@ -119,12 +144,19 @@ const fallbackParentEmail = (lead: CrmLifecycleLead) =>
 
 const calculatePayable = (lead: CrmLifecycleLead) => {
   const base = lead.baseTuitionFee || 15000000;
-  const discounts =
+  const fixedDiscounts =
     (lead.tuitionDiscount || 0) +
     (lead.scholarshipDiscount || 0) +
     (lead.phaseEnrollmentDiscount || 0) +
     (lead.otherDiscount || 0);
-  return Math.max(0, base - discounts + (lead.advancedFee || 0));
+  const percentDiscount =
+    (lead.scholarshipPercent || 0) +
+    (lead.phaseDiscountPercent || 0) +
+    (lead.siblingDiscountPercent || 0) +
+    (lead.staffChildDiscountPercent || 0) +
+    (lead.otherDiscountPercent || 0);
+  const percentDiscountValue = Math.round(base * Math.min(100, percentDiscount) / 100);
+  return Math.max(0, base - fixedDiscounts - percentDiscountValue + (lead.advancedFee || 0) + (lead.supportFee || 0));
 };
 
 const buildStudentFromLead = (lead: CrmLifecycleLead, index: number): SyncedStudent => {

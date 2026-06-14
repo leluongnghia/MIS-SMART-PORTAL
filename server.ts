@@ -270,6 +270,124 @@ const smtpConfig = {
 };
 
 const crmLeadIntakeQueue: any[] = [];
+const crmLeadsStore = new Map<string, any>();
+const crmWorkflowLogsStore: any[] = [];
+const crmPaymentsStore = new Map<string, any>();
+const crmImportBatchesStore: any[] = [];
+
+const CRM_STAGE_SET = new Set([
+  'NEW_LEAD',
+  'CONTACTED',
+  'CONSULTING',
+  'APPOINTMENT_BOOKED',
+  'ENTRANCE_TEST_REGISTERED',
+  'TEST_COMPLETED',
+  'SCHOLARSHIP_REVIEW',
+  'OFFER_SENT',
+  'SEAT_RESERVATION_PAYMENT',
+  'SEAT_RESERVED',
+  'ENROLLMENT_PAYMENT',
+  'DOCUMENTS_PENDING',
+  'ENROLLED',
+  'LOST',
+]);
+
+function normalizeCrmStage(stage: unknown) {
+  const value = String(stage || '').toUpperCase();
+  const legacy: Record<string, string> = {
+    NEW: 'NEW_LEAD',
+    LEAD: 'NEW_LEAD',
+    ADS: 'NEW_LEAD',
+    TOUR: 'APPOINTMENT_BOOKED',
+    OPEN_DAY: 'APPOINTMENT_BOOKED',
+    TESTING: 'ENTRANCE_TEST_REGISTERED',
+    OFFER: 'OFFER_SENT',
+    RESERVED: 'SEAT_RESERVED',
+  };
+  const mapped = CRM_STAGE_SET.has(value) ? value : legacy[value];
+  return mapped || 'NEW_LEAD';
+}
+
+function createCrmCode(prefix: string) {
+  return `${prefix}_${new Date().getFullYear()}_${Date.now().toString(36).toUpperCase()}`;
+}
+
+function normalizeCrmLead(raw: any) {
+  const id = String(raw.id || `lead_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`);
+  const leadCode = String(raw.leadCode || createCrmCode('LD'));
+  const stage = normalizeCrmStage(raw.stage);
+  const now = new Date().toISOString();
+  return {
+    id,
+    leadCode,
+    contactId: String(raw.contactId || `ct_${leadCode.toLowerCase()}`),
+    opportunityId: String(raw.opportunityId || `opp_${leadCode.toLowerCase()}`),
+    enrollmentCode: String(raw.enrollmentCode || `ENR_${leadCode}`),
+    studentName: String(raw.studentName || raw.student_name || raw.name || '').trim(),
+    parentName: String(raw.parentName || raw.parent_name || raw.contactName || '').trim(),
+    phone: String(raw.phone || raw.mobile || raw.parentPhone || '').trim(),
+    email: String(raw.email || raw.parentEmail || '').trim(),
+    grade: String(raw.grade || raw.className || 'Lop 10').trim(),
+    stage,
+    source: String(raw.source || raw.utm_source || raw.utmSource || 'Website').trim(),
+    campaign: String(raw.campaign || raw.campaignName || raw.utm_campaign || raw.utmCampaign || 'Tuyen sinh 2026').trim(),
+    adSet: String(raw.adSet || '').trim(),
+    keyword: String(raw.keyword || '').trim(),
+    utmSource: String(raw.utmSource || raw.utm_source || raw.source || 'Website').trim(),
+    utmMedium: String(raw.utmMedium || raw.utm_medium || 'organic').trim(),
+    utmCampaign: String(raw.utmCampaign || raw.utm_campaign || raw.campaign || 'Tuyen sinh 2026').trim(),
+    landingPage: String(raw.landingPage || raw.landing_page || '/admissions').trim(),
+    adCost: Number(raw.adCost || 0),
+    ownerId: String(raw.ownerId || 'admissions_team'),
+    ownerName: String(raw.ownerName || 'Phong Tuyen sinh'),
+    leadTemperature: String(raw.leadTemperature || 'WARM'),
+    leadScore: Number(raw.leadScore || 0),
+    lostReason: String(raw.lostReason || ''),
+    testDate: String(raw.testDate || ''),
+    testTime: String(raw.testTime || ''),
+    mathScore: raw.mathScore ?? '',
+    englishScore: raw.englishScore ?? '',
+    vietnameseScore: raw.vietnameseScore ?? '',
+    scholarshipPercent: Number(raw.scholarshipPercent || 0),
+    baseTuitionFee: Number(raw.baseTuitionFee || 60000000),
+    reservationFee: Number(raw.reservationFee || 5000000),
+    notes: String(raw.notes || raw.message || ''),
+    createdAt: raw.createdAt || now,
+    updatedAt: now,
+    rawPayload: raw.rawPayload || raw,
+  };
+}
+
+function appendCrmWorkflowLog(leadId: string, name: string, channel = 'SYSTEM', status = 'SENT', error = '') {
+  const log = {
+    id: `wf_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+    leadId,
+    name,
+    channel,
+    status,
+    error,
+    createdAt: new Date().toISOString(),
+  };
+  crmWorkflowLogsStore.unshift(log);
+  if (crmWorkflowLogsStore.length > 500) crmWorkflowLogsStore.pop();
+  return log;
+}
+
+function getBankConfig() {
+  return {
+    bankBin: process.env.BANK_BIN || '970436',
+    bankAccountNo: process.env.BANK_ACCOUNT_NO || '0123456789',
+    bankAccountName: process.env.BANK_ACCOUNT_NAME || 'MIS SMART SCHOOL',
+    reservationPrefix: process.env.PAYMENT_PREFIX_RESERVATION || 'GCHO',
+    enrollmentPrefix: process.env.PAYMENT_PREFIX_ENROLLMENT || 'NHAPHOC',
+  };
+}
+
+function buildVietQrUrl(payment: any) {
+  const accountName = encodeURIComponent(payment.bankAccountName);
+  const addInfo = encodeURIComponent(payment.code);
+  return `https://img.vietqr.io/image/${payment.bankBin}-${payment.bankAccountNo}-compact2.png?amount=${payment.amount}&addInfo=${addInfo}&accountName=${accountName}`;
+}
 
 function hasSmtpConfig() {
   return Boolean(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS);
@@ -496,6 +614,195 @@ app.post('/api/zalo/broadcast/prepare', async (req, res) => {
   });
 });
 
+app.get('/api/crm/leads', (req, res) => {
+  const leads = Array.from(crmLeadsStore.values())
+    .sort((a, b) => String(b.updatedAt || '').localeCompare(String(a.updatedAt || '')));
+  res.json({
+    status: 'success',
+    leads,
+    count: leads.length,
+  });
+});
+
+app.patch('/api/crm/leads/:id/stage', (req, res) => {
+  const id = String(req.params.id || '');
+  const existing = crmLeadsStore.get(id);
+  if (!existing) {
+    return res.status(404).json({ status: 'error', error: 'CRM lead not found.' });
+  }
+
+  const stage = normalizeCrmStage(req.body?.stage);
+  const next = {
+    ...existing,
+    stage,
+    lostReason: stage === 'LOST' ? String(req.body?.lostReason || existing.lostReason || '') : existing.lostReason,
+    updatedAt: new Date().toISOString(),
+  };
+  crmLeadsStore.set(id, next);
+  const log = appendCrmWorkflowLog(id, `Stage changed to ${stage}`);
+
+  res.json({
+    status: 'success',
+    lead: next,
+    workflowLog: log,
+  });
+});
+
+app.post('/api/crm/import/preview', (req, res) => {
+  const rows = Array.isArray(req.body?.rows)
+    ? req.body.rows
+    : String(req.body?.text || '').split(/\r?\n/).filter(Boolean);
+
+  const leads = rows.map((row: any) => {
+    if (typeof row === 'object') return normalizeCrmLead(row);
+    const cols = String(row).includes('\t') ? String(row).split('\t') : String(row).split(',');
+    return normalizeCrmLead({
+      studentName: cols[0],
+      parentName: cols[1],
+      phone: cols[2],
+      email: cols[3],
+      source: cols[4],
+      campaign: cols[5],
+      stage: cols[6],
+      rawPayload: row,
+    });
+  });
+
+  const errors = leads
+    .map((lead: any, index: number) => {
+      const duplicate = Array.from(crmLeadsStore.values()).some((item: any) =>
+        item.phone === lead.phone || (lead.email && item.email === lead.email)
+      );
+      const missing = !lead.studentName || !lead.parentName || !lead.phone;
+      return missing || duplicate
+        ? {
+            row: index + 1,
+            leadCode: lead.leadCode,
+            errors: [
+              missing ? 'Missing studentName, parentName or phone.' : '',
+              duplicate ? 'Duplicate phone or email.' : '',
+            ].filter(Boolean),
+          }
+        : null;
+    })
+    .filter(Boolean);
+
+  const batch = {
+    id: `import_${Date.now()}`,
+    status: errors.length ? 'HAS_ERRORS' : 'READY',
+    leads,
+    errors,
+    createdAt: new Date().toISOString(),
+  };
+  crmImportBatchesStore.unshift(batch);
+  if (crmImportBatchesStore.length > 50) crmImportBatchesStore.pop();
+
+  res.json({
+    status: 'success',
+    batch,
+  });
+});
+
+app.post('/api/crm/payments/vietqr', (req, res) => {
+  const leadId = String(req.body?.leadId || req.body?.id || '');
+  const existing = crmLeadsStore.get(leadId) || normalizeCrmLead(req.body?.lead || req.body || {});
+  if (!existing.studentName || !existing.phone) {
+    return res.status(400).json({ status: 'error', error: 'A valid leadId or lead payload is required.' });
+  }
+  crmLeadsStore.set(existing.id, existing);
+
+  const bank = getBankConfig();
+  const paymentType = String(req.body?.type || 'RESERVATION').toUpperCase() === 'ENROLLMENT' ? 'ENROLLMENT' : 'RESERVATION';
+  const code = paymentType === 'RESERVATION'
+    ? `${bank.reservationPrefix}_${existing.leadCode}`
+    : `${bank.enrollmentPrefix}_${existing.enrollmentCode}`;
+  const amount = Number(req.body?.amount || (paymentType === 'RESERVATION' ? existing.reservationFee : existing.baseTuitionFee));
+  const payment = {
+    id: `pay_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+    leadId: existing.id,
+    type: paymentType,
+    code,
+    amount,
+    status: 'PENDING',
+    bankBin: bank.bankBin,
+    bankAccountNo: bank.bankAccountNo,
+    bankAccountName: bank.bankAccountName,
+    createdAt: new Date().toISOString(),
+  };
+  const withQr = { ...payment, vietQrUrl: buildVietQrUrl(payment) };
+  crmPaymentsStore.set(withQr.id, withQr);
+  appendCrmWorkflowLog(existing.id, `Created VietQR ${code}`);
+
+  res.status(201).json({
+    status: 'success',
+    payment: withQr,
+  });
+});
+
+app.post('/api/crm/payments/reconcile', (req, res) => {
+  const lines = Array.isArray(req.body?.rows)
+    ? req.body.rows.map((item: any) => JSON.stringify(item))
+    : String(req.body?.text || req.body?.csv || '').split(/\r?\n/).filter(Boolean);
+
+  const matches: any[] = [];
+  crmPaymentsStore.forEach((payment, paymentId) => {
+    const matchedLine = lines.find((line: string) =>
+      line.toUpperCase().includes(String(payment.code).toUpperCase()) ||
+      (line.includes(String(payment.amount)) && line.toUpperCase().includes(String(payment.leadId).toUpperCase()))
+    );
+    if (!matchedLine || payment.status === 'MATCHED') return;
+    const matchedPayment = {
+      ...payment,
+      status: 'MATCHED',
+      matchedAt: new Date().toISOString(),
+      statementRef: matchedLine,
+    };
+    crmPaymentsStore.set(paymentId, matchedPayment);
+    const lead = crmLeadsStore.get(payment.leadId);
+    if (lead) {
+      const nextStage = payment.type === 'RESERVATION' ? 'SEAT_RESERVED' : 'DOCUMENTS_PENDING';
+      crmLeadsStore.set(payment.leadId, { ...lead, stage: nextStage, updatedAt: new Date().toISOString() });
+      appendCrmWorkflowLog(payment.leadId, `Payment reconciled: ${payment.code}`);
+    }
+    matches.push(matchedPayment);
+  });
+
+  res.json({
+    status: 'success',
+    matchedCount: matches.length,
+    matches,
+  });
+});
+
+app.post('/api/crm/workflows/run', (req, res) => {
+  const leadId = String(req.body?.leadId || '');
+  const lead = crmLeadsStore.get(leadId);
+  if (!lead) {
+    return res.status(404).json({ status: 'error', error: 'CRM lead not found.' });
+  }
+
+  const workflow = String(req.body?.workflow || 'AUTO_STAGE_WORKFLOW');
+  const logs = [];
+  if (lead.stage === 'ENTRANCE_TEST_REGISTERED') {
+    logs.push(appendCrmWorkflowLog(leadId, 'Send entrance test schedule', 'EMAIL', lead.email ? 'SENT' : 'SKIPPED'));
+    logs.push(appendCrmWorkflowLog(leadId, 'Prepare Zalo OA test reminder', 'ZALO', 'PENDING'));
+  } else if (lead.stage === 'TEST_COMPLETED') {
+    logs.push(appendCrmWorkflowLog(leadId, 'Send test result and scholarship proposal', 'EMAIL', lead.email ? 'SENT' : 'SKIPPED'));
+  } else if (lead.stage === 'SEAT_RESERVED') {
+    logs.push(appendCrmWorkflowLog(leadId, 'Send reservation confirmation and enrollment checklist', 'EMAIL', lead.email ? 'SENT' : 'SKIPPED'));
+  } else if (lead.stage === 'DOCUMENTS_PENDING') {
+    logs.push(appendCrmWorkflowLog(leadId, 'Check enrollment document readiness', 'SYSTEM', 'SENT'));
+  } else {
+    logs.push(appendCrmWorkflowLog(leadId, `No automatic action for ${lead.stage}`, 'SYSTEM', 'SKIPPED'));
+  }
+
+  res.json({
+    status: 'success',
+    workflow,
+    logs,
+  });
+});
+
 app.post('/api/crm/leads/intake', (req, res) => {
   const payload = req.body || {};
   const studentName = String(payload.studentName || payload.student_name || payload.name || '').trim();
@@ -524,12 +831,21 @@ app.post('/api/crm/leads/intake', (req, res) => {
     status: 'QUEUED',
   };
 
-  crmLeadIntakeQueue.unshift(intakeLead);
+  const normalizedIntakeLead = normalizeCrmLead({
+    ...payload,
+    ...intakeLead,
+    campaign: payload.campaign || payload.campaignName || intakeLead.campaignName,
+    stage: 'NEW_LEAD',
+  });
+
+  crmLeadIntakeQueue.unshift(normalizedIntakeLead);
+  crmLeadsStore.set(normalizedIntakeLead.id, normalizedIntakeLead);
+  appendCrmWorkflowLog(normalizedIntakeLead.id, 'Lead intake queued from public form/API');
   if (crmLeadIntakeQueue.length > 200) crmLeadIntakeQueue.pop();
 
   res.status(201).json({
     status: 'success',
-    lead: intakeLead,
+    lead: normalizedIntakeLead,
     queueSize: crmLeadIntakeQueue.length,
   });
 });

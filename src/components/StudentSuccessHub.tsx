@@ -720,7 +720,7 @@ export default function StudentSuccessHub({ currentUser }: { currentUser: UserPr
       student.code,
       student.name,
       student.className,
-      gpa,
+      String(gpa),
       `${attendanceRate}%`,
       student.parentName,
       student.parentPhone,
@@ -792,7 +792,7 @@ export default function StudentSuccessHub({ currentUser }: { currentUser: UserPr
         ? {
             ...student,
             name: profileNameVal.trim(),
-            gender: profileGenderVal,
+            gender: profileGenderVal as StudentRecord['gender'],
             birthDate: profileBirthDateVal,
             address: profileAddressVal.trim(),
             parentName: profileParentNameVal.trim(),

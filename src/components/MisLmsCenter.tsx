@@ -219,7 +219,7 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
       }
     });
 
-    saveUnifiedStudents(nextUnified);
+    saveUnifiedStudents(nextUnified as UnifiedStudent[]);
   }, [lmsStudents]);
 
   // Helper to export Leads list to CSV
@@ -926,7 +926,7 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
         student.name,
         student.className,
         submission ? 'Đã nộp' : 'Chưa nộp',
-        submission?.score ?? '',
+        String(submission?.score ?? ''),
         submission ? `${submission.correctCount}/${submission.totalQuestions}` : '',
         submission?.submittedAt ?? '',
         student.parentEmail,
@@ -2431,7 +2431,7 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
                                   ...newInvoiceData,
                                   studentId: selectedId,
                                   studentName: matched.name,
-                                  studentCode: matched.code || '',
+                                  studentCode: (matched as any).code || '',
                                   student: matched.name
                                 });
                               } else {
@@ -2450,7 +2450,7 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
                             <option value="">-- Chọn học sinh --</option>
                             {lmsStudents.map(s => (
                               <option key={s.id} value={s.id}>
-                                {s.name} - {s.code || s.id} ({s.className || 'Không lớp'})
+                                {s.name} - {(s as any).code || s.id} ({s.className || 'Không lớp'})
                               </option>
                             ))}
                           </select>

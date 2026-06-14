@@ -1,4 +1,6 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+'use client';
+
+import React, { createContext, useContext, useState } from 'react';
 import { translations } from '../utils/translations';
 
 type Lang = 'vi' | 'en';
@@ -13,12 +15,15 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [lang, setLangState] = useState<Lang>(() => {
+    if (typeof window === 'undefined') return 'vi';
     return (localStorage.getItem('mis_lang') as Lang) || 'vi';
   });
 
   const setLang = (newLang: Lang) => {
     setLangState(newLang);
-    localStorage.setItem('mis_lang', newLang);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('mis_lang', newLang);
+    }
   };
 
   // Safe translation resolver

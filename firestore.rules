@@ -65,5 +65,46 @@ service cloud.firestore {
       allow update: if isSignedIn() && isValidId(taskId) && isValidTask(incoming());
       allow delete: if isSignedIn() && isValidId(taskId);
     }
+
+    // Admissions CRM Collections
+    function isValidCrmLead(data) {
+      return data.id is string &&
+             data.leadCode is string &&
+             data.studentName is string &&
+             data.parentName is string &&
+             data.phone is string &&
+             data.stage is string;
+    }
+
+    match /crm_leads/{leadId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && isValidId(leadId) && isValidCrmLead(incoming());
+      allow update: if isSignedIn() && isValidId(leadId) && isValidCrmLead(incoming());
+      allow delete: if isSignedIn() && isValidId(leadId);
+    }
+
+    match /crm_contacts/{contactId} {
+      allow read, write: if isSignedIn() && isValidId(contactId);
+    }
+
+    match /crm_opportunities/{opportunityId} {
+      allow read, write: if isSignedIn() && isValidId(opportunityId);
+    }
+
+    match /crm_interactions/{interactionId} {
+      allow read, write: if isSignedIn() && isValidId(interactionId);
+    }
+
+    match /crm_workflow_logs/{workflowLogId} {
+      allow read, write: if isSignedIn() && isValidId(workflowLogId);
+    }
+
+    match /crm_payments/{paymentId} {
+      allow read, write: if isSignedIn() && isValidId(paymentId);
+    }
+
+    match /crm_import_batches/{batchId} {
+      allow read, write: if isSignedIn() && isValidId(batchId);
+    }
   }
 }

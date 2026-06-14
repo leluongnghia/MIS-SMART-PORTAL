@@ -3,7 +3,7 @@ services:
     name: mis-smart-portal
     runtime: node
     plan: free
-    buildCommand: npm install && npm run build
+    buildCommand: npm install --legacy-peer-deps && npm run db:migrate && npm run db:seed && npm run build
     startCommand: npm start
     envVars:
       - key: NODE_ENV
@@ -12,6 +12,12 @@ services:
         sync: false  # Nhập thủ công trên Render Dashboard
       - key: APP_URL
         sync: false  # URL do Render cấp, nhập sau khi deploy
+      - key: DATABASE_URL
+        value: "./local.db"
+      - key: NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+        sync: false
+      - key: CLERK_SECRET_KEY
+        sync: false
       - key: SMTP_HOST
         sync: false  # SMTP host của nhà cung cấp email, ví dụ smtp.gmail.com
       - key: SMTP_PORT
