@@ -50,7 +50,10 @@ import EventManagement from './components/EventManagement';
 import SystemSettingsModal from './components/SystemSettingsModal';
 import RbacSettingsModal, { DEFAULT_RBAC_CONFIG } from './components/RbacSettingsModal';
 import GuideModal from './components/GuideModal';
+import CommandPalette from './components/ui/CommandPalette';
 import { ToastProvider, useToast } from './components/ui/Toast';
+import { useAppState } from './hooks/useAppState';
+import { useTaskHandlers } from './hooks/useTaskHandlers';
 import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Tooltip } from 'recharts';
 import { 
   School, 
@@ -625,51 +628,36 @@ function AppInner() {
   };
 
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [sidebarSearchQuery, setSidebarSearchQuery] = useState('');
-  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
-  const [commandQuery, setCommandQuery] = useState('');
-  const [activeView, setActiveView] = useState<'KANBAN' | 'CALENDAR' | 'LIST' | 'GANTT'>('KANBAN');
-  const [overviewTab, setOverviewTab] = useState<'DASHBOARD' | 'STRATEGY_OKRS' | 'TASKS' | 'WORKFLOW_APPROVALS' | 'CRM_ADMISSIONS' | 'STUDENT_SUCCESS' | 'PARENT_PORTAL' | 'TEACHER_HR' | 'RISK_CENTER' | 'ANALYTICS' | 'BOARD_DIRECTIVES' | 'ACADEMIC_OPS' | 'LOGISTICS' | 'REQUESTS' | 'HRM' | 'LMS' | 'GOOGLE_SHEETS' | 'DOCUMENT' | 'MEETING' | 'KNOWLEDGE' | 'EVENTS'>('DASHBOARD');
-  const [priorityFilter, setPriorityFilter] = useState<string>('ALL');
-  const [statusFilter, setStatusFilter] = useState<string>('ALL');
-  const [tagFilter, setTagFilter] = useState<string>('ALL');
-  const [isStatsCollapsed, setIsStatsCollapsed] = useState(false);
-  const [isChartCollapsed, setIsChartCollapsed] = useState(false);
-  const [isCompactView, setIsCompactView] = useState(false);
-  const [deadlineFilter, setDeadlineFilter] = useState<'ALL' | 'TODAY' | 'THIS_WEEK' | 'OVERDUE'>('ALL');
-  const [aiSummary, setAiSummary] = useState('');
-  const [isSummarizing, setIsSummarizing] = useState(false);
-  const [showSummaryModal, setShowSummaryModal] = useState(false);
-
-  const [expandedBranches, setExpandedBranches] = useState<Record<string, boolean>>({
-    BGH: false,
-    TOAN_TIN: false,
-    VAN: false,
-    HANH_CHINH: false
-  });
-
-  const toggleBranch = (workspaceId: string) => {
-    setExpandedBranches(prev => ({
-      ...prev,
-      [workspaceId]: !prev[workspaceId]
-    }));
-  };
-
-  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
-    foundation: true,
-    operation: true,
-    strategy: true,
-    business: true,
-    campus: true,
-  });
-
-  const toggleGroup = (groupKey: string) => {
-    setExpandedGroups(prev => ({
-      ...prev,
-      [groupKey]: !prev[groupKey]
-    }));
-  };
+  const appState = useAppState();
+  const {
+    searchQuery, setSearchQuery,
+    sidebarSearchQuery, setSidebarSearchQuery,
+    isCommandPaletteOpen, setIsCommandPaletteOpen,
+    commandQuery, setCommandQuery,
+    activeView, setActiveView,
+    overviewTab, setOverviewTab,
+    priorityFilter, setPriorityFilter,
+    statusFilter, setStatusFilter,
+    tagFilter, setTagFilter,
+    isStatsCollapsed, setIsStatsCollapsed,
+    isChartCollapsed, setIsChartCollapsed,
+    isCompactView, setIsCompactView,
+    deadlineFilter, setDeadlineFilter,
+    aiSummary, setAiSummary,
+    isSummarizing, setIsSummarizing,
+    showSummaryModal, setShowSummaryModal,
+    isSidebarOpen, setIsSidebarOpen,
+    isGuideModalOpen, setIsGuideModalOpen,
+    mobileActiveColumn, setMobileActiveColumn,
+    selectedWorkspace, setSelectedWorkspace,
+    mobileActiveWorkspace, setMobileActiveWorkspace,
+    isRbacModalOpen, setIsRbacModalOpen,
+    isSystemSettingsOpen, setIsSystemSettingsOpen,
+    showPermissionsPopover, setShowPermissionsPopover,
+    visiblePanels, setVisiblePanels, togglePanel,
+    expandedBranches, setExpandedBranches, toggleBranch,
+    expandedGroups, setExpandedGroups, toggleGroup
+  } = appState;
 
   const tabLabels: Record<string, string> = {
     DASHBOARD: 'Bảng điều khiển Điều hành',
@@ -733,30 +721,6 @@ function AppInner() {
   const isGroupOpen = (groupKey: 'strategy' | 'operation' | 'foundation' | 'business' | 'campus') => {
     if (sidebarSearchQuery) return true;
     return expandedGroups[groupKey];
-  };
-
-  // Panels visibility state to avoid long page (tránh để tình trạng trang quá dài)
-  const [visiblePanels, setVisiblePanels] = useState<Record<string, boolean>>(() => {
-    try {
-      const saved = localStorage.getItem('mis_visible_panels');
-      if (saved) return JSON.parse(saved);
-    } catch (e) {}
-    return {
-      directives: true,
-      stats: true,
-      charts: false
-    };
-  });
-
-  const togglePanel = (panelKey: string) => {
-    setVisiblePanels(prev => {
-      const updated = {
-        ...prev,
-        [panelKey]: !prev[panelKey]
-      };
-      localStorage.setItem('mis_visible_panels', JSON.stringify(updated));
-      return updated;
-    });
   };
 
   // Modal control states
@@ -1231,266 +1195,29 @@ function AppInner() {
     }
   };
 
-  // CREATE TASK
-  const handleCreateTask = async (taskData: Omit<Task, 'id' | 'comments' | 'history'>) => {
-    if (!hasPermission('createTask')) {
-      toast.error('Không có quyền truy cập', 'Tài khoản của bạn không được cấp quyền khởi tạo chỉ đạo / nhiệm vụ mới.');
-      return;
-    }
-    const newTaskId = `task_${Date.now()}`;
-    const newTask: Task = {
-      ...taskData,
-      id: newTaskId,
-      comments: [],
-      history: [
-        {
-          id: `h_${Date.now()}`,
-          userName: displayCurrentUser.name,
-          userTitle: displayCurrentUser.title,
-          action: `Đã khởi tạo và giao công việc`,
-          createdAt: getCurrentTimeFormatted()
-        }
-      ]
-    };
+  const taskHandlers = useTaskHandlers({
+    tasks,
+    setTasks,
+    currentUser,
+    displayCurrentUser,
+    hasPermission,
+    toast,
+    setSelectedTaskForDetail,
+    selectedTaskForDetail,
+    setIsCreateModalOpen,
+    writeLocalJson,
+    LOCAL_TASKS_KEY,
+    getStatusLabel,
+  });
 
-    persistTaskLocally(newTask);
-    try {
-      await setDoc(doc(db, 'tasks', newTaskId), newTask);
-    } catch (e) {
-      handleFirestoreError(e, OperationType.CREATE, `tasks/${newTaskId}`);
-    }
-    setIsCreateModalOpen(false);
-  };
-
-  // UPDATE STATUS (With report evidence support)
-  const handleUpdateStatus = async (taskId: string, newStatus: TaskStatus, evidence?: string) => {
-    const t = tasks.find(item => item.id === taskId);
-    if (!t) return;
-
-    if (evidence) {
-      if (!hasPermission('submitReport', t)) {
-        toast.error('Không có quyền truy cập', 'Tài khoản của bạn không có quyền gửi báo cáo & minh chứng thực hiện.');
-        return;
-      }
-    } else if (newStatus === 'HOAN_THANH') {
-      if (!hasPermission('approveReport', t)) {
-        toast.error('Không có quyền truy cập', 'Tài khoản của bạn không có quyền nghiệm thu hoặc duyệt báo cáo hoàn thành.');
-        return;
-      }
-    } else {
-      if (!hasPermission('changeStatus', t)) {
-        toast.error('Không có quyền truy cập', 'Tài khoản của bạn không được cấp quyền thay đổi tiến độ công việc.');
-        return;
-      }
-    }
-
-    const historyAction = evidence 
-      ? `Đã gửi báo cáo minh chứng: "${evidence.substring(0, 50)}..."`
-      : `Đã chuyển đổi trạng thái công việc thành "${getStatusLabel(newStatus)}"`;
-
-    const updatedHistory = [
-      ...t.history,
-      {
-        id: `h_${Date.now()}`,
-        userName: displayCurrentUser.name,
-        userTitle: displayCurrentUser.title,
-        action: historyAction,
-        createdAt: getCurrentTimeFormatted()
-      }
-    ];
-
-    const updatedTask = {
-      ...t,
-      status: newStatus,
-      history: updatedHistory,
-      rejectionReason: newStatus === 'HOAN_THANH' ? '' : (t.rejectionReason || ''),
-      reportEvidence: evidence !== undefined ? evidence : (t.reportEvidence || '')
-    };
-
-    persistTaskLocally(updatedTask);
-    try {
-      await setDoc(doc(db, 'tasks', taskId), updatedTask);
-    } catch (e) {
-      handleFirestoreError(e, OperationType.UPDATE, `tasks/${taskId}`);
-    }
-  };
-
-  // REJECT TASK (Managers/Admin requests changes)
-  const handleRejectTask = async (taskId: string, reason: string) => {
-    const t = tasks.find(item => item.id === taskId);
-    if (!t) return;
-
-    if (!hasPermission('rejectReport', t)) {
-      toast.error('Không có quyền truy cập', 'Tài khoản của bạn không được cấp quyền yêu cầu điều chỉnh báo cáo.');
-      return;
-    }
-
-    const updatedHistory = [
-      ...t.history,
-      {
-        id: `h_${Date.now()}`,
-        userName: displayCurrentUser.name,
-        userTitle: displayCurrentUser.title,
-        action: `Yêu cầu chỉnh sửa lại: "${reason}"`,
-        createdAt: getCurrentTimeFormatted()
-      }
-    ];
-
-    const updatedTask = {
-      ...t,
-      status: 'DANG_TIEN_HANH' as TaskStatus,
-      rejectionReason: reason,
-      history: updatedHistory
-    };
-
-    persistTaskLocally(updatedTask);
-    try {
-      await setDoc(doc(db, 'tasks', taskId), updatedTask);
-    } catch (e) {
-      handleFirestoreError(e, OperationType.UPDATE, `tasks/${taskId}`);
-    }
-  };
-
-  // DELETE TASK
-  const handleDeleteTask = async (taskId: string) => {
-    const t = tasks.find(item => item.id === taskId);
-    if (!t) return;
-
-    if (!hasPermission('deleteTask', t)) {
-      toast.error('Không có quyền truy cập', 'Tài khoản của bạn không được cấp quyền xóa chỉ đạo.');
-      return;
-    }
-    removeTaskLocally(taskId);
-    try {
-      await deleteDoc(doc(db, 'tasks', taskId));
-      if (selectedTaskForDetail && selectedTaskForDetail.id === taskId) {
-        setSelectedTaskForDetail(null);
-      }
-    } catch (e) {
-      handleFirestoreError(e, OperationType.DELETE, `tasks/${taskId}`);
-    }
-  };
-
-  // UPDATE TASK
-  const handleUpdateTask = async (taskId: string, updates: Partial<Task>) => {
-    const t = tasks.find(item => item.id === taskId);
-    if (!t) return;
-
-    const isOnlyChecklistUpdate = Object.keys(updates).length === 1 && updates.checklist !== undefined;
-    const canEditTask = hasPermission('editTask', t);
-    const isAssignee = t.assignedId === currentUser.id;
-
-    if (!canEditTask && !(isOnlyChecklistUpdate && isAssignee)) {
-      toast.error('Không có quyền truy cập', 'Tài khoản của bạn không được cấp quyền chỉnh sửa nhiệm vụ.');
-      return;
-    }
-
-    const updatedHistory = [...t.history];
-    const changes: string[] = [];
-    if (updates.title && updates.title !== t.title) changes.push('tiêu đề');
-    if (updates.description && updates.description !== t.description) changes.push('mô tả');
-    if (updates.deadline && updates.deadline !== t.deadline) changes.push('hạn chót');
-    if (updates.assignedId && updates.assignedId !== t.assignedId) {
-      changes.push(`người thực hiện (${updates.assignedName})`);
-    }
-
-    if (changes.length > 0) {
-      updatedHistory.push({
-        id: `h_${Date.now()}`,
-        userName: displayCurrentUser.name,
-        userTitle: displayCurrentUser.title,
-        action: `Đã chỉnh sửa ${changes.join(', ')} của công việc`,
-        createdAt: getCurrentTimeFormatted()
-      });
-    } else if (isOnlyChecklistUpdate) {
-      const oldChecklist = t.checklist || [];
-      const newChecklist = updates.checklist || [];
-      if (newChecklist.length > oldChecklist.length) {
-        updatedHistory.push({
-          id: `h_${Date.now()}`,
-          userName: displayCurrentUser.name,
-          userTitle: displayCurrentUser.title,
-          action: `Đã thêm mục checklist mới`,
-          createdAt: getCurrentTimeFormatted()
-        });
-      } else if (newChecklist.length < oldChecklist.length) {
-        updatedHistory.push({
-          id: `h_${Date.now()}`,
-          userName: displayCurrentUser.name,
-          userTitle: displayCurrentUser.title,
-          action: `Đã xóa mục checklist`,
-          createdAt: getCurrentTimeFormatted()
-        });
-      } else {
-        const changedItem = newChecklist.find((item, idx) => oldChecklist[idx] && item.done !== oldChecklist[idx].done);
-        if (changedItem) {
-          updatedHistory.push({
-            id: `h_${Date.now()}`,
-            userName: displayCurrentUser.name,
-            userTitle: displayCurrentUser.title,
-            action: `Đã đánh dấu ${changedItem.done ? 'hoàn thành' : 'chưa hoàn thành'} mục checklist "${changedItem.text}"`,
-            createdAt: getCurrentTimeFormatted()
-          });
-        }
-      }
-    }
-
-    const updatedTask = {
-      ...t,
-      ...updates,
-      history: updatedHistory
-    };
-
-    persistTaskLocally(updatedTask);
-    try {
-      await setDoc(doc(db, 'tasks', taskId), updatedTask);
-    } catch (e) {
-      handleFirestoreError(e, OperationType.UPDATE, `tasks/${taskId}`);
-    }
-  };
-
-  // ADD COMMENT
-  const handleAddComment = async (taskId: string, commentContent: string) => {
-    const t = tasks.find(item => item.id === taskId);
-    if (!t) return;
-
-    if (!hasPermission('addComment', t)) {
-      toast.error('Không có quyền truy cập', 'Tài khoản của bạn không được cấp quyền thảo luận góp ý ý kiến.');
-      return;
-    }
-
-    const newC: Comment = {
-      id: `c_${Date.now()}`,
-      userName: displayCurrentUser.name,
-      userTitle: displayCurrentUser.title,
-      content: commentContent,
-      createdAt: getCurrentTimeFormatted().split(' ')[1] + ' ' + getCurrentTimeFormatted().split(' ')[0]
-    };
-
-    const updatedHistory = [
-      ...t.history,
-      {
-        id: `h_${Date.now()}`,
-        userName: displayCurrentUser.name,
-        userTitle: displayCurrentUser.title,
-        action: `Đã đóng góp thảo luận mới`,
-        createdAt: getCurrentTimeFormatted()
-      }
-    ];
-
-    const updatedTask = {
-      ...t,
-      comments: [...t.comments, newC],
-      history: updatedHistory
-    };
-
-    persistTaskLocally(updatedTask);
-    try {
-      await setDoc(doc(db, 'tasks', taskId), updatedTask);
-    } catch (e) {
-      handleFirestoreError(e, OperationType.UPDATE, `tasks/${taskId}`);
-    }
-  };
+  const {
+    handleCreateTask,
+    handleUpdateStatus,
+    handleRejectTask,
+    handleDeleteTask,
+    handleUpdateTask,
+    handleAddComment
+  } = taskHandlers;
 
   const getStatusLabel = (status: TaskStatus) => {
     switch (status) {
@@ -3546,156 +3273,24 @@ function AppInner() {
         </div>
       )}
 
-      {isCommandPaletteOpen && (
-        <div className="fixed inset-0 z-[70] flex items-start justify-center bg-slate-950/45 backdrop-blur-sm px-3 pt-20 md:pt-24 print:hidden">
-          <div
-            className="absolute inset-0"
-            onClick={closeCommandPalette}
-            aria-hidden="true"
-          />
-          <div className="relative w-full max-w-2xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-750 dark:bg-slate-900">
-            <div className="flex items-center gap-3 border-b border-slate-100 px-4 py-3 dark:border-slate-800">
-              <Search className="h-5 w-5 shrink-0 text-indigo-600 dark:text-indigo-400" />
-              <input
-                ref={commandInputRef}
-                value={commandQuery}
-                onChange={(e) => setCommandQuery(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    setSearchQuery(commandQuery);
-                    setOverviewTab('TASKS');
-                    closeCommandPalette();
-                  }
-                }}
-                placeholder="Tìm nhanh chức năng, công việc, nhân sự, bộ phận..."
-                className="h-11 min-w-0 flex-1 bg-transparent text-sm font-semibold text-slate-900 outline-none placeholder:text-slate-400 dark:text-white"
-              />
-              <button
-                type="button"
-                onClick={closeCommandPalette}
-                className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-                title="Đóng"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-
-            <div className="max-h-[70vh] overflow-y-auto p-3">
-              <div className="mb-3 flex items-center justify-between px-1 text-[11px] font-bold uppercase tracking-wide text-slate-400">
-                <span>Tìm kiếm nhanh</span>
-                <span className="rounded-md border border-slate-200 px-1.5 py-0.5 font-mono normal-case text-slate-500 dark:border-slate-700">Esc</span>
-              </div>
-
-              {commandSectionResults.length > 0 && (
-                <div className="mb-4">
-                  <div className="px-1 pb-2 text-[10px] font-black uppercase tracking-wide text-slate-400">Màn hình</div>
-                  <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
-                    {commandSectionResults.map(item => {
-                      const Icon = item.icon;
-                      return (
-                        <button
-                          key={item.id}
-                          type="button"
-                          onClick={() => openOverviewSection(item.tab)}
-                          className="flex min-h-16 items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 text-left transition-all hover:border-indigo-200 hover:bg-indigo-50 dark:border-slate-800 dark:bg-slate-850 dark:hover:border-indigo-700 dark:hover:bg-indigo-950/40"
-                        >
-                          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-indigo-600 shadow-3xs dark:bg-slate-900 dark:text-indigo-400">
-                            <Icon className="h-4 w-4" />
-                          </span>
-                          <span className="min-w-0">
-                            <span className="block truncate text-xs font-extrabold text-slate-850 dark:text-white">{item.label}</span>
-                            <span className="block truncate text-[11px] font-medium text-slate-500 dark:text-slate-400">{item.description}</span>
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {commandTaskResults.length > 0 && (
-                <div className="mb-4">
-                  <div className="px-1 pb-2 text-[10px] font-black uppercase tracking-wide text-slate-400">Công việc</div>
-                  <div className="space-y-1.5">
-                    {commandTaskResults.map(task => (
-                      <button
-                        key={task.id}
-                        type="button"
-                        onClick={() => openTaskFromCommand(task)}
-                        className="flex w-full items-center gap-3 rounded-xl border border-slate-100 px-3 py-2.5 text-left transition-all hover:border-indigo-200 hover:bg-indigo-50 dark:border-slate-800 dark:hover:border-indigo-700 dark:hover:bg-indigo-950/40"
-                      >
-                        <Briefcase className="h-4 w-4 shrink-0 text-slate-400" />
-                        <span className="min-w-0 flex-1">
-                          <span className="block truncate text-xs font-extrabold text-slate-850 dark:text-white">{task.title}</span>
-                          <span className="block truncate text-[11px] font-medium text-slate-500 dark:text-slate-400">
-                            {task.assignedName} · {getStatusLabel(task.status)} · {task.deadline}
-                          </span>
-                        </span>
-                        <ChevronRight className="h-4 w-4 shrink-0 text-slate-300" />
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {(commandUserResults.length > 0 || commandWorkspaceResults.length > 0) && (
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  {commandUserResults.length > 0 && (
-                    <div>
-                      <div className="px-1 pb-2 text-[10px] font-black uppercase tracking-wide text-slate-400">Nhân sự</div>
-                      <div className="space-y-1.5">
-                        {commandUserResults.map(user => (
-                          <button
-                            key={user.id}
-                            type="button"
-                            onClick={() => openUserFromCommand(user)}
-                            className="flex w-full items-center gap-2.5 rounded-xl border border-slate-100 px-3 py-2 text-left transition-all hover:border-indigo-200 hover:bg-indigo-50 dark:border-slate-800 dark:hover:border-indigo-700 dark:hover:bg-indigo-950/40"
-                          >
-                            <img src={getSafeAvatar(user.avatar, user.name)} alt={user.name} className="h-8 w-8 shrink-0 rounded-lg object-cover" referrerPolicy="no-referrer" />
-                            <span className="min-w-0">
-                              <span className="block truncate text-xs font-extrabold text-slate-850 dark:text-white">{user.name}</span>
-                              <span className="block truncate text-[11px] font-medium text-slate-500 dark:text-slate-400">{user.title}</span>
-                            </span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {commandWorkspaceResults.length > 0 && (
-                    <div>
-                      <div className="px-1 pb-2 text-[10px] font-black uppercase tracking-wide text-slate-400">Bộ phận</div>
-                      <div className="space-y-1.5">
-                        {commandWorkspaceResults.map(workspace => (
-                          <button
-                            key={workspace.id}
-                            type="button"
-                            onClick={() => openWorkspaceFromCommand(workspace.id)}
-                            className="flex w-full items-center gap-2.5 rounded-xl border border-slate-100 px-3 py-2 text-left transition-all hover:border-indigo-200 hover:bg-indigo-50 dark:border-slate-800 dark:hover:border-indigo-700 dark:hover:bg-indigo-950/40"
-                          >
-                            <Layers className="h-4 w-4 shrink-0 text-indigo-500" />
-                            <span className="min-w-0">
-                              <span className="block truncate text-xs font-extrabold text-slate-850 dark:text-white">{workspace.name}</span>
-                              <span className="block truncate text-[11px] font-medium text-slate-500 dark:text-slate-400">{workspace.description}</span>
-                            </span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {commandSectionResults.length === 0 && commandTaskResults.length === 0 && commandUserResults.length === 0 && commandWorkspaceResults.length === 0 && (
-                <div className="rounded-xl border border-dashed border-slate-200 px-4 py-10 text-center dark:border-slate-700">
-                  <p className="text-sm font-bold text-slate-700 dark:text-slate-200">Không tìm thấy kết quả phù hợp</p>
-                  <p className="mt-1 text-xs text-slate-400">Nhấn Enter để áp dụng từ khóa này vào bộ lọc công việc.</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      <CommandPalette
+        isOpen={isCommandPaletteOpen}
+        onClose={closeCommandPalette}
+        currentUser={currentUser}
+        tasks={roleFilteredTasks}
+        users={displayUsers}
+        workspaces={visibleWorkspaces}
+        onOpenSection={openOverviewSection}
+        onOpenTask={openTaskFromCommand}
+        onOpenWorkspace={openWorkspaceFromCommand}
+        onOpenUser={openUserFromCommand}
+        onSearchQuerySubmit={(query) => {
+          setSearchQuery(query);
+          setOverviewTab('TASKS');
+        }}
+        getSafeAvatar={getSafeAvatar}
+        getStatusLabel={getStatusLabel}
+      />
 
       
 
