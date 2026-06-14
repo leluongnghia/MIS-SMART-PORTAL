@@ -509,10 +509,6 @@ function AppInner() {
   const [rbacConfig, setRbacConfig] = useState<RbacConfig>(() => readLocalJson<RbacConfig>(LOCAL_RBAC_KEY, DEFAULT_RBAC_CONFIG));
   const [userOverrides, setUserOverrides] = useState<Record<string, Partial<RolePermissions>>>(() => readLocalJson<Record<string, Partial<RolePermissions>>>(LOCAL_USER_OVERRIDES_KEY, {}));
   const [groupByDepartment, setGroupByDepartment] = useState<boolean>(true);
-  const [mobileActiveWorkspace, setMobileActiveWorkspace] = useState<string>('');
-  const [isRbacModalOpen, setIsRbacModalOpen] = useState(false);
-  const [isSystemSettingsOpen, setIsSystemSettingsOpen] = useState(false);
-  const [showPermissionsPopover, setShowPermissionsPopover] = useState(false);
 
   const saveRbacConfig = async (updatedConfig: RbacConfig) => {
     setRbacConfig(updatedConfig);
@@ -589,8 +585,6 @@ function AppInner() {
     setSelectedWorkspace(wId);
     setIsSidebarOpen(false);
   };
-
-  const [selectedWorkspace, setSelectedWorkspace] = useState<string>('ALL');
 
   const canDisplayTab = (tab: any) => {
     return canDisplayTabWithWorkspace(tab, currentUser.role, currentUser.workspaceId);
