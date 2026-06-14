@@ -1188,6 +1188,15 @@ function AppInner() {
     }
   };
 
+  const getStatusLabel = (status: TaskStatus) => {
+    switch (status) {
+      case 'CHUA_BAT_DA': return 'Chưa bắt đầu';
+      case 'DANG_TIEN_HANH': return 'Đang tiến hành';
+      case 'CHO_DUYET': return 'Chờ duyệt';
+      case 'HOAN_THANH': return 'Đã hoàn thành';
+    }
+  };
+
   const taskHandlers = useTaskHandlers({
     tasks,
     setTasks,
@@ -1211,15 +1220,6 @@ function AppInner() {
     handleUpdateTask,
     handleAddComment
   } = taskHandlers;
-
-  const getStatusLabel = (status: TaskStatus) => {
-    switch (status) {
-      case 'CHUA_BAT_DA': return 'Chưa bắt đầu';
-      case 'DANG_TIEN_HANH': return 'Đang tiến hành';
-      case 'CHO_DUYET': return 'Chờ duyệt';
-      case 'HOAN_THANH': return 'Đã hoàn thành';
-    }
-  };
 
   // FILTER LOGIC
   // 1. Filter by role access limit
