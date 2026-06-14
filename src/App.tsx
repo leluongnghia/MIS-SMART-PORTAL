@@ -415,6 +415,8 @@ function AppInner() {
     return matched ? normalizeUserProfile(enrichUserWithMIDetails(matched)) : normalizeUserProfile(enrichUserWithMIDetails(MOCK_USERS[0]));
   });
 
+  const displayCurrentUser = translateUser(currentUser, lang);
+
   const handleOnboardUser = (newStaff: { name: string; workspaceId: string; title: string; role: Role }) => {
     const roleName = newStaff.role === 'ADMIN' ? 'Ban Giám hiệu' : newStaff.role === 'MANAGER' ? 'Tổ trưởng Chuyên môn' : 'Giáo viên / Nhân viên';
     const newId = `user_${newStaff.name.toLowerCase().replace(/\s+/g, '_').normalize("NFD").replace(/[\u0300-\u036f]/g, "")}_${Date.now().toString().slice(-4)}`;
@@ -1326,7 +1328,6 @@ function AppInner() {
   const displayAnnouncements = announcements.map(a => translateAnnouncement(a, lang));
   const displayDirectives = directives.map(d => translateDirective(d, lang));
   const displayUsers = users.map(u => translateUser(u, lang));
-  const displayCurrentUser = translateUser(currentUser, lang);
 
   // Current active Workspace metadata
   const activeWorkspaceMeta = visibleWorkspaces.find(w => w.id === selectedWorkspace) || visibleWorkspaces[0];
