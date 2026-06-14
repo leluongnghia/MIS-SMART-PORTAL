@@ -63,22 +63,52 @@ export default function ExecutiveDashboard({
     return new Date().toISOString().split('T')[0];
   }, []);
 
+  const dashboardView = useMemo(() => {
+    if (currentUser.role === 'ADMIN' || currentUser.workspaceId === 'BGH') {
+      return 'DIEU_HANH';
+    }
+    if (currentUser.role === 'MANAGER') {
+      return 'TRUONG_PHONG';
+    }
+    return 'NHAN_SU';
+  }, [currentUser]);
+
+  const filteredTasks = useMemo(() => {
+    if (dashboardView === 'DIEU_HANH') {
+      return tasks;
+    }
+    if (dashboardView === 'TRUONG_PHONG') {
+      return tasks.filter(t => t.workspaceId === currentUser.workspaceId || t.assignedId === currentUser.id);
+    }
+    return tasks.filter(t => t.assignedId === currentUser.id);
+  }, [tasks, dashboardView, currentUser.workspaceId, currentUser.id]);
+
+  const filteredDirectives = useMemo(() => {
+    if (dashboardView === 'DIEU_HANH') {
+      return directives;
+    }
+    return directives.filter(d => 
+      d.senderId === currentUser.id || 
+      d.implementations.some(i => i.userId === currentUser.id)
+    );
+  }, [directives, dashboardView, currentUser.id]);
+
   const summaryMetrics = useMemo(() => {
     // 1. Overdue Tasks
-    const overdue = tasks.filter(t => t.status !== 'HOAN_THANH' && t.deadline < todayStr).length;
+    const overdue = filteredTasks.filter(t => t.status !== 'HOAN_THANH' && t.deadline < todayStr).length;
     // 2. Pending Approval Tasks
-    const pendingApproval = tasks.filter(t => t.status === 'CHO_DUYET').length;
+    const pendingApproval = filteredTasks.filter(t => t.status === 'CHO_DUYET').length;
     // 3. In Progress Tasks
-    const inProgress = tasks.filter(t => t.status === 'DANG_TIEN_HANH' || t.status === 'CHUA_BAT_DA').length;
+    const inProgress = filteredTasks.filter(t => t.status === 'DANG_TIEN_HANH' || t.status === 'CHUA_BAT_DA').length;
     // 4. Overall Completion Rate
-    const total = tasks.length;
-    const completed = tasks.filter(t => t.status === 'HOAN_THANH').length;
+    const total = filteredTasks.length;
+    const completed = filteredTasks.filter(t => t.status === 'HOAN_THANH').length;
     const kpiRate = total > 0 ? Math.round((completed / total) * 100) : 0;
-    const urgentDirectives = directives.filter(d => d.urgency === 'KHAN' || d.urgency === 'DAC_BIET').length;
+    const urgentDirectives = filteredDirectives.filter(d => d.urgency === 'KHAN' || d.urgency === 'DAC_BIET').length;
     const admissionsRate = 85;
 
     return { overdue, pendingApproval, inProgress, kpiRate, urgentDirectives, admissionsRate };
-  }, [tasks, directives, todayStr]);
+  }, [filteredTasks, filteredDirectives, todayStr]);
 
   // LEVEL 2: Action Center - items to process today
   const actionItems = useMemo(() => {
@@ -92,18 +122,20 @@ export default function ExecutiveDashboard({
     }[] = [];
 
     // Pending approvals (High priority for Ban Giám hiệu/Managers)
-    tasks.filter(t => t.status === 'CHO_DUYET').forEach(t => {
-      items.push({
-        id: `approve-${t.id}`,
-        type: 'duyệt',
-        title: `Nghiệm thu chỉ đạo: ${t.title}`,
-        sub: `Người nộp: ${t.assignedName} • Phòng: ${t.workspaceId}`,
-        originalTask: t
+    if (dashboardView === 'DIEU_HANH' || dashboardView === 'TRUONG_PHONG') {
+      filteredTasks.filter(t => t.status === 'CHO_DUYET').forEach(t => {
+        items.push({
+          id: `approve-${t.id}`,
+          type: 'duyệt',
+          title: `Nghiệm thu chỉ đạo: ${t.title}`,
+          sub: `Người nộp: ${t.assignedName} • Phòng: ${t.workspaceId}`,
+          originalTask: t
+        });
       });
-    });
+    }
 
     // Overdue tasks
-    tasks.filter(t => t.status !== 'HOAN_THANH' && t.deadline < todayStr).slice(0, 3).forEach(t => {
+    filteredTasks.filter(t => t.status !== 'HOAN_THANH' && t.deadline < todayStr).slice(0, 3).forEach(t => {
       items.push({
         id: `overdue-${t.id}`,
         type: 'quá_hạn',
@@ -114,7 +146,7 @@ export default function ExecutiveDashboard({
     });
 
     // Due today tasks
-    tasks.filter(t => t.status !== 'HOAN_THANH' && t.deadline === todayStr).forEach(t => {
+    filteredTasks.filter(t => t.status !== 'HOAN_THANH' && t.deadline === todayStr).forEach(t => {
       items.push({
         id: `due-${t.id}`,
         type: 'hạn_chót',
@@ -125,8 +157,7 @@ export default function ExecutiveDashboard({
     });
 
     // Unresolved urgent directives
-    directives.slice(0, 2).forEach(d => {
-      const isUrgent = d.urgency === 'KHAN';
+    filteredDirectives.slice(0, 2).forEach(d => {
       const myImp = d.implementations.find(i => i.userId === currentUser.id);
       if (!myImp || myImp.status !== 'DA_HOAN_THANH') {
         items.push({
@@ -140,7 +171,7 @@ export default function ExecutiveDashboard({
     });
 
     return items.slice(0, 5); // display top 5 urgent actions
-  }, [tasks, directives, currentUser.id, todayStr]);
+  }, [filteredTasks, filteredDirectives, currentUser.id, todayStr, dashboardView]);
 
   // LEVEL 3: Risk & Alert Center calculations
   const riskAlerts = useMemo(() => {
@@ -149,42 +180,82 @@ export default function ExecutiveDashboard({
       text: string;
     }[] = [];
 
+    if (dashboardView === 'NHAN_SU') {
+      const myOverdue = filteredTasks.filter(t => t.status !== 'HOAN_THANH' && t.deadline < todayStr).length;
+      if (myOverdue > 0) {
+        alerts.push({
+          type: 'critical',
+          text: `Bạn đang có ${myOverdue} công việc quá hạn học vụ cần hoàn thành gấp.`
+        });
+      }
+      
+      const myPendingApprovals = filteredTasks.filter(t => t.status === 'CHO_DUYET').length;
+      if (myPendingApprovals > 0) {
+        alerts.push({
+          type: 'warning',
+          text: `Bạn có ${myPendingApprovals} hồ sơ học vụ đang chờ Ban Giám hiệu phê duyệt.`
+        });
+      }
+      
+      alerts.push({
+        type: 'info',
+        text: 'Đảm bảo cập nhật báo cáo minh chứng học vụ đầy đủ trước hạn chót.'
+      });
+      return alerts;
+    }
+
     // 1. Overdue tasks count
     if (summaryMetrics.overdue > 0) {
+      const scopeText = dashboardView === 'TRUONG_PHONG' ? 'của bộ phận' : 'toàn trường';
       alerts.push({
         type: 'critical',
-        text: `${summaryMetrics.overdue} công việc quá hạn học vụ cần chỉ đạo khắc phục ngay.`
+        text: `${summaryMetrics.overdue} công việc quá hạn học vụ ${scopeText} cần chỉ đạo khắc phục ngay.`
       });
     }
 
     // 2. Departments below KPI threshold (75%)
-    let belowKpiCount = 0;
-    workspaces.filter(w => w.id !== 'ALL').forEach(w => {
-      const wsTasks = tasks.filter(t => t.workspaceId === w.id);
-      const completed = wsTasks.filter(t => t.status === 'HOAN_THANH').length;
-      const total = wsTasks.length;
-      const rate = total > 0 ? (completed / total) * 100 : 100;
-      if (rate < 75 && total > 0) {
-        belowKpiCount++;
-      }
-    });
-
-    if (belowKpiCount > 0) {
-      alerts.push({
-        type: 'warning',
-        text: `${belowKpiCount} bộ phận/tổ chuyên môn có tỷ lệ hoàn thành dưới mục tiêu (75%).`
+    if (dashboardView === 'DIEU_HANH') {
+      let belowKpiCount = 0;
+      workspaces.filter(w => w.id !== 'ALL').forEach(w => {
+        const wsTasks = tasks.filter(t => t.workspaceId === w.id);
+        const completed = wsTasks.filter(t => t.status === 'HOAN_THANH').length;
+        const total = wsTasks.length;
+        const rate = total > 0 ? (completed / total) * 100 : 100;
+        if (rate < 75 && total > 0) {
+          belowKpiCount++;
+        }
       });
+
+      if (belowKpiCount > 0) {
+        alerts.push({
+          type: 'warning',
+          text: `${belowKpiCount} bộ phận/tổ chuyên môn có tỷ lệ hoàn thành dưới mục tiêu (75%).`
+        });
+      }
+    } else if (dashboardView === 'TRUONG_PHONG') {
+      const myWs = workspaces.find(w => w.id === currentUser.workspaceId);
+      if (myWs) {
+        const wsTasks = filteredTasks.filter(t => t.workspaceId === myWs.id);
+        const completed = wsTasks.filter(t => t.status === 'HOAN_THANH').length;
+        const total = wsTasks.length;
+        const rate = total > 0 ? (completed / total) * 100 : 100;
+        if (rate < 75 && total > 0) {
+          alerts.push({
+            type: 'warning',
+            text: `Hiệu suất tổ ${myWs.name} đang ở mức ${Math.round(rate)}%, dưới mục tiêu (75%).`
+          });
+        }
+      }
     }
 
     // 3. Pending approvals older than 7 days
-    const pendingTasks = tasks.filter(t => t.status === 'CHO_DUYET');
+    const pendingTasks = filteredTasks.filter(t => t.status === 'CHO_DUYET');
     let oldPendingCount = 0;
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
     const sevenDaysAgoStr = sevenDaysAgo.toISOString().split('T')[0];
 
     pendingTasks.forEach(t => {
-      // Check last history log to see when it was sent for approval
       const submissionLog = [...t.history].reverse().find(h => h.action.includes('báo cáo minh chứng'));
       if (submissionLog) {
         const submissionDate = submissionLog.createdAt.split(' ')[0];
@@ -195,24 +266,27 @@ export default function ExecutiveDashboard({
     });
 
     if (oldPendingCount > 0) {
+      const scopeText = dashboardView === 'TRUONG_PHONG' ? 'bộ phận' : 'học vụ';
       alerts.push({
         type: 'warning',
-        text: `${oldPendingCount} hồ sơ học vụ chờ duyệt tồn đọng trên 7 ngày.`
+        text: `${oldPendingCount} hồ sơ chờ duyệt ${scopeText} tồn đọng trên 7 ngày.`
       });
     }
 
-    // 4. Hardcoded weekly progression alert for demo variety
+    // 4. Weekly progression alert
+    const trendText = dashboardView === 'TRUONG_PHONG'
+      ? 'Tỷ lệ hoàn thành của bộ phận tuần này giảm nhẹ. Đề xuất rà soát tiến độ.'
+      : 'Tỷ lệ hoàn thành tuần này giảm nhẹ 8% so với tuần trước. Ban Giám hiệu đề xuất tăng tốc rà soát.';
     alerts.push({
       type: 'info',
-      text: 'Tỷ lệ hoàn thành tuần này giảm nhẹ 8% so với tuần trước. Ban Giám hiệu đề xuất tăng tốc rà soát.'
+      text: trendText
     });
 
     return alerts;
-  }, [summaryMetrics.overdue, tasks, workspaces]);
+  }, [summaryMetrics.overdue, filteredTasks, workspaces, dashboardView, todayStr, currentUser.workspaceId, tasks]);
 
   // LEVEL 4: KPI & Analytics Chart Data
   const chartData = useMemo(() => {
-    // Generate organic points leading to current performance
     const points = [];
     const now = new Date();
     const currentRate = summaryMetrics.kpiRate;
@@ -222,9 +296,7 @@ export default function ExecutiveDashboard({
       d.setDate(now.getDate() - (i * 4)); // 4-day steps
       const label = d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
       
-      // Compute progress ratio
       const ratio = (6 - i) / 6;
-      // Synthesize actual data point moving toward currentRate
       const baseVal = 40 + (currentRate - 40) * ratio;
       const noise = Math.sin(i * 1.2) * 4;
       const actualVal = Math.max(15, Math.min(100, Math.round(baseVal + noise)));
@@ -238,8 +310,9 @@ export default function ExecutiveDashboard({
     return points;
   }, [summaryMetrics.kpiRate]);
 
-  // LEVEL 5: Department Performance calculations
+  // LEVEL 5: Department Performance calculations (For Executive)
   const departmentPerformance = useMemo(() => {
+    if (dashboardView !== 'DIEU_HANH') return [];
     const list: {
       id: string;
       name: string;
@@ -277,44 +350,60 @@ export default function ExecutiveDashboard({
       });
     });
 
-    // Sort by risk priority (Nguy cơ first, then Cảnh báo, then An toàn)
-    // Secondary sort by KPI ascending
     return list.sort((a, b) => {
       const getWeight = (s: string) => s === 'Nguy cơ' ? 3 : s === 'Cảnh báo' ? 2 : 1;
       const weightDiff = getWeight(b.status) - getWeight(a.status);
       if (weightDiff !== 0) return weightDiff;
       return a.kpi - b.kpi;
     });
-  }, [tasks, workspaces, todayStr]);
+  }, [tasks, workspaces, todayStr, dashboardView]);
+
+  // LEVEL 5.2: Member Performance calculations (For Managers)
+  const memberPerformance = useMemo(() => {
+    if (dashboardView !== 'TRUONG_PHONG') return [];
+    const myMembers = users.filter(u => u.workspaceId === currentUser.workspaceId && u.role === 'STAFF');
+    return myMembers.map(u => {
+      const userTasks = tasks.filter(t => t.assignedId === u.id);
+      const total = userTasks.length;
+      const completed = userTasks.filter(t => t.status === 'HOAN_THANH').length;
+      const overdue = userTasks.filter(t => t.status !== 'HOAN_THANH' && t.deadline < todayStr).length;
+      const pending = userTasks.filter(t => t.status === 'CHO_DUYET').length;
+      const kpi = total > 0 ? Math.round((completed / total) * 100) : 100;
+      
+      let status: 'An toàn' | 'Cảnh báo' | 'Nguy cơ' = 'An toàn';
+      if (overdue > 1 || kpi < 70) {
+        status = 'Nguy cơ';
+      } else if (overdue > 0 || kpi < 85) {
+        status = 'Cảnh báo';
+      }
+      return { id: u.id, name: u.name, title: u.title, kpi, overdue, pending, status };
+    });
+  }, [users, tasks, currentUser.workspaceId, dashboardView, todayStr]);
 
   // LEVEL 6: Simplified Task Management
   const simplifiedTasks = useMemo(() => {
-    // Show top 6 important non-completed tasks
-    return tasks
+    return filteredTasks
       .filter(t => t.status !== 'HOAN_THANH')
       .sort((a, b) => {
-        // High priority first
         const priorityVal = (p: TaskPriority) => p === 'CAO' ? 3 : p === 'TRUNG_BINH' ? 2 : 1;
         const pDiff = priorityVal(b.priority) - priorityVal(a.priority);
         if (pDiff !== 0) return pDiff;
-        // Earliest deadline first
         return a.deadline.localeCompare(b.deadline);
       })
       .slice(0, 6);
-  }, [tasks]);
+  }, [filteredTasks]);
 
   // ACTIVITY FEED: timeline of recent updates
   const recentActivities = useMemo(() => {
-    const allHistory = tasks.flatMap(t => 
+    const allHistory = filteredTasks.flatMap(t => 
       t.history.map(h => ({
         ...h,
         taskTitle: t.title,
         taskId: t.id
       }))
     );
-    // Sort descending by log timestamp/id
     return allHistory.sort((a, b) => b.id.localeCompare(a.id)).slice(0, 5);
-  }, [tasks]);
+  }, [filteredTasks]);
 
   // Helpers for Action Center type styling
   const getActionBadgeClass = (type: string) => {
@@ -344,7 +433,7 @@ export default function ExecutiveDashboard({
 
   return (
     <div className="space-y-6 p-1">
-      {selectedCampus === 'ALL' && (
+      {dashboardView === 'DIEU_HANH' && selectedCampus === 'ALL' && (
         <div className="bg-gradient-to-br from-indigo-50/70 to-blue-50/70 dark:from-slate-850 dark:to-slate-900 border border-indigo-150/40 dark:border-slate-800 rounded-3xl p-6 shadow-3xs space-y-6">
           <div className="flex items-center justify-between">
             <h3 className="font-display font-extrabold text-indigo-950 dark:text-indigo-400 text-sm flex items-center gap-2">
@@ -424,13 +513,17 @@ export default function ExecutiveDashboard({
           >
             <div>
               <span className="text-[10px] tracking-widest font-black uppercase text-rose-600 dark:text-rose-400 block font-mono">
-                Rủi ro cần xử lý
+                {dashboardView === 'NHAN_SU' ? 'Quá hạn học vụ' : 'Rủi ro cần xử lý'}
               </span>
               <span className="text-4xl font-display font-extrabold text-slate-900 dark:text-white mt-1 block">
                 {summaryMetrics.overdue}
               </span>
               <span className="text-[11px] text-slate-400 dark:text-slate-400 block mt-1.5 font-medium">
-                Nhiệm vụ quá hạn toàn trường
+                {dashboardView === 'DIEU_HANH' 
+                  ? 'Nhiệm vụ quá hạn toàn trường' 
+                  : dashboardView === 'TRUONG_PHONG' 
+                  ? 'Nhiệm vụ quá hạn tổ chuyên môn' 
+                  : 'Nhiệm vụ quá hạn của tôi'}
               </span>
             </div>
             <div className="w-12 h-12 rounded-2xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-450 border border-rose-100 dark:border-rose-900/35 flex items-center justify-center shadow-3xs shrink-0">
@@ -445,13 +538,13 @@ export default function ExecutiveDashboard({
           >
             <div>
               <span className="text-[10px] tracking-widest font-black uppercase text-amber-600 dark:text-amber-400 block font-mono">
-                Chỉ đạo khẩn
+                {dashboardView === 'DIEU_HANH' ? 'Chỉ đạo khẩn' : 'Chỉ thị BGH'}
               </span>
               <span className="text-4xl font-display font-extrabold text-slate-900 dark:text-white mt-1 block">
                 {summaryMetrics.urgentDirectives}
               </span>
               <span className="text-[11px] text-slate-400 dark:text-slate-400 block mt-1.5 font-medium">
-                Khẩn / đặc biệt từ BGH
+                {dashboardView === 'DIEU_HANH' ? 'Khẩn / đặc biệt từ BGH' : 'Yêu cầu phản hồi/thực hiện'}
               </span>
             </div>
             <div className="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-450 border border-amber-100 dark:border-amber-900/35 flex items-center justify-center shadow-3xs shrink-0">
@@ -466,13 +559,13 @@ export default function ExecutiveDashboard({
           >
             <div>
               <span className="text-[10px] tracking-widest font-black uppercase text-blue-600 dark:text-blue-400 block font-mono">
-                Tuyển sinh hiện tại
+                {dashboardView === 'DIEU_HANH' ? 'Tuyển sinh hiện tại' : 'Đang triển khai'}
               </span>
               <span className="text-4xl font-display font-extrabold text-slate-900 dark:text-white mt-1 block">
-                {summaryMetrics.admissionsRate}%
+                {dashboardView === 'DIEU_HANH' ? `${summaryMetrics.admissionsRate}%` : summaryMetrics.inProgress}
               </span>
               <span className="text-[11px] text-slate-400 dark:text-slate-400 block mt-1.5 font-medium">
-                Theo chỉ tiêu năm học
+                {dashboardView === 'DIEU_HANH' ? 'Theo chỉ tiêu năm học' : 'Công việc đang thực hiện'}
               </span>
             </div>
             <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-450 border border-blue-100 dark:border-blue-900/35 flex items-center justify-center shadow-3xs shrink-0">
@@ -487,13 +580,21 @@ export default function ExecutiveDashboard({
           >
             <div>
               <span className="text-[10px] tracking-widest font-black uppercase text-emerald-600 dark:text-emerald-400 block font-mono">
-                KPI Toàn Trường
+                {dashboardView === 'DIEU_HANH' 
+                  ? 'KPI Toàn Trường' 
+                  : dashboardView === 'TRUONG_PHONG' 
+                  ? 'Hiệu suất tổ' 
+                  : 'KPI Cá Nhân'}
               </span>
               <span className="text-4xl font-display font-extrabold text-emerald-600 dark:text-emerald-450 mt-1 block">
                 {summaryMetrics.kpiRate}%
               </span>
               <span className="text-[11px] text-slate-400 dark:text-slate-400 block mt-1.5 font-medium">
-                Chỉ tiêu hoàn thành học vụ
+                {dashboardView === 'DIEU_HANH' 
+                  ? 'Chỉ tiêu hoàn thành học vụ' 
+                  : dashboardView === 'TRUONG_PHONG' 
+                  ? 'Tỷ lệ hoàn thành của tổ chuyên môn' 
+                  : 'Tỷ lệ hoàn thành công việc của tôi'}
               </span>
             </div>
             <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-450 border border-emerald-100 dark:border-emerald-900/35 flex items-center justify-center shadow-3xs shrink-0">
@@ -662,7 +763,7 @@ export default function ExecutiveDashboard({
                 colorClasses = 'bg-amber-50 border border-amber-200/60 text-amber-800 dark:bg-amber-950/20 dark:border-amber-900/30 dark:text-amber-300';
                 badgeText = '⚠️ warning';
               } else {
-                colorClasses = 'bg-blue-50 border border-blue-200/50 text-blue-800 dark:bg-blue-950/20 dark:border-blue-900/30 dark:text-blue-300';
+                colorClasses = 'bg-blue-50 border border-blue-200/50 text-blue-800 dark:bg-blue-950/20 dark:border-amber-900/30 dark:text-blue-300';
                 badgeText = 'ℹ️ info';
               }
 
@@ -685,7 +786,7 @@ export default function ExecutiveDashboard({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
         
         {/* LEVEL 4: KPI & Analytics */}
-        <section className="lg:col-span-6 bg-white border border-slate-200 dark:border-slate-800/80 rounded-2xl p-5 shadow-xs flex flex-col justify-between">
+        <section className={`${dashboardView === 'NHAN_SU' ? 'lg:col-span-12' : 'lg:col-span-6'} bg-white border border-slate-200 dark:border-slate-800/80 rounded-2xl p-5 shadow-xs flex flex-col justify-between`}>
           <div>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800/60 pb-3 mb-4">
               <div className="flex items-center gap-2">
@@ -693,7 +794,7 @@ export default function ExecutiveDashboard({
                   <TrendingUp className="w-4.5 h-4.5" />
                 </span>
                 <h3 className="font-display font-extrabold text-slate-900 dark:text-white text-sm">
-                  Hiệu suất giáo dục (Actual vs Target)
+                  {dashboardView === 'NHAN_SU' ? 'Hiệu suất công việc cá nhân' : 'Hiệu suất giáo dục (Actual vs Target)'}
                 </h3>
               </div>
 
@@ -711,7 +812,7 @@ export default function ExecutiveDashboard({
             </div>
 
             <div className="text-xs text-slate-500 mb-4 font-sans leading-relaxed">
-              Mục tiêu hoàn thành KPI toàn trường đặt ra là <strong className="text-slate-800 dark:text-white">80%</strong>. 
+              Mục tiêu hoàn thành KPI đặt ra là <strong className="text-slate-800 dark:text-white">80%</strong>. 
               Tỷ lệ hoàn thành thực tế hiện tại đạt <strong className="text-indigo-650 dark:text-indigo-400 font-extrabold">{summaryMetrics.kpiRate}%</strong>.
             </div>
           </div>
@@ -735,52 +836,136 @@ export default function ExecutiveDashboard({
           </div>
         </section>
 
-        {/* LEVEL 5: Department Performance */}
-        <section className="lg:col-span-6 bg-white border border-slate-200 dark:border-slate-800/80 rounded-2xl p-5 shadow-xs flex flex-col justify-between">
-          <div>
-            <div className="flex items-center gap-2 border-b border-slate-100 dark:border-slate-800/60 pb-3 mb-4">
-              <span className="p-1.5 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-450 rounded-lg">
-                <Layers className="w-4.5 h-4.5" />
-              </span>
-              <h3 className="font-display font-extrabold text-slate-900 dark:text-white text-sm">
-                Xếp hạng bộ phận theo rủi ro học vụ
-              </h3>
-            </div>
+        {/* LEVEL 5: Department Performance or Member Performance */}
+        {dashboardView !== 'NHAN_SU' && (
+          <section className="lg:col-span-6 bg-white border border-slate-200 dark:border-slate-800/80 rounded-2xl p-5 shadow-xs flex flex-col justify-between">
+            {dashboardView === 'DIEU_HANH' ? (
+              <div>
+                <div className="flex items-center gap-2 border-b border-slate-100 dark:border-slate-800/60 pb-3 mb-4">
+                  <span className="p-1.5 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-450 rounded-lg">
+                    <Layers className="w-4.5 h-4.5" />
+                  </span>
+                  <h3 className="font-display font-extrabold text-slate-900 dark:text-white text-sm">
+                    Xếp hạng bộ phận theo rủi ro học vụ
+                  </h3>
+                </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-[11.5px]">
-                <thead>
-                  <tr className="text-slate-400 dark:text-slate-400 border-b border-slate-100 dark:border-slate-800/60 font-bold uppercase tracking-wider font-mono text-[9px] pb-2">
-                    <th className="pb-2 font-bold">Tên đơn vị</th>
-                    <th className="pb-2 text-center font-bold">KPI %</th>
-                    <th className="pb-2 text-center font-bold">Quá hạn</th>
-                    <th className="pb-2 text-center font-bold">Chờ duyệt</th>
-                    <th className="pb-2 text-right font-bold">Trạng thái</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 font-medium">
-                  {departmentPerformance.map(dept => {
-                    let statusColor = 'text-emerald-600 bg-emerald-50 dark:text-emerald-450 dark:bg-emerald-950/30';
-                    if (dept.status === 'Nguy cơ') {
-                      statusColor = 'text-rose-600 bg-rose-50 dark:text-rose-450 dark:bg-rose-950/30';
-                    } else if (dept.status === 'Cảnh báo') {
-                      statusColor = 'text-amber-600 bg-amber-50 dark:text-amber-450 dark:bg-amber-950/30';
-                    }
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-[11.5px]">
+                    <thead>
+                      <tr className="text-slate-400 dark:text-slate-400 border-b border-slate-100 dark:border-slate-800/60 font-bold uppercase tracking-wider font-mono text-[9px] pb-2">
+                        <th className="pb-2 font-bold">Tên đơn vị</th>
+                        <th className="pb-2 text-center font-bold">KPI %</th>
+                        <th className="pb-2 text-center font-bold">Quá hạn</th>
+                        <th className="pb-2 text-center font-bold">Chờ duyệt</th>
+                        <th className="pb-2 text-right font-bold">Trạng thái</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 font-medium">
+                      {departmentPerformance.map(dept => {
+                        let statusColor = 'text-emerald-600 bg-emerald-50 dark:text-emerald-450 dark:bg-emerald-950/30';
+                        if (dept.status === 'Nguy cơ') {
+                          statusColor = 'text-rose-600 bg-rose-50 dark:text-rose-450 dark:bg-rose-950/30';
+                        } else if (dept.status === 'Cảnh báo') {
+                          statusColor = 'text-amber-600 bg-amber-50 dark:text-amber-450 dark:bg-amber-950/30';
+                        }
 
-                    return (
-                      <tr
-                        key={dept.id}
-                        onClick={() => onSelectWorkspace(dept.id)}
-                        className="cursor-pointer hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors"
-                        title="Mo danh sach nhiem vu cua to nay"
-                      >
-                        <td className="py-2.5 font-bold text-slate-800 dark:text-white max-w-[130px] truncate">
-                          {dept.name}
-                        </td>
-                        <td className="py-2.5 text-center font-mono font-bold text-slate-750 dark:text-slate-200">
-                          {dept.kpi}%
-                        </td>
-                        <td className="py-2.5 text-center font-mono font-bold text-rose-650 dark:text-rose-400">
+                        return (
+                          <tr
+                            key={dept.id}
+                            onClick={() => onSelectWorkspace(dept.id)}
+                            className="cursor-pointer hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors"
+                            title="Mở danh sách nhiệm vụ của tổ này"
+                          >
+                            <td className="py-2.5 font-bold text-slate-800 dark:text-white max-w-[130px] truncate">
+                              {dept.name}
+                            </td>
+                            <td className="py-2.5 text-center font-mono font-bold text-slate-750 dark:text-slate-200">
+                              {dept.kpi}%
+                            </td>
+                            <td className="py-2.5 text-center font-mono font-bold text-rose-655 text-rose-600 dark:text-rose-400">
+                              {dept.overdue}
+                            </td>
+                            <td className="py-2.5 text-center font-mono font-bold text-amber-655 text-amber-600 dark:text-amber-400">
+                              {dept.pending}
+                            </td>
+                            <td className="py-2.5 text-right">
+                              <span className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider font-mono ${statusColor}`}>
+                                {dept.status}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ) : (
+              <div>
+                <div className="flex items-center gap-2 border-b border-slate-100 dark:border-slate-800/60 pb-3 mb-4">
+                  <span className="p-1.5 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-450 rounded-lg">
+                    <Users className="w-4.5 h-4.5" />
+                  </span>
+                  <h3 className="font-display font-extrabold text-slate-900 dark:text-white text-sm">
+                    Hiệu suất &amp; Rủi ro thành viên tổ chuyên môn
+                  </h3>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-[11.5px]">
+                    <thead>
+                      <tr className="text-slate-400 dark:text-slate-400 border-b border-slate-100 dark:border-slate-800/60 font-bold uppercase tracking-wider font-mono text-[9px] pb-2">
+                        <th className="pb-2 font-bold">Nhân viên</th>
+                        <th className="pb-2 text-center font-bold">KPI %</th>
+                        <th className="pb-2 text-center font-bold">Quá hạn</th>
+                        <th className="pb-2 text-center font-bold">Chờ duyệt</th>
+                        <th className="pb-2 text-right font-bold">Đánh giá</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 font-medium">
+                      {memberPerformance.map(member => {
+                        let statusColor = 'text-emerald-600 bg-emerald-50 dark:text-emerald-450 dark:bg-emerald-950/30';
+                        if (member.status === 'Nguy cơ') {
+                          statusColor = 'text-rose-600 bg-rose-50 dark:text-rose-450 dark:bg-rose-950/30';
+                        } else if (member.status === 'Cảnh báo') {
+                          statusColor = 'text-amber-600 bg-amber-50 dark:text-amber-450 dark:bg-amber-950/30';
+                        }
+
+                        return (
+                          <tr
+                            key={member.id}
+                            className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors"
+                          >
+                            <td className="py-2.5 font-bold text-slate-800 dark:text-white max-w-[130px] truncate">
+                              <div>{member.name}</div>
+                              <div className="text-[9px] text-slate-400 font-normal">{member.title}</div>
+                            </td>
+                            <td className="py-2.5 text-center font-mono font-bold text-slate-750 dark:text-slate-200">
+                              {member.kpi}%
+                            </td>
+                            <td className="py-2.5 text-center font-mono font-bold text-rose-600 dark:text-rose-450">
+                              {member.overdue}
+                            </td>
+                            <td className="py-2.5 text-center font-mono font-bold text-amber-600 dark:text-amber-450">
+                              {member.pending}
+                            </td>
+                            <td className="py-2.5 text-right">
+                              <span className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider font-mono ${statusColor}`}>
+                                {member.status}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </section>
+        )}
+      </div>font-bold text-rose-650 dark:text-rose-400">
                           {dept.overdue}
                         </td>
                         <td className="py-2.5 text-center font-mono font-bold text-amber-650 dark:text-amber-400">
