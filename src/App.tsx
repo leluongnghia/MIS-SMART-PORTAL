@@ -3309,12 +3309,12 @@ function AppInner() {
         tasks={tasks}
         currentUser={currentUser}
         onViewTask={(task) => {
-          setSelectedTask(task);
-          setIsDetailsOpen(true);
+          setSelectedTaskForDetail(task);
+          setIsNotificationsOpen(false);
         }}
         onViewDirective={(directive) => {
-          setSelectedDirective(directive);
           setOverviewTab('BOARD_DIRECTIVES');
+          setIsNotificationsOpen(false);
         }}
       />
 
@@ -3376,11 +3376,11 @@ function AppInner() {
         })()}
         onActionClick={(item) => {
           if (item.originalTask) {
-            setSelectedTask(item.originalTask);
-            setIsDetailsOpen(true);
+            setSelectedTaskForDetail(item.originalTask);
+            setIsActionCenterOpen(false);
           } else if (item.originalDirective) {
-            setSelectedDirective(item.originalDirective);
             setOverviewTab('BOARD_DIRECTIVES');
+            setIsActionCenterOpen(false);
           }
         }}
       />
