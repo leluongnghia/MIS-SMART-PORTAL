@@ -33,6 +33,7 @@ conn.on('ready', () => {
       // 2. Run remote extraction and build commands
       const commands = [
         `cd ${projectDir}`,
+        `rm -rf .next dist`,
         `tar -xzf project.tar.gz`,
         `rm project.tar.gz`,
         `npm install --legacy-peer-deps`,
@@ -64,7 +65,7 @@ conn.on('ready', () => {
 }).on('error', (err) => {
   console.error('SSH connection error:', err);
 }).connect({
-  host: '192.168.49.206',
+  host: '100.81.164.75',
   port: 22,
   username: 'duong',
   password: 'd123456'
