@@ -623,7 +623,10 @@ function AppInner() {
         return false;
     }
   };
+
+
   const [searchQuery, setSearchQuery] = useState('');
+  const [sidebarSearchQuery, setSidebarSearchQuery] = useState('');
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [commandQuery, setCommandQuery] = useState('');
   const [activeView, setActiveView] = useState<'KANBAN' | 'CALENDAR' | 'LIST' | 'GANTT'>('KANBAN');
@@ -666,6 +669,70 @@ function AppInner() {
       ...prev,
       [groupKey]: !prev[groupKey]
     }));
+  };
+
+  const tabLabels: Record<string, string> = {
+    DASHBOARD: 'Bảng điều khiển Điều hành',
+    BOARD_DIRECTIVES: 'Chỉ đạo BGH',
+    ANALYTICS: 'Báo cáo & Phân tích',
+    RISK_CENTER: 'Quản trị Rủi ro',
+    STRATEGY_OKRS: 'Định hướng & OKRs',
+    DOCUMENT: 'Quản lý Văn bản',
+    TASKS: 'Nhiệm vụ & Dự án',
+    WORKFLOW_APPROVALS: 'Quy trình & Phê duyệt',
+    MEETING: 'Quản lý Cuộc họp',
+    KNOWLEDGE: 'Kho Tri Thức',
+    CRM_ADMISSIONS: 'Tuyển sinh & CRM',
+    STUDENT_SUCCESS: 'Hồ sơ Học sinh 360°',
+    PARENT_PORTAL: 'Cổng PHHS / Học sinh',
+    HRM: 'Quản trị HRM',
+    LMS: 'Hệ thống LMS',
+    EVENTS: 'Quản lý Sự kiện',
+    ACADEMIC_OPS: 'Thời khóa biểu tổng & Giáo án',
+    LOGISTICS: 'Thư viện & Thiết bị',
+    REQUESTS: 'Yêu cầu & Dịch vụ',
+    GOOGLE_SHEETS: 'Đồng bộ Sheets'
+  };
+
+  const matchesSearch = (tabId: string) => {
+    if (!sidebarSearchQuery) return true;
+    const label = tabLabels[tabId] || '';
+    return label.toLowerCase().includes(sidebarSearchQuery.toLowerCase());
+  };
+
+  const hasVisibleStrategy = 
+    (canDisplayTab('DASHBOARD') && matchesSearch('DASHBOARD')) ||
+    (canDisplayTab('BOARD_DIRECTIVES') && matchesSearch('BOARD_DIRECTIVES')) ||
+    (canDisplayTab('ANALYTICS') && matchesSearch('ANALYTICS')) ||
+    (canDisplayTab('RISK_CENTER') && matchesSearch('RISK_CENTER'));
+
+  const hasVisibleOperation = 
+    (canDisplayTab('TASKS') && matchesSearch('TASKS')) ||
+    (canDisplayTab('WORKFLOW_APPROVALS') && matchesSearch('WORKFLOW_APPROVALS')) ||
+    (canDisplayTab('MEETING') && matchesSearch('MEETING')) ||
+    (canDisplayTab('KNOWLEDGE') && matchesSearch('KNOWLEDGE'));
+
+  const hasVisibleFoundation = 
+    (canDisplayTab('STRATEGY_OKRS') && matchesSearch('STRATEGY_OKRS')) ||
+    (canDisplayTab('DOCUMENT') && matchesSearch('DOCUMENT'));
+
+  const hasVisibleBusiness = 
+    (canDisplayTab('CRM_ADMISSIONS') && matchesSearch('CRM_ADMISSIONS')) ||
+    (canDisplayTab('STUDENT_SUCCESS') && matchesSearch('STUDENT_SUCCESS')) ||
+    (canDisplayTab('PARENT_PORTAL') && matchesSearch('PARENT_PORTAL')) ||
+    (canDisplayTab('HRM') && matchesSearch('HRM')) ||
+    (canDisplayTab('LMS') && matchesSearch('LMS'));
+
+  const hasVisibleCampus = 
+    (canDisplayTab('EVENTS') && matchesSearch('EVENTS')) ||
+    (canDisplayTab('ACADEMIC_OPS') && matchesSearch('ACADEMIC_OPS')) ||
+    (canDisplayTab('LOGISTICS') && matchesSearch('LOGISTICS')) ||
+    (canDisplayTab('REQUESTS') && matchesSearch('REQUESTS')) ||
+    (canDisplayTab('GOOGLE_SHEETS') && matchesSearch('GOOGLE_SHEETS'));
+
+  const isGroupOpen = (groupKey: 'strategy' | 'operation' | 'foundation' | 'business' | 'campus') => {
+    if (sidebarSearchQuery) return true;
+    return expandedGroups[groupKey];
   };
 
   // Panels visibility state to avoid long page (tránh để tình trạng trang quá dài)
@@ -1967,56 +2034,13 @@ function AppInner() {
                 <button
                   onClick={() => {
                     setIsLoggedIn(false);
-                    localStorage.removeItem('mis_edutask_logged_in');
-                    localStorage.removeItem('mis_edutask_logged_in_user_id');
-                  }}
-                  id="btn-header-logout"
-                  className="text-[11px] font-bold text-rose-600 hover:text-rose-700 hover:underline cursor-pointer focus:outline-none transition-colors"
-                >
-                  Đăng xuất
-                </button>
-              </div>
-            </div>
-            
-            {/* Mobile logout option helper */}
-            <div className="flex flex-col items-center gap-1 sm:hidden">
-              <img
-                src={getSafeAvatar(currentUser.avatar, displayCurrentUser.name)}
-                alt={displayCurrentUser.name}
-                referrerPolicy="no-referrer"
-                className="w-9 h-9 rounded-xl bg-slate-200 border-2 border-slate-200 shadow-sm object-cover"
-              />
-              <button
-                onClick={() => {
-                  setIsLoggedIn(false);
-                  localStorage.removeItem('mis_edutask_logged_in');
-                  localStorage.removeItem('mis_edutask_logged_in_user_id');
-                }}
-                className="text-[9px] font-extrabold text-rose-600 active:underline leading-none"
-              >
-                Đăng xuất
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
-
-      {/* Sidebar Mobile Backdrop Overlay */}
-      {isSidebarOpen && (
-        <div 
-          onClick={() => setIsSidebarOpen(false)}
-          className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-39 md:hidden transition-all animate-fade-in"
-          id="sidebar-backdrop-mobile"
-        />
-      )}
-
-      {/* Flex Layout Container with Sidebar + Main Workspace */}
-      <div className="flex flex-1 min-h-0 relative">
-        
-        {/* Sidebar Navigation matching the design HTML */}
-        <aside className={`fixed inset-y-0 left-0 z-40 w-64 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 flex flex-col shrink-0 border-r border-slate-200/80 dark:border-slate-800/80 min-h-full transition-transform duration-300 md:static md:translate-x-0 ${
-          isSidebarOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'
-        }`}>
+                    localStorage.removeIt        <aside 
+          role="navigation" 
+          aria-label="Menu chính"
+          className={`fixed inset-y-0 left-0 z-40 w-64 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 flex flex-col shrink-0 border-r border-slate-200/80 dark:border-slate-800/80 min-h-full transition-transform duration-300 md:static md:translate-x-0 ${
+            isSidebarOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'
+          }`}
+        >
           {/* Mobile close button inside sidebar */}
           <div className="flex md:hidden items-center justify-between p-4 border-b border-slate-200/80 dark:border-slate-850 bg-slate-50 dark:bg-slate-900">
             <span className="font-display font-black text-xs text-indigo-950 dark:text-indigo-400 uppercase tracking-widest">Danh mục chỉ đạo</span>
@@ -2031,415 +2055,546 @@ function AppInner() {
           <div className="p-4 flex flex-col gap-3.5 flex-1 overflow-y-auto">
             <p className="text-[10px] uppercase tracking-widest font-black text-slate-400 mb-0.5 px-3 font-mono">School OS 2.0</p>
 
-            {/* GROUP 1: STRATEGY */}
-            <div className="flex flex-col gap-0.5 border-b border-slate-100 dark:border-slate-800 pb-2.5" style={{ order: 1 }}>
-              <button 
-                onClick={() => toggleGroup('strategy')}
-                className="w-full flex items-center justify-between text-[10px] font-black tracking-wider text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 py-1.5 px-3 uppercase font-mono cursor-pointer transition-colors"
-              >
-                <span className="flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
-                  <span className={expandedGroups.strategy ? 'text-rose-600 dark:text-rose-400 font-extrabold' : ''}>1. Chiến lược</span>
-                </span>
-                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${expandedGroups.strategy ? 'text-rose-600 dark:text-rose-400' : '-rotate-90'}`} />
-              </button>
-              
-              {expandedGroups.strategy && (
-                <div className="flex flex-col gap-1 pl-2 ml-2 mt-1 border-l border-rose-100 dark:border-rose-900 transition-all duration-300">
-                  {/* Dashboard */}
-                  <button 
-                    onClick={() => { setOverviewTab('DASHBOARD'); setIsSidebarOpen(false); }}
-                    className={`${!canDisplayTab('DASHBOARD') ? 'hidden' : ''} w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
-                      overviewTab === 'DASHBOARD' 
-                        ? 'bg-rose-50 dark:bg-rose-950/45 text-rose-700 dark:text-rose-300 font-extrabold border-l-4 border-rose-600 shadow-3xs scale-[1.01]' 
-                        : 'text-slate-600 dark:text-slate-350 hover:bg-rose-50/35 hover:text-rose-700 dark:hover:bg-slate-800 dark:hover:text-rose-400 font-semibold border-l-4 border-transparent'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <Layout className={`w-4 h-4 transition-colors ${overviewTab === 'DASHBOARD' ? 'text-rose-600 dark:text-rose-400' : 'text-rose-400 dark:text-rose-550'}`} />
-                      <span>Bảng điều khiển Điều hành</span>
-                    </div>
-                  </button>
-
-                  {/* Chỉ đạo BGH */}
-                  <button 
-                    onClick={() => { setOverviewTab('BOARD_DIRECTIVES'); setIsSidebarOpen(false); }}
-                    className={`${!canDisplayTab('BOARD_DIRECTIVES') ? 'hidden' : ''} w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
-                      overviewTab === 'BOARD_DIRECTIVES' 
-                        ? 'bg-rose-50 dark:bg-rose-950/45 text-rose-700 dark:text-rose-300 font-extrabold border-l-4 border-rose-600 shadow-3xs scale-[1.01]' 
-                        : 'text-slate-600 dark:text-slate-350 hover:bg-rose-50/35 hover:text-rose-700 dark:hover:bg-slate-800 dark:hover:text-rose-400 font-semibold border-l-4 border-transparent'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <Megaphone className={`w-4 h-4 transition-colors ${overviewTab === 'BOARD_DIRECTIVES' ? 'text-rose-600 dark:text-rose-400' : 'text-rose-400 dark:text-rose-550'}`} />
-                      <span>Chỉ đạo BGH</span>
-                    </div>
-                    <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider font-mono shrink-0 select-none ${
-                      overviewTab === 'BOARD_DIRECTIVES' ? 'bg-rose-600 text-white' : 'bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300'
-                    }`}>NEW</span>
-                  </button>
-
-                  {/* Báo cáo */}
-                  <button 
-                    onClick={() => { setOverviewTab('ANALYTICS'); setIsSidebarOpen(false); }}
-                    className={`${!canDisplayTab('ANALYTICS') ? 'hidden' : ''} w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
-                      overviewTab === 'ANALYTICS' 
-                        ? 'bg-rose-50 dark:bg-rose-950/45 text-rose-700 dark:text-rose-300 font-extrabold border-l-4 border-rose-600 shadow-3xs scale-[1.01]' 
-                        : 'text-slate-600 dark:text-slate-350 hover:bg-rose-50/35 hover:text-rose-700 dark:hover:bg-slate-800 dark:hover:text-rose-400 font-semibold border-l-4 border-transparent'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <FileSpreadsheet className={`w-4 h-4 transition-colors ${overviewTab === 'ANALYTICS' ? 'text-rose-600 dark:text-rose-400' : 'text-rose-400 dark:text-rose-550'}`} />
-                      <span>Báo cáo &amp; Phân tích</span>
-                    </div>
-                  </button>
-
-                  {/* Rủi ro */}
-                  <button 
-                    onClick={() => { setOverviewTab('RISK_CENTER'); setIsSidebarOpen(false); }}
-                    className={`${!canDisplayTab('RISK_CENTER') ? 'hidden' : ''} w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
-                      overviewTab === 'RISK_CENTER' 
-                        ? 'bg-rose-50 dark:bg-rose-950/45 text-rose-700 dark:text-rose-300 font-extrabold border-l-4 border-rose-600 shadow-3xs scale-[1.01]' 
-                        : 'text-slate-600 dark:text-slate-350 hover:bg-rose-50/35 hover:text-rose-700 dark:hover:bg-slate-800 dark:hover:text-rose-400 font-semibold border-l-4 border-transparent'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <AlertCircle className={`w-4 h-4 transition-colors ${overviewTab === 'RISK_CENTER' ? 'text-rose-600 dark:text-rose-400' : 'text-rose-400 dark:text-rose-550'}`} />
-                      <span>Quản trị Rủi ro</span>
-                    </div>
-                  </button>
-                </div>
+            {/* Sidebar Search Input */}
+            <div className="px-3 mb-1.5 relative">
+              <span className="absolute inset-y-0 left-3 pl-3 flex items-center pointer-events-none text-slate-400">
+                <Search className="w-3.5 h-3.5" />
+              </span>
+              <input
+                type="text"
+                value={sidebarSearchQuery}
+                onChange={(e) => setSidebarSearchQuery(e.target.value)}
+                placeholder="Tìm nhanh tính năng..."
+                className="w-full pl-9 pr-8 py-1.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 rounded-xl text-[11px] focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-700 dark:text-slate-200 placeholder-slate-400 transition-all"
+                aria-label="Tìm kiếm tính năng"
+              />
+              {sidebarSearchQuery && (
+                <button
+                  onClick={() => setSidebarSearchQuery('')}
+                  className="absolute inset-y-0 right-3 pr-3 flex items-center text-slate-400 hover:text-slate-650 dark:hover:text-slate-200 cursor-pointer"
+                  title="Xoá tìm kiếm"
+                >
+                  <X className="w-3 h-3" />
+                </button>
               )}
             </div>
 
-            {/* GROUP 3: FOUNDATION */}
-            <div className="flex flex-col gap-0.5 border-b border-slate-100 dark:border-slate-800 pb-2.5" style={{ order: 3 }}>
-              <button 
-                onClick={() => toggleGroup('foundation')}
-                className="w-full flex items-center justify-between text-[10px] font-black tracking-wider text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 py-1.5 px-3 uppercase font-mono cursor-pointer transition-colors"
-              >
-                <span className="flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
-                  <span className={expandedGroups.foundation ? 'text-indigo-600 dark:text-indigo-400 font-extrabold' : ''}>3. Nền tảng</span>
-                </span>
-                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${expandedGroups.foundation ? 'text-indigo-600 dark:text-indigo-400' : '-rotate-90'}`} />
-              </button>
-              
-              {expandedGroups.foundation && (
-                <div className="flex flex-col gap-1 pl-2 ml-2 mt-1 border-l border-indigo-100 dark:border-indigo-900 transition-all duration-300">
-                  {/* Định hướng & OKRs */}
-                  <button 
-                    onClick={() => { setOverviewTab('STRATEGY_OKRS'); setIsSidebarOpen(false); }}
-                    className={`${!canDisplayTab('STRATEGY_OKRS') ? 'hidden' : ''} w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
-                      overviewTab === 'STRATEGY_OKRS' 
-                        ? 'bg-indigo-50 dark:bg-indigo-950/45 text-indigo-700 dark:text-indigo-300 font-extrabold border-l-4 border-indigo-600 shadow-3xs scale-[1.01]' 
-                        : 'text-slate-600 dark:text-slate-350 hover:bg-indigo-50/35 hover:text-indigo-700 dark:hover:bg-slate-800 dark:hover:text-indigo-400 font-semibold border-l-4 border-transparent'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <Layers className={`w-4 h-4 transition-colors ${overviewTab === 'STRATEGY_OKRS' ? 'text-indigo-600 dark:text-indigo-400' : 'text-indigo-400 dark:text-indigo-550'}`} />
-                      <span>Định hướng &amp; OKRs</span>
-                    </div>
-                  </button>
+            {/* GROUP 1: STRATEGY (Chiến lược) */}
+            {hasVisibleStrategy && (
+              <div className="flex flex-col gap-0.5 border-b border-slate-100 dark:border-slate-800 pb-2.5">
+                <button 
+                  onClick={() => toggleGroup('strategy')}
+                  aria-expanded={isGroupOpen('strategy')}
+                  className="w-full flex items-center justify-between text-[10px] font-black tracking-wider text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 py-1.5 px-3 uppercase font-mono cursor-pointer transition-colors"
+                >
+                  <span className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                    <span className={isGroupOpen('strategy') ? 'text-rose-600 dark:text-rose-400 font-extrabold' : ''}>1. Chiến lược</span>
+                  </span>
+                  <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isGroupOpen('strategy') ? 'text-rose-600 dark:text-rose-400' : '-rotate-90'}`} />
+                </button>
+                
+                {isGroupOpen('strategy') && (
+                  <div className="flex flex-col gap-1 pl-2 ml-2 mt-1 border-l border-rose-100 dark:border-rose-900 transition-all duration-300">
+                    {/* Dashboard */}
+                    {canDisplayTab('DASHBOARD') && matchesSearch('DASHBOARD') && (
+                      <button 
+                        onClick={() => { setOverviewTab('DASHBOARD'); setIsSidebarOpen(false); }}
+                        aria-current={overviewTab === 'DASHBOARD' ? 'page' : undefined}
+                        className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
+                          overviewTab === 'DASHBOARD' 
+                            ? 'bg-rose-55 dark:bg-rose-950/45 text-rose-700 dark:text-rose-300 font-extrabold border-l-4 border-rose-600 shadow-3xs scale-[1.01]' 
+                            : 'text-slate-600 dark:text-slate-350 hover:bg-rose-50/35 hover:text-rose-700 dark:hover:bg-slate-800 dark:hover:text-rose-400 font-semibold border-l-4 border-transparent'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <Layout className={`w-4 h-4 transition-colors ${overviewTab === 'DASHBOARD' ? 'text-rose-600 dark:text-rose-400' : 'text-rose-400 dark:text-rose-550'}`} />
+                          <span>Bảng điều khiển Điều hành</span>
+                        </div>
+                      </button>
+                    )}
 
-                  {/* Văn bản */}
-                  <button 
-                    onClick={() => { setOverviewTab('DOCUMENT'); setIsSidebarOpen(false); }}
-                    className={`${!canDisplayTab('DOCUMENT') ? 'hidden' : ''} w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
-                      overviewTab === 'DOCUMENT' 
-                        ? 'bg-indigo-50 dark:bg-indigo-950/45 text-indigo-700 dark:text-indigo-300 font-extrabold border-l-4 border-indigo-600 shadow-3xs scale-[1.01]' 
-                        : 'text-slate-600 dark:text-slate-350 hover:bg-indigo-50/35 hover:text-indigo-700 dark:hover:bg-slate-800 dark:hover:text-indigo-400 font-semibold border-l-4 border-transparent'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <FileText className={`w-4 h-4 transition-colors ${overviewTab === 'DOCUMENT' ? 'text-indigo-600 dark:text-indigo-400' : 'text-indigo-400 dark:text-indigo-550'}`} />
-                      <span>Quản lý Văn bản</span>
-                    </div>
-                    <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider font-mono shrink-0 select-none ${
-                      overviewTab === 'DOCUMENT' ? 'bg-indigo-600 text-white' : 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300'
-                    }`}>NEW</span>
-                  </button>
-                </div>
-              )}
+                    {/* Chỉ đạo BGH */}
+                    {canDisplayTab('BOARD_DIRECTIVES') && matchesSearch('BOARD_DIRECTIVES') && (
+                      <button 
+                        onClick={() => { setOverviewTab('BOARD_DIRECTIVES'); setIsSidebarOpen(false); }}
+                        aria-current={overviewTab === 'BOARD_DIRECTIVES' ? 'page' : undefined}
+                        className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
+                          overviewTab === 'BOARD_DIRECTIVES' 
+                            ? 'bg-rose-55 dark:bg-rose-950/45 text-rose-700 dark:text-rose-300 font-extrabold border-l-4 border-rose-600 shadow-3xs scale-[1.01]' 
+                            : 'text-slate-600 dark:text-slate-350 hover:bg-rose-50/35 hover:text-rose-700 dark:hover:bg-slate-800 dark:hover:text-rose-400 font-semibold border-l-4 border-transparent'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <Megaphone className={`w-4 h-4 transition-colors ${overviewTab === 'BOARD_DIRECTIVES' ? 'text-rose-600 dark:text-rose-400' : 'text-rose-400 dark:text-rose-550'}`} />
+                          <span>Chỉ đạo BGH</span>
+                        </div>
+                        <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider font-mono shrink-0 select-none ${
+                          overviewTab === 'BOARD_DIRECTIVES' ? 'bg-rose-600 text-white' : 'bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300'
+                        }`}>NEW</span>
+                      </button>
+                    )}
+
+                    {/* Báo cáo */}
+                    {canDisplayTab('ANALYTICS') && matchesSearch('ANALYTICS') && (
+                      <button 
+                        onClick={() => { setOverviewTab('ANALYTICS'); setIsSidebarOpen(false); }}
+                        aria-current={overviewTab === 'ANALYTICS' ? 'page' : undefined}
+                        className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
+                          overviewTab === 'ANALYTICS' 
+                            ? 'bg-rose-55 dark:bg-rose-950/45 text-rose-700 dark:text-rose-300 font-extrabold border-l-4 border-rose-600 shadow-3xs scale-[1.01]' 
+                            : 'text-slate-600 dark:text-slate-350 hover:bg-rose-50/35 hover:text-rose-700 dark:hover:bg-slate-800 dark:hover:text-rose-400 font-semibold border-l-4 border-transparent'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <FileSpreadsheet className={`w-4 h-4 transition-colors ${overviewTab === 'ANALYTICS' ? 'text-rose-600 dark:text-rose-400' : 'text-rose-400 dark:text-rose-550'}`} />
+                          <span>Báo cáo &amp; Phân tích</span>
+                        </div>
+                      </button>
+                    )}
+
+                    {/* Rủi ro */}
+                    {canDisplayTab('RISK_CENTER') && matchesSearch('RISK_CENTER') && (
+                      <button 
+                        onClick={() => { setOverviewTab('RISK_CENTER'); setIsSidebarOpen(false); }}
+                        aria-current={overviewTab === 'RISK_CENTER' ? 'page' : undefined}
+                        className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
+                          overviewTab === 'RISK_CENTER' 
+                            ? 'bg-rose-55 dark:bg-rose-950/45 text-rose-700 dark:text-rose-300 font-extrabold border-l-4 border-rose-600 shadow-3xs scale-[1.01]' 
+                            : 'text-slate-600 dark:text-slate-350 hover:bg-rose-50/35 hover:text-rose-700 dark:hover:bg-slate-800 dark:hover:text-rose-400 font-semibold border-l-4 border-transparent'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <AlertCircle className={`w-4 h-4 transition-colors ${overviewTab === 'RISK_CENTER' ? 'text-rose-600 dark:text-rose-400' : 'text-rose-400 dark:text-rose-550'}`} />
+                          <span>Quản trị Rủi ro</span>
+                        </div>
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* GROUP 2: OPERATION (Vận hành) */}
+            {hasVisibleOperation && (
+              <div className="flex flex-col gap-0.5 border-b border-slate-100 dark:border-slate-800 pb-2.5">
+                <button 
+                  onClick={() => toggleGroup('operation')}
+                  aria-expanded={isGroupOpen('operation')}
+                  className="w-full flex items-center justify-between text-[10px] font-black tracking-wider text-slate-400 dark:text-slate-500 hover:text-violet-600 dark:hover:text-violet-400 py-1.5 px-3 uppercase font-mono cursor-pointer transition-colors"
+                >
+                  <span className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-violet-500"></span>
+                    <span className={isGroupOpen('operation') ? 'text-violet-600 dark:text-violet-400 font-extrabold' : ''}>2. Vận hành</span>
+                  </span>
+                  <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isGroupOpen('operation') ? 'text-violet-600 dark:text-violet-400' : '-rotate-90'}`} />
+                </button>
+                
+                {isGroupOpen('operation') && (
+                  <div className="flex flex-col gap-1 pl-2 ml-2 mt-1 border-l border-violet-100 dark:border-violet-900 transition-all duration-300">
+                    {/* Nhiệm vụ & Dự án */}
+                    {canDisplayTab('TASKS') && matchesSearch('TASKS') && (
+                      <button 
+                        onClick={() => { setOverviewTab('TASKS'); handleSelectViewOnMobile('KANBAN'); setIsSidebarOpen(false); }}
+                        aria-current={overviewTab === 'TASKS' ? 'page' : undefined}
+                        className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
+                          overviewTab === 'TASKS' 
+                            ? 'bg-violet-50 dark:bg-violet-950/45 text-violet-700 dark:text-violet-300 font-extrabold border-l-4 border-violet-600 shadow-3xs scale-[1.01]' 
+                            : 'text-slate-600 dark:text-slate-350 hover:bg-violet-50/35 hover:text-violet-750 dark:hover:bg-slate-800 dark:hover:text-violet-400 font-semibold border-l-4 border-transparent'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <ListTodo className={`w-4 h-4 transition-colors ${overviewTab === 'TASKS' ? 'text-violet-600 dark:text-violet-400' : 'text-violet-400 dark:text-violet-550'}`} />
+                          <span>Nhiệm vụ &amp; Dự án</span>
+                        </div>
+                      </button>
+                    )}
+
+                    {/* Quy trình & Phê duyệt */}
+                    {canDisplayTab('WORKFLOW_APPROVALS') && matchesSearch('WORKFLOW_APPROVALS') && (
+                      <button 
+                        onClick={() => { setOverviewTab('WORKFLOW_APPROVALS'); setIsSidebarOpen(false); }}
+                        aria-current={overviewTab === 'WORKFLOW_APPROVALS' ? 'page' : undefined}
+                        className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
+                          overviewTab === 'WORKFLOW_APPROVALS' 
+                            ? 'bg-violet-50 dark:bg-violet-950/45 text-violet-700 dark:text-violet-300 font-extrabold border-l-4 border-violet-600 shadow-3xs scale-[1.01]' 
+                            : 'text-slate-600 dark:text-slate-350 hover:bg-violet-50/35 hover:text-violet-750 dark:hover:bg-slate-800 dark:hover:text-violet-400 font-semibold border-l-4 border-transparent'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <FileCheck className={`w-4 h-4 transition-colors ${overviewTab === 'WORKFLOW_APPROVALS' ? 'text-violet-600 dark:text-violet-400' : 'text-violet-400 dark:text-violet-550'}`} />
+                          <span>Quy trình &amp; Phê duyệt</span>
+                        </div>
+                      </button>
+                    )}
+
+                    {/* Cuộc họp */}
+                    {canDisplayTab('MEETING') && matchesSearch('MEETING') && (
+                      <button 
+                        onClick={() => { setOverviewTab('MEETING'); setIsSidebarOpen(false); }}
+                        aria-current={overviewTab === 'MEETING' ? 'page' : undefined}
+                        className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
+                          overviewTab === 'MEETING' 
+                            ? 'bg-violet-50 dark:bg-violet-950/45 text-violet-700 dark:text-violet-300 font-extrabold border-l-4 border-violet-600 shadow-3xs scale-[1.01]' 
+                            : 'text-slate-600 dark:text-slate-350 hover:bg-violet-50/35 hover:text-violet-750 dark:hover:bg-slate-800 dark:hover:text-violet-400 font-semibold border-l-4 border-transparent'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <CalendarDays className={`w-4 h-4 transition-colors ${overviewTab === 'MEETING' ? 'text-violet-600 dark:text-violet-400' : 'text-violet-400 dark:text-violet-550'}`} />
+                          <span>Quản lý Cuộc họp</span>
+                        </div>
+                        <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider font-mono shrink-0 select-none ${
+                          overviewTab === 'MEETING' ? 'bg-violet-600 text-white' : 'bg-violet-100 text-violet-750 dark:bg-violet-950 dark:text-violet-300'
+                        }`}>NEW</span>
+                      </button>
+                    )}
+
+                    {/* Kho tri thức */}
+                    {canDisplayTab('KNOWLEDGE') && matchesSearch('KNOWLEDGE') && (
+                      <button 
+                        onClick={() => { setOverviewTab('KNOWLEDGE'); setIsSidebarOpen(false); }}
+                        aria-current={overviewTab === 'KNOWLEDGE' ? 'page' : undefined}
+                        className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
+                          overviewTab === 'KNOWLEDGE' 
+                            ? 'bg-violet-50 dark:bg-violet-950/45 text-violet-700 dark:text-violet-300 font-extrabold border-l-4 border-violet-600 shadow-3xs scale-[1.01]' 
+                            : 'text-slate-600 dark:text-slate-350 hover:bg-violet-50/35 hover:text-violet-750 dark:hover:bg-slate-800 dark:hover:text-violet-400 font-semibold border-l-4 border-transparent'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <BookOpen className={`w-4 h-4 transition-colors ${overviewTab === 'KNOWLEDGE' ? 'text-violet-600 dark:text-violet-400' : 'text-violet-400 dark:text-violet-550'}`} />
+                          <span>Kho Tri Thức</span>
+                        </div>
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* GROUP 3: FOUNDATION (Nền tảng) */}
+            {hasVisibleFoundation && (
+              <div className="flex flex-col gap-0.5 border-b border-slate-100 dark:border-slate-800 pb-2.5">
+                <button 
+                  onClick={() => toggleGroup('foundation')}
+                  aria-expanded={isGroupOpen('foundation')}
+                  className="w-full flex items-center justify-between text-[10px] font-black tracking-wider text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 py-1.5 px-3 uppercase font-mono cursor-pointer transition-colors"
+                >
+                  <span className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
+                    <span className={isGroupOpen('foundation') ? 'text-indigo-600 dark:text-indigo-400 font-extrabold' : ''}>3. Nền tảng</span>
+                  </span>
+                  <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isGroupOpen('foundation') ? 'text-indigo-600 dark:text-indigo-400' : '-rotate-90'}`} />
+                </button>
+                
+                {isGroupOpen('foundation') && (
+                  <div className="flex flex-col gap-1 pl-2 ml-2 mt-1 border-l border-indigo-100 dark:border-indigo-900 transition-all duration-300">
+                    {/* Định hướng & OKRs */}
+                    {canDisplayTab('STRATEGY_OKRS') && matchesSearch('STRATEGY_OKRS') && (
+                      <button 
+                        onClick={() => { setOverviewTab('STRATEGY_OKRS'); setIsSidebarOpen(false); }}
+                        aria-current={overviewTab === 'STRATEGY_OKRS' ? 'page' : undefined}
+                        className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
+                          overviewTab === 'STRATEGY_OKRS' 
+                            ? 'bg-indigo-50 dark:bg-indigo-950/45 text-indigo-700 dark:text-indigo-300 font-extrabold border-l-4 border-indigo-600 shadow-3xs scale-[1.01]' 
+                            : 'text-slate-600 dark:text-slate-350 hover:bg-indigo-50/35 hover:text-indigo-700 dark:hover:bg-slate-800 dark:hover:text-indigo-400 font-semibold border-l-4 border-transparent'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <Layers className={`w-4 h-4 transition-colors ${overviewTab === 'STRATEGY_OKRS' ? 'text-indigo-600 dark:text-indigo-400' : 'text-indigo-400 dark:text-indigo-550'}`} />
+                          <span>Định hướng &amp; OKRs</span>
+                        </div>
+                      </button>
+                    )}
+
+                    {/* Văn bản */}
+                    {canDisplayTab('DOCUMENT') && matchesSearch('DOCUMENT') && (
+                      <button 
+                        onClick={() => { setOverviewTab('DOCUMENT'); setIsSidebarOpen(false); }}
+                        aria-current={overviewTab === 'DOCUMENT' ? 'page' : undefined}
+                        className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
+                          overviewTab === 'DOCUMENT' 
+                            ? 'bg-indigo-50 dark:bg-indigo-950/45 text-indigo-700 dark:text-indigo-300 font-extrabold border-l-4 border-indigo-600 shadow-3xs scale-[1.01]' 
+                            : 'text-slate-600 dark:text-slate-350 hover:bg-indigo-50/35 hover:text-indigo-700 dark:hover:bg-slate-800 dark:hover:text-indigo-400 font-semibold border-l-4 border-transparent'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <FileText className={`w-4 h-4 transition-colors ${overviewTab === 'DOCUMENT' ? 'text-indigo-600 dark:text-indigo-400' : 'text-indigo-400 dark:text-indigo-550'}`} />
+                          <span>Quản lý Văn bản</span>
+                        </div>
+                        <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider font-mono shrink-0 select-none ${
+                          overviewTab === 'DOCUMENT' ? 'bg-indigo-650 text-white' : 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300'
+                        }`}>NEW</span>
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* GROUP 4: BUSINESS (Nghiệp vụ Trường học) */}
+            {hasVisibleBusiness && (
+              <div className="flex flex-col gap-0.5 border-b border-slate-100 dark:border-slate-800 pb-2.5">
+                <button 
+                  onClick={() => toggleGroup('business')}
+                  aria-expanded={isGroupOpen('business')}
+                  className="w-full flex items-center justify-between text-[10px] font-black tracking-wider text-slate-400 dark:text-slate-500 hover:text-emerald-600 dark:text-emerald-400 dark:hover:text-emerald-400 py-1.5 px-3 uppercase font-mono cursor-pointer transition-colors"
+                >
+                  <span className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                    <span className={isGroupOpen('business') ? 'text-emerald-600 dark:text-emerald-400 font-extrabold' : ''}>4. Nghiệp vụ Trường học</span>
+                  </span>
+                  <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isGroupOpen('business') ? 'text-emerald-600 dark:text-emerald-400' : '-rotate-90'}`} />
+                </button>
+                
+                {isGroupOpen('business') && (
+                  <div className="flex flex-col gap-1 pl-2 ml-2 mt-1 border-l border-emerald-100 dark:border-emerald-900 transition-all duration-300">
+                    {/* Tuyển sinh & CRM */}
+                    {canDisplayTab('CRM_ADMISSIONS') && matchesSearch('CRM_ADMISSIONS') && (
+                      <button 
+                        onClick={() => { setOverviewTab('CRM_ADMISSIONS'); setIsSidebarOpen(false); }}
+                        aria-current={overviewTab === 'CRM_ADMISSIONS' ? 'page' : undefined}
+                        className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
+                          overviewTab === 'CRM_ADMISSIONS' 
+                            ? 'bg-emerald-50 dark:bg-emerald-950/45 text-emerald-700 dark:text-emerald-300 font-extrabold border-l-4 border-emerald-600 shadow-3xs scale-[1.01]' 
+                            : 'text-slate-600 dark:text-slate-350 hover:bg-emerald-50/35 hover:text-emerald-750 dark:hover:bg-slate-800 dark:hover:text-emerald-400 font-semibold border-l-4 border-transparent'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <SlidersHorizontal className={`w-4 h-4 transition-colors ${overviewTab === 'CRM_ADMISSIONS' ? 'text-emerald-600 dark:text-emerald-400' : 'text-emerald-400 dark:text-emerald-555'}`} />
+                          <span>Tuyển sinh &amp; CRM</span>
+                        </div>
+                      </button>
+                    )}
+
+                    {/* Học sinh 360 */}
+                    {canDisplayTab('STUDENT_SUCCESS') && matchesSearch('STUDENT_SUCCESS') && (
+                      <button 
+                        onClick={() => { setOverviewTab('STUDENT_SUCCESS'); setIsSidebarOpen(false); }}
+                        aria-current={overviewTab === 'STUDENT_SUCCESS' ? 'page' : undefined}
+                        className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
+                          overviewTab === 'STUDENT_SUCCESS' 
+                            ? 'bg-emerald-50 dark:bg-emerald-950/45 text-emerald-700 dark:text-emerald-300 font-extrabold border-l-4 border-emerald-600 shadow-3xs scale-[1.01]' 
+                            : 'text-slate-600 dark:text-slate-350 hover:bg-emerald-50/35 hover:text-emerald-700 dark:hover:bg-slate-800 dark:hover:text-emerald-400 font-semibold border-l-4 border-transparent'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <Users className={`w-4 h-4 transition-colors ${overviewTab === 'STUDENT_SUCCESS' ? 'text-emerald-600 dark:text-emerald-400' : 'text-emerald-400 dark:text-emerald-555'}`} />
+                          <span>Hồ sơ Học sinh 360°</span>
+                        </div>
+                      </button>
+                    )}
+
+                    {/* Cổng PHHS / Học sinh */}
+                    {canDisplayTab('PARENT_PORTAL') && matchesSearch('PARENT_PORTAL') && (
+                      <button
+                        onClick={() => { setOverviewTab('PARENT_PORTAL'); setIsSidebarOpen(false); }}
+                        aria-current={overviewTab === 'PARENT_PORTAL' ? 'page' : undefined}
+                        className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
+                          overviewTab === 'PARENT_PORTAL'
+                            ? 'bg-emerald-50 dark:bg-emerald-950/45 text-emerald-700 dark:text-emerald-300 font-extrabold border-l-4 border-emerald-600 shadow-3xs scale-[1.01]'
+                            : 'text-slate-600 dark:text-slate-350 hover:bg-emerald-50/35 hover:text-emerald-700 dark:hover:bg-slate-800 dark:hover:text-emerald-400 font-semibold border-l-4 border-transparent'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <Smartphone className={`w-4 h-4 transition-colors ${overviewTab === 'PARENT_PORTAL' ? 'text-emerald-600 dark:text-emerald-400' : 'text-emerald-400 dark:text-emerald-555'}`} />
+                          <span>Cổng PHHS / Học sinh</span>
+                        </div>
+                        <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider font-mono shrink-0 select-none ${
+                          overviewTab === 'PARENT_PORTAL' ? 'bg-emerald-600 text-white' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
+                        }`}>NEW</span>
+                      </button>
+                    )}
+
+                    {/* HRM */}
+                    {canDisplayTab('HRM') && matchesSearch('HRM') && (
+                      <button 
+                        onClick={() => { setOverviewTab('HRM'); setIsSidebarOpen(false); }}
+                        aria-current={overviewTab === 'HRM' ? 'page' : undefined}
+                        className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
+                          overviewTab === 'HRM' 
+                            ? 'bg-emerald-50 dark:bg-emerald-950/45 text-emerald-700 dark:text-emerald-300 font-extrabold border-l-4 border-emerald-600 shadow-3xs scale-[1.01]' 
+                            : 'text-slate-600 dark:text-slate-350 hover:bg-emerald-50/35 hover:text-emerald-700 dark:hover:bg-slate-800 dark:hover:text-emerald-400 font-semibold border-l-4 border-transparent'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <UserCheck className={`w-4 h-4 transition-colors ${overviewTab === 'HRM' ? 'text-emerald-600 dark:text-emerald-400' : 'text-emerald-400 dark:text-emerald-555'}`} />
+                          <span>Quản trị HRM</span>
+                        </div>
+                        <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider font-mono shrink-0 select-none ${
+                          overviewTab === 'HRM' ? 'bg-emerald-600 text-white' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
+                        }`}>NEW</span>
+                      </button>
+                    )}
+
+                    {/* LMS */}
+                    {canDisplayTab('LMS') && matchesSearch('LMS') && (
+                      <button 
+                        onClick={() => { setOverviewTab('LMS'); setIsSidebarOpen(false); }}
+                        aria-current={overviewTab === 'LMS' ? 'page' : undefined}
+                        className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
+                          overviewTab === 'LMS' 
+                            ? 'bg-emerald-50 dark:bg-emerald-950/45 text-emerald-700 dark:text-emerald-300 font-extrabold border-l-4 border-emerald-600 shadow-3xs scale-[1.01]' 
+                            : 'text-slate-600 dark:text-slate-350 hover:bg-violet-50/35 hover:text-emerald-750 dark:hover:bg-slate-800 dark:hover:text-emerald-400 font-semibold border-l-4 border-transparent'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <Laptop className={`w-4 h-4 transition-colors ${overviewTab === 'LMS' ? 'text-emerald-600 dark:text-emerald-400' : 'text-emerald-400 dark:text-emerald-555'}`} />
+                          <span>Hệ thống LMS</span>
+                        </div>
+                        <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider font-mono shrink-0 select-none ${
+                          overviewTab === 'LMS' ? 'bg-emerald-600 text-white' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
+                        }`}>NEW</span>
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* GROUP 5: CAMPUS (Vận hành Học đường) */}
+            {hasVisibleCampus && (
+              <div className="flex flex-col gap-0.5 border-b border-slate-100 dark:border-slate-800 pb-2.5">
+                <button 
+                  onClick={() => toggleGroup('campus')}
+                  aria-expanded={isGroupOpen('campus')}
+                  className="w-full flex items-center justify-between text-[10px] font-black tracking-wider text-slate-400 dark:text-slate-500 hover:text-sky-600 dark:text-sky-400 dark:hover:text-sky-400 py-1.5 px-3 uppercase font-mono cursor-pointer transition-colors"
+                >
+                  <span className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-sky-500"></span>
+                    <span className={isGroupOpen('campus') ? 'text-sky-600 dark:text-sky-400 font-extrabold' : ''}>5. Vận hành Học đường</span>
+                  </span>
+                  <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isGroupOpen('campus') ? 'text-sky-600 dark:text-sky-400' : '-rotate-90'}`} />
+                </button>
+                
+                {isGroupOpen('campus') && (
+                  <div className="flex flex-col gap-1 pl-2 ml-2 mt-1 border-l border-sky-100 dark:border-sky-900 transition-all duration-300">
+                    {/* Sự kiện */}
+                    {canDisplayTab('EVENTS') && matchesSearch('EVENTS') && (
+                      <button 
+                        onClick={() => { setOverviewTab('EVENTS'); setIsSidebarOpen(false); }}
+                        aria-current={overviewTab === 'EVENTS' ? 'page' : undefined}
+                        className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
+                          overviewTab === 'EVENTS' 
+                            ? 'bg-sky-50 dark:bg-sky-950/45 text-sky-700 dark:text-sky-300 font-extrabold border-l-4 border-sky-600 shadow-3xs scale-[1.01]' 
+                            : 'text-slate-600 dark:text-slate-350 hover:bg-sky-50/35 hover:text-sky-750 dark:hover:bg-slate-800 dark:hover:text-sky-400 font-semibold border-l-4 border-transparent'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <Sparkles className={`w-4 h-4 transition-colors ${overviewTab === 'EVENTS' ? 'text-sky-600 dark:text-sky-400' : 'text-sky-500/80'}`} />
+                          <span>Quản lý Sự kiện</span>
+                        </div>
+                        <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider font-mono shrink-0 select-none ${
+                          overviewTab === 'EVENTS' ? 'bg-sky-600 text-white' : 'bg-sky-100 text-sky-755 dark:bg-sky-950 dark:text-sky-300'
+                        }`}>NEW</span>
+                      </button>
+                    )}
+
+                    {/* Vận hành Học thuật */}
+                    {canDisplayTab('ACADEMIC_OPS') && matchesSearch('ACADEMIC_OPS') && (
+                      <button 
+                        onClick={() => { setOverviewTab('ACADEMIC_OPS'); setIsSidebarOpen(false); }}
+                        aria-current={overviewTab === 'ACADEMIC_OPS' ? 'page' : undefined}
+                        className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
+                          overviewTab === 'ACADEMIC_OPS' 
+                            ? 'bg-sky-50/80 dark:bg-sky-950/40 text-sky-650 dark:text-sky-400 dark:text-sky-400 font-bold border-l-2 border-sky-500 shadow-3xs scale-[1.01]' 
+                            : 'text-slate-600 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-sky-605 dark:hover:text-sky-400 font-semibold border-l-2 border-transparent'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <GraduationCap className={`w-4 h-4 transition-colors ${overviewTab === 'ACADEMIC_OPS' ? 'text-sky-500' : 'text-slate-400'}`} />
+                          <span>Thời khóa biểu tổng &amp; Giáo án</span>
+                        </div>
+                        <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider font-mono shrink-0 select-none ${
+                          overviewTab === 'ACADEMIC_OPS' ? 'bg-sky-600 text-white' : 'bg-sky-55 text-sky-600 dark:text-sky-400 dark:bg-sky-950 dark:text-sky-300'
+                        }`}>NEW</span>
+                      </button>
+                    )}
+
+                    {/* Logistics */}
+                    {canDisplayTab('LOGISTICS') && matchesSearch('LOGISTICS') && (
+                      <button 
+                        onClick={() => { setOverviewTab('LOGISTICS'); setIsSidebarOpen(false); }}
+                        aria-current={overviewTab === 'LOGISTICS' ? 'page' : undefined}
+                        className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
+                          overviewTab === 'LOGISTICS' 
+                            ? 'bg-sky-50/80 dark:bg-sky-950/40 text-sky-650 dark:text-sky-400 dark:text-sky-400 font-bold border-l-2 border-sky-500 shadow-3xs scale-[1.01]' 
+                            : 'text-slate-600 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-sky-605 dark:hover:text-sky-400 font-semibold border-l-2 border-transparent'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <BookOpen className={`w-4 h-4 transition-colors ${overviewTab === 'LOGISTICS' ? 'text-sky-500' : 'text-slate-400'}`} />
+                          <span>Thư viện &amp; Thiết bị</span>
+                        </div>
+                        <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider font-mono shrink-0 select-none ${
+                          overviewTab === 'LOGISTICS' ? 'bg-sky-600 text-white' : 'bg-sky-55 text-sky-600 dark:text-sky-400 dark:bg-sky-950 dark:text-sky-300'
+                        }`}>NEW</span>
+                      </button>
+                    )}
+
+                    {/* Yêu cầu */}
+                    {canDisplayTab('REQUESTS') && matchesSearch('REQUESTS') && (
+                      <button 
+                        onClick={() => { setOverviewTab('REQUESTS'); setIsSidebarOpen(false); }}
+                        aria-current={overviewTab === 'REQUESTS' ? 'page' : undefined}
+                        className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
+                          overviewTab === 'REQUESTS' 
+                            ? 'bg-sky-50/80 dark:bg-sky-950/40 text-sky-650 dark:text-sky-400 dark:text-sky-400 font-bold border-l-2 border-sky-500 shadow-3xs scale-[1.01]' 
+                            : 'text-slate-600 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-sky-605 dark:hover:text-sky-400 font-semibold border-l-2 border-transparent'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <Briefcase className={`w-4 h-4 transition-colors ${overviewTab === 'REQUESTS' ? 'text-sky-500' : 'text-slate-400'}`} />
+                          <span>Yêu cầu &amp; Dịch vụ</span>
+                        </div>
+                        <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider font-mono shrink-0 select-none ${
+                          overviewTab === 'REQUESTS' ? 'bg-sky-600 text-white' : 'bg-sky-55 text-sky-600 dark:text-sky-400 dark:bg-sky-950 dark:text-sky-300'
+                        }`}>NEW</span>
+                      </button>
+                    )}
+
+                    {/* Sheets Sync */}
+                    {canDisplayTab('GOOGLE_SHEETS') && matchesSearch('GOOGLE_SHEETS') && (
+                      <button 
+                        onClick={() => { setOverviewTab('GOOGLE_SHEETS'); setIsSidebarOpen(false); }}
+                        aria-current={overviewTab === 'GOOGLE_SHEETS' ? 'page' : undefined}
+                        className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
+                          overviewTab === 'GOOGLE_SHEETS' 
+                            ? 'bg-sky-50/80 dark:bg-sky-950/40 text-sky-650 dark:text-sky-400 dark:text-sky-400 font-bold border-l-2 border-sky-500 shadow-3xs scale-[1.01]' 
+                            : 'text-slate-600 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-sky-605 dark:hover:text-sky-400 font-semibold border-l-2 border-transparent'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <RefreshCw className={`w-4 h-4 transition-colors ${overviewTab === 'GOOGLE_SHEETS' ? 'text-sky-550' : 'text-slate-400'}`} />
+                          <span>Đồng bộ Sheets</span>
+                        </div>
+                        <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider font-mono shrink-0 select-none ${
+                          overviewTab === 'GOOGLE_SHEETS' ? 'bg-sky-600 text-white' : 'bg-sky-55 text-sky-600 dark:text-sky-400 dark:bg-sky-950 dark:text-sky-300'
+                        }`}>NEW</span>
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Goal Completion Meter bottom segment matching the design HTML */}
+          <div className="mt-auto p-4 border-t border-slate-200 bg-white">
+            <div className="flex items-center justify-between text-[11px] text-slate-550 mb-1 font-mono">
+              <span className="font-semibold text-slate-650">Đạt tiến độ mục tiêu</span>
+              <span className="font-bold text-indigo-650">{completionRate}%</span>
             </div>
-
-            {/* GROUP 2: OPERATION */}
-            <div className="flex flex-col gap-0.5 border-b border-slate-100 dark:border-slate-800 pb-2.5" style={{ order: 2 }}>
-              <button 
-                onClick={() => toggleGroup('operation')}
-                className="w-full flex items-center justify-between text-[10px] font-black tracking-wider text-slate-400 dark:text-slate-500 hover:text-violet-600 dark:hover:text-violet-400 py-1.5 px-3 uppercase font-mono cursor-pointer transition-colors"
-              >
-                <span className="flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-violet-500"></span>
-                  <span className={expandedGroups.operation ? 'text-violet-600 dark:text-violet-400 font-extrabold' : ''}>2. Vận hành</span>
-                </span>
-                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${expandedGroups.operation ? 'text-violet-600 dark:text-violet-400' : '-rotate-90'}`} />
-              </button>
-              
-              {expandedGroups.operation && (
-                <div className="flex flex-col gap-1 pl-2 ml-2 mt-1 border-l border-violet-100 dark:border-violet-900 transition-all duration-300">
-                  {/* Nhiệm vụ & Dự án */}
-                  <button 
-                    onClick={() => { setOverviewTab('TASKS'); handleSelectViewOnMobile('KANBAN'); }}
-                    className={`${!canDisplayTab('TASKS') ? 'hidden' : ''} w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
-                      overviewTab === 'TASKS' 
-                        ? 'bg-violet-50 dark:bg-violet-950/45 text-violet-700 dark:text-violet-300 font-extrabold border-l-4 border-violet-600 shadow-3xs scale-[1.01]' 
-                        : 'text-slate-600 dark:text-slate-350 hover:bg-violet-50/35 hover:text-violet-750 dark:hover:bg-slate-800 dark:hover:text-violet-400 font-semibold border-l-4 border-transparent'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <ListTodo className={`w-4 h-4 transition-colors ${overviewTab === 'TASKS' ? 'text-violet-600 dark:text-violet-400' : 'text-violet-400 dark:text-violet-550'}`} />
-                      <span>Nhiệm vụ &amp; Dự án</span>
-                    </div>
-                  </button>
-
-                  {/* Quy trình & Phê duyệt */}
-                  <button 
-                    onClick={() => { setOverviewTab('WORKFLOW_APPROVALS'); setIsSidebarOpen(false); }}
-                    className={`${!canDisplayTab('WORKFLOW_APPROVALS') ? 'hidden' : ''} w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
-                      overviewTab === 'WORKFLOW_APPROVALS' 
-                        ? 'bg-violet-50 dark:bg-violet-950/45 text-violet-700 dark:text-violet-300 font-extrabold border-l-4 border-violet-600 shadow-3xs scale-[1.01]' 
-                        : 'text-slate-600 dark:text-slate-350 hover:bg-violet-50/35 hover:text-violet-750 dark:hover:bg-slate-800 dark:hover:text-violet-400 font-semibold border-l-4 border-transparent'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <FileCheck className={`w-4 h-4 transition-colors ${overviewTab === 'WORKFLOW_APPROVALS' ? 'text-violet-600 dark:text-violet-400' : 'text-violet-400 dark:text-violet-550'}`} />
-                      <span>Quy trình &amp; Phê duyệt</span>
-                    </div>
-                  </button>
-
-                  {/* Cuộc họp */}
-                  <button 
-                    onClick={() => { setOverviewTab('MEETING'); setIsSidebarOpen(false); }}
-                    className={`${!canDisplayTab('MEETING') ? 'hidden' : ''} w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
-                      overviewTab === 'MEETING' 
-                        ? 'bg-violet-50 dark:bg-violet-950/45 text-violet-700 dark:text-violet-300 font-extrabold border-l-4 border-violet-600 shadow-3xs scale-[1.01]' 
-                        : 'text-slate-600 dark:text-slate-350 hover:bg-violet-50/35 hover:text-violet-750 dark:hover:bg-slate-800 dark:hover:text-violet-400 font-semibold border-l-4 border-transparent'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <CalendarDays className={`w-4 h-4 transition-colors ${overviewTab === 'MEETING' ? 'text-violet-600 dark:text-violet-400' : 'text-violet-400 dark:text-violet-550'}`} />
-                      <span>Quản lý Cuộc họp</span>
-                    </div>
-                    <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider font-mono shrink-0 select-none ${
-                      overviewTab === 'MEETING' ? 'bg-violet-600 text-white' : 'bg-violet-100 text-violet-750 dark:bg-violet-950 dark:text-violet-300'
-                    }`}>NEW</span>
-                  </button>
-
-                  {/* Kho tri thức */}
-                  <button 
-                    onClick={() => { setOverviewTab('KNOWLEDGE'); setIsSidebarOpen(false); }}
-                    className={`${!canDisplayTab('KNOWLEDGE') ? 'hidden' : ''} w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
-                      overviewTab === 'KNOWLEDGE' 
-                        ? 'bg-violet-50 dark:bg-violet-950/45 text-violet-700 dark:text-violet-300 font-extrabold border-l-4 border-violet-600 shadow-3xs scale-[1.01]' 
-                        : 'text-slate-600 dark:text-slate-350 hover:bg-violet-50/35 hover:text-violet-750 dark:hover:bg-slate-800 dark:hover:text-violet-400 font-semibold border-l-4 border-transparent'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <BookOpen className={`w-4 h-4 transition-colors ${overviewTab === 'KNOWLEDGE' ? 'text-violet-600 dark:text-violet-400' : 'text-violet-400 dark:text-violet-550'}`} />
-                      <span>Kho Tri Thức</span>
-                    </div>
-                  </button>
-                </div>
-              )}
+            <div className="w-full bg-slate-100 border border-slate-200/40 h-1.5 rounded-full overflow-hidden">
+              <div 
+                className="bg-indigo-600 h-1.5 rounded-full transition-all duration-500"
+                style={{ width: `${completionRate}%` }}
+              ></div>
             </div>
-
-            {/* GROUP 4: BUSINESS */}
-            <div className="flex flex-col gap-0.5 border-b border-slate-100 dark:border-slate-800 pb-2.5" style={{ order: 4 }}>
-              <button 
-                onClick={() => toggleGroup('business')}
-                className="w-full flex items-center justify-between text-[10px] font-black tracking-wider text-slate-400 dark:text-slate-500 hover:text-emerald-600 dark:text-emerald-400 dark:hover:text-emerald-400 py-1.5 px-3 uppercase font-mono cursor-pointer transition-colors"
-              >
-                <span className="flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                  <span className={expandedGroups.business ? 'text-emerald-600 dark:text-emerald-400 font-extrabold' : ''}>4. Nghiệp vụ Trường học</span>
-                </span>
-                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${expandedGroups.business ? 'text-emerald-600 dark:text-emerald-400' : '-rotate-90'}`} />
-              </button>
-              
-              {expandedGroups.business && (
-                <div className="flex flex-col gap-1 pl-2 ml-2 mt-1 border-l border-emerald-100 dark:border-emerald-900 transition-all duration-300">
-                  {/* Tuyển sinh & CRM */}
-                  <button 
-                    onClick={() => { setOverviewTab('CRM_ADMISSIONS'); setIsSidebarOpen(false); }}
-                    className={`${!canDisplayTab('CRM_ADMISSIONS') ? 'hidden' : ''} w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
-                      overviewTab === 'CRM_ADMISSIONS' 
-                        ? 'bg-emerald-50 dark:bg-emerald-950/45 text-emerald-700 dark:text-emerald-300 font-extrabold border-l-4 border-emerald-600 shadow-3xs scale-[1.01]' 
-                        : 'text-slate-600 dark:text-slate-350 hover:bg-emerald-50/35 hover:text-emerald-750 dark:hover:bg-slate-800 dark:hover:text-emerald-400 font-semibold border-l-4 border-transparent'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <SlidersHorizontal className={`w-4 h-4 transition-colors ${overviewTab === 'CRM_ADMISSIONS' ? 'text-emerald-600 dark:text-emerald-400' : 'text-emerald-400 dark:text-emerald-550'}`} />
-                      <span>Tuyển sinh &amp; CRM</span>
-                    </div>
-                  </button>
-
-                  {/* Học sinh 360 */}
-                  <button 
-                    onClick={() => { setOverviewTab('STUDENT_SUCCESS'); setIsSidebarOpen(false); }}
-                    className={`${!canDisplayTab('STUDENT_SUCCESS') ? 'hidden' : ''} w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
-                      overviewTab === 'STUDENT_SUCCESS' 
-                        ? 'bg-emerald-50 dark:bg-emerald-950/45 text-emerald-700 dark:text-emerald-300 font-extrabold border-l-4 border-emerald-600 shadow-3xs scale-[1.01]' 
-                        : 'text-slate-600 dark:text-slate-350 hover:bg-emerald-50/35 hover:text-emerald-700 dark:hover:bg-slate-800 dark:hover:text-emerald-400 font-semibold border-l-4 border-transparent'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <Users className={`w-4 h-4 transition-colors ${overviewTab === 'STUDENT_SUCCESS' ? 'text-emerald-600 dark:text-emerald-400' : 'text-emerald-400 dark:text-emerald-550'}`} />
-                      <span>Hồ sơ Học sinh 360°</span>
-                    </div>
-                  </button>
-
-                  {/* Cổng PHHS / Học sinh */}
-                  <button
-                    onClick={() => { setOverviewTab('PARENT_PORTAL'); setIsSidebarOpen(false); }}
-                    className={`${!canDisplayTab('PARENT_PORTAL') ? 'hidden' : ''} w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
-                      overviewTab === 'PARENT_PORTAL'
-                        ? 'bg-emerald-50 dark:bg-emerald-950/45 text-emerald-700 dark:text-emerald-300 font-extrabold border-l-4 border-emerald-600 shadow-3xs scale-[1.01]'
-                        : 'text-slate-600 dark:text-slate-350 hover:bg-emerald-50/35 hover:text-emerald-700 dark:hover:bg-slate-800 dark:hover:text-emerald-400 font-semibold border-l-4 border-transparent'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <Smartphone className={`w-4 h-4 transition-colors ${overviewTab === 'PARENT_PORTAL' ? 'text-emerald-600 dark:text-emerald-400' : 'text-emerald-400 dark:text-emerald-550'}`} />
-                      <span>Cổng PHHS / Học sinh</span>
-                    </div>
-                    <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider font-mono shrink-0 select-none ${
-                      overviewTab === 'PARENT_PORTAL' ? 'bg-emerald-600 text-white' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
-                    }`}>NEW</span>
-                  </button>
-
-
-                  {/* HRM */}
-                  <button 
-                    onClick={() => { setOverviewTab('HRM'); setIsSidebarOpen(false); }}
-                    className={`${!canDisplayTab('HRM') ? 'hidden' : ''} w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
-                      overviewTab === 'HRM' 
-                        ? 'bg-emerald-50 dark:bg-emerald-950/45 text-emerald-700 dark:text-emerald-300 font-extrabold border-l-4 border-emerald-600 shadow-3xs scale-[1.01]' 
-                        : 'text-slate-600 dark:text-slate-350 hover:bg-emerald-50/35 hover:text-emerald-700 dark:hover:bg-slate-800 dark:hover:text-emerald-400 font-semibold border-l-4 border-transparent'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <UserCheck className={`w-4 h-4 transition-colors ${overviewTab === 'HRM' ? 'text-emerald-600 dark:text-emerald-400' : 'text-emerald-400 dark:text-emerald-550'}`} />
-                      <span>Quản trị HRM</span>
-                    </div>
-                    <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider font-mono shrink-0 select-none ${
-                      overviewTab === 'HRM' ? 'bg-emerald-600 text-white' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
-                    }`}>NEW</span>
-                  </button>
-
-                  {/* LMS */}
-                  <button 
-                    onClick={() => { setOverviewTab('LMS'); setIsSidebarOpen(false); }}
-                    className={`${!canDisplayTab('LMS') ? 'hidden' : ''} w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
-                      overviewTab === 'LMS' 
-                        ? 'bg-emerald-50 dark:bg-emerald-950/45 text-emerald-700 dark:text-emerald-300 font-extrabold border-l-4 border-emerald-600 shadow-3xs scale-[1.01]' 
-                        : 'text-slate-600 dark:text-slate-350 hover:bg-emerald-50/35 hover:text-emerald-750 dark:hover:bg-slate-800 dark:hover:text-emerald-400 font-semibold border-l-4 border-transparent'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <Laptop className={`w-4 h-4 transition-colors ${overviewTab === 'LMS' ? 'text-emerald-600 dark:text-emerald-400' : 'text-emerald-400 dark:text-emerald-550'}`} />
-                      <span>Hệ thống LMS</span>
-                    </div>
-                    <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider font-mono shrink-0 select-none ${
-                      overviewTab === 'LMS' ? 'bg-emerald-600 text-white' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
-                    }`}>NEW</span>
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* GROUP 5: CAMPUS */}
-            <div className="flex flex-col gap-0.5 border-b border-slate-100 dark:border-slate-800 pb-2.5" style={{ order: 5 }}>
-              <button 
-                onClick={() => toggleGroup('campus')}
-                className="w-full flex items-center justify-between text-[10px] font-black tracking-wider text-slate-400 dark:text-slate-500 hover:text-sky-600 dark:text-sky-400 dark:hover:text-sky-400 py-1.5 px-3 uppercase font-mono cursor-pointer transition-colors"
-              >
-                <span className="flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-sky-500"></span>
-                  <span className={expandedGroups.campus ? 'text-sky-600 dark:text-sky-400 font-extrabold' : ''}>5. Vận hành Học đường</span>
-                </span>
-                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${expandedGroups.campus ? 'text-sky-600 dark:text-sky-400' : '-rotate-90'}`} />
-              </button>
-              
-              {expandedGroups.campus && (
-                <div className="flex flex-col gap-1 pl-2 ml-2 mt-1 border-l border-sky-100 dark:border-sky-900 transition-all duration-300">
-                  {/* Sự kiện */}
-                  <button 
-                    onClick={() => { setOverviewTab('EVENTS'); setIsSidebarOpen(false); }}
-                    className={`${!canDisplayTab('EVENTS') ? 'hidden' : ''} w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
-                      overviewTab === 'EVENTS' 
-                        ? 'bg-sky-50 dark:bg-sky-950/45 text-sky-700 dark:text-sky-300 font-extrabold border-l-4 border-sky-600 shadow-3xs scale-[1.01]' 
-                        : 'text-slate-600 dark:text-slate-350 hover:bg-sky-50/35 hover:text-sky-750 dark:hover:bg-slate-800 dark:hover:text-sky-400 font-semibold border-l-4 border-transparent'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <Sparkles className={`w-4 h-4 transition-colors ${overviewTab === 'EVENTS' ? 'text-sky-600 dark:text-sky-400' : 'text-sky-500/80'}`} />
-                      <span>Quản lý Sự kiện</span>
-                    </div>
-                    <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider font-mono shrink-0 select-none ${
-                      overviewTab === 'EVENTS' ? 'bg-sky-600 text-white' : 'bg-sky-100 text-sky-755 dark:bg-sky-950 dark:text-sky-300'
-                    }`}>NEW</span>
-                  </button>
-
-                  {/* Vận hành Học thuật */}
-                  <button 
-                    onClick={() => { setOverviewTab('ACADEMIC_OPS'); setIsSidebarOpen(false); }}
-                    className={`${!canDisplayTab('ACADEMIC_OPS') ? 'hidden' : ''} w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
-                      overviewTab === 'ACADEMIC_OPS' 
-                        ? 'bg-sky-50/80 dark:bg-sky-950/40 text-sky-600 dark:text-sky-400 dark:text-sky-400 font-bold border-l-2 border-sky-500 shadow-3xs scale-[1.01]' 
-                        : 'text-slate-600 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-sky-600 dark:text-sky-400 dark:hover:text-sky-400 font-semibold border-l-2 border-transparent'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <GraduationCap className={`w-4 h-4 transition-colors ${overviewTab === 'ACADEMIC_OPS' ? 'text-sky-500' : 'text-slate-400'}`} />
-                      <span>Thời khóa biểu tổng &amp; Giáo án</span>
-                    </div>
-                    <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider font-mono shrink-0 select-none ${
-                      overviewTab === 'ACADEMIC_OPS' ? 'bg-sky-600 text-white' : 'bg-sky-50 text-sky-600 dark:text-sky-400 dark:bg-sky-950 dark:text-sky-300'
-                    }`}>NEW</span>
-                  </button>
-
-                  {/* Logistics */}
-                  <button 
-                    onClick={() => { setOverviewTab('LOGISTICS'); setIsSidebarOpen(false); }}
-                    className={`${!canDisplayTab('LOGISTICS') ? 'hidden' : ''} w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
-                      overviewTab === 'LOGISTICS' 
-                        ? 'bg-sky-50/80 dark:bg-sky-950/40 text-sky-600 dark:text-sky-400 dark:text-sky-400 font-bold border-l-2 border-sky-500 shadow-3xs scale-[1.01]' 
-                        : 'text-slate-600 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-sky-600 dark:text-sky-400 dark:hover:text-sky-400 font-semibold border-l-2 border-transparent'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <BookOpen className={`w-4 h-4 transition-colors ${overviewTab === 'LOGISTICS' ? 'text-sky-500' : 'text-slate-400'}`} />
-                      <span>Thư viện &amp; Thiết bị</span>
-                    </div>
-                    <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider font-mono shrink-0 select-none ${
-                      overviewTab === 'LOGISTICS' ? 'bg-sky-600 text-white' : 'bg-sky-50 text-sky-600 dark:text-sky-400 dark:bg-sky-950 dark:text-sky-300'
-                    }`}>NEW</span>
-                  </button>
-
-                  {/* Yêu cầu */}
-                  <button 
-                    onClick={() => { setOverviewTab('REQUESTS'); setIsSidebarOpen(false); }}
-                    className={`${!canDisplayTab('REQUESTS') ? 'hidden' : ''} w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
-                      overviewTab === 'REQUESTS' 
-                        ? 'bg-sky-50/80 dark:bg-sky-950/40 text-sky-600 dark:text-sky-400 dark:text-sky-400 font-bold border-l-2 border-sky-500 shadow-3xs scale-[1.01]' 
-                        : 'text-slate-600 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-sky-600 dark:text-sky-400 dark:hover:text-sky-400 font-semibold border-l-2 border-transparent'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <Briefcase className={`w-4 h-4 transition-colors ${overviewTab === 'REQUESTS' ? 'text-sky-500' : 'text-slate-400'}`} />
-                      <span>Yêu cầu &amp; Dịch vụ</span>
-                    </div>
-                    <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider font-mono shrink-0 select-none ${
-                      overviewTab === 'REQUESTS' ? 'bg-sky-600 text-white' : 'bg-sky-50 text-sky-600 dark:text-sky-400 dark:bg-sky-950 dark:text-sky-300'
-                    }`}>NEW</span>
-                  </button>
-
-                  {/* Sheets Sync */}
-                  <button 
-                    onClick={() => { setOverviewTab('GOOGLE_SHEETS'); setIsSidebarOpen(false); }}
-                    className={`${!canDisplayTab('GOOGLE_SHEETS') ? 'hidden' : ''} w-full px-3 py-2 rounded-xl flex items-center justify-between text-[12px] cursor-pointer transition-all text-left ${
-                      overviewTab === 'GOOGLE_SHEETS' 
-                        ? 'bg-sky-50/80 dark:bg-sky-950/40 text-sky-600 dark:text-sky-400 dark:text-sky-400 font-bold border-l-2 border-sky-500 shadow-3xs scale-[1.01]' 
+            <p className="text-[10.5px] text-slate-500 leading-tight mt-2 font-sans">
+              Hoàn thành các mục tiêu tháng 10
+            </p>
+          </div>
+        </aside>? 'bg-sky-50/80 dark:bg-sky-950/40 text-sky-600 dark:text-sky-400 dark:text-sky-400 font-bold border-l-2 border-sky-500 shadow-3xs scale-[1.01]' 
                         : 'text-slate-600 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-sky-600 dark:text-sky-400 dark:hover:text-sky-400 font-semibold border-l-2 border-transparent'
                     }`}
                   >
