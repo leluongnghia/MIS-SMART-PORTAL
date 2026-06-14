@@ -102,14 +102,14 @@ export default function NotificationDrawer({
           content = `"${t.title}" đang chờ bạn phê duyệt hoàn thành.`;
         } else {
           title = `Nhiệm vụ sắp đến hạn`;
-          content = `"${t.title}" có hạn chót vào ngày ${t.dueDate}.`;
+          content = `"${t.title}" có hạn chót vào ngày ${t.deadline}.`;
         }
         return {
           id: t.id,
           type: 'task' as const,
           title,
           content,
-          time: t.updatedAt || t.createdAt,
+          time: t.createdAt,
           sender: 'Hệ thống',
           senderTitle: 'Hệ thống tự động',
           isMeeting: false,
