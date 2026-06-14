@@ -196,13 +196,94 @@ export const MOCK_USERS: UserProfile[] = [
     avatar: 'https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?w=150&h=150&fit=crop&crop=face',
     workspaceId: 'HANH_CHINH'
   },
+  // -- BỔ SUNG CÁC TỔ TRƯỞNG / TRƯỞNG NHÓM THEO SƠ ĐỒ CHUYÊN MÔN --
+  {
+    id: 'user_khtn_mgr',
+    email: 'kimanh@mis.edu.vn',
+    name: 'Cô Trần Thị Kim Anh',
+    role: 'MANAGER',
+    roleName: 'Tổ trưởng Chuyên môn',
+    title: 'Trưởng nhóm Tổ Vật lí - Hóa học (THPT)',
+    avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&h=150&fit=crop&crop=face',
+    workspaceId: 'KHTN'
+  },
+  {
+    id: 'user_lsdl_mgr',
+    email: 'vanson@mis.edu.vn',
+    name: 'Thầy Hoàng Văn Sơn',
+    role: 'MANAGER',
+    roleName: 'Tổ trưởng Chuyên môn',
+    title: 'Trưởng nhóm Tổ Sinh - Địa - GDQP (THPT)',
+    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face',
+    workspaceId: 'LS_DL'
+  },
+  {
+    id: 'user_nn_mgr',
+    email: 'minhtuyet@mis.edu.vn',
+    name: 'Cô Minh Tuyết',
+    role: 'MANAGER',
+    roleName: 'Tổ trưởng Chuyên môn',
+    title: 'Trưởng nhóm Tổ Ngoại ngữ (THPT)',
+    avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&h=150&fit=crop&crop=face',
+    workspaceId: 'NGOAI_NGU'
+  },
+  {
+    id: 'user_nt_mgr',
+    email: 'hoanghuong@mis.edu.vn',
+    name: 'Cô Hoàng Thị Hương',
+    role: 'MANAGER',
+    roleName: 'Tổ trưởng Chuyên môn',
+    title: 'Tổ trưởng / Liên hệ Tổ GDKT-PL & Nghệ thuật (THPT)',
+    avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&h=150&fit=crop&crop=face',
+    workspaceId: 'NT_TC_QPAN'
+  },
+  {
+    id: 'user_khtn_cs_mgr',
+    email: 'minhkhang@mis.edu.vn',
+    name: 'Thầy Vũ Minh Khang',
+    role: 'MANAGER',
+    roleName: 'Tổ trưởng Chuyên môn',
+    title: 'Trưởng nhóm Tổ Khoa học Tự nhiên (THCS)',
+    avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&h=150&fit=crop&crop=face',
+    workspaceId: 'KHTN'
+  },
+  {
+    id: 'user_toan_th_mgr',
+    email: 'maichi@mis.edu.vn',
+    name: 'Cô Nguyễn Mai Chi',
+    role: 'MANAGER',
+    roleName: 'Tổ trưởng Chuyên môn',
+    title: 'Tổ trưởng Tổ Toán - Tiếng Việt (Tiểu học)',
+    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face',
+    workspaceId: 'TOAN_TIN'
+  },
+  {
+    id: 'user_khtn_th_mgr',
+    email: 'thuha@mis.edu.vn',
+    name: 'Cô Lê Thu Hà',
+    role: 'MANAGER',
+    roleName: 'Tổ trưởng Chuyên môn',
+    title: 'Trưởng nhóm Tổ Tự nhiên & Xã hội (Tiểu học)',
+    avatar: 'https://images.unsplash.com/photo-1594744803329-e58b31de215f?w=150&h=150&fit=crop&crop=face',
+    workspaceId: 'CN_TRAI_NGHIEM'
+  },
+  {
+    id: 'user_nt_th_mgr',
+    email: 'congson@mis.edu.vn',
+    name: 'Thầy Trịnh Công Sơn',
+    role: 'MANAGER',
+    roleName: 'Tổ trưởng Chuyên môn',
+    title: 'Tổ trưởng / Liên hệ Tổ Nghệ thuật & Thể chất (Tiểu học)',
+    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
+    workspaceId: 'NT_TC_QPAN'
+  },
   {
     id: 'user_nam',
     email: 'nam@mis.edu.vn',
     name: 'Thầy Trần Hoàng Nam',
-    role: 'STAFF',
-    roleName: 'Giáo viên / Nhân viên',
-    title: 'Giáo viên Tổ Toán - Tin học',
+    role: 'MANAGER',
+    roleName: 'Tổ phó Chuyên môn',
+    title: 'Tổ phó Tổ Toán - Tin học (THCS)',
     avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&h=150&fit=crop&crop=face',
     workspaceId: 'TOAN_TIN'
   },
@@ -230,11 +311,11 @@ export const MOCK_USERS: UserProfile[] = [
     id: 'user_lan',
     email: 'lan@mis.edu.vn',
     name: 'Cô Nguyễn Thanh Lan',
-    role: 'STAFF',
-    roleName: 'Giáo viên / Nhân viên',
-    title: 'Giáo viên Toán - Đại số',
+    role: 'MANAGER',
+    roleName: 'Tổ trưởng Chuyên môn',
+    title: 'Tổ trưởng Tổ Ngữ văn & Lịch sử - Địa lí (THCS)',
     avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&h=150&fit=crop&crop=face',
-    workspaceId: 'TOAN_TIN'
+    workspaceId: 'VAN'
   },
   {
     id: 'user_phong',
@@ -250,11 +331,11 @@ export const MOCK_USERS: UserProfile[] = [
     id: 'user_quyen',
     email: 'quyen@mis.edu.vn',
     name: 'Cô Đỗ Thục Quyên',
-    role: 'STAFF',
-    roleName: 'Giáo viên / Nhân viên',
-    title: 'Giáo viên Tổ Ngữ văn',
+    role: 'MANAGER',
+    roleName: 'Liên hệ chuyên môn',
+    title: 'Liên hệ Tổ Ngoại ngữ & GDCD (THCS)',
     avatar: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=150&h=150&fit=crop&crop=face',
-    workspaceId: 'VAN'
+    workspaceId: 'NGOAI_NGU'
   },
   {
     id: 'user_binh',
@@ -739,7 +820,7 @@ export const MOCK_USERS: UserProfile[] = [
     name: 'Thầy David Miller',
     role: 'MANAGER',
     roleName: 'Tổ trưởng Chuyên môn',
-    title: 'Giám đốc học thuật Chương trình Quốc tế & Song ngữ',
+    title: 'Giám đốc học thuật kiêm Liên hệ Tổ Ngoại ngữ & Tin học (Tiểu học)',
     avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face',
     workspaceId: 'QUOC_TE'
   },

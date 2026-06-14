@@ -677,22 +677,91 @@ export default function HrmCenter({ currentUser, users, onUpdateUsers, hasCapabi
                     <span className="w-2 h-2 rounded-full bg-indigo-500"></span>
                     Tổ chuyên môn Học thuật
                   </h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1">
-                    <div className="p-2.5 bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-xl">
-                      <strong className="text-[10px] text-slate-800 dark:text-white block font-bold">Tổ Toán - Tin học</strong>
-                      <span className="text-[8.5px] text-slate-450 block mt-0.5">Tổ trưởng: Cô Lê Thị Thanh Nhàn</span>
+                  <div className="grid grid-cols-1 gap-4 max-h-[380px] overflow-y-auto pr-1">
+                    {/* Cấp THPT */}
+                    <div className="space-y-1.5">
+                      <div className="flex items-center gap-1.5">
+                        <span className="w-1.5 h-3 bg-indigo-600 rounded-full"></span>
+                        <span className="text-[9px] font-black uppercase tracking-wide text-indigo-600 dark:text-indigo-400 font-mono">Cấp THPT</span>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <div className="p-2.5 bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-xl shadow-4xs text-left">
+                          <strong className="text-[10px] text-slate-800 dark:text-white block font-bold">Tổ Toán - Tin học (THPT)</strong>
+                          <span className="text-[8.5px] text-slate-450 block mt-0.5">Tổ trưởng: Cô Lê Thị Thanh Nhàn</span>
+                        </div>
+                        <div className="p-2.5 bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-xl shadow-4xs text-left">
+                          <strong className="text-[10px] text-slate-800 dark:text-white block font-bold">Tổ Ngữ văn (THPT)</strong>
+                          <span className="text-[8.5px] text-slate-450 block mt-0.5">Tổ trưởng: Thầy Vũ Tiến Đạt</span>
+                        </div>
+                        <div className="p-2.5 bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-xl shadow-4xs text-left">
+                          <strong className="text-[10px] text-slate-800 dark:text-white block font-bold">Tổ Vật lí - Hóa học (THPT)</strong>
+                          <span className="text-[8.5px] text-slate-450 block mt-0.5">Trưởng nhóm: Cô Trần Thị Kim Anh</span>
+                        </div>
+                        <div className="p-2.5 bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-xl shadow-4xs text-left">
+                          <strong className="text-[10px] text-slate-800 dark:text-white block font-bold">Tổ Sinh - Địa - GDQP (THPT)</strong>
+                          <span className="text-[8.5px] text-slate-450 block mt-0.5">Trưởng nhóm: Thầy Hoàng Văn Sơn</span>
+                        </div>
+                        <div className="p-2.5 bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-xl shadow-4xs text-left">
+                          <strong className="text-[10px] text-slate-800 dark:text-white block font-bold">Tổ Ngoại ngữ (THPT)</strong>
+                          <span className="text-[8.5px] text-slate-450 block mt-0.5">Trưởng nhóm: Cô Minh Tuyết</span>
+                        </div>
+                        <div className="p-2.5 bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-xl shadow-4xs text-left">
+                          <strong className="text-[10px] text-slate-800 dark:text-white block font-bold">Tổ GDKT-PL &amp; Nghệ thuật (THPT)</strong>
+                          <span className="text-[8.5px] text-slate-450 block mt-0.5">Liên hệ: Cô Hoàng Thị Hương</span>
+                        </div>
+                      </div>
                     </div>
-                    <div className="p-2.5 bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-xl">
-                      <strong className="text-[10px] text-slate-800 dark:text-white block font-bold">Tổ Ngữ văn</strong>
-                      <span className="text-[8.5px] text-slate-450 block mt-0.5">Tổ trưởng: Thầy Vũ Tiến Đạt</span>
+
+                    {/* Cấp THCS */}
+                    <div className="space-y-1.5 pt-1">
+                      <div className="flex items-center gap-1.5">
+                        <span className="w-1.5 h-3 bg-violet-500 rounded-full"></span>
+                        <span className="text-[9px] font-black uppercase tracking-wide text-violet-600 dark:text-violet-400 font-mono">Cấp THCS</span>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <div className="p-2.5 bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-xl shadow-4xs text-left">
+                          <strong className="text-[10px] text-slate-800 dark:text-white block font-bold">Tổ Toán - Tin học (THCS)</strong>
+                          <span className="text-[8.5px] text-slate-450 block mt-0.5">Tổ phó: Thầy Trần Hoàng Nam</span>
+                        </div>
+                        <div className="p-2.5 bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-xl shadow-4xs text-left">
+                          <strong className="text-[10px] text-slate-800 dark:text-white block font-bold">Tổ Khoa học Tự nhiên (THCS)</strong>
+                          <span className="text-[8.5px] text-slate-450 block mt-0.5">Trưởng nhóm: Thầy Vũ Minh Khang</span>
+                        </div>
+                        <div className="p-2.5 bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-xl shadow-4xs text-left">
+                          <strong className="text-[10px] text-slate-800 dark:text-white block font-bold">Tổ Ngữ văn &amp; Lịch sử - Địa lí (THCS)</strong>
+                          <span className="text-[8.5px] text-slate-450 block mt-0.5">Tổ trưởng: Cô Nguyễn Thanh Lan</span>
+                        </div>
+                        <div className="p-2.5 bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-xl shadow-4xs text-left">
+                          <strong className="text-[10px] text-slate-800 dark:text-white block font-bold">Tổ Ngoại ngữ &amp; GDCD (THCS)</strong>
+                          <span className="text-[8.5px] text-slate-450 block mt-0.5">Liên hệ: Cô Đỗ Thục Quyên</span>
+                        </div>
+                      </div>
                     </div>
-                    <div className="p-2.5 bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-xl">
-                      <strong className="text-[10px] text-slate-800 dark:text-white block font-bold">Tổ Ngoại ngữ</strong>
-                      <span className="text-[8.5px] text-slate-450 block mt-0.5">Tổ trưởng: Cô Minh Tuyết</span>
-                    </div>
-                    <div className="p-2.5 bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-xl">
-                      <strong className="text-[10px] text-slate-800 dark:text-white block font-bold">Tổ Khoa học Tự nhiên</strong>
-                      <span className="text-[8.5px] text-slate-450 block mt-0.5">Trưởng nhóm: Cô Trần Thị Kim Anh</span>
+
+                    {/* Cấp Tiểu học */}
+                    <div className="space-y-1.5 pt-1">
+                      <div className="flex items-center gap-1.5">
+                        <span className="w-1.5 h-3 bg-sky-500 rounded-full"></span>
+                        <span className="text-[9px] font-black uppercase tracking-wide text-sky-600 dark:text-sky-400 font-mono">Cấp Tiểu học</span>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <div className="p-2.5 bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-xl shadow-4xs text-left">
+                          <strong className="text-[10px] text-slate-800 dark:text-white block font-bold">Tổ Toán - Tiếng Việt (Tiểu học)</strong>
+                          <span className="text-[8.5px] text-slate-450 block mt-0.5">Tổ trưởng: Cô Nguyễn Mai Chi</span>
+                        </div>
+                        <div className="p-2.5 bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-xl shadow-4xs text-left">
+                          <strong className="text-[10px] text-slate-800 dark:text-white block font-bold">Tổ Tự nhiên &amp; Xã hội (Tiểu học)</strong>
+                          <span className="text-[8.5px] text-slate-450 block mt-0.5">Trưởng nhóm: Cô Lê Thu Hà</span>
+                        </div>
+                        <div className="p-2.5 bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-xl shadow-4xs text-left">
+                          <strong className="text-[10px] text-slate-800 dark:text-white block font-bold">Tổ Ngoại ngữ &amp; Tin học (Tiểu học)</strong>
+                          <span className="text-[8.5px] text-slate-450 block mt-0.5">Liên hệ: Thầy David Miller</span>
+                        </div>
+                        <div className="p-2.5 bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-xl shadow-4xs text-left">
+                          <strong className="text-[10px] text-slate-800 dark:text-white block font-bold">Tổ Nghệ thuật &amp; Thể chất (Tiểu học)</strong>
+                          <span className="text-[8.5px] text-slate-450 block mt-0.5">Liên hệ: Thầy Trịnh Công Sơn</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
