@@ -106,5 +106,22 @@ service cloud.firestore {
     match /crm_import_batches/{batchId} {
       allow read, write: if isSignedIn() && isValidId(batchId);
     }
+
+    // New unified portal and student directory collections
+    match /mis_student_directory/{studentId} {
+      allow read, write: if isSignedIn() && isValidId(studentId);
+    }
+
+    match /mis_lms_tuition_fees/{invoiceId} {
+      allow read, write: if isSignedIn() && isValidId(invoiceId);
+    }
+
+    match /mis_sis_grades_v3/{gradeId} {
+      allow read, write: if isSignedIn() && isValidId(gradeId);
+    }
+
+    match /mis_portal_leave_requests_v3/{requestId} {
+      allow read, write: if isSignedIn() && isValidId(requestId);
+    }
   }
 }
