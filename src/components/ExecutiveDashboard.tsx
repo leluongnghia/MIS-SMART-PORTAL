@@ -15,6 +15,7 @@ import {
   Sparkles,
   Calendar,
   User,
+  Users,
   ArrowRight,
   Bell,
   X
