@@ -227,3 +227,69 @@ Tính năng bảo mật đa phân hệ được kiểm soát chặt chẽ thông
    * Điều phối lịch trình xe đưa đón học sinh (Bus service).
    * Điểm danh lên xuống xe của học sinh, quản lý suất ăn.
    * Thực hiện quy trình mượn/trả sách thư viện số.
+
+---
+
+## 10. Luồng Quản lý Đa Cơ sở & Phân Cấp Dữ Liệu (Multi-campus & Data Hierarchy)
+
+Nhằm đáp ứng mô hình các chuỗi trường học liên cấp hoặc tập đoàn giáo dục, hệ thống hỗ trợ kiến trúc **Đa cơ sở (Multi-campus / Multi-tenancy)** để vừa đảm bảo tính cô lập an toàn dữ liệu, vừa tối ưu hóa công tác điều hành vĩ mô từ BGH Tổng (Tập đoàn).
+
+### 10.1. Sơ đồ Phân cấp Dữ liệu & Quy trình Vận hành Đa Cơ sở
+
+```mermaid
+graph TD
+    subgraph HQ [Tập đoàn / Ban Giám hiệu Tổng Group]
+        HQ_Dashboard[Executive Group Dashboard] --> HQ_Compare[So sánh Hiệu suất tuyển sinh & tài chính liên cơ sở]
+        HQ_Approve[Phê duyệt ngân sách vượt cấp >50M]
+    end
+
+    subgraph Campus_A [Cơ sở A - Hà Nội]
+        A_Principal[BGH Cơ sở A] --> A_Data[Dữ liệu CRM, HRM, Học phí Cơ sở A]
+        A_Teacher[Giáo viên A] --> A_LMS[LMS Học vụ Cơ sở A]
+    end
+
+    subgraph Campus_B [Cơ sở B - TP.HCM]
+        B_Principal[BGH Cơ sở B] --> B_Data[Dữ liệu CRM, HRM, Học phí Cơ sở B]
+        B_Teacher[Giáo viên B] --> B_LMS[LMS Học vụ Cơ sở B]
+    end
+
+    %% Data Isolation Boundary
+    A_Data <-. Cô lập dữ liệu tuyệt đối .-> B_Data
+    A_LMS <-. Cô lập dữ liệu tuyệt đối .-> B_LMS
+
+    %% Aggregate Data Feed
+    A_Data -- Tự động đồng bộ số liệu vĩ mô định kỳ --> HQ_Dashboard
+    B_Data -- Tự động đồng bộ số liệu vĩ mô định kỳ --> HQ_Dashboard
+    
+    %% Budget Escalation Approval
+    A_Principal -- Yêu cầu duyệt ngân sách lớn --> HQ_Approve
+    B_Principal -- Yêu cầu duyệt ngân sách lớn --> HQ_Approve
+```
+
+### 10.2. Chi Tiết Cơ Chế Phân Cấp và Cô Lập Dữ Liệu (Data Isolation Scoping)
+
+Cơ chế phân quyền phạm vi truy cập dữ liệu (Data Scoping) được chia làm 3 tầng:
+
+1. **Phạm vi Toàn hệ thống (Group Executive Scope)**:
+   * **Đối tượng**: Ban Giám hiệu Tổng (Hội đồng Quản trị Tập đoàn), Quản trị viên hệ thống SaaS.
+   * **Quyền hạn**:
+     * Xem **Báo cáo so sánh chéo (Cross-campus Performance Analytics)** về tuyển sinh, tài chính, nhân sự toàn hệ thống.
+     * Cấu hình các quy chế, chính sách nhân sự, định mức học phí khung áp dụng chung cho tất cả các cơ sở.
+     * Tiếp nhận và phê duyệt các đề nghị ngân sách vượt hạn mức phân quyền của giám đốc cơ sở (Duyệt cấp 4).
+2. **Phạm vi Cơ sở (Campus Tenant Scope)**:
+   * **Đối tượng**: Ban Giám hiệu Cơ sở (Hiệu trưởng / Giám đốc điều hành cơ sở), Kế toán trưởng cơ sở, HRM cơ sở.
+   * **Quyền hạn**:
+     * Vận hành, điều phối toàn bộ nguồn lực thuộc cơ sở trực thuộc (tuyển sinh cơ sở, học phí cơ sở, bảng lương nhân sự cơ sở).
+     * **Bảo mật**: Không được phép truy cập, chỉnh sửa hoặc xuất báo cáo dữ liệu của cơ sở khác trong cùng hệ thống.
+3. **Phạm vi Phòng ban Cơ sở (Department Scoping)**:
+   * **Đối tượng**: Giáo viên chủ nhiệm, Tổ trưởng chuyên môn cơ sở, Nhân viên điều phối xe bus/bán trú cơ sở.
+   * **Quyền hạn**: Chỉ thao tác nghiệp vụ và hiển thị danh sách học sinh, lịch dạy, chấm công thuộc đúng phòng ban hoặc lớp học được phân công tại cơ sở đó.
+
+### 10.3. Chỉ số Tổng hợp & Đối chiếu liên Cơ sở trên Group Dashboard
+
+BGH Tập đoàn theo dõi tình hình sức khỏe toàn trường thông qua 4 nhóm chỉ số tổng hợp thời gian thực:
+
+* **Chỉ số Tuyển sinh & CRM**: Đối chiếu số lượng Lead mới tiếp cận, tỷ lệ chuyển đổi (Lead-to-Student) giữa các cơ sở để đánh giá mức độ hiệu quả của đội ngũ PR/Tuyển sinh từng vùng.
+* **Chỉ số Tài chính & Dòng tiền**: Tổng hợp doanh thu học phí thực tế đã thu, đối soát các khoản nợ học phí quá hạn của từng cơ sở để phân bổ ngân sách tập đoàn hợp lý.
+* **Hiệu suất Giảng dạy & Đào tạo**: Thống kê số lượng giáo viên hoàn thành KPI/CPD, điểm số học tập trung bình của học sinh trên LMS giữa các cơ sở để kiểm soát đồng bộ chất lượng giáo dục.
+* **Vận hành & Hậu cần**: Theo dõi tỷ lệ lấp đầy các tuyến xe đưa đón, tỷ lệ học sinh đăng ký bán trú và chi phí vận hành logistics liên cơ sở.
