@@ -390,6 +390,7 @@ const exportCsv = (leads: AdmissionLead[]) => {
 export default function SchoolCrmHub() {
   const [leads, setLeads] = useState<AdmissionLead[]>(readStoredLeads);
   const [selectedLeadId, setSelectedLeadId] = useState<string>(readStoredLeads()[0]?.id || '');
+  const [activeTab, setActiveTab] = useState<'CARE' | 'ASSESSMENT' | 'DOCUMENTS' | 'PERSONAL'>('CARE');
   const [searchTerm, setSearchTerm] = useState('');
   const [stageFilter, setStageFilter] = useState<LeadStage | 'ALL'>('ALL');
   const [viewMode, setViewMode] = useState<'LIST' | 'KANBAN'>('LIST');
@@ -403,6 +404,10 @@ export default function SchoolCrmHub() {
   const [importText, setImportText] = useState('');
   const [reconcileText, setReconcileText] = useState('');
   const [notice, setNotice] = useState('');
+
+  useEffect(() => {
+    setActiveTab('CARE');
+  }, [selectedLeadId]);
 
   useEffect(() => {
     let unsub: (() => void) | undefined;
@@ -861,78 +866,244 @@ export default function SchoolCrmHub() {
             <div className="flex items-start justify-between gap-3">
               <div>
                 <h3 className="text-lg font-black text-slate-900 dark:text-white">{selectedLead.studentName}</h3>
-                <p className="text-xs text-slate-500">{selectedLead.parentName} | {selectedLead.phone}</p>
+                <p className="text-xs text-slate-500">{selectedLead.parentName || 'Chưa có thông tin PH'} | {selectedLead.phone || 'Chưa có SĐT'}</p>
               </div>
               <span className={`rounded-full border px-2 py-1 text-[11px] font-bold ${selectedStageMeta?.color}`}>{selectedStageMeta?.short}</span>
             </div>
 
-            <div className="mt-4 grid gap-2">
-              <label className="text-[11px] font-black uppercase text-slate-500">Chuyển pipeline</label>
-              <select value={selectedLead.stage} onChange={e => updateStage(selectedLead, e.target.value as LeadStage)} className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold dark:border-slate-700 dark:bg-slate-950 dark:text-white">
-                {stageMeta.map(stage => <option key={stage.key} value={stage.key}>{stage.label}</option>)}
-              </select>
+            {/* Tabs Navigation */}
+            <div className="mt-4 flex border-b border-slate-100 dark:border-slate-800">
+              <button
+                onClick={() => setActiveTab('CARE')}
+                className={`flex-1 pb-2 text-center text-[11px] font-black uppercase tracking-wide transition-all border-b-2 ${
+                  activeTab === 'CARE'
+                    ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400'
+                    : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+                }`}
+              >
+                Chăm sóc
+              </button>
+              <button
+                onClick={() => setActiveTab('ASSESSMENT')}
+                className={`flex-1 pb-2 text-center text-[11px] font-black uppercase tracking-wide transition-all border-b-2 ${
+                  activeTab === 'ASSESSMENT'
+                    ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400'
+                    : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+                }`}
+              >
+                Đánh giá
+              </button>
+              <button
+                onClick={() => setActiveTab('DOCUMENTS')}
+                className={`flex-1 pb-2 text-center text-[11px] font-black uppercase tracking-wide transition-all border-b-2 ${
+                  activeTab === 'DOCUMENTS'
+                    ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400'
+                    : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+                }`}
+              >
+                Hồ sơ
+              </button>
+              <button
+                onClick={() => setActiveTab('PERSONAL')}
+                className={`flex-1 pb-2 text-center text-[11px] font-black uppercase tracking-wide transition-all border-b-2 ${
+                  activeTab === 'PERSONAL'
+                    ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400'
+                    : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+                }`}
+              >
+                Cá nhân
+              </button>
             </div>
 
-            <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
-              <EditableField label="Ngày test" value={selectedLead.testDate} type="date" onChange={value => persistLead({ ...selectedLead, testDate: value })} />
-              <EditableField label="Giờ test" value={selectedLead.testTime} type="time" onChange={value => persistLead({ ...selectedLead, testTime: value })} />
-              <EditableField label="Toán/Tư duy" value={String(selectedLead.mathScore)} type="number" onChange={value => persistLead({ ...selectedLead, mathScore: value ? Number(value) : '' })} />
-              <EditableField label="Tiếng Anh" value={String(selectedLead.englishScore)} type="number" onChange={value => persistLead({ ...selectedLead, englishScore: value ? Number(value) : '' })} />
-              <EditableField label="Học bổng %" value={String(selectedLead.scholarshipPercent)} type="number" onChange={value => persistLead({ ...selectedLead, scholarshipPercent: numberValue(value) })} />
-              <EditableField label="Ưu đãi giai đoạn %" value={String(selectedLead.phaseDiscountPercent)} type="number" onChange={value => persistLead({ ...selectedLead, phaseDiscountPercent: numberValue(value) })} />
-            </div>
-
-            <div className="mt-4 flex flex-wrap gap-2">
-              <button onClick={() => generatePayment(selectedLead, 'RESERVATION')} className="inline-flex items-center gap-2 rounded-lg bg-cyan-600 px-3 py-2 text-xs font-bold text-white">
-                <QrCode className="h-4 w-4" /> QR giữ chỗ
-              </button>
-              <button onClick={() => generatePayment(selectedLead, 'ENROLLMENT')} className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-3 py-2 text-xs font-bold text-white">
-                <QrCode className="h-4 w-4" /> QR nhập học
-              </button>
-              <button onClick={() => updateStage(selectedLead, 'ENROLLED')} className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-slate-700 dark:border-slate-700 dark:text-slate-200">
-                <CheckCircle2 className="h-4 w-4" /> Đồng bộ 360
-              </button>
-            </div>
-
-            {selectedLead.payments[0] && (
-              <div className="mt-4 rounded-lg border border-slate-200 p-3 dark:border-slate-700">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <div className="text-xs font-black text-slate-900 dark:text-white">{selectedLead.payments[0].code}</div>
-                    <div className="text-xs text-slate-500">{money(selectedLead.payments[0].amount)} | {selectedLead.payments[0].status}</div>
+            {/* Tab 1: CARE */}
+            {activeTab === 'CARE' && (
+              <div className="mt-4 space-y-4">
+                <div>
+                  <label className="text-[11px] font-black uppercase text-slate-500">Lịch sử chăm sóc</label>
+                  <div className="mt-2 flex gap-2">
+                    <input
+                      value={interactionContent}
+                      onChange={e => setInteractionContent(e.target.value)}
+                      placeholder="Ghi chú cuộc gọi/tư vấn..."
+                      className="min-w-0 flex-1 rounded-lg border border-slate-200 px-3 py-2 text-xs dark:border-slate-700 dark:bg-slate-950 dark:text-white focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                    />
+                    <button
+                      onClick={addInteraction}
+                      className="rounded-lg bg-slate-900 p-2 text-white dark:bg-slate-700 hover:bg-slate-800 transition-colors"
+                    >
+                      <Send className="h-4 w-4" />
+                    </button>
                   </div>
-                  <a href={selectedLead.payments[0].vietQrUrl} target="_blank" rel="noreferrer" className="text-xs font-bold text-emerald-600">Mở QR</a>
+                </div>
+
+                <div className="max-h-72 space-y-2.5 overflow-y-auto pr-1">
+                  {[
+                    ...selectedLead.workflowLogs,
+                    ...selectedLead.interactions.map(item => ({
+                      id: item.id,
+                      name: item.content,
+                      channel: (item.type === 'Intake' ? 'SYSTEM' : 'Call') as WorkflowLog['channel'],
+                      status: 'SENT' as const,
+                      createdAt: item.date,
+                    })),
+                  ]
+                    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                    .map(item => {
+                      let icon = '⚙️';
+                      if (item.channel === 'EMAIL') icon = '📧';
+                      else if (item.channel === 'ZALO') icon = '💬';
+                      else if (item.channel === 'Call' || item.name.toLowerCase().includes('gọi')) icon = '📞';
+                      else if (item.name.toLowerCase().includes('zalo') || item.name.toLowerCase().includes('tin nhắn')) icon = '💬';
+                      
+                      return (
+                        <div key={item.id} className="rounded-lg border border-slate-100 bg-slate-50/50 p-2.5 text-xs dark:border-slate-800 dark:bg-slate-950/40 flex items-start gap-2.5">
+                          <span className="text-base select-none shrink-0">{icon}</span>
+                          <div className="flex-1 min-w-0">
+                            <div className="font-bold text-slate-800 dark:text-slate-100 leading-snug break-words">{item.name}</div>
+                            <div className="text-[10px] text-slate-400 mt-1 flex items-center gap-1.5 font-mono">
+                              <span>{item.createdAt.slice(0, 10)} {item.createdAt.includes('T') ? item.createdAt.slice(11, 16) : ''}</span>
+                              <span>·</span>
+                              <span className="uppercase text-[9px] px-1 bg-slate-200/50 dark:bg-slate-800 text-slate-500 rounded">{item.channel}</span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  {selectedLead.workflowLogs.length === 0 && selectedLead.interactions.length === 0 && (
+                    <div className="text-center py-6 text-xs text-slate-300 dark:text-slate-600 italic">Chưa có lịch sử chăm sóc</div>
+                  )}
                 </div>
               </div>
             )}
 
-            <div className="mt-4">
-              <label className="text-[11px] font-black uppercase text-slate-500">Hồ sơ nhập học</label>
-              <div className="mt-2 grid grid-cols-2 gap-2">
-                {Object.entries(selectedLead.docChecklist).map(([key, value]) => (
-                  <label key={key} className="flex items-center gap-2 rounded-lg border border-slate-200 p-2 text-xs dark:border-slate-700">
-                    <input type="checkbox" checked={value} onChange={e => persistLead({ ...selectedLead, docChecklist: { ...selectedLead.docChecklist, [key]: e.target.checked } })} />
-                    <span>{documentLabel(key)}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
+            {/* Tab 2: ASSESSMENT */}
+            {activeTab === 'ASSESSMENT' && (
+              <div className="mt-4 space-y-4">
+                <div className="grid gap-2">
+                  <label className="text-[11px] font-black uppercase text-slate-500">Chuyển pipeline</label>
+                  <select
+                    value={selectedLead.stage}
+                    onChange={e => updateStage(selectedLead, e.target.value as LeadStage)}
+                    className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold dark:border-slate-700 dark:bg-slate-950 dark:text-white focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                  >
+                    {stageMeta.map(stage => <option key={stage.key} value={stage.key}>{stage.label}</option>)}
+                  </select>
+                </div>
 
-            <div className="mt-4">
-              <label className="text-[11px] font-black uppercase text-slate-500">Lịch sử chăm sóc</label>
-              <div className="mt-2 flex gap-2">
-                <input value={interactionContent} onChange={e => setInteractionContent(e.target.value)} placeholder="Ghi chú cuộc gọi/tư vấn..." className="min-w-0 flex-1 rounded-lg border border-slate-200 px-3 py-2 text-xs dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
-                <button onClick={addInteraction} className="rounded-lg bg-slate-900 p-2 text-white dark:bg-slate-700"><Send className="h-4 w-4" /></button>
-              </div>
-              <div className="mt-3 max-h-40 space-y-2 overflow-y-auto">
-                {[...selectedLead.workflowLogs, ...selectedLead.interactions.map(item => ({ id: item.id, name: item.content, channel: 'SYSTEM' as const, status: 'SENT' as const, createdAt: item.date }))].slice(0, 8).map(item => (
-                  <div key={item.id} className="rounded-lg bg-slate-50 p-2 text-xs dark:bg-slate-950">
-                    <div className="font-bold text-slate-800 dark:text-slate-100">{item.name}</div>
-                    <div className="text-slate-500">{item.createdAt} | {item.channel} | {item.status}</div>
+                <div>
+                  <label className="text-[11px] font-black uppercase text-slate-500 block mb-2">Đánh giá năng lực đầu vào</label>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <EditableField label="Ngày test" value={selectedLead.testDate} type="date" onChange={value => persistLead({ ...selectedLead, testDate: value })} />
+                    <EditableField label="Giờ test" value={selectedLead.testTime} type="time" onChange={value => persistLead({ ...selectedLead, testTime: value })} />
+                    <EditableField label="Toán/Tư duy" value={String(selectedLead.mathScore)} type="number" onChange={value => persistLead({ ...selectedLead, mathScore: value ? Number(value) : '' })} />
+                    <EditableField label="Tiếng Anh" value={String(selectedLead.englishScore)} type="number" onChange={value => persistLead({ ...selectedLead, englishScore: value ? Number(value) : '' })} />
+                    <EditableField label="Học bổng %" value={String(selectedLead.scholarshipPercent)} type="number" onChange={value => persistLead({ ...selectedLead, scholarshipPercent: numberValue(value) })} />
+                    <EditableField label="Ưu đãi giai đoạn %" value={String(selectedLead.phaseDiscountPercent)} type="number" onChange={value => persistLead({ ...selectedLead, phaseDiscountPercent: numberValue(value) })} />
                   </div>
-                ))}
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-black uppercase text-slate-500 block mb-2">Thao tác tài chính & Bàn giao</label>
+                  <div className="flex flex-wrap gap-2">
+                    <button onClick={() => generatePayment(selectedLead, 'RESERVATION')} className="inline-flex items-center gap-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 transition-colors px-3 py-2 text-xs font-bold text-white">
+                      <QrCode className="h-3.5 w-3.5" /> QR giữ chỗ
+                    </button>
+                    <button onClick={() => generatePayment(selectedLead, 'ENROLLMENT')} className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 transition-colors px-3 py-2 text-xs font-bold text-white">
+                      <QrCode className="h-3.5 w-3.5" /> QR nhập học
+                    </button>
+                    <button onClick={() => updateStage(selectedLead, 'ENROLLED')} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors px-3 py-2 text-xs font-bold text-slate-700 dark:border-slate-700 dark:text-slate-200">
+                      <CheckCircle2 className="h-3.5 w-3.5" /> Đồng bộ 360
+                    </button>
+                  </div>
+                </div>
+
+                {selectedLead.payments[0] && (
+                  <div className="rounded-lg border border-slate-200 p-3 dark:border-slate-700 bg-slate-50/30">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <div className="text-xs font-black text-slate-900 dark:text-white truncate">{selectedLead.payments[0].code}</div>
+                        <div className="text-xs text-slate-500 mt-0.5">{money(selectedLead.payments[0].amount)} | <span className={selectedLead.payments[0].status === 'MATCHED' ? 'text-emerald-600 font-bold' : 'text-amber-600'}>{selectedLead.payments[0].status}</span></div>
+                      </div>
+                      <a href={selectedLead.payments[0].vietQrUrl} target="_blank" rel="noreferrer" className="text-xs font-bold text-emerald-600 shrink-0 hover:underline">Mở QR</a>
+                    </div>
+                  </div>
+                )}
               </div>
-            </div>
+            )}
+
+            {/* Tab 3: DOCUMENTS */}
+            {activeTab === 'DOCUMENTS' && (
+              <div className="mt-4 space-y-3">
+                <label className="text-[11px] font-black uppercase text-slate-500">Danh mục hồ sơ gốc nộp số</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {Object.entries(selectedLead.docChecklist).map(([key, value]) => (
+                    <label key={key} className="flex items-center gap-2 rounded-lg border border-slate-200 p-2.5 text-xs dark:border-slate-700 bg-slate-50/30 hover:border-slate-300 dark:hover:border-slate-600 transition-colors cursor-pointer select-none">
+                      <input type="checkbox" checked={value} onChange={e => persistLead({ ...selectedLead, docChecklist: { ...selectedLead.docChecklist, [key]: e.target.checked } })} className="accent-emerald-600 h-3.5 w-3.5" />
+                      <span className="font-semibold">{documentLabel(key)}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Tab 4: PERSONAL */}
+            {activeTab === 'PERSONAL' && (
+              <div className="mt-4 space-y-4">
+                <div>
+                  <label className="text-[11px] font-black uppercase text-slate-500 block mb-2">Thông tin phụ huynh</label>
+                  <div className="grid gap-3">
+                    <EditableField
+                      label="Họ tên phụ huynh"
+                      value={selectedLead.parentName || ''}
+                      type="text"
+                      onChange={value => persistLead({ ...selectedLead, parentName: value })}
+                    />
+                    <EditableField
+                      label="Số điện thoại"
+                      value={selectedLead.phone || ''}
+                      type="text"
+                      onChange={value => persistLead({ ...selectedLead, phone: value })}
+                    />
+                    <EditableField
+                      label="Thư điện tử (Email)"
+                      value={selectedLead.email || ''}
+                      type="text"
+                      onChange={value => persistLead({ ...selectedLead, email: value })}
+                    />
+                    <EditableField
+                      label="Địa chỉ thường trú"
+                      value={selectedLead.address || ''}
+                      type="text"
+                      onChange={value => persistLead({ ...selectedLead, address: value })}
+                    />
+                  </div>
+                </div>
+
+                <div className="border-t border-slate-100 dark:border-slate-800 pt-3">
+                  <label className="text-[11px] font-black uppercase text-slate-500 block mb-2">Thông tin học sinh & Nguồn</label>
+                  <div className="grid gap-3">
+                    <EditableField
+                      label="Trường học hiện tại"
+                      value={selectedLead.currentSchool || ''}
+                      type="text"
+                      onChange={value => persistLead({ ...selectedLead, currentSchool: value })}
+                    />
+                    <EditableField
+                      label="CCCD / Mã định danh"
+                      value={selectedLead.personalId || ''}
+                      type="text"
+                      onChange={value => persistLead({ ...selectedLead, personalId: value })}
+                    />
+                    <EditableField
+                      label="Thông tin anh/chị/em"
+                      value={selectedLead.siblingInfo || ''}
+                      type="text"
+                      onChange={value => persistLead({ ...selectedLead, siblingInfo: value })}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
           </aside>
         )}
       </div>
