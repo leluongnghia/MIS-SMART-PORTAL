@@ -50,6 +50,7 @@ import EventManagement from './components/EventManagement';
 import SystemSettingsModal from './components/SystemSettingsModal';
 import RbacSettingsModal, { DEFAULT_RBAC_CONFIG } from './components/RbacSettingsModal';
 import GuideModal from './components/GuideModal';
+import { ToastProvider, useToast } from './components/ui/Toast';
 import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Tooltip } from 'recharts';
 import { 
   School, 
@@ -296,8 +297,9 @@ const canRoleAccessTab = (role: Role, workspaceId: string | undefined, tab: Over
   return canDisplayTabWithWorkspace(tab, role, workspaceId);
 };
 
-export default function App() {
+function AppInner() {
   const { lang, setLang, t } = useLanguage();
+  const toast = useToast();
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [showWorkspaceDropdown, setShowWorkspaceDropdown] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -1165,7 +1167,7 @@ export default function App() {
   // CREATE TASK
   const handleCreateTask = async (taskData: Omit<Task, 'id' | 'comments' | 'history'>) => {
     if (!hasPermission('createTask')) {
-      alert('Tài khoản của bạn không được cấp quyền khởi tạo chỉ đạo / nhiệm vụ mới.');
+      toast.error('Không có quyền truy cập', 'Tài khoản của bạn không được cấp quyền khởi tạo chỉ đạo / nhiệm vụ mới.');
       return;
     }
     const newTaskId = `task_${Date.now()}`;
@@ -1200,17 +1202,17 @@ export default function App() {
 
     if (evidence) {
       if (!hasPermission('submitReport', t)) {
-        alert('Tài khoản của bạn không có quyền gửi báo cáo & minh chứng thực hiện.');
+        toast.error('Không có quyền truy cập', 'Tài khoản của bạn không có quyền gửi báo cáo & minh chứng thực hiện.');
         return;
       }
     } else if (newStatus === 'HOAN_THANH') {
       if (!hasPermission('approveReport', t)) {
-        alert('Tài khoản của bạn không có quyền nghiệm thu hoặc duyệt báo cáo hoàn thành.');
+        toast.error('Không có quyền truy cập', 'Tài khoản của bạn không có quyền nghiệm thu hoặc duyệt báo cáo hoàn thành.');
         return;
       }
     } else {
       if (!hasPermission('changeStatus', t)) {
-        alert('Tài khoản của bạn không được cấp quyền thay đổi tiến độ công việc.');
+        toast.error('Không có quyền truy cập', 'Tài khoản của bạn không được cấp quyền thay đổi tiến độ công việc.');
         return;
       }
     }
@@ -1252,7 +1254,7 @@ export default function App() {
     if (!t) return;
 
     if (!hasPermission('rejectReport', t)) {
-      alert('Tài khoản của bạn không được cấp quyền yêu cầu điều chỉnh báo cáo.');
+      toast.error('Không có quyền truy cập', 'Tài khoản của bạn không được cấp quyền yêu cầu điều chỉnh báo cáo.');
       return;
     }
 
@@ -1288,7 +1290,7 @@ export default function App() {
     if (!t) return;
 
     if (!hasPermission('deleteTask', t)) {
-      alert('Tài khoản của bạn không được cấp quyền xóa chỉ đạo.');
+      toast.error('Không có quyền truy cập', 'Tài khoản của bạn không được cấp quyền xóa chỉ đạo.');
       return;
     }
     removeTaskLocally(taskId);
@@ -1312,7 +1314,7 @@ export default function App() {
     const isAssignee = t.assignedId === currentUser.id;
 
     if (!canEditTask && !(isOnlyChecklistUpdate && isAssignee)) {
-      alert('Tài khoản của bạn không được cấp quyền chỉnh sửa nhiệm vụ.');
+      toast.error('Không có quyền truy cập', 'Tài khoản của bạn không được cấp quyền chỉnh sửa nhiệm vụ.');
       return;
     }
 
@@ -1386,7 +1388,7 @@ export default function App() {
     if (!t) return;
 
     if (!hasPermission('addComment', t)) {
-      alert('Tài khoản của bạn không được cấp quyền thảo luận góp ý ý kiến.');
+      toast.error('Không có quyền truy cập', 'Tài khoản của bạn không được cấp quyền thảo luận góp ý ý kiến.');
       return;
     }
 
@@ -1751,11 +1753,7 @@ export default function App() {
         </div>
 
         <div className="flex items-center gap-1.5 lg:gap-2 xl:gap-3 shrink-0">
-          {/* Cloud Sync Status Indicator */}
-          <div className="hidden xl:flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-200/60 dark:border-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded-xl text-[10.5px] font-semibold animate-fade-in no-print">
-            <Cloud className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 animate-pulse" />
-            <span className="hidden 2xl:inline">Đã kết nối đám mây</span>
-          </div>
+          {/* Cloud Sync: ẩn khỏi header, chuyển vào user menu (Phase 2) */}
 
           {/* Campus Switcher Dropdown */}
           <div className="relative no-print" id="campus-switcher-container">
@@ -1820,15 +1818,7 @@ export default function App() {
             )}
           </div>
 
-          {/* Language Toggle */}
-          <button
-            onClick={() => setLang(lang === 'vi' ? 'en' : 'vi')}
-            className="px-2.5 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 transition-all cursor-pointer shadow-3xs flex items-center gap-1.5 text-[10px] font-extrabold focus:outline-none no-print"
-            title={lang === 'vi' ? "Switch to English" : "Chuyển sang Tiếng Việt"}
-            type="button"
-          >
-            <span>{lang === 'vi' ? '🇻🇳 VI' : '🇬🇧 EN'}</span>
-          </button>
+          {/* Ngôn ngữ: ẩn khỏi header top-bar, sẽ đưa vào user dropdown menu (Phase 2) */}
 
           {/* Dark Mode Toggle */}
           <button
@@ -1882,9 +1872,7 @@ export default function App() {
             }`}></span>
           </button>
 
-          <div className="hidden 2xl:flex items-center gap-3">
-            <span className="px-3 py-1 bg-slate-100 border border-slate-200 text-slate-600 text-xs font-bold rounded-full">Học kỳ I - 2026/27</span>
-          </div>
+          {/* Học kỳ: ẩn khỏi header top-bar, chuyển vào sidebar footer (Phase 2) */}
 
           {/* Sandbox Mock SSO Controller - Solution 1 */}
           <div className="relative" id="sandbox-sso-container">
@@ -2487,71 +2475,72 @@ export default function App() {
         </aside>
 
         {/* Main Content Area on the Right */}
-        <main className="flex-1 flex flex-col p-6 gap-6 overflow-y-auto bg-slate-50 min-h-0">
-          
-          {/* Current Switched User Notification Banner - modern premium design */}
-          <div className="bg-gradient-to-r from-indigo-50/50 via-white to-indigo-50/20 border border-indigo-100/80 rounded-2xl p-5 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-5 shadow-sm transform transition-all hover:scale-[1.005] duration-300">
-            <div className="flex items-start gap-4 flex-1">
-              <div className="relative">
-                <img 
-                  src={getSafeAvatar(currentUser.avatar, displayCurrentUser.name)} 
-                  alt={displayCurrentUser.name} 
+        <main id="main-content" className="flex-1 flex flex-col p-6 gap-6 overflow-y-auto bg-slate-50 min-h-0">
+
+          {/* Context Bar – gọn nhẹ, thay thế Welcome Banner cũ (không còn chiếm 100px) */}
+          <div className="flex items-center justify-between gap-4 bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 rounded-2xl px-4 py-3 shadow-sm">
+            {/* Left: Avatar + tên + role */}
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="relative shrink-0">
+                <img
+                  src={getSafeAvatar(currentUser.avatar, displayCurrentUser.name)}
+                  alt={displayCurrentUser.name}
                   referrerPolicy="no-referrer"
-                  className="w-14 h-14 rounded-2xl object-cover border-2 border-white shadow-sm mt-0.5 shrink-0"
+                  className="w-9 h-9 rounded-xl object-cover border-2 border-white dark:border-slate-700 shadow-sm"
                 />
-                <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full ring-2 ring-white bg-emerald-500"></span>
+                <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full ring-2 ring-white dark:ring-slate-800 bg-emerald-500" aria-label="Đang trực tuyến" />
               </div>
-              <div className="flex-1">
+              <div className="min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h2 className="text-base font-display font-black text-slate-900">
-                    Chào mừng, {displayCurrentUser.name}
-                  </h2>
-                  <span className="text-[9.5px] font-black px-2.5 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200/50 rounded-lg uppercase font-mono tracking-wider">
+                  <span className="text-sm font-bold text-slate-900 dark:text-white truncate">{displayCurrentUser.name}</span>
+                  <span className="text-[10px] font-bold px-2 py-0.5 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200/50 dark:border-emerald-800/50 rounded-lg uppercase font-mono tracking-wider shrink-0">
                     {displayCurrentUser.roleName}
                   </span>
-                  <span className="text-[10px] text-slate-400 font-bold font-mono bg-slate-100 border border-slate-200/60 px-2 py-0.5 rounded-lg">• Workspace: <span className="text-indigo-600 font-extrabold">{currentUser.workspaceId}</span></span>
                 </div>
-                
-                 {/* Phân quyền cán bộ (RBAC) button - placed under name/role for ADMIN and styled smaller */}
-                {currentUser.role === 'ADMIN' && (
-                  <div className="mt-2 flex flex-wrap gap-2 items-center">
-                    <button
-                      id="btn-nav-rbac-settings"
-                      onClick={() => setIsRbacModalOpen(true)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 hover:border-slate-300 hover:text-slate-900 rounded-lg shadow-3xs transition-all cursor-pointer"
-                      title="Thiết lập phân quyền thành viên"
-                    >
-                      <Shield className="w-3.5 h-3.5 text-indigo-600 animate-pulse" />
-                      <span>Phân quyền cán bộ (RBAC)</span>
-                    </button>
-                    <button
-                      id="btn-system-settings"
-                      onClick={() => setIsSystemSettingsOpen(true)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 hover:border-slate-300 hover:text-slate-900 rounded-lg shadow-3xs transition-all cursor-pointer"
-                      title="Cài đặt SMTP, AI và Zalo OA Broadcast"
-                    >
-                      <Settings className="w-3.5 h-3.5 text-sky-600" />
-                      <span>Cài đặt hệ thống</span>
-                    </button>
-                  </div>
-                )}
+                <span className="text-[11px] text-slate-400 dark:text-slate-500 font-mono">{displayCurrentUser.title}</span>
               </div>
             </div>
 
-            {/* Quick stats on banner */}
-            <div className="flex flex-wrap items-center gap-3 shrink-0">
-              <div className="flex items-center gap-3 border border-indigo-100 bg-white rounded-xl p-2 px-4 shadow-3xs text-xs font-semibold">
-                <div className="text-center pr-3 border-r border-slate-100">
-                  <span className="text-[9px] font-bold text-slate-400 uppercase block font-mono">Chỉ đạo liên quan</span>
-                  <span className="text-base font-black text-indigo-600 mt-0.5 block">{roleFilteredTasks.length}</span>
+            {/* Right: Quick stats + Admin actions */}
+            <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
+              {/* Số liệu nhanh */}
+              <div className="hidden sm:flex items-center gap-3 border border-indigo-100 dark:border-indigo-900/50 bg-indigo-50/50 dark:bg-indigo-950/30 rounded-xl px-3 py-1.5 text-xs">
+                <div className="text-center">
+                  <span className="text-[9px] font-bold text-slate-400 uppercase block font-mono">Chỉ đạo</span>
+                  <span className="text-sm font-black text-indigo-600 dark:text-indigo-400 block leading-none">{roleFilteredTasks.length}</span>
                 </div>
-                <div className="text-center pl-1">
-                  <span className="text-[9px] font-bold text-slate-400 uppercase block font-mono">Chờ phê duyệt</span>
-                  <span className="text-base font-black text-amber-500 mt-0.5 block">
+                <div className="w-px h-6 bg-slate-200 dark:bg-slate-700" />
+                <div className="text-center">
+                  <span className="text-[9px] font-bold text-slate-400 uppercase block font-mono">Chờ duyệt</span>
+                  <span className="text-sm font-black text-amber-500 block leading-none">
                     {roleFilteredTasks.filter(t => t.status === 'CHO_DUYET').length}
                   </span>
                 </div>
               </div>
+
+              {/* Admin buttons */}
+              {currentUser.role === 'ADMIN' && (
+                <>
+                  <button
+                    id="btn-nav-rbac-settings"
+                    onClick={() => setIsRbacModalOpen(true)}
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600 rounded-lg shadow-3xs transition-all cursor-pointer"
+                    title="Thiết lập phân quyền thành viên"
+                  >
+                    <Shield className="w-3.5 h-3.5 text-indigo-600" />
+                    <span className="hidden md:inline">Phân quyền (RBAC)</span>
+                  </button>
+                  <button
+                    id="btn-system-settings"
+                    onClick={() => setIsSystemSettingsOpen(true)}
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600 rounded-lg shadow-3xs transition-all cursor-pointer"
+                    title="Cài đặt SMTP, AI và Zalo OA Broadcast"
+                  >
+                    <Settings className="w-3.5 h-3.5 text-sky-600" />
+                    <span className="hidden md:inline">Cài đặt</span>
+                  </button>
+                </>
+              )}
             </div>
           </div>
 
@@ -4427,5 +4416,14 @@ export default function App() {
       />
 
     </div>
+  );
+}
+
+// ─── Root Export: bao bọ ToastProvider để useToast hoạt động khắp ứng dụng ───
+export default function App() {
+  return (
+    <ToastProvider>
+      <AppInner />
+    </ToastProvider>
   );
 }
