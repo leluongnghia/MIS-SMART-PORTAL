@@ -571,9 +571,6 @@ function AppInner() {
     // 4. Fall back to role-based safety (RBAC)
     return rbacConfig[role]?.[permissionKey] ?? false;
   };
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isGuideModalOpen, setIsGuideModalOpen] = useState(false);
-  const [mobileActiveColumn, setMobileActiveColumn] = useState<TaskStatus>('DANG_TIEN_HANH');
 
   const handleSelectViewOnMobile = (view: 'KANBAN' | 'CALENDAR' | 'LIST' | 'GANTT') => {
     setActiveView(view);
