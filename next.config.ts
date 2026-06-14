@@ -9,6 +9,7 @@ const nextConfig: NextConfig = {
   },
   poweredByHeader: false,
   reactStrictMode: true,
+  serverExternalPackages: ['@electric-sql/pglite'],
   transpilePackages: ['recharts', 'lucide-react', 'motion'],
 };
 
