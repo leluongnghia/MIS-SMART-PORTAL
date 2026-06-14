@@ -392,6 +392,9 @@ export default function SchoolCrmHub() {
   const [selectedLeadId, setSelectedLeadId] = useState<string>(readStoredLeads()[0]?.id || '');
   const [searchTerm, setSearchTerm] = useState('');
   const [stageFilter, setStageFilter] = useState<LeadStage | 'ALL'>('ALL');
+  const [viewMode, setViewMode] = useState<'LIST' | 'KANBAN'>('LIST');
+  const [draggingLeadId, setDraggingLeadId] = useState<string | null>(null);
+  const [dragOverStage, setDragOverStage] = useState<LeadStage | null>(null);
   const [cloudStatus, setCloudStatus] = useState<'SYNCING' | 'READY' | 'LOCAL'>('SYNCING');
   const [saving, setSaving] = useState(false);
   const [showAddLead, setShowAddLead] = useState(false);
@@ -509,6 +512,34 @@ export default function SchoolCrmHub() {
     setInteractionContent('');
   };
 
+  // Drag & Drop handlers
+  const handleDragStart = (e: React.DragEvent, leadId: string) => {
+    setDraggingLeadId(leadId);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e: React.DragEvent, stage: LeadStage) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setDragOverStage(stage);
+  };
+
+  const handleDrop = async (e: React.DragEvent, targetStage: LeadStage) => {
+    e.preventDefault();
+    if (!draggingLeadId) return;
+    const lead = leads.find(l => l.id === draggingLeadId);
+    if (lead && lead.stage !== targetStage) {
+      await updateStage(lead, targetStage);
+    }
+    setDraggingLeadId(null);
+    setDragOverStage(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggingLeadId(null);
+    setDragOverStage(null);
+  };
+
   const generatePayment = async (lead: AdmissionLead, type: PaymentType) => {
     const code = type === 'RESERVATION' ? `GCHO_${lead.leadCode}` : `NHAPHOC_${lead.enrollmentCode}`;
     const amount = type === 'RESERVATION' ? lead.reservationFee : Math.max(0, lead.baseTuitionFee * (1 - (lead.scholarshipPercent + lead.phaseDiscountPercent + lead.siblingDiscountPercent + lead.staffChildDiscountPercent + lead.otherDiscountPercent) / 100) + lead.supportFee);
@@ -610,24 +641,104 @@ export default function SchoolCrmHub() {
       </div>
 
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
-        {[
-          ['Tổng lead', leads.length, <Users className="h-5 w-5" />],
-          ['Đã test', tested, <ClipboardList className="h-5 w-5" />],
-          ['Giữ chỗ', reserved, <WalletCards className="h-5 w-5" />],
-          ['Nhập học', enrolled, <CheckCircle2 className="h-5 w-5" />],
-          ['Doanh thu đối soát', money(reconciledRevenue), <QrCode className="h-5 w-5" />],
-        ].map(([label, value, icon]) => (
-          <div key={String(label)} className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
-            <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
-              <span className="text-xs font-bold uppercase">{label}</span>
-              {icon}
+        {([
+          { label: 'Tổng lead', value: leads.length, icon: <Users className="h-4 w-4" />, accent: 'from-indigo-500/10 to-indigo-500/5 border-indigo-200/60', color: 'text-indigo-600' },
+          { label: 'Đã test', value: tested, icon: <ClipboardList className="h-4 w-4" />, accent: 'from-sky-500/10 to-sky-500/5 border-sky-200/60', color: 'text-sky-600' },
+          { label: 'Giữ chỗ', value: reserved, icon: <WalletCards className="h-4 w-4" />, accent: 'from-violet-500/10 to-violet-500/5 border-violet-200/60', color: 'text-violet-600' },
+          { label: 'Nhập học', value: enrolled, icon: <CheckCircle2 className="h-4 w-4" />, accent: 'from-emerald-500/10 to-emerald-500/5 border-emerald-200/60', color: 'text-emerald-600' },
+          { label: 'Doanh thu đối soát', value: money(reconciledRevenue), icon: <QrCode className="h-4 w-4" />, accent: 'from-amber-500/10 to-amber-500/5 border-amber-200/60', color: 'text-amber-600' },
+        ] as const).map(({ label, value, icon, accent, color }) => (
+          <div key={label} className={`rounded-xl border bg-gradient-to-br ${accent} p-4 hover:shadow-sm transition-shadow`}>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">{label}</span>
+              <div className={`w-7 h-7 rounded-lg bg-white/70 border border-white/80 shadow-xs flex items-center justify-center ${color}`}>{icon}</div>
             </div>
-            <div className="mt-2 text-2xl font-black text-slate-900 dark:text-white">{value}</div>
+            <div className={`text-2xl font-black ${color}`}>{value}</div>
           </div>
         ))}
       </div>
 
-      <div className="grid gap-5 xl:grid-cols-[1.15fr_0.85fr]">
+      {/* View Mode Toggle */}
+      <div className="flex items-center gap-2">
+        <button
+          onClick={() => setViewMode('LIST')}
+          className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${viewMode === 'LIST' ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-sm' : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50'}`}
+        >
+          <ClipboardList className="h-3.5 w-3.5" /> Danh sách
+        </button>
+        <button
+          onClick={() => setViewMode('KANBAN')}
+          className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${viewMode === 'KANBAN' ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-sm' : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50'}`}
+        >
+          <Award className="h-3.5 w-3.5" /> Kanban Board
+        </button>
+        <span className="text-xs text-slate-400 ml-2">{filteredLeads.length} lead</span>
+      </div>
+
+      {/* Kanban Board */}
+      {viewMode === 'KANBAN' && (
+        <div className="overflow-x-auto pb-4">
+          <div className="flex gap-3 min-w-max">
+            {stageMeta.map(stage => {
+              const stageLeads = leads.filter(l => l.stage === stage.key);
+              const isOver = dragOverStage === stage.key;
+              return (
+                <div
+                  key={stage.key}
+                  className={`w-64 flex-shrink-0 rounded-xl border transition-all duration-150 ${isOver ? 'ring-2 ring-indigo-400 border-indigo-300 bg-indigo-50/40 dark:bg-indigo-950/20' : 'border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60'}`}
+                  onDragOver={e => handleDragOver(e, stage.key)}
+                  onDrop={e => handleDrop(e, stage.key)}
+                  onDragLeave={() => setDragOverStage(null)}
+                >
+                  {/* Column header */}
+                  <div className={`px-3 py-2.5 rounded-t-xl border-b border-slate-200 dark:border-slate-700/60 flex items-center justify-between`}>
+                    <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-black border ${stage.color}`}>{stage.short}</span>
+                    <span className="text-[10px] font-black text-slate-400">{stageLeads.length}</span>
+                  </div>
+                  {/* Cards */}
+                  <div className="p-2 space-y-2 min-h-[120px]">
+                    {stageLeads.map(lead => {
+                      const tempIcon = lead.leadTemperature === 'HOT' ? '🔥' : lead.leadTemperature === 'WARM' ? '🟡' : '❄️';
+                      const scoreColor = lead.leadScore >= 70 ? 'bg-emerald-100 text-emerald-700' : lead.leadScore >= 40 ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-600';
+                      const isDragging = draggingLeadId === lead.id;
+                      return (
+                        <div
+                          key={lead.id}
+                          draggable
+                          onDragStart={e => handleDragStart(e, lead.id)}
+                          onDragEnd={handleDragEnd}
+                          onClick={() => setSelectedLeadId(lead.id)}
+                          className={`bg-white dark:bg-slate-800 border rounded-lg p-2.5 cursor-grab active:cursor-grabbing select-none transition-all duration-150 hover:shadow-md hover:border-indigo-200 dark:border-slate-700 ${isDragging ? 'opacity-40 scale-95' : ''} ${selectedLead?.id === lead.id ? 'ring-1 ring-emerald-400 border-emerald-300' : 'border-slate-200'}`}
+                        >
+                          <div className="flex items-start justify-between gap-1.5">
+                            <div className="font-black text-[11.5px] text-slate-900 dark:text-white leading-snug flex-1 truncate">{lead.studentName}</div>
+                            <span className="shrink-0 text-sm">{tempIcon}</span>
+                          </div>
+                          <div className="text-[10px] text-slate-400 mt-0.5 truncate">{lead.parentName} · {lead.phone}</div>
+                          <div className="flex items-center justify-between mt-2">
+                            <span className="text-[9px] px-1.5 py-0.5 bg-slate-100 dark:bg-slate-700 text-slate-500 rounded font-mono truncate max-w-[80px]">{lead.source}</span>
+                            <span className={`text-[9px] px-1.5 py-0.5 rounded font-black ${scoreColor}`}>{lead.leadScore}pt</span>
+                          </div>
+                          <div className="mt-1.5 h-0.5 rounded-full bg-slate-100 dark:bg-slate-700 overflow-hidden">
+                            <div className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-sky-500 transition-all" style={{ width: `${lead.leadScore}%` }} />
+                          </div>
+                        </div>
+                      );
+                    })}
+                    {stageLeads.length === 0 && (
+                      <div className="text-center py-6 text-[10px] text-slate-300 dark:text-slate-600 italic">Chưa có lead</div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {viewMode === 'LIST' && (
+        <>
+        <div className="grid gap-5 xl:grid-cols-[1.15fr_0.85fr]">
         <section className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
           <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div>
@@ -642,29 +753,45 @@ export default function SchoolCrmHub() {
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={funnelData}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                <defs>
+                  <linearGradient id="crmBarGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#10b981" stopOpacity={1} />
+                    <stop offset="100%" stopColor="#0284c7" stopOpacity={0.85} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(148,163,184,0.12)" />
                 <XAxis dataKey="name" tick={{ fontSize: 10 }} interval={0} angle={-20} textAnchor="end" height={60} />
-                <YAxis allowDecimals={false} />
-                <Tooltip />
-                <Bar dataKey="value" fill="#10b981" radius={[5, 5, 0, 0]} />
+                <YAxis allowDecimals={false} tick={{ fontSize: 10 }} />
+                <Tooltip contentStyle={{ borderRadius: '10px', fontSize: '12px', border: '1px solid #e2e8f0' }} />
+                <Bar dataKey="value" fill="url(#crmBarGradient)" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </section>
 
-        <section className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
-          <h3 className="text-sm font-black text-slate-900 dark:text-white">Import & đối soát</h3>
-          <div className="mt-3 grid gap-3">
-            <textarea value={importText} onChange={e => setImportText(e.target.value)} placeholder="Học sinh,Phụ huynh,SĐT,Email,Nguồn,Chiến dịch,Trạng thái" className="min-h-20 rounded-lg border border-slate-200 p-3 text-xs dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
-            <button onClick={importLeads} className="inline-flex items-center justify-center gap-2 rounded-lg bg-slate-900 px-3 py-2 text-xs font-bold text-white dark:bg-slate-700">
-              <Upload className="h-4 w-4" /> Import lead
+        <section className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 space-y-4">
+          <h3 className="text-sm font-black text-slate-900 dark:text-white">Import &amp; Đối soát Sao kê</h3>
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <Upload className="h-3.5 w-3.5 text-slate-500" />
+              <span className="text-[11px] font-black uppercase tracking-wide text-slate-500">Import Lead</span>
+            </div>
+            <textarea value={importText} onChange={e => setImportText(e.target.value)} placeholder="Học sinh, Phụ huynh, SĐT, Email, Nguồn, Chiến dịch, Trạng thái" className="w-full min-h-[72px] rounded-lg border border-slate-200 p-3 text-xs dark:border-slate-700 dark:bg-slate-950 dark:text-white resize-none focus:outline-none focus:ring-2 focus:ring-indigo-400/40" />
+            <button onClick={importLeads} className="inline-flex items-center justify-center gap-2 rounded-lg bg-slate-900 px-3 py-2 text-xs font-bold text-white hover:bg-slate-800 dark:bg-slate-700 transition-colors">
+              <Upload className="h-3.5 w-3.5" /> Import lead
             </button>
-            <textarea value={reconcileText} onChange={e => setReconcileText(e.target.value)} placeholder="Dán sao kê CSV/Excel: nội dung chuyển khoản có GCHO_/NHAPHOC_ hoặc leadCode + số tiền" className="min-h-20 rounded-lg border border-slate-200 p-3 text-xs dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
-            <button onClick={reconcilePayments} className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-3 py-2 text-xs font-bold text-white">
-              <WalletCards className="h-4 w-4" /> Đối soát
-            </button>
-            {notice && <div className="rounded-lg bg-amber-50 p-3 text-xs font-semibold text-amber-800">{notice}</div>}
           </div>
+          <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+            <div className="flex items-center gap-2">
+              <WalletCards className="h-3.5 w-3.5 text-emerald-600" />
+              <span className="text-[11px] font-black uppercase tracking-wide text-slate-500">Đối soát Sao kê</span>
+            </div>
+            <textarea value={reconcileText} onChange={e => setReconcileText(e.target.value)} placeholder="Dán sao kê: GCHO_xxx hoặc NHAPHOC_xxx + số tiền" className="w-full min-h-[72px] rounded-lg border border-slate-200 p-3 text-xs dark:border-slate-700 dark:bg-slate-950 dark:text-white resize-none focus:outline-none focus:ring-2 focus:ring-emerald-400/40" />
+            <button onClick={reconcilePayments} className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 px-3 py-2 text-xs font-bold text-white transition-colors">
+              <WalletCards className="h-3.5 w-3.5" /> Đối soát
+            </button>
+          </div>
+          {notice && <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 text-xs font-semibold text-amber-800">{notice}</div>}
         </section>
       </div>
 
@@ -681,35 +808,45 @@ export default function SchoolCrmHub() {
             <table className="min-w-full text-left text-xs">
               <thead className="bg-slate-50 text-slate-500 dark:bg-slate-950 dark:text-slate-400">
                 <tr>
-                  <th className="px-4 py-3 font-black">Lead</th>
-                  <th className="px-4 py-3 font-black">Pipeline</th>
-                  <th className="px-4 py-3 font-black">Marketing</th>
-                  <th className="px-4 py-3 font-black">Score</th>
-                  <th className="px-4 py-3 font-black">Thanh toán</th>
+                  <th className="px-4 py-3 font-black text-[11px] uppercase tracking-wide">Lead</th>
+                  <th className="px-4 py-3 font-black text-[11px] uppercase tracking-wide">Pipeline</th>
+                  <th className="px-4 py-3 font-black text-[11px] uppercase tracking-wide">Marketing</th>
+                  <th className="px-4 py-3 font-black text-[11px] uppercase tracking-wide">Score</th>
+                  <th className="px-4 py-3 font-black text-[11px] uppercase tracking-wide">Thanh toán</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {filteredLeads.map(lead => {
                   const meta = stageMeta.find(item => item.key === lead.stage);
                   const payment = lead.payments[0];
+                  const tempIcon = lead.leadTemperature === 'HOT' ? '🔥' : lead.leadTemperature === 'WARM' ? '🟡' : '❄️';
+                  const scoreColor = lead.leadScore >= 70 ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-400' : lead.leadScore >= 40 ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-400' : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300';
                   return (
-                    <tr key={lead.id} onClick={() => setSelectedLeadId(lead.id)} className={`cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-950 ${selectedLead?.id === lead.id ? 'bg-emerald-50/60 dark:bg-emerald-950/20' : ''}`}>
+                    <tr key={lead.id} onClick={() => setSelectedLeadId(lead.id)} className={`cursor-pointer transition-colors hover:bg-slate-50 dark:hover:bg-slate-950 ${selectedLead?.id === lead.id ? 'bg-emerald-50/70 dark:bg-emerald-950/20' : ''}`}>
                       <td className="px-4 py-3">
-                        <div className="font-black text-slate-900 dark:text-white">{lead.studentName}</div>
-                        <div className="text-slate-500">{lead.leadCode} | {lead.parentName} | {lead.phone}</div>
+                        <div className="font-black text-slate-900 dark:text-white text-[12.5px]">{lead.studentName}</div>
+                        <div className="text-[11px] text-slate-500 mt-0.5">{lead.leadCode} · {lead.parentName} · {lead.phone}</div>
                       </td>
                       <td className="px-4 py-3">
-                        <span className={`inline-flex rounded-full border px-2 py-1 font-bold ${meta?.color}`}>{meta?.label}</span>
+                        <div className="flex items-center gap-1.5">
+                          <span>{tempIcon}</span>
+                          <span className={`inline-flex rounded-full border px-2 py-0.5 text-[11px] font-bold ${meta?.color}`}>{meta?.short}</span>
+                        </div>
                       </td>
-                      <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
-                        <div>{lead.source}</div>
-                        <div className="text-slate-400">{lead.campaign}</div>
+                      <td className="px-4 py-3 text-[11px] text-slate-600 dark:text-slate-300">
+                        <div className="font-semibold">{lead.source}</div>
+                        <div className="text-slate-400 text-[10px]">{lead.campaign}</div>
                       </td>
                       <td className="px-4 py-3">
-                        <span className="rounded-lg bg-slate-100 px-2 py-1 font-black text-slate-800 dark:bg-slate-800 dark:text-white">{lead.leadScore}</span>
+                        <div className="flex flex-col gap-1">
+                          <span className={`rounded-lg px-2 py-0.5 text-[11px] font-black w-fit ${scoreColor}`}>{lead.leadScore}</span>
+                          <div className="w-16 h-1 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                            <div className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-sky-500" style={{ width: `${lead.leadScore}%` }} />
+                          </div>
+                        </div>
                       </td>
-                      <td className="px-4 py-3">
-                        {payment ? <span className={payment.status === 'MATCHED' ? 'font-bold text-emerald-600' : 'font-bold text-amber-600'}>{payment.status} {money(payment.amount)}</span> : <span className="text-slate-400">Chưa tạo QR</span>}
+                      <td className="px-4 py-3 text-[11px]">
+                        {payment ? <span className={payment.status === 'MATCHED' ? 'font-bold text-emerald-600' : 'font-bold text-amber-600'}>{payment.status === 'MATCHED' ? '✅' : '⏳'} {money(payment.amount)}</span> : <span className="text-slate-400">Chưa tạo QR</span>}
                       </td>
                     </tr>
                   );
@@ -799,6 +936,8 @@ export default function SchoolCrmHub() {
           </aside>
         )}
       </div>
+        </>
+      )}
 
       {showAddLead && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/55 p-4">

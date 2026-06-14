@@ -18,13 +18,58 @@ interface LeaveRequest {
   status: 'PENDING' | 'APPROVED' | 'REJECTED';
 }
 
+interface AttendanceRecord {
+  id: string;
+  staffName: string;
+  role: string;
+  date: string;
+  checkIn: string;
+  checkOut: string;
+  status: 'PRESENT' | 'LATE' | 'ABSENT' | 'LEAVE';
+}
+
+interface SalaryRecord {
+  id: string;
+  staffName: string;
+  role: string;
+  department: string;
+  baseSalary: number;
+  teachingBonus: number;
+  kpiBonus: number;
+  deductions: number;
+  totalSalary: number;
+  month: string;
+  paid: boolean;
+}
+
 export default function TeacherHrHub({ currentUser, users, onUpdateUsers }: TeacherHrHubProps) {
-  const [activeTab, setActiveTab] = useState<'ORG_CHART' | 'DIRECTORY' | 'KPI_WORKLOAD' | 'LEAVE_REQUESTS'>('ORG_CHART');
+  const [activeTab, setActiveTab] = useState<'ORG_CHART' | 'DIRECTORY' | 'KPI_WORKLOAD' | 'LEAVE_REQUESTS' | 'ATTENDANCE_SALARY'>('ORG_CHART');
 
   // Leave Requests state
   const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([
     { id: 'l_1', name: 'Cô Phạm Hồng Nhung', role: 'Giáo viên Ngữ Văn', days: 2, reason: 'Nghỉ phép đi khám sức khỏe định kỳ ở bệnh viện', status: 'PENDING' },
     { id: 'l_2', name: 'Thầy Nguyễn Văn Kha', role: 'Cán bộ Thiết bị', days: 1, reason: 'Giải quyết việc gia đình riêng đột xuất', status: 'PENDING' }
+  ]);
+
+  // Attendance state
+  const today = new Date().toISOString().slice(0, 10);
+  const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
+    { id: 'a1', staffName: 'Cô Nguyễn Thị Mai', role: 'GV Toán', date: today, checkIn: '07:25', checkOut: '17:00', status: 'PRESENT' },
+    { id: 'a2', staffName: 'Thầy Trần Văn Dũng', role: 'GV Văn', date: today, checkIn: '07:45', checkOut: '16:55', status: 'LATE' },
+    { id: 'a3', staffName: 'Cô Lê Thị Hoa', role: 'GV Anh', date: today, checkIn: '', checkOut: '', status: 'ABSENT' },
+    { id: 'a4', staffName: 'Thầy Phạm Minh Tuấn', role: 'GV Lý', date: today, checkIn: '07:20', checkOut: '16:45', status: 'PRESENT' },
+    { id: 'a5', staffName: 'Cô Hoàng Thu Hằng', role: 'GV Hóa', date: today, checkIn: '', checkOut: '', status: 'LEAVE' },
+  ]);
+  const [attendanceFilter, setAttendanceFilter] = useState<string>('ALL');
+  const [selectedMonth, setSelectedMonth] = useState('2026-06');
+
+  // Salary state
+  const [salaryRecords] = useState<SalaryRecord[]>([
+    { id: 's1', staffName: 'Cô Nguyễn Thị Mai', role: 'GV Toán', department: 'Tổ Toán-Tin', baseSalary: 12000000, teachingBonus: 3500000, kpiBonus: 1200000, deductions: 800000, totalSalary: 15900000, month: '2026-06', paid: true },
+    { id: 's2', staffName: 'Thầy Trần Văn Dũng', role: 'GV Văn', department: 'Tổ Ngữ Văn', baseSalary: 11000000, teachingBonus: 2800000, kpiBonus: 900000, deductions: 750000, totalSalary: 13950000, month: '2026-06', paid: true },
+    { id: 's3', staffName: 'Cô Lê Thị Hoa', role: 'GV Anh', department: 'Tổ Ngoại Ngữ', baseSalary: 13000000, teachingBonus: 4000000, kpiBonus: 1500000, deductions: 900000, totalSalary: 17600000, month: '2026-06', paid: false },
+    { id: 's4', staffName: 'Thầy Phạm Minh Tuấn', role: 'GV Lý', department: 'Tổ KH Tự nhiên', baseSalary: 10500000, teachingBonus: 2500000, kpiBonus: 800000, deductions: 700000, totalSalary: 13100000, month: '2026-06', paid: false },
+    { id: 's5', staffName: 'Cô Hoàng Thu Hằng', role: 'GV Hóa', department: 'Tổ KH Tự nhiên', baseSalary: 11500000, teachingBonus: 3000000, kpiBonus: 1000000, deductions: 800000, totalSalary: 14700000, month: '2026-06', paid: true },
   ]);
 
   // Transfer state
@@ -187,6 +232,14 @@ export default function TeacherHrHub({ currentUser, users, onUpdateUsers }: Teac
           }`}
         >
           <span>Duyệt Nghỉ Phép ({leaveRequests.filter(l => l.status === 'PENDING').length})</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('ATTENDANCE_SALARY')}
+          className={`flex-1 md:flex-initial flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            activeTab === 'ATTENDANCE_SALARY' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+          }`}
+        >
+          <span>Chấm công &amp; Lương</span>
         </button>
       </div>
 
@@ -644,6 +697,144 @@ export default function TeacherHrHub({ currentUser, users, onUpdateUsers }: Teac
                   )}
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* TAB 5: ATTENDANCE & SALARY */}
+        {activeTab === 'ATTENDANCE_SALARY' && (
+          <div className="space-y-6">
+            {/* Attendance Section */}
+            <div className="bg-white border border-slate-200 dark:border-slate-800/80 p-5 rounded-2xl shadow-xs">
+              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-4">
+                <div>
+                  <h3 className="font-display font-extrabold text-slate-900 dark:text-white text-sm">Chấm công hôm nay</h3>
+                  <p className="text-[11px] text-slate-400 mt-0.5">{today} • {attendanceRecords.filter(a => a.status === 'PRESENT').length} có mặt / {attendanceRecords.length} nhân sự</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  {(['ALL','PRESENT','LATE','ABSENT','LEAVE'] as const).map(f => (
+                    <button key={f} onClick={() => setAttendanceFilter(f)} className={`px-2.5 py-1 rounded-lg text-[10px] font-black transition-all ${attendanceFilter === f ? 'bg-indigo-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200'}`}>
+                      {f === 'ALL' ? 'Tất cả' : f === 'PRESENT' ? '✓ Có mặt' : f === 'LATE' ? '⏰ Trễ' : f === 'ABSENT' ? '✗ Vắng' : '📋 Nghỉ phép'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Summary cards */}
+              <div className="grid grid-cols-4 gap-3 mb-4">
+                {[
+                  { label: 'Có mặt', count: attendanceRecords.filter(a => a.status === 'PRESENT').length, cls: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+                  { label: 'Đi trễ', count: attendanceRecords.filter(a => a.status === 'LATE').length, cls: 'bg-amber-50 text-amber-700 border-amber-200' },
+                  { label: 'Vắng mặt', count: attendanceRecords.filter(a => a.status === 'ABSENT').length, cls: 'bg-rose-50 text-rose-700 border-rose-200' },
+                  { label: 'Nghỉ phép', count: attendanceRecords.filter(a => a.status === 'LEAVE').length, cls: 'bg-sky-50 text-sky-700 border-sky-200' },
+                ].map(s => (
+                  <div key={s.label} className={`p-3 rounded-xl border text-center ${s.cls}`}>
+                    <div className="text-2xl font-black">{s.count}</div>
+                    <div className="text-[10px] font-bold mt-0.5">{s.label}</div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-700">
+                      {['Nhân sự','Vai trò','Check-in','Check-out','Trạng thái','Thao tác'].map(h => (
+                        <th key={h} className="text-left px-4 py-2.5 text-[10px] font-black uppercase tracking-wider text-slate-400">{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                    {attendanceRecords.filter(a => attendanceFilter === 'ALL' || a.status === attendanceFilter).map(a => {
+                      const sCls = a.status === 'PRESENT' ? 'bg-emerald-50 text-emerald-700' : a.status === 'LATE' ? 'bg-amber-50 text-amber-700' : a.status === 'ABSENT' ? 'bg-rose-50 text-rose-700' : 'bg-sky-50 text-sky-700';
+                      const sLabel = a.status === 'PRESENT' ? '✓ Có mặt' : a.status === 'LATE' ? '⏰ Đi trễ' : a.status === 'ABSENT' ? '✗ Vắng' : '📋 Nghỉ phép';
+                      return (
+                        <tr key={a.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                          <td className="px-4 py-3 font-bold text-slate-800 dark:text-white">{a.staffName}</td>
+                          <td className="px-4 py-3 text-slate-500">{a.role}</td>
+                          <td className="px-4 py-3 font-mono text-slate-700 dark:text-slate-300">{a.checkIn || '—'}</td>
+                          <td className="px-4 py-3 font-mono text-slate-700 dark:text-slate-300">{a.checkOut || '—'}</td>
+                          <td className="px-4 py-3"><span className={`px-2 py-0.5 rounded text-[10px] font-black ${sCls}`}>{sLabel}</span></td>
+                          <td className="px-4 py-3">
+                            <select
+                              value={a.status}
+                              onChange={e => setAttendanceRecords(prev => prev.map(r => r.id === a.id ? { ...r, status: e.target.value as AttendanceRecord['status'] } : r))}
+                              className="text-[10px] py-0.5 px-1.5 border border-slate-200 rounded-lg bg-white dark:bg-slate-800 dark:text-white dark:border-slate-700"
+                            >
+                              <option value="PRESENT">Có mặt</option>
+                              <option value="LATE">Đi trễ</option>
+                              <option value="ABSENT">Vắng</option>
+                              <option value="LEAVE">Nghỉ phép</option>
+                            </select>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Salary Section */}
+            <div className="bg-white border border-slate-200 dark:border-slate-800/80 p-5 rounded-2xl shadow-xs">
+              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-4">
+                <div>
+                  <h3 className="font-display font-extrabold text-slate-900 dark:text-white text-sm">Bảng lương tháng</h3>
+                  <p className="text-[11px] text-slate-400 mt-0.5">
+                    Tổng chi lương: <strong className="text-slate-700 dark:text-slate-200">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(salaryRecords.reduce((s, r) => s + r.totalSalary, 0))}</strong>
+                    {' '}• {salaryRecords.filter(s => s.paid).length}/{salaryRecords.length} đã thanh toán
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <label className="text-[10px] font-bold text-slate-400">Tháng:</label>
+                  <input type="month" value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)} className="text-xs p-1.5 border border-slate-200 rounded-lg bg-white dark:bg-slate-800 dark:text-white dark:border-slate-700" />
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-700">
+                      {['Nhân sự','Bộ phận','Lương cơ bản','Phụ cấp dạy','Thưởng KPI','Khấu trừ','Thực lãnh','Trạng thái'].map(h => (
+                        <th key={h} className="text-left px-3 py-2.5 text-[10px] font-black uppercase tracking-wider text-slate-400">{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                    {salaryRecords.map(s => {
+                      const fmt = (n: number) => new Intl.NumberFormat('vi-VN', { notation: 'compact', maximumFractionDigits: 1 }).format(n);
+                      return (
+                        <tr key={s.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                          <td className="px-3 py-3">
+                            <div className="font-bold text-slate-800 dark:text-white">{s.staffName}</div>
+                            <div className="text-[10px] text-slate-400">{s.role}</div>
+                          </td>
+                          <td className="px-3 py-3 text-slate-500">{s.department}</td>
+                          <td className="px-3 py-3 font-mono text-slate-600 dark:text-slate-300">{fmt(s.baseSalary)}đ</td>
+                          <td className="px-3 py-3 font-mono text-indigo-600">{fmt(s.teachingBonus)}đ</td>
+                          <td className="px-3 py-3 font-mono text-emerald-600">+{fmt(s.kpiBonus)}đ</td>
+                          <td className="px-3 py-3 font-mono text-rose-500">-{fmt(s.deductions)}đ</td>
+                          <td className="px-3 py-3 font-mono font-black text-slate-900 dark:text-white">{fmt(s.totalSalary)}đ</td>
+                          <td className="px-3 py-3">
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-black ${s.paid ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
+                              {s.paid ? '✓ Đã trả' : '⏳ Chờ'}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                  <tfoot>
+                    <tr className="bg-slate-50 dark:bg-slate-800/40 border-t border-slate-200 dark:border-slate-700">
+                      <td colSpan={6} className="px-3 py-2.5 text-[10px] font-black uppercase text-slate-400">Tổng cộng</td>
+                      <td className="px-3 py-2.5 font-mono font-black text-indigo-700 dark:text-indigo-300">
+                        {new Intl.NumberFormat('vi-VN', { notation: 'compact', maximumFractionDigits: 1 }).format(salaryRecords.reduce((s, r) => s + r.totalSalary, 0))}đ
+                      </td>
+                      <td className="px-3 py-2.5 text-[10px] font-bold text-slate-500">{salaryRecords.filter(s => s.paid).length} đã trả</td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
             </div>
           </div>
         )}

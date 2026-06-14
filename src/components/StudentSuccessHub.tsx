@@ -314,6 +314,32 @@ export default function StudentSuccessHub({ currentUser }: { currentUser: UserPr
   const [newGrade, setNewGrade] = useState({ subject: 'Toán', oral: 8, fifteenMinute: 8, midterm: 8, final: 8 });
   const [newDisciplineText, setNewDisciplineText] = useState('');
 
+  // Main module tab
+  const [mainTab, setMainTab] = useState<'STUDENTS' | 'PARENT_PORTAL' | 'EARLY_WARNING'>('STUDENTS');
+
+  // Parent Portal / Early Warning state
+  const [parentMessages] = useState([
+    { id: 'pm1', student: 'Nguyễn Văn An', class: '10A1', parent: 'Nguyễn Văn Hùng', phone: '0912345678', email: 'hung@email.com', subject: 'Hỏi về kết quả học tập HK2', date: '2026-06-12', read: false, type: 'INQUIRY' as const },
+    { id: 'pm2', student: 'Trần Thị Bích', class: '11B2', parent: 'Trần Minh Thái', phone: '0987654321', email: 'thai@email.com', subject: 'Thông báo học sinh nghỉ ốm 3 ngày', date: '2026-06-11', read: true, type: 'LEAVE' as const },
+    { id: 'pm3', student: 'Lê Hoàng Nam', class: '9C1', parent: 'Lê Văn Phúc', phone: '0901234567', email: 'phuc@email.com', subject: 'Xin tư vấn hướng nghề nghiệp', date: '2026-06-10', read: false, type: 'INQUIRY' as const },
+    { id: 'pm4', student: 'Phạm Thu Hà', class: '12A3', parent: 'Phạm Ngọc Lan', phone: '0976543210', email: 'lan@email.com', subject: 'Phản ánh về điều kiện cơ sở vật chất', date: '2026-06-09', read: true, type: 'FEEDBACK' as const },
+  ]);
+
+  const earlyWarnings = useMemo(() => {
+    return students.slice(0, 30).map(s => {
+      const stuGrades = grades.filter(g => g.studentId === s.id);
+      const avgGpa = stuGrades.length ? stuGrades.reduce((sum, g) => sum + ((g.oral + g.fifteenMinute + g.midterm + g.final * 2) / 5), 0) / stuGrades.length : 8;
+      const stuAtt = attendance.filter(a => a.studentId === s.id);
+      const absentDays = stuAtt.filter(a => a.status === 'ABSENT').length;
+      const alerts: string[] = [];
+      if (avgGpa < 5) alerts.push('📉 GPA thấp');
+      if (absentDays >= 3) alerts.push('📅 Vắng nhiều');
+      if (s.disciplineLogs.length >= 2) alerts.push('⚠ Kỷ luật');
+      if (s.conduct === 'Trung bình') alerts.push('🔶 Hạnh kiểm TB');
+      return { ...s, gpa: Math.round(avgGpa * 10) / 10, absentDays, alerts, needSupport: alerts.length > 0 };
+    }).filter(s => s.needSupport);
+  }, [students, grades, attendance]);
+
   // Academic History form states
   const [newHistYear, setNewHistYear] = useState('2025-2026');
   const [newHistClass, setNewHistClass] = useState('9A1');
@@ -1095,68 +1121,265 @@ export default function StudentSuccessHub({ currentUser }: { currentUser: UserPr
         </div>
       </div>
 
+      {/* Main Tab Navigation */}
+      <div className="flex gap-1.5 bg-slate-100 dark:bg-slate-800/60 p-1.5 rounded-2xl w-fit">
+        {([
+          { key: 'STUDENTS', label: 'Hồ sơ Học sinh', icon: <Users className="w-3.5 h-3.5" /> },
+          { key: 'PARENT_PORTAL', label: 'Cổng Phụ huynh', icon: <Mail className="w-3.5 h-3.5" /> },
+          { key: 'EARLY_WARNING', label: 'Cảnh báo sớm', icon: <Bell className="w-3.5 h-3.5" /> },
+        ] as const).map(tab => (
+          <button key={tab.key} onClick={() => setMainTab(tab.key)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${mainTab === tab.key ? 'bg-white dark:bg-slate-900 text-indigo-700 dark:text-indigo-300 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
+            {tab.icon} {tab.label}
+            {tab.key === 'PARENT_PORTAL' && parentMessages.filter(m => !m.read).length > 0 && (
+              <span className="ml-0.5 w-4 h-4 rounded-full bg-rose-500 text-white text-[9px] font-black flex items-center justify-center">{parentMessages.filter(m => !m.read).length}</span>
+            )}
+            {tab.key === 'EARLY_WARNING' && earlyWarnings.length > 0 && (
+              <span className="ml-0.5 w-4 h-4 rounded-full bg-amber-500 text-white text-[9px] font-black flex items-center justify-center">{earlyWarnings.length}</span>
+            )}
+          </button>
+        ))}
+      </div>
+
+      {/* PARENT PORTAL TAB */}
+      {mainTab === 'PARENT_PORTAL' && (
+        <div className="space-y-5">
+          {/* Stats row */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[
+              { label: 'Tổng tin nhắn', count: parentMessages.length, cls: 'text-indigo-600', bg: 'from-indigo-500/10 to-indigo-500/5 border-indigo-200/60' },
+              { label: 'Chưa đọc', count: parentMessages.filter(m => !m.read).length, cls: 'text-rose-600', bg: 'from-rose-500/10 to-rose-500/5 border-rose-200/60' },
+              { label: 'Xin nghỉ', count: parentMessages.filter(m => m.type === 'LEAVE').length, cls: 'text-amber-600', bg: 'from-amber-500/10 to-amber-500/5 border-amber-200/60' },
+              { label: 'Phản ánh', count: parentMessages.filter(m => m.type === 'FEEDBACK').length, cls: 'text-emerald-600', bg: 'from-emerald-500/10 to-emerald-500/5 border-emerald-200/60' },
+            ].map(s => (
+              <div key={s.label} className={`bg-gradient-to-br ${s.bg} border rounded-2xl p-4`}>
+                <p className={`text-2xl font-black ${s.cls}`}>{s.count}</p>
+                <p className="text-[11px] font-bold text-slate-500 mt-0.5">{s.label}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Message list */}
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">
+              <h3 className="font-display font-extrabold text-slate-900 dark:text-white text-sm">Tin nhắn từ phụ huynh</h3>
+              <span className="text-[10px] font-mono text-slate-400">{parentMessages.length} tin nhắn</span>
+            </div>
+            <div className="divide-y divide-slate-100 dark:divide-slate-800">
+              {parentMessages.map(msg => {
+                const typeCls = msg.type === 'LEAVE' ? 'bg-amber-50 text-amber-700' : msg.type === 'FEEDBACK' ? 'bg-emerald-50 text-emerald-700' : 'bg-indigo-50 text-indigo-700';
+                const typeLabel = msg.type === 'LEAVE' ? '📋 Xin nghỉ' : msg.type === 'FEEDBACK' ? '💬 Phản ánh' : '❓ Hỏi đáp';
+                return (
+                  <div key={msg.id} className={`flex items-start gap-4 px-5 py-4 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors ${!msg.read ? 'bg-blue-50/30 dark:bg-indigo-950/10' : ''}`}>
+                    <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-400 to-violet-500 flex items-center justify-center text-white font-black text-sm shrink-0">
+                      {msg.parent.charAt(msg.parent.lastIndexOf(' ') + 1)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className={`text-sm font-black text-slate-900 dark:text-white ${!msg.read ? '' : 'font-bold'}`}>{msg.subject}</p>
+                          <div className="flex items-center gap-2 mt-0.5 text-[10px] text-slate-400">
+                            <span>PH: <strong className="text-slate-600 dark:text-slate-300">{msg.parent}</strong></span>
+                            <span>•</span>
+                            <span>HS: <strong className="text-slate-600 dark:text-slate-300">{msg.student} ({msg.class})</strong></span>
+                            <span>•</span>
+                            <span>{msg.date}</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          {!msg.read && <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />}
+                          <span className={`px-2 py-0.5 rounded text-[9px] font-black ${typeCls}`}>{typeLabel}</span>
+                        </div>
+                      </div>
+                      <div className="flex gap-3 mt-2 text-[10px] text-slate-400">
+                        <a href={`tel:${msg.phone}`} className="flex items-center gap-1 hover:text-indigo-600 transition-colors">📞 {msg.phone}</a>
+                        <a href={`mailto:${msg.email}`} className="flex items-center gap-1 hover:text-indigo-600 transition-colors">✉ {msg.email}</a>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Quick send notice */}
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl space-y-3">
+            <h4 className="font-black text-sm text-slate-900 dark:text-white">Gửi thông báo hàng loạt tới phụ huynh</h4>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <input placeholder="Tiêu đề thông báo" className="text-xs p-2.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 dark:text-white col-span-2" />
+              <select className="text-xs p-2.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 dark:text-white">
+                <option>Tất cả lớp</option>
+                <option>Khối 10</option>
+                <option>Khối 11</option>
+                <option>Khối 12</option>
+              </select>
+              <textarea rows={3} placeholder="Nội dung thông báo..." className="text-xs p-2.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 dark:text-white resize-none col-span-2" />
+              <div className="flex flex-col gap-2">
+                <button className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold">📧 Gửi Email</button>
+                <button className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold">📱 SMS</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* EARLY WARNING TAB */}
+      {mainTab === 'EARLY_WARNING' && (
+        <div className="space-y-5">
+          {/* Summary */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[
+              { label: 'Cần hỗ trợ', count: earlyWarnings.length, cls: 'text-rose-600', bg: 'from-rose-500/10 to-rose-500/5 border-rose-200/60' },
+              { label: 'GPA thấp', count: earlyWarnings.filter(s => s.alerts.some(a => a.includes('GPA'))).length, cls: 'text-orange-600', bg: 'from-orange-500/10 to-orange-500/5 border-orange-200/60' },
+              { label: 'Vắng nhiều', count: earlyWarnings.filter(s => s.alerts.some(a => a.includes('Vắng'))).length, cls: 'text-amber-600', bg: 'from-amber-500/10 to-amber-500/5 border-amber-200/60' },
+              { label: 'Kỷ luật', count: earlyWarnings.filter(s => s.alerts.some(a => a.includes('Kỷ'))).length, cls: 'text-violet-600', bg: 'from-violet-500/10 to-violet-500/5 border-violet-200/60' },
+            ].map(s => (
+              <div key={s.label} className={`bg-gradient-to-br ${s.bg} border rounded-2xl p-4`}>
+                <p className={`text-2xl font-black ${s.cls}`}>{s.count}</p>
+                <p className="text-[11px] font-bold text-slate-500 mt-0.5">{s.label}</p>
+              </div>
+            ))}
+          </div>
+
+          {earlyWarnings.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-64 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl text-slate-400">
+              <CheckCircle2 className="w-12 h-12 text-emerald-400 mb-3" />
+              <p className="font-bold text-slate-600">Không có học sinh cần cảnh báo</p>
+              <p className="text-sm mt-1">Tất cả học sinh đều đang trong ngưỡng an toàn 👏</p>
+            </div>
+          ) : (
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-700">
+                    {['Học sinh','Lớp','GPA','Vắng (ngày)','Cảnh báo','Phụ huynh','SĐT','Hành động'].map(h => (
+                      <th key={h} className="text-left px-3 py-2.5 text-[10px] font-black uppercase tracking-wider text-slate-400">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {earlyWarnings.map(s => (
+                    <tr key={s.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                      <td className="px-3 py-3">
+                        <div className="flex items-center gap-2">
+                          <img src={s.avatar} alt={s.name} className="w-7 h-7 rounded-full object-cover shrink-0" />
+                          <span className="font-bold text-slate-800 dark:text-white">{s.name}</span>
+                        </div>
+                      </td>
+                      <td className="px-3 py-3 text-slate-500">{s.className}</td>
+                      <td className="px-3 py-3">
+                        <span className={`font-mono font-black ${s.gpa < 5 ? 'text-rose-600' : s.gpa < 6.5 ? 'text-amber-600' : 'text-slate-700 dark:text-slate-200'}`}>{s.gpa}</span>
+                      </td>
+                      <td className="px-3 py-3">
+                        <span className={`font-mono ${s.absentDays >= 3 ? 'text-rose-600 font-black' : 'text-slate-500'}`}>{s.absentDays}</span>
+                      </td>
+                      <td className="px-3 py-3">
+                        <div className="flex flex-wrap gap-1">
+                          {s.alerts.map(a => (
+                            <span key={a} className="px-1.5 py-0.5 bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-300 rounded text-[9px] font-black">{a}</span>
+                          ))}
+                        </div>
+                      </td>
+                      <td className="px-3 py-3 text-slate-600 dark:text-slate-300">{s.parentName}</td>
+                      <td className="px-3 py-3 font-mono text-slate-500">{s.parentPhone}</td>
+                      <td className="px-3 py-3">
+                        <div className="flex gap-1.5">
+                          <button
+                            onClick={() => { setSelectedStudentId(s.id); setMainTab('STUDENTS'); }}
+                            className="px-2 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-[9px] font-black"
+                          >
+                            Hồ sơ
+                          </button>
+                          <a href={`tel:${s.parentPhone}`} className="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg text-[9px] font-black">Gọi</a>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* STUDENTS TAB — existing content wrapped */}
+      {mainTab === 'STUDENTS' && (<>
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
-        <MetricCard label="Sĩ số" value={`${stats.total}`} note="Hồ sơ học sinh" icon={Users} color="text-indigo-600" />
-        <MetricCard label="GPA trung bình" value={`${stats.avgGpa}`} note="Theo sổ điểm" icon={BookOpen} color="text-sky-600" />
-        <MetricCard label="Chuyên cần" value={`${stats.avgAttendance}%`} note="Theo điểm danh" icon={CalendarCheck} color="text-emerald-600" />
-        <MetricCard label="Vắng hôm nay" value={`${stats.absentToday}`} note="Cần theo dõi" icon={AlertTriangle} color="text-rose-600" />
-        <MetricCard label="Cảnh báo" value={`${stats.supportCount}`} note="Cần hỗ trợ" icon={Bell} color="text-amber-600" />
+        <MetricCard label="Sĩ số" value={`${stats.total}`} note="Hồ sơ học sinh" icon={Users} color="text-indigo-600" accent="from-indigo-500/10 to-indigo-500/5 border-indigo-200/60" />
+        <MetricCard label="GPA trung bình" value={`${stats.avgGpa}`} note="Theo sổ điểm" icon={BookOpen} color="text-sky-600" accent="from-sky-500/10 to-sky-500/5 border-sky-200/60" />
+        <MetricCard label="Chuyên cần" value={`${stats.avgAttendance}%`} note="Theo điểm danh" icon={CalendarCheck} color="text-emerald-600" accent="from-emerald-500/10 to-emerald-500/5 border-emerald-200/60" />
+        <MetricCard label="Vắng hôm nay" value={`${stats.absentToday}`} note="Cần theo dõi" icon={AlertTriangle} color="text-rose-600" accent="from-rose-500/10 to-rose-500/5 border-rose-200/60" />
+        <MetricCard label="Cảnh báo" value={`${stats.supportCount}`} note="Cần hỗ trợ" icon={Bell} color="text-amber-600" accent="from-amber-500/10 to-amber-500/5 border-amber-200/60" />
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
-        <div className="xl:col-span-4 bg-white border border-slate-200 dark:border-slate-800/80 p-4 rounded-2xl shadow-xs space-y-4">
+        <div className="xl:col-span-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 p-4 rounded-2xl shadow-sm space-y-4">
+          {/* Quick Add Form */}
           <form onSubmit={handleAddStudent} className="flex gap-2">
             <input
               value={newStudentName}
               onChange={(e) => setNewStudentName(e.target.value)}
-              className="flex-1 text-xs px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              className="flex-1 text-xs px-3 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-shadow"
               placeholder="Thêm nhanh học sinh mới..."
             />
-            <button type="submit" className="px-3 rounded-xl bg-indigo-600 text-white text-xs font-bold flex items-center gap-1">
+            <button type="submit" className="px-4 rounded-xl bg-gradient-to-br from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all">
               <Plus className="w-3.5 h-3.5" />
               Thêm
             </button>
           </form>
 
+          {/* Filters */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full text-xs pl-9 pr-4 py-2 border border-slate-200 rounded-xl bg-slate-50 focus:outline-none"
+                className="w-full text-xs pl-8 pr-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 transition-shadow"
                 placeholder="Tìm học sinh..."
               />
             </div>
             <select
               value={classFilter}
               onChange={(e) => setClassFilter(e.target.value)}
-              className="w-full text-xs px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 focus:outline-none"
+              className="w-full text-xs px-3 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 focus:outline-none"
             >
               {classOptions.map(item => <option key={item}>{item}</option>)}
             </select>
           </div>
 
-          <div className="space-y-2 max-h-[540px] overflow-y-auto pr-1">
+          {/* Student List */}
+          <div className="space-y-1.5 max-h-[540px] overflow-y-auto pr-1 -mr-1">
             {filteredStudents.map(({ student, gpa, attendanceRate, needSupport }) => (
               <button
                 key={student.id}
                 type="button"
                 onClick={() => setSelectedStudentId(student.id)}
-                className={`w-full text-left p-3 rounded-xl border transition-all flex items-center gap-3 ${
-                  selectedStudentId === student.id ? 'border-indigo-500 bg-indigo-50/60' : 'border-slate-100 hover:bg-slate-50'
+                className={`w-full text-left p-3 rounded-xl border transition-all duration-200 flex items-center gap-3 group ${
+                  selectedStudentId === student.id
+                    ? 'border-indigo-400/60 bg-gradient-to-r from-indigo-50 to-indigo-50/40 shadow-sm'
+                    : 'border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:border-slate-200'
                 }`}
               >
-                <img src={student.avatar} alt={student.name} className="w-10 h-10 rounded-full object-cover shrink-0" />
+                <div className="relative shrink-0">
+                  <img src={student.avatar} alt={student.name} className="w-9 h-9 rounded-full object-cover" />
+                  {needSupport && (
+                    <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-rose-500 rounded-full border-2 border-white" />
+                  )}
+                </div>
                 <div className="flex-1 min-w-0">
-                  <h4 className="text-xs font-bold text-slate-900 truncate">{student.name}</h4>
+                  <h4 className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate">{student.name}</h4>
                   <span className="text-[10px] text-slate-400 block font-mono">{student.code} · {student.className}</span>
-                  <span className="text-[10px] text-slate-500">GPA {gpa} · chuyên cần {attendanceRate}%</span>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="text-[10px] text-slate-500">GPA <strong className="text-slate-700 dark:text-slate-300">{gpa}</strong></span>
+                    <span className="text-[10px] text-slate-400">·</span>
+                    <span className="text-[10px] text-slate-500">chuyên cần <strong className={attendanceRate < 85 ? 'text-rose-600' : 'text-emerald-600'}>{attendanceRate}%</strong></span>
+                  </div>
                 </div>
                 {needSupport && (
-                  <span className="px-1.5 py-0.5 bg-rose-50 text-rose-600 text-[8.5px] font-black rounded-md uppercase font-mono">
-                    Cảnh báo
+                  <span className="px-1.5 py-0.5 bg-rose-100 text-rose-600 text-[8px] font-black rounded-md uppercase font-mono border border-rose-200/60 shrink-0">
+                    ⚠ Cảnh báo
                   </span>
                 )}
               </button>
@@ -1166,27 +1389,52 @@ export default function StudentSuccessHub({ currentUser }: { currentUser: UserPr
 
         <div className="xl:col-span-8">
           {selectedStudent ? (
-            <div className="bg-white border border-slate-200 dark:border-slate-800/80 rounded-2xl shadow-xs overflow-hidden">
-              <div className="p-6 bg-slate-50 border-b border-slate-200/60 flex items-center gap-4">
-                <img src={selectedStudent.avatar} alt={selectedStudent.name} className="w-16 h-16 rounded-2xl object-cover border-2 border-white shadow-sm shrink-0" />
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 rounded-2xl shadow-sm overflow-hidden">
+              {/* Student Profile Header */}
+              <div className="relative p-6 bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 border-b border-white/5 flex items-center gap-4 overflow-hidden">
+                {/* Decorative background circles */}
+                <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full bg-indigo-500/10 blur-2xl pointer-events-none" />
+                <div className="absolute -bottom-6 right-24 w-24 h-24 rounded-full bg-sky-500/10 blur-xl pointer-events-none" />
+
+                <div className="relative shrink-0">
+                  <img src={selectedStudent.avatar} alt={selectedStudent.name} className="w-16 h-16 rounded-2xl object-cover ring-2 ring-white/20 shadow-lg" />
+                  <div className="absolute -bottom-1.5 -right-1.5 w-5 h-5 bg-emerald-400 rounded-full border-2 border-slate-900 flex items-center justify-center">
+                    <div className="w-1.5 h-1.5 bg-white rounded-full" />
+                  </div>
+                </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="text-base font-extrabold text-slate-900 leading-tight">{selectedStudent.name}</h3>
-                    <span className="px-2 py-0.5 bg-slate-200 text-slate-650 text-[10px] font-bold rounded-lg font-mono">{selectedStudent.code}</span>
-                    <span className="px-2 py-0.5 bg-indigo-100 text-indigo-700 text-[10px] font-bold rounded-lg">{selectedStudent.className}</span>
+                    <h3 className="text-base font-extrabold text-white leading-tight">{selectedStudent.name}</h3>
+                    <span className="px-2 py-0.5 bg-white/10 text-slate-200 text-[10px] font-bold rounded-lg font-mono border border-white/15">{selectedStudent.code}</span>
+                    <span className="px-2 py-0.5 bg-indigo-500/25 text-indigo-300 text-[10px] font-bold rounded-lg border border-indigo-400/30">Lớp {selectedStudent.className}</span>
                   </div>
-                  <p className="text-[10.5px] text-slate-500 mt-1">
-                    Phụ huynh: <strong>{selectedStudent.parentName}</strong> · {selectedStudent.parentPhone} · {selectedStudent.parentEmail}
+                  <p className="text-[10.5px] text-slate-400 mt-1.5">
+                    Phụ huynh: <strong className="text-slate-200">{selectedStudent.parentName}</strong> · <span className="text-slate-400">{selectedStudent.parentPhone}</span>
                   </p>
+                  <div className="flex items-center gap-3 mt-2">
+                    <span className="flex items-center gap-1 text-[10px] text-slate-300">
+                      <span className="w-1.5 h-1.5 rounded-full bg-sky-400 inline-block" />
+                      GPA <strong className="text-sky-300">{selectedMetric.gpa}</strong>
+                    </span>
+                    <span className="flex items-center gap-1 text-[10px] text-slate-300">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />
+                      Chuyên cần <strong className="text-emerald-300">{selectedMetric.attendanceRate}%</strong>
+                    </span>
+                    <span className="flex items-center gap-1 text-[10px] text-slate-300">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block" />
+                      {selectedStudent.conduct}
+                    </span>
+                  </div>
                 </div>
                 {selectedMetric.needSupport && (
-                  <span className="px-2 py-1 rounded-lg bg-rose-100 text-rose-700 text-[10px] font-black border border-rose-200">
-                    Cần hỗ trợ
+                  <span className="px-2.5 py-1.5 rounded-xl bg-rose-500/20 text-rose-300 text-[10px] font-black border border-rose-500/30 shrink-0 animate-pulse">
+                    ⚠ Cần hỗ trợ
                   </span>
                 )}
               </div>
 
-              <div className="flex overflow-x-auto border-b border-slate-100 text-xs font-bold text-slate-500 bg-white">
+              {/* Tab Navigation */}
+              <div className="flex overflow-x-auto bg-slate-50 dark:bg-slate-800/40 border-b border-slate-100 dark:border-slate-800 px-2 py-2 gap-1">
                 {[
                   ['PROFILE', 'Hồ sơ'],
                   ['HISTORY', 'Quá trình'],
@@ -1199,8 +1447,10 @@ export default function StudentSuccessHub({ currentUser }: { currentUser: UserPr
                     key={id}
                     type="button"
                     onClick={() => setProfileTab(id as typeof profileTab)}
-                    className={`min-w-28 flex-1 py-3 text-center border-b-2 transition-all ${
-                      profileTab === id ? 'border-indigo-600 text-indigo-600' : 'border-transparent hover:text-slate-800'
+                    className={`min-w-max px-4 py-2 rounded-lg text-xs font-bold transition-all duration-200 ${
+                      profileTab === id
+                        ? 'bg-white dark:bg-slate-800 text-indigo-700 dark:text-indigo-400 shadow-sm border border-slate-200 dark:border-slate-700'
+                        : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-white/60'
                     }`}
                   >
                     {label}
@@ -2006,24 +2256,28 @@ export default function StudentSuccessHub({ currentUser }: { currentUser: UserPr
           )}
         </div>
       </div>
+    </>) } {/* end STUDENTS tab */}
     </div>
   );
 }
 
-function MetricCard({ label, value, note, icon: Icon, color }: {
+function MetricCard({ label, value, note, icon: Icon, color, accent }: {
   label: string;
   value: string;
   note: string;
   icon: React.ComponentType<{ className?: string }>;
   color: string;
+  accent?: string;
 }) {
   return (
-    <div className="bg-white border border-slate-200 dark:border-slate-800/80 p-5 rounded-2xl shadow-xs">
-      <div className="flex items-center justify-between">
-        <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block">{label}</span>
-        <Icon className={`w-4 h-4 ${color}`} />
+    <div className={`bg-gradient-to-br ${accent || 'from-slate-50 to-white border-slate-200/80'} border p-5 rounded-2xl shadow-sm hover:shadow-md transition-shadow`}>
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">{label}</span>
+        <div className={`w-8 h-8 rounded-xl flex items-center justify-center bg-white/70 shadow-xs border border-white/80`}>
+          <Icon className={`w-4 h-4 ${color}`} />
+        </div>
       </div>
-      <strong className={`text-2xl font-display font-black mt-1.5 block ${color}`}>{value}</strong>
+      <strong className={`text-2xl font-display font-black block ${color}`}>{value}</strong>
       <span className="text-[10.5px] text-slate-500 mt-1 block">{note}</span>
     </div>
   );
@@ -2036,15 +2290,17 @@ function InfoCard({ icon: Icon, label, lines, action }: {
   action?: React.ReactNode;
 }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 relative">
-      <div className="flex items-center justify-between gap-2 mb-2">
+    <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-gradient-to-br from-slate-50 to-white dark:from-slate-800/60 dark:to-slate-800/30 p-4 relative hover:shadow-sm transition-shadow">
+      <div className="flex items-center justify-between gap-2 mb-2.5">
         <div className="flex items-center gap-2">
-          <Icon className="w-4 h-4 text-indigo-600" />
-          <span className="text-[10px] uppercase font-black text-slate-500 tracking-wide">{label}</span>
+          <div className="w-6 h-6 rounded-lg bg-indigo-100 dark:bg-indigo-500/20 flex items-center justify-center">
+            <Icon className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+          </div>
+          <span className="text-[10px] uppercase font-black text-slate-500 dark:text-slate-400 tracking-wide">{label}</span>
         </div>
         {action}
       </div>
-      <div className="space-y-1 text-xs text-slate-650 leading-relaxed">
+      <div className="space-y-1.5 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
         {lines.map((line, index) => (
           <div key={`${label}-${index}`}>{line}</div>
         ))}
