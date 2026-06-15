@@ -1,4 +1,3 @@
-import { getDashboardStats } from './actions';
 import DashboardClient from './dashboard-client';
 
 export default async function DashboardPage({
@@ -7,7 +6,6 @@ export default async function DashboardPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  const stats = await getDashboardStats();
 
   return <DashboardClient />;
 }

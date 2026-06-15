@@ -1,9 +1,6 @@
-'use client';
+import { redirect } from 'next/navigation';
 
-import dynamic from 'next/dynamic';
-
-const App = dynamic(() => import('../../App'), { ssr: false });
-
-export default function MisPortalPage() {
-  return <App />;
+export default async function IndexPage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
+  redirect(//dashboard);
 }
