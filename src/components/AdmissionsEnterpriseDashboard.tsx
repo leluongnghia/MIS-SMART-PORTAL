@@ -617,60 +617,43 @@ export default function AdmissionsEnterpriseDashboard() {
               );
             })}
           </div>
-
-          <div className="mt-5 overflow-x-auto pb-1">
-            <div className="flex min-w-max gap-2">
-              {moduleNav.map(item => (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => setActiveModule(item.id)}
-                  className={cn(
-                    'w-44 rounded-xl border px-3 py-2 text-left transition',
-                    activeModule === item.id ? 'border-blue-200 bg-blue-50 text-blue-700 shadow-sm' : 'border-slate-200 bg-white text-slate-600 hover:border-blue-200 hover:bg-slate-50'
-                  )}
-                >
-                  <span className="block text-xs font-black">{item.label}</span>
-                  <span className="mt-0.5 block truncate text-[11px] font-semibold opacity-75">{item.desc}</span>
-                </button>
-              ))}
-            </div>
-          </div>
         </section>
 
-        {activeModule !== 'dashboard' && (
-          <ModuleWorkspace
-            module={activeModule}
-            cards={cards}
-            selectedLead={selectedLead}
-            selectedStageLabel={selectedStageLabel}
-            paymentRows={paymentRows}
-            doneTodos={doneTodos}
-            activityLog={activityLog}
-            pipelineEnabled={pipelineEnabled}
-            emailSubject={emailSubject}
-            emailBody={emailBody}
-            sentMessage={sentMessage}
-            onSelectLead={setSelectedLeadId}
-            onPatchLead={updateSelectedLead}
-            onSetStatus={status => updateSelectedLead({ status })}
-            onMarkPaid={markPayment}
-            onToggleTodo={toggleTodo}
-            onAddActivity={value => {
-              setActivityInput(value);
-              const trimmed = value.trim();
-              if (!trimmed) return;
-              setActivityLog(current => [{ time: 'Vừa xong', title: `${selectedLead.advisor} cập nhật hồ sơ`, desc: trimmed }, ...current]);
-              updateSelectedLead({ note: trimmed });
-            }}
-            onTogglePipeline={togglePipeline}
-            onSetEmailSubject={setEmailSubject}
-            onSetEmailBody={setEmailBody}
-            onInsertVariable={insertVariable}
-            onSendEmail={sendEmail}
-          />
-        )}
-
+        <div className="grid gap-5 xl:grid-cols-[260px_minmax(0,1fr)]">
+          <AdmissionsModuleNav activeModule={activeModule} onChange={setActiveModule} />
+          <div className="min-w-0 space-y-5">
+            {activeModule !== 'dashboard' ? (
+              <ModuleWorkspace
+                module={activeModule}
+                cards={cards}
+                selectedLead={selectedLead}
+                selectedStageLabel={selectedStageLabel}
+                paymentRows={paymentRows}
+                doneTodos={doneTodos}
+                activityLog={activityLog}
+                pipelineEnabled={pipelineEnabled}
+                emailSubject={emailSubject}
+                emailBody={emailBody}
+                sentMessage={sentMessage}
+                onSelectLead={setSelectedLeadId}
+                onPatchLead={updateSelectedLead}
+                onSetStatus={status => updateSelectedLead({ status })}
+                onMarkPaid={markPayment}
+                onToggleTodo={toggleTodo}
+                onAddActivity={value => {
+                  setActivityInput(value);
+                  const trimmed = value.trim();
+                  if (!trimmed) return;
+                  setActivityLog(current => [{ time: 'Vừa xong', title: `${selectedLead.advisor} cập nhật hồ sơ`, desc: trimmed }, ...current]);
+                  updateSelectedLead({ note: trimmed });
+                }}
+                onTogglePipeline={togglePipeline}
+                onSetEmailSubject={setEmailSubject}
+                onSetEmailBody={setEmailBody}
+                onInsertVariable={insertVariable}
+                onSendEmail={sendEmail}
+              />
+            ) : (
         <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(420px,40%)]">
           <main className="space-y-5">
             <div className="grid gap-5 2xl:grid-cols-2">
@@ -975,6 +958,9 @@ export default function AdmissionsEnterpriseDashboard() {
             </Panel>
           </aside>
         </div>
+            )}
+          </div>
+        </div>
       </div>
 
       <div className="fixed bottom-6 right-6 z-30">
@@ -996,6 +982,64 @@ export default function AdmissionsEnterpriseDashboard() {
         </button>
       </div>
     </div>
+  );
+}
+
+function AdmissionsModuleNav({
+  activeModule,
+  onChange,
+}: {
+  activeModule: ActiveModule;
+  onChange: (module: ActiveModule) => void;
+}) {
+  const groups: Array<{ title: string; items: ActiveModule[] }> = [
+    { title: 'Tổng quan', items: ['dashboard'] },
+    { title: 'Quản lý tuyển sinh', items: ['leads', 'applications', 'interviews', 'enrollment', 'classes', 'scholarships', 'payments'] },
+    { title: 'Marketing & Chiến dịch', items: ['campaigns', 'email'] },
+    { title: 'Báo cáo', items: ['reports', 'tasks'] },
+    { title: 'Cài đặt', items: ['settings'] },
+  ];
+  const navById = new Map(moduleNav.map(item => [item.id, item]));
+
+  return (
+    <aside className="h-fit rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_8px_24px_rgba(15,23,42,0.04)] xl:sticky xl:top-4">
+      <div className="border-b border-slate-100 px-2 pb-3">
+        <p className="text-sm font-black text-slate-950">MIS SMART PORTAL</p>
+        <p className="mt-0.5 text-xs font-bold text-blue-600">Tuyển sinh</p>
+      </div>
+      <div className="mt-3 space-y-4">
+        {groups.map(group => (
+          <div key={group.title}>
+            <p className="px-2 text-[11px] font-black uppercase tracking-wide text-slate-400">{group.title}</p>
+            <div className="mt-1 space-y-1">
+              {group.items.map(id => {
+                const item = navById.get(id);
+                if (!item) return null;
+                const active = activeModule === id;
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => onChange(id)}
+                    className={cn(
+                      'w-full rounded-xl px-3 py-2 text-left transition',
+                      active ? 'bg-blue-50 text-blue-700 shadow-sm ring-1 ring-blue-100' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                    )}
+                  >
+                    <span className="block text-xs font-black">{item.label}</span>
+                    <span className="mt-0.5 block truncate text-[11px] font-semibold opacity-70">{item.desc}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="mt-4 rounded-xl border border-slate-100 bg-slate-50 p-3">
+        <p className="text-xs font-black text-slate-700">Hoạt động gần đây</p>
+        <p className="mt-1 text-[11px] font-semibold leading-relaxed text-slate-500">Lead, hồ sơ, email và thanh toán được xử lý trong cùng module Tuyển sinh.</p>
+      </div>
+    </aside>
   );
 }
 
