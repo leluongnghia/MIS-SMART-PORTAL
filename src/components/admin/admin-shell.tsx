@@ -65,6 +65,7 @@ const menuGroups: MenuItemGroup[] = [
       { label: 'Công việc & Quy trình', href: 'tasks', icon: CheckSquare },
       { label: 'Phê duyệt', href: 'approvals', icon: UserCheck },
       { label: 'Lịch & Sự kiện', href: 'events', icon: Calendar },
+      { label: 'Chỉ đạo BGH', href: 'directives', icon: ClipboardCheck },
       { label: 'Thông báo nội bộ', href: 'announcements', icon: Bell },
       { label: 'Quản trị Nhân sự HRM', href: 'hrm', icon: Users },
       { label: 'Quản trị Rủi ro', href: 'risk', icon: ShieldAlert },
