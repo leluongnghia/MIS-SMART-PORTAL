@@ -474,7 +474,6 @@ const readDashboardCards = () => {
 export default function AdmissionsEnterpriseDashboard() {
   const [cards, setCards] = useState<PipelineCard[]>(readDashboardCards);
   const [selectedLeadId, setSelectedLeadId] = useState(initialCards[0].id);
-  const [draggingId, setDraggingId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<ProfileTab>('overview');
   const [activeModule, setActiveModule] = useState<ActiveModule>('dashboard');
   const [editing, setEditing] = useState(false);
@@ -496,13 +495,6 @@ export default function AdmissionsEnterpriseDashboard() {
   const selectedStageLabel = columns.find(column => column.id === selectedLead.status)?.label || 'Lead mới';
   const selectedStep = statusStepIndex[selectedLead.status];
 
-  const cardsByStatus = useMemo(() => {
-    return columns.map(column => ({
-      ...column,
-      items: cards.filter(card => card.status === column.id),
-    }));
-  }, [cards]);
-
   const paymentRows = useMemo(() => cards.slice(0, 5).map(card => ({
     id: card.id,
     name: card.name,
@@ -517,11 +509,9 @@ export default function AdmissionsEnterpriseDashboard() {
     setCards(current => current.map(card => card.id === selectedLead.id ? { ...card, ...patch } : card));
   };
 
-  const moveCard = (status: PipelineStatus) => {
-    if (!draggingId) return;
-    setCards(current => current.map(card => card.id === draggingId ? { ...card, status } : card));
-    setSelectedLeadId(draggingId);
-    setDraggingId(null);
+  const moveCardToStatus = (id: string, status: PipelineStatus) => {
+    setCards(current => current.map(card => card.id === id ? { ...card, status } : card));
+    setSelectedLeadId(id);
   };
 
   const toggleTodo = (id: string) => {
@@ -638,6 +628,7 @@ export default function AdmissionsEnterpriseDashboard() {
                 onSelectLead={setSelectedLeadId}
                 onPatchLead={updateSelectedLead}
                 onSetStatus={status => updateSelectedLead({ status })}
+                onMoveLead={moveCardToStatus}
                 onMarkPaid={markPayment}
                 onToggleTodo={toggleTodo}
                 onAddActivity={value => {
@@ -766,109 +757,6 @@ export default function AdmissionsEnterpriseDashboard() {
               </Panel>
             </div>
 
-            <Panel title="Kanban Pipeline" action="Kéo thả để đổi trạng thái">
-              <div className="grid gap-3 xl:grid-cols-5">
-                {cardsByStatus.map(column => (
-                  <div key={column.id} onDragOver={event => event.preventDefault()} onDrop={() => moveCard(column.id)} className={cn('min-h-[280px] rounded-2xl border p-3', column.tint)}>
-                    <div className="mb-3 flex items-center justify-between">
-                      <h3 className="text-sm font-black text-slate-900">{column.label}</h3>
-                      <span className="rounded-full bg-white px-2 py-1 text-xs font-black text-slate-500">{column.items.length}</span>
-                    </div>
-                    <div className="space-y-2">
-                      {column.items.map(card => (
-                        <button
-                          key={card.id}
-                          type="button"
-                          draggable
-                          onClick={() => setSelectedLeadId(card.id)}
-                          onDragStart={() => setDraggingId(card.id)}
-                          onDragEnd={() => setDraggingId(null)}
-                          className={cn('w-full cursor-grab rounded-xl border bg-white p-3 text-left shadow-[0_8px_20px_rgba(15,23,42,0.04)] transition active:cursor-grabbing', selectedLead.id === card.id ? 'border-blue-400 ring-2 ring-blue-100' : 'border-slate-200 hover:border-blue-200')}
-                        >
-                          <div className="flex items-center gap-2">
-                            <Avatar initials={initials(card.name)} small />
-                            <div className="min-w-0">
-                              <p className="truncate text-sm font-black text-slate-900">{card.name}</p>
-                              <p className="text-xs font-bold text-slate-500">{card.grade}</p>
-                            </div>
-                          </div>
-                          <div className="mt-3 grid gap-1 text-[11px] font-semibold text-slate-500">
-                            <span>Ngày tạo: {card.createdAt}</span>
-                            <span>Tư vấn viên: {card.advisor}</span>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </Panel>
-
-            <div className="grid gap-5 2xl:grid-cols-[1.3fr_.7fr]">
-              <Panel title="Email Template">
-                <div className="space-y-3">
-                  <input value={emailSubject} onChange={event => setEmailSubject(event.target.value)} className="h-10 w-full rounded-xl border border-slate-200 px-3 text-sm font-bold text-slate-800" />
-                  <div className="flex flex-wrap gap-1 rounded-xl border border-slate-200 bg-slate-50 p-2">
-                    {['B', 'I', 'U', '•', '1.', '@', 'Link', 'Ảnh'].map(item => (
-                      <button key={item} type="button" onClick={() => setEmailBody(current => `${current}${item === 'Link' ? '\nhttps://mis.edu.vn/admissions' : ''}`)} className="h-8 rounded-lg bg-white px-3 text-xs font-black text-slate-600 shadow-sm hover:bg-blue-50 hover:text-blue-700">{item}</button>
-                    ))}
-                  </div>
-                  <textarea value={emailBody} onChange={event => setEmailBody(event.target.value)} rows={8} className="w-full resize-none rounded-xl border border-slate-200 p-3 text-sm font-medium leading-relaxed text-slate-700" />
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <span className="text-xs font-bold text-emerald-600">{sentMessage}</span>
-                    <button type="button" onClick={sendEmail} className="inline-flex h-9 items-center gap-2 rounded-lg bg-blue-600 px-3 text-xs font-black text-white hover:bg-blue-700">
-                      <Send className="h-3.5 w-3.5" />
-                      Gửi email
-                    </button>
-                  </div>
-                </div>
-              </Panel>
-
-              <Panel title="Biến động">
-                <div className="space-y-2">
-                  {variableList.map(item => (
-                    <button key={item} type="button" onClick={() => insertVariable(item)} className="flex w-full items-center justify-between rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 text-left text-xs font-black text-slate-700 hover:border-blue-200 hover:bg-blue-50">
-                      {item}
-                      <Plus className="h-3.5 w-3.5 text-blue-600" />
-                    </button>
-                  ))}
-                </div>
-              </Panel>
-            </div>
-
-            <div className="grid gap-5 2xl:grid-cols-[1.2fr_.8fr]">
-              <Panel title="Học phí & Thanh toán">
-                <div className="mb-4 grid gap-3 md:grid-cols-4">
-                  {[
-                    ['Tổng học phí', compactMoney(paymentRows.reduce((sum, row) => sum + row.tuition, 0))],
-                    ['Đã thu', compactMoney(paymentRows.reduce((sum, row) => sum + row.paid, 0))],
-                    ['Còn lại', compactMoney(paymentRows.reduce((sum, row) => sum + row.remaining, 0))],
-                    ['Tỷ lệ thu', `${Math.round(paymentRows.reduce((sum, row) => sum + row.paid, 0) / paymentRows.reduce((sum, row) => sum + row.tuition, 0) * 100)}%`],
-                  ].map(([label, value]) => (
-                    <div key={label} className="rounded-xl border border-slate-100 bg-slate-50 p-3">
-                      <p className="text-[11px] font-bold text-slate-500">{label}</p>
-                      <p className="mt-1 text-lg font-black text-slate-950">{value}</p>
-                    </div>
-                  ))}
-                </div>
-                <PaymentTable rows={paymentRows} onMarkPaid={markPayment} />
-              </Panel>
-
-              <Panel title="Cài đặt Pipeline">
-                <div className="space-y-2">
-                  {pipelineSteps.map((step, index) => (
-                    <div key={step} className="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2">
-                      <span className="grid h-6 w-6 place-items-center rounded-full bg-white text-xs font-black text-slate-500">{index + 1}</span>
-                      <span className="min-w-0 flex-1 text-sm font-black text-slate-800">{step}</span>
-                      <button type="button" onClick={() => togglePipeline(step)} className={cn('h-5 w-9 rounded-full p-0.5 transition', pipelineEnabled[step] ? 'bg-blue-600' : 'bg-slate-300')}>
-                        <span className={cn('block h-4 w-4 rounded-full bg-white transition', pipelineEnabled[step] && 'translate-x-4')} />
-                      </button>
-                      <MoreHorizontal className="h-4 w-4 text-slate-400" />
-                    </div>
-                  ))}
-                </div>
-              </Panel>
-            </div>
           </main>
 
           <aside className="space-y-5">
@@ -1002,12 +890,12 @@ function AdmissionsModuleNav({
   const navById = new Map(moduleNav.map(item => [item.id, item]));
 
   return (
-    <aside className="h-fit rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_8px_24px_rgba(15,23,42,0.04)] xl:sticky xl:top-4">
+    <aside className="rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_8px_24px_rgba(15,23,42,0.04)] xl:sticky xl:top-4 xl:max-h-[calc(100vh-2rem)] xl:overflow-hidden">
       <div className="border-b border-slate-100 px-2 pb-3">
         <p className="text-sm font-black text-slate-950">MIS SMART PORTAL</p>
         <p className="mt-0.5 text-xs font-bold text-blue-600">Tuyển sinh</p>
       </div>
-      <div className="mt-3 space-y-4">
+      <div className="mt-3 max-h-[calc(100vh-12rem)] space-y-3 overflow-y-auto pr-1">
         {groups.map(group => (
           <div key={group.title}>
             <p className="px-2 text-[11px] font-black uppercase tracking-wide text-slate-400">{group.title}</p>
@@ -1022,7 +910,7 @@ function AdmissionsModuleNav({
                     type="button"
                     onClick={() => onChange(id)}
                     className={cn(
-                      'w-full rounded-xl px-3 py-2 text-left transition',
+                      'w-full rounded-xl px-3 py-1.5 text-left transition',
                       active ? 'bg-blue-50 text-blue-700 shadow-sm ring-1 ring-blue-100' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                     )}
                   >
@@ -1035,7 +923,7 @@ function AdmissionsModuleNav({
           </div>
         ))}
       </div>
-      <div className="mt-4 rounded-xl border border-slate-100 bg-slate-50 p-3">
+      <div className="mt-3 rounded-xl border border-slate-100 bg-slate-50 p-3">
         <p className="text-xs font-black text-slate-700">Hoạt động gần đây</p>
         <p className="mt-1 text-[11px] font-semibold leading-relaxed text-slate-500">Lead, hồ sơ, email và thanh toán được xử lý trong cùng module Tuyển sinh.</p>
       </div>
@@ -1058,6 +946,7 @@ function ModuleWorkspace({
   onSelectLead,
   onPatchLead,
   onSetStatus,
+  onMoveLead,
   onMarkPaid,
   onToggleTodo,
   onAddActivity,
@@ -1081,6 +970,7 @@ function ModuleWorkspace({
   onSelectLead: (id: string) => void;
   onPatchLead: (patch: Partial<PipelineCard>) => void;
   onSetStatus: (status: PipelineStatus) => void;
+  onMoveLead: (id: string, status: PipelineStatus) => void;
   onMarkPaid: (id: string) => void;
   onToggleTodo: (id: string) => void;
   onAddActivity: (value: string) => void;
@@ -1091,30 +981,59 @@ function ModuleWorkspace({
   onSendEmail: () => void;
 }) {
   const [noteDraft, setNoteDraft] = useState('');
+  const [draggingLeadId, setDraggingLeadId] = useState<string | null>(null);
   const title = moduleNav.find(item => item.id === module)?.label || 'Chức năng tuyển sinh';
+  const leadColumns = useMemo(() => columns.map(column => ({
+    ...column,
+    items: cards.filter(card => card.status === column.id),
+  })), [cards]);
 
   if (module === 'leads') {
     return (
-      <Panel title={title} action={`${cards.length} lead`}>
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[900px] text-left text-xs">
-            <thead className="text-slate-500">
-              <tr>{['Thí sinh', 'Phụ huynh', 'Liên hệ', 'Nguồn', 'Trạng thái', 'Tư vấn viên', 'Thao tác'].map(head => <th key={head} className="border-b border-slate-100 py-2 font-black">{head}</th>)}</tr>
-            </thead>
-            <tbody>
-              {cards.map(card => (
-                <tr key={card.id} className="border-b border-slate-50">
-                  <td className="py-3 font-black text-slate-900">{card.name}<span className="block text-[11px] text-slate-500">{card.grade}</span></td>
-                  <td className="py-3 font-bold text-slate-600">{card.parentName}</td>
-                  <td className="py-3 font-bold text-slate-600">{card.phone}<span className="block text-[11px]">{card.email}</span></td>
-                  <td className="py-3 font-bold text-slate-600">{card.source}</td>
-                  <td className="py-3"><span className="rounded-full bg-blue-50 px-2 py-1 font-black text-blue-700">{columns.find(column => column.id === card.status)?.label}</span></td>
-                  <td className="py-3 font-bold text-slate-600">{card.advisor}</td>
-                  <td className="py-3"><button type="button" onClick={() => onSelectLead(card.id)} className="rounded-lg border border-slate-200 px-2 py-1 font-black hover:border-blue-200 hover:bg-blue-50">Mở hồ sơ</button></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      <Panel title={title} action="Kanban kéo thả">
+        <div className="grid gap-3 2xl:grid-cols-5">
+          {leadColumns.map(column => (
+            <div
+              key={column.id}
+              onDragOver={event => event.preventDefault()}
+              onDrop={() => {
+                if (!draggingLeadId) return;
+                onMoveLead(draggingLeadId, column.id);
+                setDraggingLeadId(null);
+              }}
+              className={cn('min-h-[360px] rounded-2xl border p-3', column.tint)}
+            >
+              <div className="mb-3 flex items-center justify-between">
+                <h3 className="text-sm font-black text-slate-900">{column.label}</h3>
+                <span className="rounded-full bg-white px-2 py-1 text-xs font-black text-slate-500">{column.items.length}</span>
+              </div>
+              <div className="space-y-2">
+                {column.items.map(card => (
+                  <button
+                    key={card.id}
+                    type="button"
+                    draggable
+                    onClick={() => onSelectLead(card.id)}
+                    onDragStart={() => setDraggingLeadId(card.id)}
+                    onDragEnd={() => setDraggingLeadId(null)}
+                    className={cn('w-full cursor-grab rounded-xl border bg-white p-3 text-left shadow-[0_8px_20px_rgba(15,23,42,0.04)] transition active:cursor-grabbing', selectedLead.id === card.id ? 'border-blue-400 ring-2 ring-blue-100' : 'border-slate-200 hover:border-blue-200')}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Avatar initials={initials(card.name)} small />
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-black text-slate-900">{card.name}</p>
+                        <p className="text-xs font-bold text-slate-500">{card.grade}</p>
+                      </div>
+                    </div>
+                    <div className="mt-3 grid gap-1 text-[11px] font-semibold text-slate-500">
+                      <span>Ngày tạo: {card.createdAt}</span>
+                      <span>Tư vấn viên: {card.advisor}</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
       </Panel>
     );
