@@ -1,5 +1,7 @@
 'use client';
 
+import { useEffect } from 'react';
+import { useRouter, useParams } from 'next/navigation';
 import {
   FileText,
   Clock,
@@ -29,6 +31,23 @@ const taskStatsData = [
 ];
 
 export default function TasksDashboard() {
+  const router = useRouter();
+  const params = useParams();
+  const locale = params?.locale || 'vi';
+
+  useEffect(() => {
+    const userId = localStorage.getItem('mis_edutask_logged_in_user_id');
+    const loggedIn = localStorage.getItem('mis_edutask_logged_in') === 'true';
+    if (!loggedIn || !userId) return;
+    // Dynamically import to avoid server-side issues
+    import('@/src/mockData').then(({ MOCK_USERS }) => {
+      const user = MOCK_USERS.find(u => u.id === userId);
+      if (user && user.workspaceId && user.workspaceId !== 'BGH' && user.workspaceId !== 'KHAO_THI' && user.workspaceId !== 'TUYEN_SINH_PR' && user.role !== 'ADMIN') {
+        router.replace(`/${locale}/dashboard?tab=tasks`);
+      }
+    });
+  }, [locale, router]);
+
   return (
     <div className="space-y-6">
       {/* Header */}

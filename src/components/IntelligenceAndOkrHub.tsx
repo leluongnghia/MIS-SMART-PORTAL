@@ -260,7 +260,10 @@ export default function IntelligenceAndOkrHub({
 
       const response = await fetch('/api/gemini/summarize-report', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-user-id': currentUser.id
+        },
         body: JSON.stringify({ reports: reportCandidates })
       });
 
@@ -302,7 +305,10 @@ export default function IntelligenceAndOkrHub({
 
       const response = await fetch('/api/gemini/early-warning', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-user-id': currentUser.id
+        },
         body: JSON.stringify({ tasks: activeTasks })
       });
 
@@ -336,7 +342,10 @@ export default function IntelligenceAndOkrHub({
 
       const response = await fetch('/api/gemini/voice-to-task', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-user-id': currentUser.id
+        },
         body: JSON.stringify({
           promptText: voiceInputText,
           usersContext: usersData,

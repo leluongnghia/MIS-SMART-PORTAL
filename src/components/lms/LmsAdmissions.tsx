@@ -206,7 +206,10 @@ export default function LmsAdmissions({
     try {
       const response = await fetch('/api/email/send-campaign', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-user-id': currentUser.id,
+        },
         body: JSON.stringify({
           campaignName: emailTemplate,
           recipients,

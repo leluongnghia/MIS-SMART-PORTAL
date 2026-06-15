@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
+import { verifyApiAuth } from '../../../../libs/server/auth';
 
 export async function POST(req: NextRequest) {
+  // Verify auth (Only ADMIN role can save system config)
+  const { errorResponse } = await verifyApiAuth(req, { requiredRole: 'ADMIN' });
+  if (errorResponse) return errorResponse;
+
   try {
     const { smtp, zalo, gemini } = await req.json();
 

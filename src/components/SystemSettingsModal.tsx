@@ -17,6 +17,7 @@ import {
 
 interface SystemSettingsModalProps {
   onClose: () => void;
+  currentUserId?: string;
 }
 
 type ConfigStatus = {
@@ -99,7 +100,7 @@ function FieldStatus({ label, active }: { label: string; active: boolean }) {
   );
 }
 
-export default function SystemSettingsModal({ onClose }: SystemSettingsModalProps) {
+export default function SystemSettingsModal({ onClose, currentUserId }: SystemSettingsModalProps) {
   const [activeTab, setActiveTab] = useState<'EMAIL' | 'ZALO' | 'ENV'>('EMAIL');
   const [config, setConfig] = useState<ConfigStatus | null>(null);
   const [loadingConfig, setLoadingConfig] = useState(false);
@@ -148,7 +149,9 @@ export default function SystemSettingsModal({ onClose }: SystemSettingsModalProp
   const loadStatus = async () => {
     setLoadingConfig(true);
     try {
-      const response = await fetch('/api/notification/config-status');
+      const response = await fetch('/api/notification/config-status', {
+        headers: currentUserId ? { 'x-user-id': currentUserId } : {},
+      });
       const data = await response.json();
       if (!response.ok || data.status !== 'success') {
         throw new Error(data.error || 'Không thể tải trạng thái cấu hình.');
@@ -187,7 +190,10 @@ export default function SystemSettingsModal({ onClose }: SystemSettingsModalProp
     try {
       const response = await fetch('/api/notification/config-save', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          ...(currentUserId ? { 'x-user-id': currentUserId } : {}),
+        },
         body: JSON.stringify({
           smtp: {
             host: smtpHost,
@@ -242,7 +248,10 @@ export default function SystemSettingsModal({ onClose }: SystemSettingsModalProp
     try {
       const response = await fetch('/api/email/send-test', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          ...(currentUserId ? { 'x-user-id': currentUserId } : {}),
+        },
         body: JSON.stringify({
           to: testEmail,
           subject: testSubject,
@@ -272,7 +281,10 @@ export default function SystemSettingsModal({ onClose }: SystemSettingsModalProp
       const labels = broadcastLabels.split(',').map(label => label.trim()).filter(Boolean);
       const response = await fetch('/api/zalo/broadcast/prepare', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          ...(currentUserId ? { 'x-user-id': currentUserId } : {}),
+        },
         body: JSON.stringify({
           title: broadcastTitle,
           content: broadcastContent,

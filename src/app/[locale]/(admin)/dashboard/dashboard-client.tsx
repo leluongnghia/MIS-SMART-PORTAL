@@ -44,7 +44,7 @@ const performanceData = [
   { month: '05/2025', total: 83.4, admission: 71.8, attendance: 94.2 },
 ];
 
-export default function DashboardClient() {
+export default function DashboardClient({ tab }: { tab?: string }) {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [isReady, setIsReady] = useState(false);
 
@@ -83,10 +83,19 @@ export default function DashboardClient() {
         users={MOCK_USERS}
         workspaces={WORKSPACES}
         currentUser={currentUser}
+        tab={tab}
         onViewTask={(task) => alert(`Xem chi tiết công việc: ${task.title}`)}
         onUpdateStatus={(taskId, newStatus) => alert(`Cập nhật trạng thái công việc ${taskId} sang ${newStatus}`)}
         onRejectTask={(taskId, reason) => alert(`Từ chối công việc ${taskId} vì: ${reason}`)}
-        onNavigateTab={(tab) => alert(`Chuyển sang tab: ${tab}`)}
+        onNavigateTab={(targetTab) => {
+          // Update URL query parameter client-side
+          const cleanTab = targetTab.toLowerCase();
+          const newUrl = `${window.location.pathname}?tab=${cleanTab}`;
+          window.history.pushState(null, '', newUrl);
+          // Dispatch popstate event to trigger updates if necessary, or let the parent know
+          const popStateEvent = new PopStateEvent('popstate');
+          dispatchEvent(popStateEvent);
+        }}
       />
     );
   }

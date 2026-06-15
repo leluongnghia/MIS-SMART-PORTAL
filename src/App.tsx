@@ -980,11 +980,13 @@ function AppInner() {
     let cancelled = false;
 
     const runReminderBatch = async () => {
+      if (!currentUser) return;
       try {
         const res = await fetch('/api/email/run-deadline-reminders', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'x-user-id': currentUser.id,
           },
           body: JSON.stringify({
             tasks,
@@ -1074,7 +1076,10 @@ function AppInner() {
     try {
       const response = await fetch('/api/gemini/summarize-daily-tasks', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-user-id': currentUser?.id || '',
+        },
         body: JSON.stringify({ 
           tasks: incompleteTasks,
           teacherName: displayCurrentUser.name 
@@ -2713,6 +2718,7 @@ function AppInner() {
       {isSystemSettingsOpen && (
         <SystemSettingsModal
           onClose={() => setIsSystemSettingsOpen(false)}
+          currentUserId={currentUser?.id}
         />
       )}
 

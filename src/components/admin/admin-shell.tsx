@@ -105,6 +105,17 @@ export default function AdminShell({ locale, children }: { locale: string; child
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [isAuthReady, setIsAuthReady] = useState<boolean>(false);
+  const [currentTab, setCurrentTab] = useState<string | null>(null);
+
+  useEffect(() => {
+    const updateTab = () => {
+      const params = new URLSearchParams(window.location.search);
+      setCurrentTab(params.get('tab'));
+    };
+    updateTab();
+    window.addEventListener('popstate', updateTab);
+    return () => window.removeEventListener('popstate', updateTab);
+  }, [pathname]);
 
   useEffect(() => {
     const loggedIn = localStorage.getItem('mis_edutask_logged_in') === 'true';
@@ -184,6 +195,43 @@ export default function AdminShell({ locale, children }: { locale: string; child
     );
   }
 
+  const isDepartment = currentUser?.workspaceId &&
+    currentUser.workspaceId !== 'BGH' &&
+    currentUser.workspaceId !== 'KHAO_THI' &&
+    currentUser.workspaceId !== 'TUYEN_SINH_PR' &&
+    currentUser?.role !== 'ADMIN';
+
+  const departmentMenuGroups: MenuItemGroup[] = [
+    {
+      title: 'TỔNG QUAN',
+      items: [
+        { label: 'Tổng quan bộ phận', href: 'dashboard', icon: LayoutDashboard },
+      ],
+    },
+    {
+      title: 'NGHIỆP VỤ BỘ PHẬN',
+      items: [
+        { label: 'Công việc nội bộ', href: 'dashboard?tab=tasks', icon: CheckSquare },
+        { label: 'Duyệt giáo án', href: 'dashboard?tab=giaoan', icon: FileText },
+        { label: 'Đề xuất nghỉ phép', href: 'dashboard?tab=nghiphep', icon: UserCheck },
+        { label: 'Thành viên tổ', href: 'dashboard?tab=members', icon: Users },
+      ],
+    },
+    {
+      title: 'HỌC VỤ & LỊCH',
+      items: [
+        { label: 'Thời khóa biểu & Lịch dạy', href: 'dashboard?tab=schedule', icon: CalendarDays },
+        { label: 'Hồ sơ Học sinh 360', href: 'students', icon: GraduationCap },
+      ],
+    },
+    {
+      title: 'HỆ THỐNG',
+      items: [
+        { label: 'Cấu hình cá nhân', href: 'settings', icon: Settings },
+      ],
+    },
+  ];
+
   const activeMenuGroups = currentUser?.workspaceId === 'KHAO_THI' ? [
     {
       title: 'TỔNG QUAN',
@@ -237,7 +285,7 @@ export default function AdminShell({ locale, children }: { locale: string; child
         { label: 'Danh mục', href: 'categories', icon: List }
       ]
     }
-  ] : menuGroups;
+  ] : isDepartment ? departmentMenuGroups : menuGroups;
 
   const Sidebar = (
     <aside className={cn('flex h-full flex-col border-r border-slate-200 bg-white transition-all dark:border-slate-800 dark:bg-slate-950', collapsed ? 'w-20' : 'w-72')}>
@@ -270,8 +318,20 @@ export default function AdminShell({ locale, children }: { locale: string; child
             <div className="space-y-1">
               {group.items.map(item => {
                 const Icon = item.icon;
-                const href = `/${locale}/${item.href}`;
-                const active = pathname === href || pathname.startsWith(`${href}/`);
+                const [pathPart, queryPart] = item.href.split('?');
+                const href = `/${locale}/${pathPart}${queryPart ? `?${queryPart}` : ''}`;
+                
+                let active = false;
+                if (queryPart) {
+                  const itemTab = new URLSearchParams(queryPart).get('tab');
+                  active = pathname === `/${locale}/${pathPart}` && currentTab === itemTab;
+                } else {
+                  if (item.href === 'dashboard') {
+                    active = pathname === `/${locale}/dashboard` && (!currentTab || currentTab === 'overview');
+                  } else {
+                    active = pathname === href || pathname.startsWith(`${href}/`);
+                  }
+                }
                 return (
                   <Link
                     key={item.href}
