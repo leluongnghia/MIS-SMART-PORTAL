@@ -36,6 +36,9 @@ import {
 } from 'lucide-react';
 import { Button } from '@/src/components/ui/button';
 import { cn } from '@/src/lib/utils';
+import LoginPortal from '@/src/components/LoginPortal';
+import { MOCK_USERS } from '@/src/mockData';
+import type { UserProfile } from '@/src/types';
 
 type MenuItemGroup = {
   title: string;
@@ -97,6 +100,27 @@ export default function AdminShell({ locale, children }: { locale: string; child
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userOpen, setUserOpen] = useState(false);
   const [dark, setDark] = useState(false);
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+  const [isAuthReady, setIsAuthReady] = useState<boolean>(false);
+
+  useEffect(() => {
+    const loggedIn = localStorage.getItem('mis_edutask_logged_in') === 'true';
+    const savedUserId = localStorage.getItem('mis_edutask_logged_in_user_id');
+    if (loggedIn && savedUserId) {
+      const matched = MOCK_USERS.find(u => u.id === savedUserId);
+      if (matched) {
+        setCurrentUser(matched);
+        setIsLoggedIn(true);
+      } else {
+        setCurrentUser(MOCK_USERS[0]);
+        setIsLoggedIn(true);
+      }
+    } else {
+      setIsLoggedIn(false);
+    }
+    setIsAuthReady(true);
+  }, []);
 
   useEffect(() => {
     const stored = typeof window !== 'undefined' ? localStorage.getItem('mis_admin_theme') : null;
@@ -112,10 +136,51 @@ export default function AdminShell({ locale, children }: { locale: string; child
     localStorage.setItem('mis_admin_theme', next ? 'dark' : 'light');
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem('mis_edutask_logged_in');
+    localStorage.removeItem('mis_edutask_logged_in_user_id');
+    setCurrentUser(null);
+    setIsLoggedIn(false);
+    setUserOpen(false);
+  };
+
+  const getSimulatedEmail = (user: UserProfile) => {
+    if (user.email) return user.email;
+    const cleanName = user.name
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[đĐ]/g, 'd')
+      .replace(/\s+/g, '.');
+    return `${cleanName}@mis.edu.vn`;
+  };
+
   const breadcrumbs = useMemo(() => {
     const parts = pathname.split('/').filter(Boolean).slice(1);
     return parts.length ? parts : ['dashboard'];
   }, [pathname]);
+
+  if (!isAuthReady) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-500"></div>
+      </div>
+    );
+  }
+
+  if (!isLoggedIn || !currentUser) {
+    return (
+      <LoginPortal
+        onLoginSuccess={(user) => {
+          localStorage.setItem('mis_edutask_logged_in', 'true');
+          localStorage.setItem('mis_edutask_logged_in_user_id', user.id);
+          setCurrentUser(user);
+          setIsLoggedIn(true);
+        }}
+        initialUser={MOCK_USERS[0]}
+      />
+    );
+  }
 
   const Sidebar = (
     <aside className={cn('flex h-full flex-col border-r border-slate-200 bg-white transition-all dark:border-slate-800 dark:bg-slate-950', collapsed ? 'w-20' : 'w-72')}>
@@ -229,23 +294,23 @@ export default function AdminShell({ locale, children }: { locale: string; child
             
             <div className="relative">
               <Button variant="ghost" className="h-9 px-2 gap-2 flex items-center" onClick={() => setUserOpen(value => !value)}>
-                <img src="https://i.pravatar.cc/150?u=a042581f4e29026704d" alt="Avatar" className="h-8 w-8 rounded-full object-cover" />
+                <img src={currentUser.avatar || "https://i.pravatar.cc/150?u=a042581f4e29026704d"} alt="Avatar" className="h-8 w-8 rounded-full object-cover" />
                 <div className="hidden sm:flex flex-col items-start text-left">
-                  <span className="text-sm font-bold text-slate-900 dark:text-white leading-tight">Nguyễn Văn Nam</span>
-                  <span className="text-xs text-slate-500 dark:text-slate-400 leading-tight">Hiệu trưởng</span>
+                  <span className="text-sm font-bold text-slate-900 dark:text-white leading-tight">{currentUser.name}</span>
+                  <span className="text-xs text-slate-500 dark:text-slate-400 leading-tight">{currentUser.title || currentUser.roleName}</span>
                 </div>
                 <ChevronDown className="h-4 w-4 text-slate-500" />
               </Button>
               {userOpen && (
                 <div className="absolute right-0 mt-2 w-56 rounded-xl border border-slate-200 bg-white p-2 shadow-lg dark:border-slate-800 dark:bg-slate-950">
                   <div className="px-3 py-2 text-sm border-b border-slate-100 dark:border-slate-800 mb-1">
-                    <div className="font-bold text-slate-900 dark:text-white">Nguyễn Văn Nam</div>
-                    <div className="text-xs text-slate-500">namnv@school.edu.vn</div>
+                    <div className="font-bold text-slate-900 dark:text-white">{currentUser.name}</div>
+                    <div className="text-xs text-slate-500">{getSimulatedEmail(currentUser)}</div>
                   </div>
-                  <Link href={`/${locale}/settings`} className="block rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-900">
+                  <Link href={`/${locale}/settings`} onClick={() => setUserOpen(false)} className="block rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-900">
                     Cài đặt tài khoản
                   </Link>
-                  <button className="block w-full text-left rounded-lg px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/30">
+                  <button onClick={handleLogout} className="block w-full text-left rounded-lg px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/30 cursor-pointer">
                     Đăng xuất
                   </button>
                 </div>
