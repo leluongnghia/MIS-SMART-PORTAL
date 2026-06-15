@@ -1,5 +1,4 @@
-import { getAdmissionsData } from './actions';
-import KanbanClient from './kanban-client';
+import { redirect } from 'next/navigation';
 
 export default async function AdmissionsPage({
   params,
@@ -7,22 +6,5 @@ export default async function AdmissionsPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  const data = await getAdmissionsData().catch(() => {
-    return {
-      leads: [],
-      users: [],
-      activities: [],
-      documents: [],
-    };
-  });
-
-  return (
-    <KanbanClient
-      locale={locale}
-      initialLeads={data.leads as any}
-      users={data.users as any}
-      activities={data.activities as any}
-      documents={data.documents as any}
-    />
-  );
+  redirect(`/${locale}?tab=CRM_ADMISSIONS`);
 }

@@ -659,6 +659,23 @@ function AppInner() {
     expandedGroups, setExpandedGroups, toggleGroup
   } = appState;
 
+  useEffect(() => {
+    if (!isLoggedIn || typeof window === 'undefined') return;
+
+    const url = new URL(window.location.href);
+    const requestedTab = url.searchParams.get('tab') || localStorage.getItem('mis_pending_overview_tab');
+    if (requestedTab === 'CRM_ADMISSIONS') {
+      localStorage.removeItem('mis_pending_overview_tab');
+      if (canRoleAccessTab(currentUser.role, currentUser.workspaceId, 'CRM_ADMISSIONS')) {
+        setOverviewTab('CRM_ADMISSIONS');
+      }
+      if (url.searchParams.has('tab')) {
+        url.searchParams.delete('tab');
+        window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`);
+      }
+    }
+  }, [currentUser.role, currentUser.workspaceId, isLoggedIn, setOverviewTab]);
+
   const tabLabels: Record<string, string> = {
     DASHBOARD: 'Bảng điều khiển Điều hành',
     BOARD_DIRECTIVES: 'Chỉ đạo BGH',
@@ -1133,14 +1150,18 @@ function AppInner() {
 
   // Switch workspace restriction based on roles if they have a constrained scope
   const handleUserSwitch = (user: UserProfile) => {
-    setCurrentUser(normalizeUserProfile(user));
+    const normalizedUser = normalizeUserProfile(user);
+    setCurrentUser(normalizedUser);
     localStorage.setItem('mis_edutask_logged_in_user_id', user.id);
     localStorage.setItem('mis_edutask_logged_in', 'true');
     // If the selected user belongs to a specific department and is NOT Admin, filter that department initially
-    if (user.role !== 'ADMIN') {
-      setSelectedWorkspace(user.workspaceId);
+    if (normalizedUser.role !== 'ADMIN') {
+      setSelectedWorkspace(normalizedUser.workspaceId);
     } else {
       setSelectedWorkspace('ALL');
+    }
+    if (normalizedUser.workspaceId === 'TUYEN_SINH_PR') {
+      setOverviewTab('CRM_ADMISSIONS');
     }
     setIsSidebarOpen(false); // Close sidebar on mobile
   };
@@ -1425,6 +1446,9 @@ function AppInner() {
             setSelectedWorkspace(normalizedUser.workspaceId);
           } else {
             setSelectedWorkspace('ALL');
+          }
+          if (normalizedUser.workspaceId === 'TUYEN_SINH_PR') {
+            setOverviewTab('CRM_ADMISSIONS');
           }
         }}
       />
