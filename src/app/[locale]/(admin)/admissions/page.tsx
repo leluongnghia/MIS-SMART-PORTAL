@@ -7,7 +7,14 @@ export default async function AdmissionsPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  const data = await getAdmissionsData();
+  const data = await getAdmissionsData().catch(() => {
+    return {
+      leads: [],
+      users: [],
+      activities: [],
+      documents: [],
+    };
+  });
 
   return (
     <KanbanClient

@@ -66,6 +66,12 @@ export default function AdminShell({ locale, children }: { locale: string; child
     return parts.length ? parts : ['dashboard'];
   }, [pathname]);
 
+  const isAdmissionsShowcase = pathname === `/${locale}/admissions`;
+
+  if (isAdmissionsShowcase) {
+    return <div className="min-h-screen bg-[#F7F8FA] text-slate-950">{children}</div>;
+  }
+
   const Sidebar = (
     <aside className={cn('flex h-full flex-col border-r border-slate-200 bg-white transition-all dark:border-slate-800 dark:bg-slate-950', collapsed ? 'w-20' : 'w-72')}>
       <div className="flex h-16 items-center justify-between border-b border-slate-100 px-4 dark:border-slate-800">
