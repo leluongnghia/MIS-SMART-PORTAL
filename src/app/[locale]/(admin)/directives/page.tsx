@@ -1,6 +1,6 @@
 'use client';
 
-import {
+import { ChevronRight, ArrowRight, 
   FileText,
   Clock,
   AlertTriangle,
@@ -133,10 +133,10 @@ export default function DirectivesDashboard() {
               Tất cả <Badge className="ml-1.5 bg-blue-200 text-blue-700 hover:bg-blue-200">32</Badge>
             </Button>
             <Button variant="ghost" size="sm" className="h-8 rounded-full text-slate-600">
-              Khẩn cấp <Badge variant="secondary" className="ml-1.5 bg-slate-100 text-slate-500">4</Badge>
+              Khẩn cấp <Badge  className="ml-1.5 bg-slate-100 text-slate-500">4</Badge>
             </Button>
             <Button variant="ghost" size="sm" className="h-8 rounded-full text-slate-600">
-              Chờ phản hồi <Badge variant="secondary" className="ml-1.5 bg-slate-100 text-slate-500">16</Badge>
+              Chờ phản hồi <Badge  className="ml-1.5 bg-slate-100 text-slate-500">16</Badge>
             </Button>
           </div>
 
@@ -165,7 +165,7 @@ export default function DirectivesDashboard() {
                 { tag: 'Thấp', tagColor: 'text-emerald-600 border-emerald-200 bg-emerald-50', title: 'Cập nhật dữ liệu học sinh lên hệ thống', dept: 'Văn phòng', deadline: '16/05/2025', status: 'Đã hoàn thành', statCol: 'text-emerald-600' },
               ].map((item, i) => (
                 <div key={i} className={cn("p-4 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors", item.active && "bg-blue-50/50 dark:bg-blue-900/10 border-l-2 border-l-blue-600")}>
-                  <Badge variant="outline" className={cn("text-[10px] mb-2 px-1.5 py-0 border-0", item.tagColor)}>{item.tag}</Badge>
+                  <Badge  className={cn("text-[10px] mb-2 px-1.5 py-0 border-0", item.tagColor)}>{item.tag}</Badge>
                   <h4 className="text-sm font-bold text-slate-900 dark:text-white leading-snug mb-1">{item.title}</h4>
                   <p className="text-xs text-slate-500 mb-3">{item.dept}</p>
                   <div className="flex items-center justify-between">
@@ -295,7 +295,7 @@ export default function DirectivesDashboard() {
                   </div>
                   <div>
                     <p className="text-xs text-slate-500 mb-1">Trạng thái</p>
-                    <Badge variant="outline" className="text-blue-600 border-blue-200 bg-blue-50 py-0.5">Chờ phản hồi</Badge>
+                    <Badge  className="text-blue-600 border-blue-200 bg-blue-50 py-0.5">Chờ phản hồi</Badge>
                   </div>
                 </div>
 
@@ -303,7 +303,7 @@ export default function DirectivesDashboard() {
                 <div className="pt-6 border-t border-slate-100 dark:border-slate-800">
                   <div className="flex items-center justify-between mb-4">
                     <h4 className="text-sm font-bold flex items-center gap-2">
-                      Trao đổi & Phản hồi <Badge variant="secondary" className="bg-blue-100 text-blue-700 hover:bg-blue-100">3</Badge>
+                      Trao đổi & Phản hồi <Badge  className="bg-blue-100 text-blue-700 hover:bg-blue-100">3</Badge>
                     </h4>
                   </div>
                   <div className="space-y-6">
@@ -357,7 +357,7 @@ export default function DirectivesDashboard() {
                     </div>
                   </div>
                   <div className="mt-4 text-center">
-                    <Button variant="link" className="text-sm text-blue-600">Xem thêm 1 phản hồi khác <ChevronRight className="h-4 w-4 ml-1" /></Button>
+                    <Button variant="ghost" className="text-sm text-blue-600">Xem thêm 1 phản hồi khác <ChevronRight className="h-4 w-4 ml-1" /></Button>
                   </div>
                 </div>
 
@@ -474,7 +474,7 @@ export default function DirectivesDashboard() {
                 ))}
               </div>
               <div className="mt-4">
-                <Button variant="link" className="text-sm font-medium text-blue-600 p-0 h-auto">Xem tất cả lịch sử <ArrowRight className="h-4 w-4 ml-1" /></Button>
+                <Button variant="ghost" className="text-sm font-medium text-blue-600 p-0 h-auto">Xem tất cả lịch sử <ArrowRight className="h-4 w-4 ml-1" /></Button>
               </div>
             </CardContent>
           </Card>

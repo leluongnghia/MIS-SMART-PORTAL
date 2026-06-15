@@ -354,12 +354,12 @@ export default function ScheduleDashboard() {
                       <p className="text-sm font-bold text-slate-900 dark:text-white leading-tight mb-1">{doc.title}</p>
                       <p className="text-[10px] text-slate-500">Cập nhật: {doc.date}</p>
                     </div>
-                    <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0", doc.tagCol)}>{doc.tag}</Badge>
+                    <Badge  className={cn("text-[10px] px-1.5 py-0", doc.tagCol)}>{doc.tag}</Badge>
                   </div>
                 ))}
               </div>
               <div className="p-3 text-center border-t border-slate-100 dark:border-slate-800">
-                <Button variant="link" className="text-xs font-bold text-blue-600 p-0 h-auto">Xem tất cả giáo án</Button>
+                <Button variant="ghost" className="text-xs font-bold text-blue-600 p-0 h-auto">Xem tất cả giáo án</Button>
               </div>
             </CardContent>
           </Card>
@@ -436,7 +436,7 @@ export default function ScheduleDashboard() {
                   ))}
                 </div>
                 <div className="mt-4 w-full border-t border-slate-100 pt-3 text-center">
-                  <Button variant="link" className="text-xs font-bold text-blue-600 p-0 h-auto">Xem chi tiết phòng học</Button>
+                  <Button variant="ghost" className="text-xs font-bold text-blue-600 p-0 h-auto">Xem chi tiết phòng học</Button>
                 </div>
               </CardContent>
             </Card>

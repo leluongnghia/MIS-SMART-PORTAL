@@ -9,5 +9,5 @@ export default async function DashboardPage({
   const { locale } = await params;
   const stats = await getDashboardStats();
 
-  return <DashboardClient locale={locale} stats={stats as any} />;
+  return <DashboardClient />;
 }

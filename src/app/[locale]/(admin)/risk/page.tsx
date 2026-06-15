@@ -288,15 +288,15 @@ export default function RiskDashboard() {
                           <span className="text-[11px] font-medium text-slate-600 dark:text-slate-300">{row.cat}</span>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-center"><Badge variant="outline" className={cn("text-[10px] py-0 border-0", row.levelCol)}>{row.level}</Badge></td>
-                      <td className="px-4 py-3 text-center"><Badge variant="outline" className={cn("text-[10px] py-0 border-0", row.probCol)}>{row.prob}</Badge></td>
+                      <td className="px-4 py-3 text-center"><Badge  className={cn("text-[10px] py-0 border-0", row.levelCol)}>{row.level}</Badge></td>
+                      <td className="px-4 py-3 text-center"><Badge  className={cn("text-[10px] py-0 border-0", row.probCol)}>{row.prob}</Badge></td>
                       <td className="px-4 py-3">
                         <p className="text-[12px] font-bold text-slate-900 dark:text-white leading-tight">{row.owner}</p>
                         <p className="text-[10px] text-slate-500">{row.ownerRole}</p>
                       </td>
                       <td className="px-4 py-3 text-[11px] text-slate-600 dark:text-slate-300 max-w-[150px] truncate" title={row.plan}>{row.plan}</td>
                       <td className="px-4 py-3 text-[11px] text-slate-900 dark:text-slate-100">{row.date}</td>
-                      <td className="px-4 py-3"><Badge variant="outline" className={cn("text-[10px] py-0 border-0", row.statCol)}>{row.status}</Badge></td>
+                      <td className="px-4 py-3"><Badge  className={cn("text-[10px] py-0 border-0", row.statCol)}>{row.status}</Badge></td>
                     </tr>
                   ))}
                 </tbody>
@@ -333,7 +333,7 @@ export default function RiskDashboard() {
                   <h4 className="text-sm font-bold text-slate-900 dark:text-white leading-tight mb-1">Thâm hụt ngân sách vượt kế hoạch</h4>
                   <p className="text-[10px] text-slate-500 mb-2">Tài chính</p>
                   <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-[10px] py-0 border-0 bg-red-50 text-red-600">Rất cao</Badge>
+                    <Badge  className="text-[10px] py-0 border-0 bg-red-50 text-red-600">Rất cao</Badge>
                     <span className="text-[10px] text-slate-400">Hạn xử lý: 31/05/2025</span>
                   </div>
                 </div>
@@ -344,7 +344,7 @@ export default function RiskDashboard() {
                   <h4 className="text-sm font-bold text-slate-900 dark:text-white leading-tight mb-1">Rò rỉ dữ liệu học sinh</h4>
                   <p className="text-[10px] text-slate-500 mb-2">An toàn dữ liệu</p>
                   <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-[10px] py-0 border-0 bg-red-50 text-red-600">Rất cao</Badge>
+                    <Badge  className="text-[10px] py-0 border-0 bg-red-50 text-red-600">Rất cao</Badge>
                     <span className="text-[10px] text-slate-400">Hạn xử lý: 25/05/2025</span>
                   </div>
                 </div>
@@ -355,13 +355,13 @@ export default function RiskDashboard() {
                   <h4 className="text-sm font-bold text-slate-900 dark:text-white leading-tight mb-1">Gián đoạn hoạt động do sự cố hệ thống</h4>
                   <p className="text-[10px] text-slate-500 mb-2">Hoạt động</p>
                   <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-[10px] py-0 border-0 bg-orange-50 text-orange-600">Cao</Badge>
+                    <Badge  className="text-[10px] py-0 border-0 bg-orange-50 text-orange-600">Cao</Badge>
                     <span className="text-[10px] text-slate-400">Hạn xử lý: 15/06/2025</span>
                   </div>
                 </div>
               </div>
               <div className="p-3 text-center border-t border-slate-100 dark:border-slate-800 bg-slate-50/50">
-                <Button variant="link" className="text-sm font-medium text-blue-600 p-0 h-auto">Xem tất cả rủi ro nổi bật</Button>
+                <Button variant="ghost" className="text-sm font-medium text-blue-600 p-0 h-auto">Xem tất cả rủi ro nổi bật</Button>
               </div>
             </CardContent>
           </Card>
@@ -393,7 +393,7 @@ export default function RiskDashboard() {
                 </div>
               ))}
               <div className="mt-4 pt-2 border-t border-slate-100 text-center">
-                <Button variant="link" className="text-sm font-medium text-blue-600 p-0 h-auto">Xem tất cả biện pháp</Button>
+                <Button variant="ghost" className="text-sm font-medium text-blue-600 p-0 h-auto">Xem tất cả biện pháp</Button>
               </div>
             </CardContent>
           </Card>
@@ -419,13 +419,13 @@ export default function RiskDashboard() {
                         <div className="text-[13px] font-bold text-slate-900 dark:text-slate-100 leading-tight mb-1">{act.text}</div>
                         <div className="text-[11px] text-slate-500">{act.desc}</div>
                       </div>
-                      <Badge variant="outline" className={cn("border-0 shrink-0 text-[10px] px-1.5 py-0.5", act.statusColor)}>{act.status}</Badge>
+                      <Badge  className={cn("border-0 shrink-0 text-[10px] px-1.5 py-0.5", act.statusColor)}>{act.status}</Badge>
                     </div>
                   </div>
                 ))}
               </div>
               <div className="mt-4 border-t border-slate-100 pt-3 text-center">
-                <Button variant="link" className="text-sm font-medium text-blue-600 p-0 h-auto">Xem tất cả sự cố</Button>
+                <Button variant="ghost" className="text-sm font-medium text-blue-600 p-0 h-auto">Xem tất cả sự cố</Button>
               </div>
             </CardContent>
           </Card>

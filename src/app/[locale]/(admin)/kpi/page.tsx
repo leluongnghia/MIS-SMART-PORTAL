@@ -1,6 +1,6 @@
 'use client';
 
-import {
+import { CheckCircle2, AlertTriangle, 
   LineChart as LineChartIcon,
   Users,
   CalendarCheck,
@@ -184,7 +184,7 @@ export default function KpiDashboard() {
                   <div className="flex-1 flex items-center">
                     <div className="h-6 bg-blue-600 rounded-r-sm" style={{ width: `${item.value}%`, backgroundColor: item.fill }} />
                     <span className="ml-2 text-xs font-bold w-10">{item.value}%</span>
-                    {index === 0 && <Badge variant="outline" className="ml-2 text-[10px] text-blue-600 border-blue-200 bg-blue-50 px-1.5 py-0">Bạn</Badge>}
+                    {index === 0 && <Badge  className="ml-2 text-[10px] text-blue-600 border-blue-200 bg-blue-50 px-1.5 py-0">Bạn</Badge>}
                   </div>
                 </div>
               ))}
@@ -295,7 +295,7 @@ export default function KpiDashboard() {
                         </span>
                       </td>
                       <td className="px-4 py-3 text-center">
-                        <Badge variant="outline" className={cn("text-[10px] py-0", row.statCol)}>{row.status}</Badge>
+                        <Badge  className={cn("text-[10px] py-0", row.statCol)}>{row.status}</Badge>
                       </td>
                     </tr>
                   ))}
@@ -304,7 +304,7 @@ export default function KpiDashboard() {
             </div>
             <div className="p-3 text-right border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30 flex justify-between items-center">
               <span className="text-[11px] text-slate-500 pl-2">Hiển thị 1 - 8 / 75 KPI</span>
-              <Button variant="link" className="text-sm font-bold text-blue-600 p-0 h-auto">
+              <Button variant="ghost" className="text-sm font-bold text-blue-600 p-0 h-auto">
                 Xem tất cả KPI <ArrowRight className="h-4 w-4 ml-1" />
               </Button>
             </div>

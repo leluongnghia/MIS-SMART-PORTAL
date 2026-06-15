@@ -1,6 +1,6 @@
 'use client';
 
-import {
+import { Users, GraduationCap, 
   Target,
   CheckCircle2,
   AlertTriangle,
@@ -211,7 +211,7 @@ export default function OkrDashboard() {
                           </div>
                         </td>
                         <td className="px-4 py-3">
-                          <Badge variant="outline" className={row.statCol}>{row.status}</Badge>
+                          <Badge  className={row.statCol}>{row.status}</Badge>
                         </td>
                       </tr>
                     ))}
@@ -219,7 +219,7 @@ export default function OkrDashboard() {
                 </table>
               </div>
               <div className="p-3 text-center border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30">
-                <Button variant="link" className="text-sm font-bold text-blue-600">
+                <Button variant="ghost" className="text-sm font-bold text-blue-600">
                   Xem chi tiết OKR theo trụ cột <ArrowRight className="h-4 w-4 ml-1" />
                 </Button>
               </div>

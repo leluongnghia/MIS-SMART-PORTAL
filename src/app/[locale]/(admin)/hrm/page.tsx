@@ -233,7 +233,7 @@ export default function HrmDashboard() {
               <img src="https://i.pravatar.cc/150?u=1" className="w-20 h-20 rounded-full object-cover mb-3 ring-4 ring-slate-50 dark:ring-slate-900" alt="" />
               <h3 className="text-lg font-bold text-slate-900 dark:text-white">Nguyễn Thị Lan</h3>
               <p className="text-sm text-slate-500 mb-2">Giáo viên Toán học</p>
-              <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">GV-TOAN-012</Badge>
+              <Badge  className="bg-blue-50 text-blue-700 border-blue-200">GV-TOAN-012</Badge>
             </div>
           </CardHeader>
           <CardContent className="p-6 pt-4 space-y-4 text-sm">
@@ -375,7 +375,7 @@ export default function HrmDashboard() {
                     <p className="text-xs font-medium text-slate-700 dark:text-slate-300">{leave.reason}</p>
                     <p className="text-[10px] text-slate-500">{leave.time}</p>
                   </div>
-                  <Badge variant="outline" className="text-[10px] font-medium text-orange-600 border-orange-200 bg-orange-50 px-2 shrink-0">
+                  <Badge  className="text-[10px] font-medium text-orange-600 border-orange-200 bg-orange-50 px-2 shrink-0">
                     Chờ duyệt
                   </Badge>
                 </div>

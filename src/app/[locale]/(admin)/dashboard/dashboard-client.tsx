@@ -1,5 +1,6 @@
 'use client';
 
+import { cn } from "@/src/lib/utils";
 import {
   AlertCircle,
   Calendar,
@@ -237,7 +238,7 @@ export default function DashboardClient() {
                     <p className="text-sm font-medium text-slate-900 dark:text-slate-100 leading-tight mb-1">{act.task}</p>
                     <p className="text-xs text-slate-500">{act.dept}</p>
                   </div>
-                  <Badge variant="outline" className={cn("shrink-0 text-[10px] font-medium border-0", act.tagColor || "bg-red-100 text-red-600")}>
+                  <Badge  className={cn("shrink-0 text-[10px] font-medium border-0", act.tagColor || "bg-red-100 text-red-600")}>
                     {act.tag}
                   </Badge>
                 </div>
@@ -322,7 +323,7 @@ export default function DashboardClient() {
                 </div>
               </div>
               <div className="mt-4 text-center">
-                <Button variant="link" className="text-sm text-blue-600 h-auto p-0">
+                <Button variant="ghost" className="text-sm text-blue-600 h-auto p-0">
                   Xem phân tích chi tiết <ChevronRight className="h-4 w-4 ml-1" />
                 </Button>
               </div>
@@ -394,7 +395,7 @@ export default function DashboardClient() {
                        </div>
                        <span className="text-sm text-slate-700 dark:text-slate-300 truncate">{r.text}</span>
                      </div>
-                     <Badge variant="outline" className={cn("border-0 shrink-0", r.tagColor || "bg-red-100 text-red-600")}>
+                     <Badge  className={cn("border-0 shrink-0", r.tagColor || "bg-red-100 text-red-600")}>
                        {r.tag}
                      </Badge>
                    </div>
@@ -417,7 +418,7 @@ export default function DashboardClient() {
               <span className="text-sm text-slate-500 font-medium">Funnel Chart Placeholder</span>
             </div>
             <div className="text-center">
-              <Button variant="link" className="text-sm text-blue-600">
+              <Button variant="ghost" className="text-sm text-blue-600">
                 Xem chi tiết phễu tuyển sinh <ChevronRight className="h-4 w-4 ml-1" />
               </Button>
             </div>

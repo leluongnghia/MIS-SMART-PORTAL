@@ -178,7 +178,7 @@ export default function TasksDashboard() {
             ].map((col, i) => (
               <div key={i} className="min-w-[240px] w-[240px] flex flex-col gap-3">
                 <div className="flex items-center gap-2 font-bold text-sm">
-                  {col.title} <Badge variant="secondary" className={cn("px-1.5 py-0", col.title === 'Cần làm' ? 'bg-blue-100 text-blue-700' : col.title === 'Đang xử lý' ? 'bg-blue-100 text-blue-700' : col.title === 'Chờ duyệt' ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700')}>{col.count}</Badge>
+                  {col.title} <Badge  className={cn("px-1.5 py-0", col.title === 'Cần làm' ? 'bg-blue-100 text-blue-700' : col.title === 'Đang xử lý' ? 'bg-blue-100 text-blue-700' : col.title === 'Chờ duyệt' ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700')}>{col.count}</Badge>
                 </div>
                 <div className="flex-1 overflow-y-auto space-y-3 custom-scrollbar pr-1">
                   {col.cards.map((card, j) => (
@@ -192,7 +192,7 @@ export default function TasksDashboard() {
                         <CalendarIcon className="h-3 w-3" /> {card.date}
                       </div>
                       <div className="flex justify-between items-end">
-                        {card.tag ? <Badge variant="outline" className={cn("text-[9px] py-0 border-0", card.tagCol)}>{card.tag}</Badge> : <div />}
+                        {card.tag ? <Badge  className={cn("text-[9px] py-0 border-0", card.tagCol)}>{card.tag}</Badge> : <div />}
                         <div className="flex -space-x-1">
                           <img src={`https://i.pravatar.cc/150?u=${i}${j}1`} className="w-5 h-5 rounded-full border border-white dark:border-slate-950 object-cover" />
                           <img src={`https://i.pravatar.cc/150?u=${i}${j}2`} className="w-5 h-5 rounded-full border border-white dark:border-slate-950 object-cover" />
@@ -317,7 +317,7 @@ export default function TasksDashboard() {
                 </div>
               ))}
               <div className="p-3 text-center">
-                <Button variant="link" className="text-xs font-bold text-blue-600 h-auto p-0">Xem thêm (3) <ChevronRight className="h-3 w-3 ml-1" /></Button>
+                <Button variant="ghost" className="text-xs font-bold text-blue-600 h-auto p-0">Xem thêm (3) <ChevronRight className="h-3 w-3 ml-1" /></Button>
               </div>
             </CardContent>
           </Card>
@@ -359,7 +359,7 @@ export default function TasksDashboard() {
                   </div>
                   <div className="text-right shrink-0 flex flex-col items-end">
                     <span className={cn("text-[10px] font-medium", item.deadline.includes('Hôm nay') ? "text-red-500" : "text-orange-500")}>{item.deadline}</span>
-                    <Badge variant="outline" className={cn("border-0 text-[9px] px-1.5 py-0 mt-0.5", item.tagCol)}>{item.tag}</Badge>
+                    <Badge  className={cn("border-0 text-[9px] px-1.5 py-0 mt-0.5", item.tagCol)}>{item.tag}</Badge>
                   </div>
                 </div>
               ))}

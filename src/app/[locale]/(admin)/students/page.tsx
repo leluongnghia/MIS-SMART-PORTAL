@@ -1,6 +1,6 @@
 'use client';
 
-import {
+import { CheckCircle2, 
   UserCircle,
   GraduationCap,
   CalendarCheck,
@@ -493,7 +493,7 @@ export default function Student360Dashboard() {
                 ))}
               </div>
               <div className="mt-6 text-center">
-                <Button variant="link" className="text-xs font-bold text-blue-600 h-auto p-0">
+                <Button variant="ghost" className="text-xs font-bold text-blue-600 h-auto p-0">
                   Xem toàn bộ lịch sử trao đổi <ChevronRight className="h-4 w-4 ml-1" />
                 </Button>
               </div>
