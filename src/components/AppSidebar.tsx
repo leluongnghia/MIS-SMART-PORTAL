@@ -7,6 +7,23 @@ import {
   SlidersHorizontal, Users, Smartphone, UserCheck, Laptop, Sparkles, 
   GraduationCap, Briefcase, RefreshCw 
 } from 'lucide-react';
+import type { AdmissionsModule } from './AdmissionsEnterpriseDashboard';
+
+const admissionsSubmenus: Array<{ id: AdmissionsModule; label: string; desc: string }> = [
+  { id: 'dashboard', label: 'Dashboard', desc: 'KPI, funnel, nguồn lead' },
+  { id: 'leads', label: 'Lead & Thí sinh', desc: 'Danh sách, lọc, phân công' },
+  { id: 'applications', label: 'Hồ sơ tuyển sinh', desc: 'Checklist hồ sơ, trạng thái' },
+  { id: 'interviews', label: 'Phỏng vấn & Tư vấn', desc: 'Lịch hẹn, nhật ký chăm sóc' },
+  { id: 'enrollment', label: 'Ghi danh & Nhập học', desc: 'Offer, giữ chỗ, nhập học' },
+  { id: 'classes', label: 'Danh sách lớp dự kiến', desc: 'Xếp lớp, sĩ số, chương trình' },
+  { id: 'scholarships', label: 'Học bổng & Ưu đãi', desc: 'Duyệt ưu đãi, học bổng' },
+  { id: 'payments', label: 'Thanh toán', desc: 'Thu phí, đối soát, công nợ' },
+  { id: 'campaigns', label: 'Chiến dịch', desc: 'Nguồn lead, landing page' },
+  { id: 'email', label: 'Email Template', desc: 'Soạn, biến động, gửi email' },
+  { id: 'reports', label: 'Báo cáo', desc: 'Chuyển đổi, doanh thu, dự báo' },
+  { id: 'tasks', label: 'Việc cần làm', desc: 'Checklist, giao việc' },
+  { id: 'settings', label: 'Cài đặt Pipeline', desc: 'Bước, toggle, phân quyền' },
+];
 
 interface AppSidebarProps {
   isSidebarOpen: boolean;
@@ -15,6 +32,8 @@ interface AppSidebarProps {
   setSidebarSearchQuery: (val: string) => void;
   overviewTab: string;
   setOverviewTab: (val: any) => void;
+  activeAdmissionsModule: AdmissionsModule;
+  setActiveAdmissionsModule: (module: AdmissionsModule) => void;
   completionRate: number;
   isGroupOpen: (group: string) => boolean;
   toggleGroup: (group: string) => void;
@@ -35,6 +54,8 @@ export default function AppSidebar({
   setSidebarSearchQuery,
   overviewTab,
   setOverviewTab,
+  activeAdmissionsModule,
+  setActiveAdmissionsModule,
   completionRate,
   isGroupOpen,
   toggleGroup,
@@ -396,8 +417,9 @@ export default function AppSidebar({
               {isGroupOpen('business') && (
                 <div className="flex flex-col gap-1 pl-2 ml-2 mt-1 border-l border-emerald-100 dark:border-emerald-950 transition-all duration-300">
                   {canDisplayTab('CRM_ADMISSIONS') && matchesSearch('CRM_ADMISSIONS') && (
+                    <>
                     <button 
-                      onClick={() => { setOverviewTab('CRM_ADMISSIONS'); setIsSidebarOpen(false); }}
+                      onClick={() => { setOverviewTab('CRM_ADMISSIONS'); setActiveAdmissionsModule('dashboard'); setIsSidebarOpen(false); }}
                       aria-current={overviewTab === 'CRM_ADMISSIONS' ? 'page' : undefined}
                       className={getTabClass('CRM_ADMISSIONS', 'business')}
                     >
@@ -406,6 +428,33 @@ export default function AppSidebar({
                         <span>Tuyển sinh &amp; CRM</span>
                       </div>
                     </button>
+                    {overviewTab === 'CRM_ADMISSIONS' && (
+                      <div className="ml-4 space-y-0.5 border-l border-emerald-200/80 pl-3 dark:border-emerald-900">
+                        {admissionsSubmenus.map(item => {
+                          const active = activeAdmissionsModule === item.id;
+                          return (
+                            <button
+                              key={item.id}
+                              type="button"
+                              onClick={() => {
+                                setOverviewTab('CRM_ADMISSIONS');
+                                setActiveAdmissionsModule(item.id);
+                                setIsSidebarOpen(false);
+                              }}
+                              className={`w-full rounded-lg px-2.5 py-1.5 text-left transition ${
+                                active
+                                  ? 'bg-emerald-100 text-emerald-800 ring-1 ring-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-200 dark:ring-emerald-800'
+                                  : 'text-slate-500 hover:bg-emerald-50/60 hover:text-emerald-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-emerald-300'
+                              }`}
+                            >
+                              <span className="block text-[11px] font-black leading-tight">{item.label}</span>
+                              <span className="mt-0.5 block truncate text-[10px] font-semibold opacity-70">{item.desc}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                    </>
                   )}
 
                   {canDisplayTab('STUDENT_SUCCESS') && matchesSearch('STUDENT_SUCCESS') && (

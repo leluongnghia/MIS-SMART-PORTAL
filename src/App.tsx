@@ -31,7 +31,7 @@ import LoginPortal from './components/LoginPortal';
 import WorkspaceManager from './components/WorkspaceManager';
 import StrategyOkrHub from './components/StrategyOkrHub';
 import WorkflowBuilder from './components/WorkflowBuilder';
-import AdmissionsEnterpriseDashboard from './components/AdmissionsEnterpriseDashboard';
+import AdmissionsEnterpriseDashboard, { type AdmissionsModule } from './components/AdmissionsEnterpriseDashboard';
 import StudentSuccessHub from './components/StudentSuccessHub';
 import RiskManagementCenter from './components/RiskManagementCenter';
 import ReportingAnalyticsBuilder from './components/ReportingAnalyticsBuilder';
@@ -658,11 +658,13 @@ function AppInner() {
   } = appState;
 
   const admissionsDefaultAppliedRef = useRef(false);
+  const [activeAdmissionsModule, setActiveAdmissionsModule] = useState<AdmissionsModule>('dashboard');
 
   useEffect(() => {
     if (!isLoggedIn || admissionsDefaultAppliedRef.current) return;
     if (currentUser.workspaceId === 'TUYEN_SINH_PR') {
       admissionsDefaultAppliedRef.current = true;
+      setActiveAdmissionsModule('dashboard');
       setOverviewTab('CRM_ADMISSIONS');
     }
   }, [currentUser.workspaceId, isLoggedIn, setOverviewTab]);
@@ -682,6 +684,7 @@ function AppInner() {
     if (requestedTab === 'CRM_ADMISSIONS') {
       localStorage.removeItem('mis_pending_overview_tab');
       if (canRoleAccessTab(currentUser.role, currentUser.workspaceId, 'CRM_ADMISSIONS')) {
+        setActiveAdmissionsModule('dashboard');
         setOverviewTab('CRM_ADMISSIONS');
       }
       if (url.searchParams.has('tab')) {
@@ -1176,6 +1179,7 @@ function AppInner() {
       setSelectedWorkspace('ALL');
     }
     if (normalizedUser.workspaceId === 'TUYEN_SINH_PR') {
+      setActiveAdmissionsModule('dashboard');
       setOverviewTab('CRM_ADMISSIONS');
     }
     setIsSidebarOpen(false); // Close sidebar on mobile
@@ -1463,6 +1467,7 @@ function AppInner() {
             setSelectedWorkspace('ALL');
           }
           if (normalizedUser.workspaceId === 'TUYEN_SINH_PR') {
+            setActiveAdmissionsModule('dashboard');
             setOverviewTab('CRM_ADMISSIONS');
           }
         }}
@@ -1524,6 +1529,8 @@ function AppInner() {
         setSidebarSearchQuery={setSidebarSearchQuery}
         overviewTab={overviewTab}
         setOverviewTab={setOverviewTab}
+        activeAdmissionsModule={activeAdmissionsModule}
+        setActiveAdmissionsModule={setActiveAdmissionsModule}
         completionRate={completionRate}
         isGroupOpen={isGroupOpen}
         toggleGroup={toggleGroup}
@@ -1643,7 +1650,7 @@ function AppInner() {
           )}
 
           {overviewTab === 'CRM_ADMISSIONS' && currentUser.workspaceId === 'TUYEN_SINH_PR' && (
-            <AdmissionsEnterpriseDashboard />
+            <AdmissionsEnterpriseDashboard activeModule={activeAdmissionsModule} />
           )}
 
           {overviewTab === 'STUDENT_SUCCESS' && (

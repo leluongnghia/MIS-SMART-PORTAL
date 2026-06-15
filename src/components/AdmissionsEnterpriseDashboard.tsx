@@ -35,7 +35,7 @@ import { cn } from '../lib/utils';
 
 type PipelineStatus = 'new' | 'contacted' | 'consulted' | 'submitted' | 'reviewing';
 type ProfileTab = 'overview' | 'info' | 'parent' | 'pipeline' | 'activity' | 'tuition' | 'handover' | 'notes';
-type ActiveModule = 'dashboard' | 'leads' | 'applications' | 'interviews' | 'enrollment' | 'classes' | 'scholarships' | 'payments' | 'campaigns' | 'reports' | 'tasks' | 'email' | 'settings';
+export type AdmissionsModule = 'dashboard' | 'leads' | 'applications' | 'interviews' | 'enrollment' | 'classes' | 'scholarships' | 'payments' | 'campaigns' | 'reports' | 'tasks' | 'email' | 'settings';
 
 interface PipelineCard {
   id: string;
@@ -381,7 +381,7 @@ const profileTabs: Array<{ id: ProfileTab; label: string }> = [
   { id: 'notes', label: 'Ghi chú' },
 ];
 
-const moduleNav: Array<{ id: ActiveModule; label: string; desc: string }> = [
+const moduleNav: Array<{ id: AdmissionsModule; label: string; desc: string }> = [
   { id: 'dashboard', label: 'Dashboard', desc: 'KPI, funnel, nguồn lead' },
   { id: 'leads', label: 'Lead & Thí sinh', desc: 'Danh sách, lọc, phân công' },
   { id: 'applications', label: 'Hồ sơ tuyển sinh', desc: 'Checklist hồ sơ, trạng thái' },
@@ -471,11 +471,14 @@ const readDashboardCards = () => {
   return initialCards;
 };
 
-export default function AdmissionsEnterpriseDashboard() {
+export default function AdmissionsEnterpriseDashboard({
+  activeModule = 'dashboard',
+}: {
+  activeModule?: AdmissionsModule;
+}) {
   const [cards, setCards] = useState<PipelineCard[]>(readDashboardCards);
   const [selectedLeadId, setSelectedLeadId] = useState(initialCards[0].id);
   const [activeTab, setActiveTab] = useState<ProfileTab>('overview');
-  const [activeModule, setActiveModule] = useState<ActiveModule>('dashboard');
   const [editing, setEditing] = useState(false);
   const [doneTodos, setDoneTodos] = useState<Set<string>>(new Set());
   const [activityLog, setActivityLog] = useState(activitySeed);
@@ -609,9 +612,7 @@ export default function AdmissionsEnterpriseDashboard() {
           </div>
         </section>
 
-        <div className="grid gap-5 xl:grid-cols-[260px_minmax(0,1fr)]">
-          <AdmissionsModuleNav activeModule={activeModule} onChange={setActiveModule} />
-          <div className="min-w-0 space-y-5">
+        <div className="min-w-0 space-y-5">
             {activeModule !== 'dashboard' ? (
               <ModuleWorkspace
                 module={activeModule}
@@ -847,7 +848,6 @@ export default function AdmissionsEnterpriseDashboard() {
           </aside>
         </div>
             )}
-          </div>
         </div>
       </div>
 
@@ -870,64 +870,6 @@ export default function AdmissionsEnterpriseDashboard() {
         </button>
       </div>
     </div>
-  );
-}
-
-function AdmissionsModuleNav({
-  activeModule,
-  onChange,
-}: {
-  activeModule: ActiveModule;
-  onChange: (module: ActiveModule) => void;
-}) {
-  const groups: Array<{ title: string; items: ActiveModule[] }> = [
-    { title: 'Tổng quan', items: ['dashboard'] },
-    { title: 'Quản lý tuyển sinh', items: ['leads', 'applications', 'interviews', 'enrollment', 'classes', 'scholarships', 'payments'] },
-    { title: 'Marketing & Chiến dịch', items: ['campaigns', 'email'] },
-    { title: 'Báo cáo', items: ['reports', 'tasks'] },
-    { title: 'Cài đặt', items: ['settings'] },
-  ];
-  const navById = new Map(moduleNav.map(item => [item.id, item]));
-
-  return (
-    <aside className="rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_8px_24px_rgba(15,23,42,0.04)] xl:sticky xl:top-4 xl:max-h-[calc(100vh-2rem)] xl:overflow-hidden">
-      <div className="border-b border-slate-100 px-2 pb-3">
-        <p className="text-sm font-black text-slate-950">MIS SMART PORTAL</p>
-        <p className="mt-0.5 text-xs font-bold text-blue-600">Tuyển sinh</p>
-      </div>
-      <div className="mt-3 max-h-[calc(100vh-12rem)] space-y-3 overflow-y-auto pr-1">
-        {groups.map(group => (
-          <div key={group.title}>
-            <p className="px-2 text-[11px] font-black uppercase tracking-wide text-slate-400">{group.title}</p>
-            <div className="mt-1 space-y-1">
-              {group.items.map(id => {
-                const item = navById.get(id);
-                if (!item) return null;
-                const active = activeModule === id;
-                return (
-                  <button
-                    key={id}
-                    type="button"
-                    onClick={() => onChange(id)}
-                    className={cn(
-                      'w-full rounded-xl px-3 py-1.5 text-left transition',
-                      active ? 'bg-blue-50 text-blue-700 shadow-sm ring-1 ring-blue-100' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-                    )}
-                  >
-                    <span className="block text-xs font-black">{item.label}</span>
-                    <span className="mt-0.5 block truncate text-[11px] font-semibold opacity-70">{item.desc}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        ))}
-      </div>
-      <div className="mt-3 rounded-xl border border-slate-100 bg-slate-50 p-3">
-        <p className="text-xs font-black text-slate-700">Hoạt động gần đây</p>
-        <p className="mt-1 text-[11px] font-semibold leading-relaxed text-slate-500">Lead, hồ sơ, email và thanh toán được xử lý trong cùng module Tuyển sinh.</p>
-      </div>
-    </aside>
   );
 }
 
@@ -956,7 +898,7 @@ function ModuleWorkspace({
   onInsertVariable,
   onSendEmail,
 }: {
-  module: ActiveModule;
+  module: AdmissionsModule;
   cards: PipelineCard[];
   selectedLead: PipelineCard;
   selectedStageLabel: string;
