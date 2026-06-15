@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Award,
   CalendarDays,
@@ -35,6 +35,7 @@ import { cn } from '../lib/utils';
 
 type PipelineStatus = 'new' | 'contacted' | 'consulted' | 'submitted' | 'reviewing';
 type ProfileTab = 'overview' | 'info' | 'parent' | 'pipeline' | 'activity' | 'tuition' | 'handover' | 'notes';
+type ActiveModule = 'dashboard' | 'leads' | 'applications' | 'interviews' | 'enrollment' | 'classes' | 'scholarships' | 'payments' | 'campaigns' | 'reports' | 'tasks' | 'email' | 'settings';
 
 interface PipelineCard {
   id: string;
@@ -380,6 +381,22 @@ const profileTabs: Array<{ id: ProfileTab; label: string }> = [
   { id: 'notes', label: 'Ghi chú' },
 ];
 
+const moduleNav: Array<{ id: ActiveModule; label: string; desc: string }> = [
+  { id: 'dashboard', label: 'Dashboard', desc: 'KPI, funnel, nguồn lead' },
+  { id: 'leads', label: 'Lead & Thí sinh', desc: 'Danh sách, lọc, phân công' },
+  { id: 'applications', label: 'Hồ sơ tuyển sinh', desc: 'Checklist hồ sơ, trạng thái' },
+  { id: 'interviews', label: 'Phỏng vấn & Tư vấn', desc: 'Lịch hẹn, nhật ký chăm sóc' },
+  { id: 'enrollment', label: 'Ghi danh & Nhập học', desc: 'Offer, giữ chỗ, nhập học' },
+  { id: 'classes', label: 'Danh sách lớp dự kiến', desc: 'Xếp lớp, sĩ số, chương trình' },
+  { id: 'scholarships', label: 'Học bổng & Ưu đãi', desc: 'Duyệt ưu đãi, học bổng' },
+  { id: 'payments', label: 'Thanh toán', desc: 'Thu phí, đối soát, công nợ' },
+  { id: 'campaigns', label: 'Chiến dịch', desc: 'Nguồn lead, landing page' },
+  { id: 'reports', label: 'Báo cáo', desc: 'Chuyển đổi, doanh thu, dự báo' },
+  { id: 'tasks', label: 'Việc cần làm', desc: 'Checklist, giao việc' },
+  { id: 'email', label: 'Email Template', desc: 'Soạn, biến động, gửi email' },
+  { id: 'settings', label: 'Cài đặt Pipeline', desc: 'Bước, toggle, phân quyền' },
+];
+
 const todoSeed = [
   { id: 'call', label: 'Gọi điện tư vấn 12 Lead', priority: 'Ưu tiên cao', color: 'bg-rose-50 text-rose-700 border-rose-100' },
   { id: 'overdue', label: 'Theo dõi 8 hồ sơ quá hạn', priority: 'Ưu tiên cao', color: 'bg-rose-50 text-rose-700 border-rose-100' },
@@ -398,12 +415,68 @@ const activitySeed = [
 const pipelineSteps = ['Lead mới', 'Đã liên hệ', 'Đã tư vấn', 'Đã tham quan trường', 'Đã nộp hồ sơ', 'Đang xét duyệt', 'Đã đóng học phí', 'Đã nhập học'];
 const statusStepIndex: Record<PipelineStatus, number> = { new: 0, contacted: 1, consulted: 2, submitted: 4, reviewing: 5 };
 const variableList = ['{{student_name}}', '{{parent_name}}', '{{grade}}', '{{program}}', '{{tuition_fee}}'];
+const CRM_LEADS_STORAGE_KEY = 'school_crm_leads';
+const DASHBOARD_CARDS_STORAGE_KEY = 'school_crm_dashboard_cards';
+
+const mapExistingStage = (stage: unknown): PipelineStatus => {
+  const value = String(stage || '').toUpperCase();
+  if (['CONTACTED', 'APPOINTMENT_BOOKED'].includes(value)) return 'contacted';
+  if (['CONSULTING', 'ENTRANCE_TEST_REGISTERED', 'TEST_COMPLETED'].includes(value)) return 'consulted';
+  if (['DOCUMENTS_PENDING', 'OFFER_SENT'].includes(value)) return 'submitted';
+  if (['SCHOLARSHIP_REVIEW', 'SEAT_RESERVATION_PAYMENT', 'SEAT_RESERVED', 'ENROLLMENT_PAYMENT', 'ENROLLED'].includes(value)) return 'reviewing';
+  return 'new';
+};
+
+const readDashboardCards = () => {
+  if (typeof window === 'undefined') return initialCards;
+  try {
+    const dashboardRaw = localStorage.getItem(DASHBOARD_CARDS_STORAGE_KEY);
+    if (dashboardRaw) {
+      const parsed = JSON.parse(dashboardRaw);
+      if (Array.isArray(parsed) && parsed.length) return parsed as PipelineCard[];
+    }
+
+    const existingRaw = localStorage.getItem(CRM_LEADS_STORAGE_KEY);
+    const existing = existingRaw ? JSON.parse(existingRaw) : null;
+    if (Array.isArray(existing) && existing.length) {
+      return existing.map((lead: any, index: number): PipelineCard => ({
+        id: String(lead.id || `existing_${index}`),
+        name: String(lead.studentName || lead.fullName || initialCards[index % initialCards.length].name),
+        grade: String(lead.grade || initialCards[index % initialCards.length].grade),
+        gender: String(lead.gender || initialCards[index % initialCards.length].gender),
+        dob: String(lead.dob || initialCards[index % initialCards.length].dob),
+        createdAt: String(lead.createdAt || initialCards[index % initialCards.length].createdAt).slice(0, 10),
+        advisor: String(lead.ownerName || lead.advisor || initialCards[index % initialCards.length].advisor),
+        status: mapExistingStage(lead.stage || lead.status),
+        parentName: String(lead.parentName || initialCards[index % initialCards.length].parentName),
+        phone: String(lead.phone || initialCards[index % initialCards.length].phone),
+        email: String(lead.email || initialCards[index % initialCards.length].email),
+        address: String(lead.address || initialCards[index % initialCards.length].address),
+        school: String(lead.currentSchool || lead.school || initialCards[index % initialCards.length].school),
+        source: String(lead.source || initialCards[index % initialCards.length].source),
+        campaign: String(lead.campaign || lead.utmCampaign || initialCards[index % initialCards.length].campaign),
+        note: String(lead.notes || lead.note || initialCards[index % initialCards.length].note),
+        tuition: Number(lead.baseTuitionFee || initialCards[index % initialCards.length].tuition),
+        paid: Number((lead.payments || []).filter((payment: any) => payment.status === 'MATCHED').reduce((sum: number, payment: any) => sum + Number(payment.amount || 0), 0) || initialCards[index % initialCards.length].paid),
+        needScore: String(lead.leadScore ? `${Math.round(Number(lead.leadScore) / 10)} / 10` : initialCards[index % initialCards.length].needScore),
+        finance: initialCards[index % initialCards.length].finance,
+        interest: lead.leadTemperature === 'HOT' ? 'Rất cao' : lead.leadTemperature === 'WARM' ? 'Cao' : initialCards[index % initialCards.length].interest,
+        expectedEnroll: initialCards[index % initialCards.length].expectedEnroll,
+        highlights: Array.isArray(lead.highlights) ? lead.highlights : initialCards[index % initialCards.length].highlights,
+      }));
+    }
+  } catch {
+    return initialCards;
+  }
+  return initialCards;
+};
 
 export default function AdmissionsEnterpriseDashboard() {
-  const [cards, setCards] = useState(initialCards);
+  const [cards, setCards] = useState<PipelineCard[]>(readDashboardCards);
   const [selectedLeadId, setSelectedLeadId] = useState(initialCards[0].id);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<ProfileTab>('overview');
+  const [activeModule, setActiveModule] = useState<ActiveModule>('dashboard');
   const [editing, setEditing] = useState(false);
   const [doneTodos, setDoneTodos] = useState<Set<string>>(new Set());
   const [activityLog, setActivityLog] = useState(activitySeed);
@@ -414,6 +487,10 @@ export default function AdmissionsEnterpriseDashboard() {
   const [pipelineEnabled, setPipelineEnabled] = useState<Record<string, boolean>>(() => Object.fromEntries(pipelineSteps.map(step => [step, true])));
   const [handoverDone, setHandoverDone] = useState<Set<string>>(new Set(['academic']));
   const [fabOpen, setFabOpen] = useState(false);
+
+  useEffect(() => {
+    localStorage.setItem(DASHBOARD_CARDS_STORAGE_KEY, JSON.stringify(cards));
+  }, [cards]);
 
   const selectedLead = cards.find(card => card.id === selectedLeadId) || cards[0];
   const selectedStageLabel = columns.find(column => column.id === selectedLead.status)?.label || 'Lead mới';
@@ -540,7 +617,59 @@ export default function AdmissionsEnterpriseDashboard() {
               );
             })}
           </div>
+
+          <div className="mt-5 overflow-x-auto pb-1">
+            <div className="flex min-w-max gap-2">
+              {moduleNav.map(item => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => setActiveModule(item.id)}
+                  className={cn(
+                    'w-44 rounded-xl border px-3 py-2 text-left transition',
+                    activeModule === item.id ? 'border-blue-200 bg-blue-50 text-blue-700 shadow-sm' : 'border-slate-200 bg-white text-slate-600 hover:border-blue-200 hover:bg-slate-50'
+                  )}
+                >
+                  <span className="block text-xs font-black">{item.label}</span>
+                  <span className="mt-0.5 block truncate text-[11px] font-semibold opacity-75">{item.desc}</span>
+                </button>
+              ))}
+            </div>
+          </div>
         </section>
+
+        {activeModule !== 'dashboard' && (
+          <ModuleWorkspace
+            module={activeModule}
+            cards={cards}
+            selectedLead={selectedLead}
+            selectedStageLabel={selectedStageLabel}
+            paymentRows={paymentRows}
+            doneTodos={doneTodos}
+            activityLog={activityLog}
+            pipelineEnabled={pipelineEnabled}
+            emailSubject={emailSubject}
+            emailBody={emailBody}
+            sentMessage={sentMessage}
+            onSelectLead={setSelectedLeadId}
+            onPatchLead={updateSelectedLead}
+            onSetStatus={status => updateSelectedLead({ status })}
+            onMarkPaid={markPayment}
+            onToggleTodo={toggleTodo}
+            onAddActivity={value => {
+              setActivityInput(value);
+              const trimmed = value.trim();
+              if (!trimmed) return;
+              setActivityLog(current => [{ time: 'Vừa xong', title: `${selectedLead.advisor} cập nhật hồ sơ`, desc: trimmed }, ...current]);
+              updateSelectedLead({ note: trimmed });
+            }}
+            onTogglePipeline={togglePipeline}
+            onSetEmailSubject={setEmailSubject}
+            onSetEmailBody={setEmailBody}
+            onInsertVariable={insertVariable}
+            onSendEmail={sendEmail}
+          />
+        )}
 
         <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(420px,40%)]">
           <main className="space-y-5">
@@ -867,6 +996,201 @@ export default function AdmissionsEnterpriseDashboard() {
         </button>
       </div>
     </div>
+  );
+}
+
+function ModuleWorkspace({
+  module,
+  cards,
+  selectedLead,
+  selectedStageLabel,
+  paymentRows,
+  doneTodos,
+  activityLog,
+  pipelineEnabled,
+  emailSubject,
+  emailBody,
+  sentMessage,
+  onSelectLead,
+  onPatchLead,
+  onSetStatus,
+  onMarkPaid,
+  onToggleTodo,
+  onAddActivity,
+  onTogglePipeline,
+  onSetEmailSubject,
+  onSetEmailBody,
+  onInsertVariable,
+  onSendEmail,
+}: {
+  module: ActiveModule;
+  cards: PipelineCard[];
+  selectedLead: PipelineCard;
+  selectedStageLabel: string;
+  paymentRows: Array<{ id: string; name: string; grade: string; tuition: number; paid: number; remaining: number; status: string }>;
+  doneTodos: Set<string>;
+  activityLog: typeof activitySeed;
+  pipelineEnabled: Record<string, boolean>;
+  emailSubject: string;
+  emailBody: string;
+  sentMessage: string;
+  onSelectLead: (id: string) => void;
+  onPatchLead: (patch: Partial<PipelineCard>) => void;
+  onSetStatus: (status: PipelineStatus) => void;
+  onMarkPaid: (id: string) => void;
+  onToggleTodo: (id: string) => void;
+  onAddActivity: (value: string) => void;
+  onTogglePipeline: (step: string) => void;
+  onSetEmailSubject: (value: string) => void;
+  onSetEmailBody: (value: string) => void;
+  onInsertVariable: (value: string) => void;
+  onSendEmail: () => void;
+}) {
+  const [noteDraft, setNoteDraft] = useState('');
+  const title = moduleNav.find(item => item.id === module)?.label || 'Chức năng tuyển sinh';
+
+  if (module === 'leads') {
+    return (
+      <Panel title={title} action={`${cards.length} lead`}>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[900px] text-left text-xs">
+            <thead className="text-slate-500">
+              <tr>{['Thí sinh', 'Phụ huynh', 'Liên hệ', 'Nguồn', 'Trạng thái', 'Tư vấn viên', 'Thao tác'].map(head => <th key={head} className="border-b border-slate-100 py-2 font-black">{head}</th>)}</tr>
+            </thead>
+            <tbody>
+              {cards.map(card => (
+                <tr key={card.id} className="border-b border-slate-50">
+                  <td className="py-3 font-black text-slate-900">{card.name}<span className="block text-[11px] text-slate-500">{card.grade}</span></td>
+                  <td className="py-3 font-bold text-slate-600">{card.parentName}</td>
+                  <td className="py-3 font-bold text-slate-600">{card.phone}<span className="block text-[11px]">{card.email}</span></td>
+                  <td className="py-3 font-bold text-slate-600">{card.source}</td>
+                  <td className="py-3"><span className="rounded-full bg-blue-50 px-2 py-1 font-black text-blue-700">{columns.find(column => column.id === card.status)?.label}</span></td>
+                  <td className="py-3 font-bold text-slate-600">{card.advisor}</td>
+                  <td className="py-3"><button type="button" onClick={() => onSelectLead(card.id)} className="rounded-lg border border-slate-200 px-2 py-1 font-black hover:border-blue-200 hover:bg-blue-50">Mở hồ sơ</button></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Panel>
+    );
+  }
+
+  if (module === 'applications') {
+    return (
+      <Panel title={title} action={selectedLead.name}>
+        <div className="grid gap-3 md:grid-cols-3">
+          {['Học bạ / bảng điểm', 'Giấy khai sinh', 'Ảnh 3x4', 'CCCD phụ huynh', 'Phiếu đăng ký', 'Biên lai giữ chỗ'].map((doc, index) => (
+            <label key={doc} className="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 p-3 text-sm font-bold">
+              <input type="checkbox" defaultChecked={index < 3} className="h-4 w-4 rounded border-slate-300 text-blue-600" />
+              {doc}
+            </label>
+          ))}
+        </div>
+      </Panel>
+    );
+  }
+
+  if (module === 'interviews') {
+    return (
+      <Panel title={title} action={selectedLead.name}>
+        <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
+          <ActivityList items={activityLog} />
+          <div className="rounded-xl border border-slate-100 bg-slate-50 p-3">
+            <textarea value={noteDraft} onChange={event => setNoteDraft(event.target.value)} rows={7} placeholder="Nhập nhật ký tư vấn, lịch hẹn, kết quả gọi điện..." className="w-full resize-none rounded-xl border border-slate-200 p-3 text-sm" />
+            <button type="button" onClick={() => { onAddActivity(noteDraft); setNoteDraft(''); }} className="mt-3 inline-flex h-9 items-center gap-2 rounded-lg bg-blue-600 px-3 text-xs font-black text-white">
+              <Send className="h-3.5 w-3.5" />
+              Lưu nhật ký
+            </button>
+          </div>
+        </div>
+      </Panel>
+    );
+  }
+
+  if (module === 'payments') {
+    return (
+      <Panel title={title} action="Đối soát & công nợ">
+        <PaymentTable rows={paymentRows} onMarkPaid={onMarkPaid} />
+      </Panel>
+    );
+  }
+
+  if (module === 'tasks') {
+    return (
+      <Panel title={title}>
+        <div className="grid gap-3 md:grid-cols-2">
+          {todoSeed.map(todo => (
+            <label key={todo.id} className="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2.5">
+              <input type="checkbox" checked={doneTodos.has(todo.id)} onChange={() => onToggleTodo(todo.id)} className="h-4 w-4 rounded border-slate-300 text-blue-600" />
+              <span className={cn('min-w-0 flex-1 text-sm font-bold', doneTodos.has(todo.id) ? 'text-slate-400 line-through' : 'text-slate-800')}>{todo.label}</span>
+              <span className={cn('rounded-full border px-2 py-1 text-[11px] font-black', todo.color)}>{todo.priority}</span>
+            </label>
+          ))}
+        </div>
+      </Panel>
+    );
+  }
+
+  if (module === 'email') {
+    return (
+      <Panel title={title} action={selectedLead.parentName}>
+        <div className="grid gap-4 lg:grid-cols-[1fr_260px]">
+          <div className="space-y-3">
+            <input value={emailSubject} onChange={event => onSetEmailSubject(event.target.value)} className="h-10 w-full rounded-xl border border-slate-200 px-3 text-sm font-bold" />
+            <textarea value={emailBody} onChange={event => onSetEmailBody(event.target.value)} rows={8} className="w-full resize-none rounded-xl border border-slate-200 p-3 text-sm" />
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-xs font-bold text-emerald-600">{sentMessage}</span>
+              <button type="button" onClick={onSendEmail} className="inline-flex h-9 items-center gap-2 rounded-lg bg-blue-600 px-3 text-xs font-black text-white">Gửi email</button>
+            </div>
+          </div>
+          <div className="space-y-2">
+            {variableList.map(variable => (
+              <button key={variable} type="button" onClick={() => onInsertVariable(variable)} className="flex w-full items-center justify-between rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 text-left text-xs font-black">
+                {variable}<Plus className="h-3.5 w-3.5 text-blue-600" />
+              </button>
+            ))}
+          </div>
+        </div>
+      </Panel>
+    );
+  }
+
+  if (module === 'settings') {
+    return (
+      <Panel title={title}>
+        <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
+          {pipelineSteps.map((step, index) => (
+            <div key={step} className="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2">
+              <span className="grid h-6 w-6 place-items-center rounded-full bg-white text-xs font-black text-slate-500">{index + 1}</span>
+              <span className="min-w-0 flex-1 text-sm font-black text-slate-800">{step}</span>
+              <button type="button" onClick={() => onTogglePipeline(step)} className={cn('h-5 w-9 rounded-full p-0.5 transition', pipelineEnabled[step] ? 'bg-blue-600' : 'bg-slate-300')}>
+                <span className={cn('block h-4 w-4 rounded-full bg-white transition', pipelineEnabled[step] && 'translate-x-4')} />
+              </button>
+            </div>
+          ))}
+        </div>
+      </Panel>
+    );
+  }
+
+  return (
+    <Panel title={title} action={selectedStageLabel}>
+      <div className="grid gap-3 md:grid-cols-3">
+        <MetricBox label="Hồ sơ đang chọn" value={selectedLead.name} />
+        <MetricBox label="Trạng thái" value={selectedStageLabel} />
+        <MetricBox label="Dự kiến nhập học" value={selectedLead.expectedEnroll} />
+      </div>
+      <div className="mt-4 grid gap-3 md:grid-cols-2">
+        <EditableInfo label="Tư vấn viên" value={selectedLead.advisor} disabled={false} onChange={value => onPatchLead({ advisor: value })} />
+        <EditableInfo label="Chiến dịch" value={selectedLead.campaign} disabled={false} onChange={value => onPatchLead({ campaign: value })} />
+      </div>
+      <div className="mt-4 flex flex-wrap gap-2">
+        {columns.map(column => (
+          <button key={column.id} type="button" onClick={() => onSetStatus(column.id)} className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-black hover:border-blue-200 hover:bg-blue-50">Chuyển {column.label}</button>
+        ))}
+      </div>
+    </Panel>
   );
 }
 

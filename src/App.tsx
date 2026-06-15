@@ -243,6 +243,7 @@ type OverviewTab = 'DASHBOARD' | 'STRATEGY_OKRS' | 'TASKS' | 'WORKFLOW_APPROVALS
 
 const canDisplayTabWithWorkspace = (tab: OverviewTab, role: Role, workspaceId?: string) => {
   if (tab === 'TEACHER_HR') return false;
+  if (tab === 'CRM_ADMISSIONS') return workspaceId === 'TUYEN_SINH_PR';
   if (role === 'ADMIN' || workspaceId === 'BGH') return true;
 
   switch (tab) {
@@ -262,9 +263,6 @@ const canDisplayTabWithWorkspace = (tab: OverviewTab, role: Role, workspaceId?: 
 
     case 'WORKFLOW_APPROVALS':
       return workspaceId === 'HANH_CHINH' || role === 'MANAGER';
-
-    case 'CRM_ADMISSIONS':
-      return workspaceId === 'TUYEN_SINH_PR';
 
     case 'STUDENT_SUCCESS':
       return workspaceId === 'CTHS_TAM_LY';
@@ -668,6 +666,13 @@ function AppInner() {
       setOverviewTab('CRM_ADMISSIONS');
     }
   }, [currentUser.workspaceId, isLoggedIn, setOverviewTab]);
+
+  useEffect(() => {
+    if (!isLoggedIn) return;
+    if (overviewTab === 'CRM_ADMISSIONS' && currentUser.workspaceId !== 'TUYEN_SINH_PR') {
+      setOverviewTab('DASHBOARD');
+    }
+  }, [currentUser.workspaceId, isLoggedIn, overviewTab, setOverviewTab]);
 
   useEffect(() => {
     if (!isLoggedIn || typeof window === 'undefined') return;
@@ -1637,7 +1642,7 @@ function AppInner() {
             <WorkflowBuilder />
           )}
 
-          {overviewTab === 'CRM_ADMISSIONS' && (
+          {overviewTab === 'CRM_ADMISSIONS' && currentUser.workspaceId === 'TUYEN_SINH_PR' && (
             <AdmissionsEnterpriseDashboard />
           )}
 
