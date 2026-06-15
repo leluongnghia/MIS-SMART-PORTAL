@@ -9,6 +9,7 @@ import {
   ChevronDown,
   CreditCard,
   FileBarChart,
+  FileText,
   LayoutDashboard,
   Menu,
   Moon,
@@ -28,6 +29,7 @@ import {
   Bell,
   UserCheck,
   ShieldAlert,
+  ShieldCheck,
   Database,
   List,
   GraduationCap,
@@ -182,6 +184,61 @@ export default function AdminShell({ locale, children }: { locale: string; child
     );
   }
 
+  const activeMenuGroups = currentUser?.workspaceId === 'KHAO_THI' ? [
+    {
+      title: 'TỔNG QUAN',
+      items: [
+        { label: 'Tổng quan', href: 'dashboard', icon: LayoutDashboard }
+      ]
+    },
+    {
+      title: 'KHẢO THÍ',
+      items: [
+        { label: 'Kế hoạch kiểm tra', href: 'dashboard?tab=kehoach', icon: ClipboardCheck },
+        { label: 'Lịch thi', href: 'dashboard?tab=lichthi', icon: Calendar },
+        { label: 'Tổ chức thi', href: 'dashboard?tab=tochuc', icon: Users },
+        { label: 'Chấm thi', href: 'dashboard?tab=chamthi', icon: CheckSquare },
+        { label: 'Phúc khảo', href: 'dashboard?tab=phuckhao', icon: Target },
+        { label: 'Ngân hàng đề thi', href: 'dashboard?tab=nganhang', icon: Database }
+      ]
+    },
+    {
+      title: 'DỮ LIỆU HỌC VỤ',
+      items: [
+        { label: 'Cơ sở dữ liệu học vụ', href: 'dashboard?tab=csdl', icon: Database },
+        { label: 'Kết quả học tập', href: 'dashboard?tab=ketqua', icon: LineChart },
+        { label: 'Thống kê học tập', href: 'dashboard?tab=thongke', icon: TrendingUp },
+        { label: 'Báo cáo học vụ', href: 'dashboard?tab=baocaohocvu', icon: FileBarChart }
+      ]
+    },
+    {
+      title: 'ĐẢM BẢO CHẤT LƯỢNG',
+      items: [
+        { label: 'Khảo sát', href: 'dashboard?tab=khaosat', icon: Users },
+        { label: 'Kiểm định chất lượng', href: 'dashboard?tab=kiemdinh', icon: ShieldCheck },
+        { label: 'Tiêu chí & Chuẩn', href: 'dashboard?tab=tieuchi', icon: List },
+        { label: 'Minh chứng', href: 'dashboard?tab=minhchung', icon: FileText },
+        { label: 'Báo cáo ĐBCL', href: 'dashboard?tab=baocaodbcl', icon: FileBarChart }
+      ]
+    },
+    {
+      title: 'BÁO CÁO',
+      items: [
+        { label: 'Báo cáo khảo thí', href: 'dashboard?tab=report_kt', icon: FileBarChart },
+        { label: 'Báo cáo ĐBCL', href: 'dashboard?tab=report_dbcl', icon: FileBarChart },
+        { label: 'Báo cáo thống kê', href: 'dashboard?tab=report_tk', icon: FileBarChart }
+      ]
+    },
+    {
+      title: 'CÀI ĐẶT',
+      items: [
+        { label: 'Cấu hình', href: 'settings', icon: Settings },
+        { label: 'Phân quyền', href: 'dashboard?tab=rbac', icon: ShieldCheck },
+        { label: 'Danh mục', href: 'categories', icon: List }
+      ]
+    }
+  ] : menuGroups;
+
   const Sidebar = (
     <aside className={cn('flex h-full flex-col border-r border-slate-200 bg-white transition-all dark:border-slate-800 dark:bg-slate-950', collapsed ? 'w-20' : 'w-72')}>
       <div className="flex h-16 items-center justify-between border-b border-slate-100 px-4 dark:border-slate-800">
@@ -192,6 +249,9 @@ export default function AdminShell({ locale, children }: { locale: string; child
           {!collapsed && (
             <div className="min-w-0">
               <div className="truncate text-sm font-black text-[#2563eb] dark:text-blue-400">MIS SMART PORTAL</div>
+              {currentUser?.workspaceId === 'KHAO_THI' && (
+                <div className="text-[10px] font-black text-slate-400 truncate mt-0.5">Phòng Khảo thí & ĐBCL</div>
+              )}
             </div>
           )}
         </Link>
@@ -200,7 +260,7 @@ export default function AdminShell({ locale, children }: { locale: string; child
         </Button>
       </div>
       <nav className="flex-1 space-y-4 overflow-y-auto p-3 custom-scrollbar">
-        {menuGroups.map((group, idx) => (
+        {activeMenuGroups.map((group, idx) => (
           <div key={idx}>
             {!collapsed && (
               <div className="mb-2 px-3 text-xs font-bold tracking-wider text-slate-400 uppercase">

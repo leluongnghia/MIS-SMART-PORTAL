@@ -847,12 +847,12 @@ export const MOCK_USERS: UserProfile[] = [
   // -- BỘ PHẬN 3: PHÒNG KHẢO THÍ & ĐBCL (KHAO_THI) --
   {
     id: 'user_kt_mgr',
-    email: 'kt_mgr@mis.edu.vn',
-    name: 'Cô Đỗ Thùy Trang',
+    email: 'anhntm@school.edu.vn',
+    name: 'Nguyễn Thị Minh Anh',
     role: 'MANAGER',
     roleName: 'Tổ trưởng Chức năng',
-    title: 'Trưởng phòng Khảo thí, Kiểm định & Pháp chế Sư phạm',
-    avatar: 'https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?w=150&h=150&fit=crop&crop=face',
+    title: 'Trưởng phòng Khảo thí & ĐBCL',
+    avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&h=150&fit=crop&crop=face',
     workspaceId: 'KHAO_THI'
   },
   {

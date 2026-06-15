@@ -1,7 +1,11 @@
 'use client';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
-
 import { cn } from "@/src/lib/utils";
+import KhaoThiDashboard from '@/src/components/KhaoThiDashboard';
+import AdmissionsEnterpriseDashboard from '@/src/components/AdmissionsEnterpriseDashboard';
+import DepartmentDashboard from '@/src/components/DepartmentDashboard';
+import { MOCK_USERS, INITIAL_TASKS, WORKSPACES } from '@/src/mockData';
 import {
   AlertCircle,
   Calendar,
@@ -41,6 +45,52 @@ const performanceData = [
 ];
 
 export default function DashboardClient() {
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [isReady, setIsReady] = useState(false);
+
+  useEffect(() => {
+    const loggedIn = localStorage.getItem('mis_edutask_logged_in') === 'true';
+    const savedUserId = localStorage.getItem('mis_edutask_logged_in_user_id');
+    if (loggedIn && savedUserId) {
+      const matched = MOCK_USERS.find(u => u.id === savedUserId);
+      if (matched) {
+        setCurrentUser(matched);
+      }
+    }
+    setIsReady(true);
+  }, []);
+
+  if (!isReady) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-500"></div>
+      </div>
+    );
+  }
+
+  if (currentUser?.workspaceId === 'KHAO_THI') {
+    return <KhaoThiDashboard />;
+  }
+
+  if (currentUser?.workspaceId === 'TUYEN_SINH_PR') {
+    return <AdmissionsEnterpriseDashboard />;
+  }
+
+  if (currentUser?.workspaceId && currentUser.workspaceId !== 'BGH' && currentUser.role !== 'ADMIN') {
+    return (
+      <DepartmentDashboard
+        tasks={INITIAL_TASKS}
+        users={MOCK_USERS}
+        workspaces={WORKSPACES}
+        currentUser={currentUser}
+        onViewTask={(task) => alert(`Xem chi tiết công việc: ${task.title}`)}
+        onUpdateStatus={(taskId, newStatus) => alert(`Cập nhật trạng thái công việc ${taskId} sang ${newStatus}`)}
+        onRejectTask={(taskId, reason) => alert(`Từ chối công việc ${taskId} vì: ${reason}`)}
+        onNavigateTab={(tab) => alert(`Chuyển sang tab: ${tab}`)}
+      />
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header controls */}
