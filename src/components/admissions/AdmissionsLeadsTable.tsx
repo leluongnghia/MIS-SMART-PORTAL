@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Search, Plus, Download, Upload, Filter, Eye, Edit2, MoreHorizontal,
   Users, MessageSquare, ClipboardList, CalendarCheck, GraduationCap,
@@ -711,22 +712,23 @@ export default function AdmissionsLeadsTable() {
         </div>
       </div>
 
-      {/* Modal Thêm Lead */}
-      {hienModal && (
-        <div className="fixed inset-0 z-[100] flex items-start justify-end">
+      {/* Modal Thêm Lead — dùng Portal mount vào document.body để tránh bị bẫy bởi overflow/transform */}
+      {hienModal && typeof document !== 'undefined' && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-start justify-end">
           {/* Overlay */}
           <div
             className="absolute inset-0 bg-slate-900/30 backdrop-blur-sm"
             onClick={() => setHienModal(false)}
           />
-          {/* Panel */}
+          {/* Panel trượt từ bên phải */}
           <div className="relative z-10 flex h-full w-full max-w-xl flex-col border-l border-slate-200 bg-white shadow-2xl">
             <ModalThemLead
               onDong={() => setHienModal(false)}
               onLuu={handleLuuLead}
             />
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );

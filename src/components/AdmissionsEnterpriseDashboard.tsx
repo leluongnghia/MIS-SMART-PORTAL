@@ -13,6 +13,11 @@ import AdmissionsLeadsTable from './admissions/AdmissionsLeadsTable';
 import AdmissionsPipelineKanban from './admissions/AdmissionsPipelineKanban';
 import AdmissionsLeadDetail from './admissions/AdmissionsLeadDetail';
 import AdmissionsAppointments from './admissions/AdmissionsAppointments';
+import AdmissionsDocuments from './admissions/AdmissionsDocuments';
+import AdmissionsPayments from './admissions/AdmissionsPayments';
+import AdmissionsReports from './admissions/AdmissionsReports';
+import AdmissionsCampaigns from './admissions/AdmissionsCampaigns';
+import AdmissionsSettings from './admissions/AdmissionsSettings';
 
 export type AdmissionsModule =
   | 'dashboard'
@@ -105,6 +110,11 @@ export default function AdmissionsEnterpriseDashboard({
       case 'pipeline':     return <AdmissionsPipelineKanban />;
       case 'lead_detail':  return <AdmissionsLeadDetail />;
       case 'appointments': return <AdmissionsAppointments />;
+      case 'documents':    return <AdmissionsDocuments />;
+      case 'payments':     return <AdmissionsPayments />;
+      case 'reports':      return <AdmissionsReports />;
+      case 'campaigns':    return <AdmissionsCampaigns />;
+      case 'settings':     return <AdmissionsSettings />;
       default:             return <PlaceholderModule module={internalModule} />;
     }
   };
