@@ -44,42 +44,42 @@ type MenuItemGroup = {
 
 const menuGroups: MenuItemGroup[] = [
   {
-    title: 'Tá»”NG QUAN',
+    title: 'TỔNG QUAN',
     items: [
-      { label: 'Tá»•ng quan Ä‘iá»u hÃ nh', href: 'dashboard', icon: LayoutDashboard },
-      { label: 'BÃ¡o cÃ¡o nhanh', href: 'reports', icon: FileBarChart },
+      { label: 'Tổng quan điều hành', href: 'dashboard', icon: LayoutDashboard },
+      { label: 'Báo cáo nhanh', href: 'reports', icon: FileBarChart },
     ],
   },
   {
-    title: 'CHIáº¾N LÆ¯á»¢C & Káº¾ HOáº CH',
+    title: 'CHIẾN LƯỢC & KẾ HOẠCH',
     items: [
-      { label: 'Chiáº¿n lÆ°á»£c & OKRs', href: 'okr', icon: Target },
-      { label: 'Káº¿ hoáº¡ch hoáº¡t Ä‘á»™ng', href: 'plans', icon: ClipboardCheck },
-      { label: 'BÃ¡o cÃ¡o & PhÃ¢n tÃ­ch KPI', href: 'kpi', icon: LineChart },
-      { label: 'PhÃ¢n tÃ­ch & Dá»± bÃ¡o', href: 'forecast', icon: TrendingUp },
+      { label: 'Chiến lược & OKRs', href: 'okr', icon: Target },
+      { label: 'Kế hoạch hoạt động', href: 'plans', icon: ClipboardCheck },
+      { label: 'Báo cáo & Phân tích KPI', href: 'kpi', icon: LineChart },
+      { label: 'Phân tích & Dự báo', href: 'forecast', icon: TrendingUp },
     ],
   },
   {
-    title: 'Váº¬N HÃ€NH',
+    title: 'VẬN HÀNH',
     items: [
-      { label: 'CÃ´ng viá»‡c & Quy trÃ¬nh', href: 'tasks', icon: CheckSquare },
-      { label: 'PhÃª duyá»‡t', href: 'approvals', icon: UserCheck },
-      { label: 'Lá»‹ch & Sá»± kiá»‡n', href: 'events', icon: Calendar },
-      { label: 'ThÃ´ng bÃ¡o ná»™i bá»™', href: 'announcements', icon: Bell },
-      { label: 'Quáº£n trá»‹ NhÃ¢n sá»± HRM', href: 'hrm', icon: Users },
-      { label: 'Quáº£n trá»‹ Rá»§i ro', href: 'risk', icon: ShieldAlert },
-      { label: 'Tuyá»ƒn sinh & CRM', href: 'admissions', icon: Workflow },
-      { label: 'Há»“ sÆ¡ Há»c sinh 360', href: 'students', icon: GraduationCap },
-      { label: 'Thá»i khÃ³a biá»ƒu & GiÃ¡o Ã¡n', href: 'schedule', icon: CalendarDays },
+      { label: 'Công việc & Quy trình', href: 'tasks', icon: CheckSquare },
+      { label: 'Phê duyệt', href: 'approvals', icon: UserCheck },
+      { label: 'Lịch & Sự kiện', href: 'events', icon: Calendar },
+      { label: 'Thông báo nội bộ', href: 'announcements', icon: Bell },
+      { label: 'Quản trị Nhân sự HRM', href: 'hrm', icon: Users },
+      { label: 'Quản trị Rủi ro', href: 'risk', icon: ShieldAlert },
+      { label: 'Tuyển sinh & CRM', href: 'admissions', icon: Workflow },
+      { label: 'Hồ sơ Học sinh 360', href: 'students', icon: GraduationCap },
+      { label: 'Thời khóa biểu & Giáo án', href: 'schedule', icon: CalendarDays },
     ],
   },
   {
-    title: 'Dá»® LIá»†U & Há»† THá»NG',
+    title: 'DỮ LIỆU & HỆ THỐNG',
     items: [
-      { label: 'Danh má»¥c', href: 'categories', icon: List },
-      { label: 'BÃ¡o cÃ¡o', href: 'system-reports', icon: FileBarChart },
-      { label: 'Kho dá»¯ liá»‡u', href: 'data', icon: Database },
-      { label: 'Cáº¥u hÃ¬nh há»‡ thá»‘ng', href: 'settings', icon: Settings },
+      { label: 'Danh mục', href: 'categories', icon: List },
+      { label: 'Báo cáo', href: 'system-reports', icon: FileBarChart },
+      { label: 'Kho dữ liệu', href: 'data', icon: Database },
+      { label: 'Cấu hình hệ thống', href: 'settings', icon: Settings },
     ],
   },
 ];
@@ -204,7 +204,7 @@ export default function AdminShell({ locale, children }: { locale: string; child
                 </div>
                 <input
                   type="text"
-                  placeholder="TÃ¬m kiáº¿m nhanh..."
+                  placeholder="Tìm kiếm nhanh..."
                   className="block w-64 rounded-md border-0 py-1.5 pl-10 pr-12 text-slate-900 ring-1 ring-inset ring-slate-200 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6 dark:bg-slate-900 dark:text-slate-100 dark:ring-slate-700"
                 />
                 <div className="absolute inset-y-0 right-0 flex items-center pr-2">
@@ -218,7 +218,7 @@ export default function AdminShell({ locale, children }: { locale: string; child
              {/* School Selector */}
              <div className="hidden sm:block">
               <select className="block w-full rounded-md border-0 py-1.5 pl-3 pr-10 text-slate-900 ring-1 ring-inset ring-slate-200 focus:ring-2 focus:ring-blue-600 sm:text-sm sm:leading-6 dark:bg-slate-900 dark:text-slate-100 dark:ring-slate-700">
-                <option>CÆ¡ sá»Ÿ 1 - TrÆ°á»ng THPT Minh Khai</option>
+                <option>Cơ sở 1 - Trường THPT Minh Khai</option>
               </select>
             </div>
 
@@ -235,22 +235,22 @@ export default function AdminShell({ locale, children }: { locale: string; child
               <Button variant="ghost" className="h-9 px-2 gap-2 flex items-center" onClick={() => setUserOpen(value => !value)}>
                 <img src="https://i.pravatar.cc/150?u=a042581f4e29026704d" alt="Avatar" className="h-8 w-8 rounded-full object-cover" />
                 <div className="hidden sm:flex flex-col items-start text-left">
-                  <span className="text-sm font-bold text-slate-900 dark:text-white leading-tight">Nguyá»…n VÄƒn Nam</span>
-                  <span className="text-xs text-slate-500 dark:text-slate-400 leading-tight">Hiá»‡u trÆ°á»Ÿng</span>
+                  <span className="text-sm font-bold text-slate-900 dark:text-white leading-tight">Nguyễn Văn Nam</span>
+                  <span className="text-xs text-slate-500 dark:text-slate-400 leading-tight">Hiệu trưởng</span>
                 </div>
                 <ChevronDown className="h-4 w-4 text-slate-500" />
               </Button>
               {userOpen && (
                 <div className="absolute right-0 mt-2 w-56 rounded-xl border border-slate-200 bg-white p-2 shadow-lg dark:border-slate-800 dark:bg-slate-950">
                   <div className="px-3 py-2 text-sm border-b border-slate-100 dark:border-slate-800 mb-1">
-                    <div className="font-bold text-slate-900 dark:text-white">Nguyá»…n VÄƒn Nam</div>
+                    <div className="font-bold text-slate-900 dark:text-white">Nguyễn Văn Nam</div>
                     <div className="text-xs text-slate-500">namnv@school.edu.vn</div>
                   </div>
                   <Link href={`/${locale}/settings`} className="block rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-900">
-                    CÃ i Ä‘áº·t tÃ i khoáº£n
+                    Cài đặt tài khoản
                   </Link>
                   <button className="block w-full text-left rounded-lg px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/30">
-                    ÄÄƒng xuáº¥t
+                    Đăng xuất
                   </button>
                 </div>
               )}
