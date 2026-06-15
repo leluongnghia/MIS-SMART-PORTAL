@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import type { ReactNode } from 'react';
 import Link from 'next/link';
@@ -20,18 +20,68 @@ import {
   Users,
   Workflow,
   X,
+  Target,
+  LineChart,
+  TrendingUp,
+  CheckSquare,
+  Calendar,
+  Bell,
+  UserCheck,
+  ShieldAlert,
+  Database,
+  List,
+  GraduationCap,
+  CalendarDays,
+  ClipboardCheck,
 } from 'lucide-react';
 import { Button } from '@/src/components/ui/button';
 import { cn } from '@/src/lib/utils';
 
-const menu = [
-  { label: 'Dashboard', href: 'dashboard', icon: LayoutDashboard },
-  { label: 'Leads', href: 'leads', icon: Users },
-  { label: 'Admissions Pipeline', href: 'admissions', icon: Workflow },
-  { label: 'Students', href: 'students', icon: UserCircle },
-  { label: 'Payments', href: 'payments', icon: CreditCard },
-  { label: 'Reports', href: 'reports', icon: FileBarChart },
-  { label: 'Settings', href: 'settings', icon: Settings },
+type MenuItemGroup = {
+  title: string;
+  items: { label: string; href: string; icon: any }[];
+};
+
+const menuGroups: MenuItemGroup[] = [
+  {
+    title: 'Tá»”NG QUAN',
+    items: [
+      { label: 'Tá»•ng quan Ä‘iá»u hÃ nh', href: 'dashboard', icon: LayoutDashboard },
+      { label: 'BÃ¡o cÃ¡o nhanh', href: 'reports', icon: FileBarChart },
+    ],
+  },
+  {
+    title: 'CHIáº¾N LÆ¯á»¢C & Káº¾ HOáº CH',
+    items: [
+      { label: 'Chiáº¿n lÆ°á»£c & OKRs', href: 'okr', icon: Target },
+      { label: 'Káº¿ hoáº¡ch hoáº¡t Ä‘á»™ng', href: 'plans', icon: ClipboardCheck },
+      { label: 'BÃ¡o cÃ¡o & PhÃ¢n tÃ­ch KPI', href: 'kpi', icon: LineChart },
+      { label: 'PhÃ¢n tÃ­ch & Dá»± bÃ¡o', href: 'forecast', icon: TrendingUp },
+    ],
+  },
+  {
+    title: 'Váº¬N HÃ€NH',
+    items: [
+      { label: 'CÃ´ng viá»‡c & Quy trÃ¬nh', href: 'tasks', icon: CheckSquare },
+      { label: 'PhÃª duyá»‡t', href: 'approvals', icon: UserCheck },
+      { label: 'Lá»‹ch & Sá»± kiá»‡n', href: 'events', icon: Calendar },
+      { label: 'ThÃ´ng bÃ¡o ná»™i bá»™', href: 'announcements', icon: Bell },
+      { label: 'Quáº£n trá»‹ NhÃ¢n sá»± HRM', href: 'hrm', icon: Users },
+      { label: 'Quáº£n trá»‹ Rá»§i ro', href: 'risk', icon: ShieldAlert },
+      { label: 'Tuyá»ƒn sinh & CRM', href: 'admissions', icon: Workflow },
+      { label: 'Há»“ sÆ¡ Há»c sinh 360', href: 'students', icon: GraduationCap },
+      { label: 'Thá»i khÃ³a biá»ƒu & GiÃ¡o Ã¡n', href: 'schedule', icon: CalendarDays },
+    ],
+  },
+  {
+    title: 'Dá»® LIá»†U & Há»† THá»NG',
+    items: [
+      { label: 'Danh má»¥c', href: 'categories', icon: List },
+      { label: 'BÃ¡o cÃ¡o', href: 'system-reports', icon: FileBarChart },
+      { label: 'Kho dá»¯ liá»‡u', href: 'data', icon: Database },
+      { label: 'Cáº¥u hÃ¬nh há»‡ thá»‘ng', href: 'settings', icon: Settings },
+    ],
+  },
 ];
 
 function segmentLabel(segment: string) {
@@ -70,13 +120,12 @@ export default function AdminShell({ locale, children }: { locale: string; child
     <aside className={cn('flex h-full flex-col border-r border-slate-200 bg-white transition-all dark:border-slate-800 dark:bg-slate-950', collapsed ? 'w-20' : 'w-72')}>
       <div className="flex h-16 items-center justify-between border-b border-slate-100 px-4 dark:border-slate-800">
         <Link href={`/${locale}/dashboard`} className="flex min-w-0 items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-600 text-white">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#2563eb] text-white">
             <BarChart3 className="h-5 w-5" />
           </div>
           {!collapsed && (
             <div className="min-w-0">
-              <div className="truncate text-sm font-black text-slate-950 dark:text-white">MIS SMART</div>
-              <div className="truncate text-[11px] font-bold uppercase tracking-wider text-slate-500">Admin Portal</div>
+              <div className="truncate text-sm font-black text-[#2563eb] dark:text-blue-400">MIS SMART PORTAL</div>
             </div>
           )}
         </Link>
@@ -84,34 +133,46 @@ export default function AdminShell({ locale, children }: { locale: string; child
           {collapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
         </Button>
       </div>
-      <nav className="flex-1 space-y-1 overflow-y-auto p-3">
-        {menu.map(item => {
-          const Icon = item.icon;
-          const href = `/${locale}/${item.href}`;
-          const active = pathname === href || pathname.startsWith(`${href}/`);
-          return (
-            <Link
-              key={item.href}
-              href={href}
-              onClick={() => setMobileOpen(false)}
-              className={cn(
-                'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-bold transition-colors',
-                active
-                  ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300'
-                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-slate-900 dark:hover:text-white',
-              )}
-            >
-              <Icon className="h-4 w-4 shrink-0" />
-              {!collapsed && <span className="truncate">{item.label}</span>}
-            </Link>
-          );
-        })}
+      <nav className="flex-1 space-y-4 overflow-y-auto p-3 custom-scrollbar">
+        {menuGroups.map((group, idx) => (
+          <div key={idx}>
+            {!collapsed && (
+              <div className="mb-2 px-3 text-xs font-bold tracking-wider text-slate-400 uppercase">
+                {group.title}
+              </div>
+            )}
+            <div className="space-y-1">
+              {group.items.map(item => {
+                const Icon = item.icon;
+                const href = `/${locale}/${item.href}`;
+                const active = pathname === href || pathname.startsWith(`${href}/`);
+                return (
+                  <Link
+                    key={item.href}
+                    href={href}
+                    onClick={() => setMobileOpen(false)}
+                    title={collapsed ? item.label : undefined}
+                    className={cn(
+                      'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+                      active
+                        ? 'bg-[#2563eb] text-white'
+                        : 'text-slate-600 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white',
+                    )}
+                  >
+                    <Icon className={cn("h-[18px] w-[18px] shrink-0", active ? "text-white" : "")} />
+                    {!collapsed && <span className="truncate">{item.label}</span>}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </nav>
     </aside>
   );
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-950 dark:bg-slate-950 dark:text-slate-50">
+    <div className="min-h-screen bg-[#f8fafc] text-slate-950 dark:bg-slate-950 dark:text-slate-50">
       <div className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:block">{Sidebar}</div>
 
       {mobileOpen && (
@@ -119,7 +180,7 @@ export default function AdminShell({ locale, children }: { locale: string; child
           <button type="button" className="absolute inset-0 bg-slate-950/55" onClick={() => setMobileOpen(false)} aria-label="Close sidebar" />
           <div className="absolute inset-y-0 left-0 w-72">
             {Sidebar}
-            <Button variant="ghost" size="icon" className="absolute right-3 top-3" onClick={() => setMobileOpen(false)}>
+            <Button variant="ghost" size="icon" className="absolute right-3 top-3 text-slate-500" onClick={() => setMobileOpen(false)}>
               <X className="h-4 w-4" />
             </Button>
           </div>
@@ -127,43 +188,70 @@ export default function AdminShell({ locale, children }: { locale: string; child
       )}
 
       <div className={cn('transition-all', collapsed ? 'lg:pl-20' : 'lg:pl-72')}>
-        <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-slate-200 bg-white/90 px-4 backdrop-blur dark:border-slate-800 dark:bg-slate-950/90">
+        <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-slate-200 bg-white px-4 dark:border-slate-800 dark:bg-slate-950">
           <div className="flex min-w-0 items-center gap-3">
             <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setMobileOpen(true)}>
               <Menu className="h-5 w-5" />
             </Button>
-            <div className="min-w-0">
-              <div className="flex items-center gap-1 text-xs font-bold text-slate-500 dark:text-slate-400">
-                <Link href={`/${locale}/dashboard`} className="hover:text-slate-950 dark:hover:text-white">Admin</Link>
-                {breadcrumbs.map((crumb, index) => (
-                  <span key={`${crumb}-${index}`} className="flex items-center gap-1">
-                    <span>/</span>
-                    <span className={index === breadcrumbs.length - 1 ? 'text-slate-950 dark:text-white' : ''}>{segmentLabel(crumb)}</span>
-                  </span>
-                ))}
+            
+            {/* Search Bar matching design */}
+            <div className="hidden md:flex items-center">
+              <div className="relative">
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                  <svg className="h-4 w-4 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+                <input
+                  type="text"
+                  placeholder="TÃ¬m kiáº¿m nhanh..."
+                  className="block w-64 rounded-md border-0 py-1.5 pl-10 pr-12 text-slate-900 ring-1 ring-inset ring-slate-200 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6 dark:bg-slate-900 dark:text-slate-100 dark:ring-slate-700"
+                />
+                <div className="absolute inset-y-0 right-0 flex items-center pr-2">
+                  <kbd className="inline-flex items-center rounded border border-slate-200 px-1 font-sans text-xs text-slate-400 dark:border-slate-700">Ctrl + K</kbd>
+                </div>
               </div>
-              <h1 className="truncate text-lg font-black">{segmentLabel(breadcrumbs[breadcrumbs.length - 1] || 'Dashboard')}</h1>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" onClick={toggleTheme} aria-label="Toggle theme">
-              {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+
+          <div className="flex items-center gap-4">
+             {/* School Selector */}
+             <div className="hidden sm:block">
+              <select className="block w-full rounded-md border-0 py-1.5 pl-3 pr-10 text-slate-900 ring-1 ring-inset ring-slate-200 focus:ring-2 focus:ring-blue-600 sm:text-sm sm:leading-6 dark:bg-slate-900 dark:text-slate-100 dark:ring-slate-700">
+                <option>CÆ¡ sá»Ÿ 1 - TrÆ°á»ng THPT Minh Khai</option>
+              </select>
+            </div>
+
+            <Button variant="ghost" size="icon" className="relative text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300">
+              <Bell className="h-5 w-5" />
+              <span className="absolute top-1.5 right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-blue-600 text-[10px] font-bold text-white">12</span>
             </Button>
+            
+            <Button variant="ghost" size="icon" onClick={toggleTheme} aria-label="Toggle theme" className="text-slate-500">
+              {dark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+            </Button>
+            
             <div className="relative">
-              <Button variant="outline" className="h-9 px-2.5" onClick={() => setUserOpen(value => !value)}>
-                <UserCircle className="h-4 w-4" />
-                <span className="hidden sm:inline">Admin</span>
-                <ChevronDown className="h-3.5 w-3.5" />
+              <Button variant="ghost" className="h-9 px-2 gap-2 flex items-center" onClick={() => setUserOpen(value => !value)}>
+                <img src="https://i.pravatar.cc/150?u=a042581f4e29026704d" alt="Avatar" className="h-8 w-8 rounded-full object-cover" />
+                <div className="hidden sm:flex flex-col items-start text-left">
+                  <span className="text-sm font-bold text-slate-900 dark:text-white leading-tight">Nguyá»…n VÄƒn Nam</span>
+                  <span className="text-xs text-slate-500 dark:text-slate-400 leading-tight">Hiá»‡u trÆ°á»Ÿng</span>
+                </div>
+                <ChevronDown className="h-4 w-4 text-slate-500" />
               </Button>
               {userOpen && (
                 <div className="absolute right-0 mt-2 w-56 rounded-xl border border-slate-200 bg-white p-2 shadow-lg dark:border-slate-800 dark:bg-slate-950">
-                  <div className="px-3 py-2 text-sm">
-                    <div className="font-black">MIS Admin</div>
-                    <div className="text-xs text-slate-500">Local operator</div>
+                  <div className="px-3 py-2 text-sm border-b border-slate-100 dark:border-slate-800 mb-1">
+                    <div className="font-bold text-slate-900 dark:text-white">Nguyá»…n VÄƒn Nam</div>
+                    <div className="text-xs text-slate-500">namnv@school.edu.vn</div>
                   </div>
-                  <Link href={`/${locale}/settings`} className="block rounded-lg px-3 py-2 text-sm font-bold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-900">
-                    Settings
+                  <Link href={`/${locale}/settings`} className="block rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-900">
+                    CÃ i Ä‘áº·t tÃ i khoáº£n
                   </Link>
+                  <button className="block w-full text-left rounded-lg px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/30">
+                    ÄÄƒng xuáº¥t
+                  </button>
                 </div>
               )}
             </div>
