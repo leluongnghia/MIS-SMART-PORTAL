@@ -4,12 +4,13 @@ import React, { useState } from 'react';
 import {
   LayoutDashboard, Users, Kanban, User, CalendarCheck,
   FolderOpen, CreditCard, BarChart3, Megaphone, Settings,
-  ChevronLeft, GraduationCap
+  ChevronLeft, GraduationCap, Plus
 } from 'lucide-react';
 
 // Import modules
 import AdmissionsDashboard from './admissions/AdmissionsDashboard';
-import AdmissionsLeadsTable from './admissions/AdmissionsLeadsTable';
+import AdmissionsLeadsTable, { Lead, LEADS_MAU, ModalThemLead, FormThem } from './admissions/AdmissionsLeadsTable';
+import { renderModal } from './admissions/portalHelper';
 import AdmissionsPipelineKanban from './admissions/AdmissionsPipelineKanban';
 import AdmissionsLeadDetail from './admissions/AdmissionsLeadDetail';
 import AdmissionsAppointments from './admissions/AdmissionsAppointments';
@@ -17,7 +18,15 @@ import AdmissionsDocuments from './admissions/AdmissionsDocuments';
 import AdmissionsPayments from './admissions/AdmissionsPayments';
 import AdmissionsReports from './admissions/AdmissionsReports';
 import AdmissionsCampaigns from './admissions/AdmissionsCampaigns';
-import AdmissionsSettings from './admissions/AdmissionsSettings';
+import AdmissionsSettings, { type ChuongTrinhHoc } from './admissions/AdmissionsSettings';
+
+const INITIAL_CHUONG_TRINH: ChuongTrinhHoc[] = [
+  { id: 'ct1', ten: 'Tiểu học - Chương trình Quốc gia', cap: 'Tiểu học', hoatDong: true, moTa: 'Chương trình chuẩn của Bộ Giáo dục & Đào tạo Việt Nam kết hợp các môn bổ trợ phát triển thể chất và kỹ năng.' },
+  { id: 'ct2', ten: 'THCS - Song ngữ Quốc tế', cap: 'THCS', hoatDong: true, moTa: 'Chương trình tích hợp giữa khung chuẩn Việt Nam và hệ Cambridge, giảng dạy bằng cả tiếng Anh và tiếng Việt.' },
+  { id: 'ct3', ten: 'THPT - IB', cap: 'THPT', hoatDong: true, moTa: 'Chương trình Tú tài Quốc tế (International Baccalaureate) định hướng du học và săn học bổng.' },
+  { id: 'ct4', ten: 'THPT - A-Level', cap: 'THPT', hoatDong: true, moTa: 'Chương trình học của Cambridge International Examinations dành cho học sinh chuẩn bị vào Đại học quốc tế.' },
+  { id: 'ct5', ten: 'Mầm non', cap: 'Mầm non', hoatDong: true, moTa: 'Chương trình giáo dục mầm non chất lượng cao, tiếp cận phương pháp Montessori và Reggio Emilia.' }
+];
 
 export type AdmissionsModule =
   | 'dashboard'
@@ -96,6 +105,9 @@ export default function AdmissionsEnterpriseDashboard({
   // Resolve legacy module IDs
   const resolvedModule = LEGACY_MAP[propModule] ?? propModule;
   const [internalModule, setInternalModule] = useState<AdmissionsModule>(resolvedModule);
+  const [leads, setLeads] = useState<Lead[]>(LEADS_MAU);
+  const [hienModal, setHienModal] = useState(false);
+  const [chuongTrinhList, setChuongTrinhList] = useState<ChuongTrinhHoc[]>(INITIAL_CHUONG_TRINH);
 
   // Sync with prop changes
   React.useEffect(() => {
@@ -103,10 +115,27 @@ export default function AdmissionsEnterpriseDashboard({
     setInternalModule(resolved);
   }, [propModule]);
 
+  const handleLuuLead = (data: FormThem) => {
+    const leadMoi: Lead = {
+      id: `l${Date.now()}`,
+      hoTen: data.hoTenHocSinh,
+      sdt: data.sdtPhuHuynh,
+      email: data.emailPhuHuynh || '—',
+      nguonLead: data.nguonLead,
+      khoi: data.khoi,
+      tvv: data.tvv,
+      tvvAvatar: data.tvv.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase(),
+      trangThai: 'Mới',
+      diemLead: 50,
+      ngayTao: new Date().toLocaleDateString('vi-VN', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }),
+    };
+    setLeads(prev => [leadMoi, ...prev]);
+  };
+
   const renderModule = () => {
     switch (internalModule) {
       case 'dashboard':    return <AdmissionsDashboard />;
-      case 'leads':        return <AdmissionsLeadsTable />;
+      case 'leads':        return <AdmissionsLeadsTable leads={leads} setLeads={setLeads} chuongTrinhList={chuongTrinhList.filter(c => c.hoatDong).map(c => c.ten)} />;
       case 'pipeline':     return <AdmissionsPipelineKanban />;
       case 'lead_detail':  return <AdmissionsLeadDetail />;
       case 'appointments': return <AdmissionsAppointments />;
@@ -114,7 +143,7 @@ export default function AdmissionsEnterpriseDashboard({
       case 'payments':     return <AdmissionsPayments />;
       case 'reports':      return <AdmissionsReports />;
       case 'campaigns':    return <AdmissionsCampaigns />;
-      case 'settings':     return <AdmissionsSettings />;
+      case 'settings':     return <AdmissionsSettings chuongTrinhList={chuongTrinhList} setChuongTrinhList={setChuongTrinhList} />;
       default:             return <PlaceholderModule module={internalModule} />;
     }
   };
@@ -126,26 +155,36 @@ export default function AdmissionsEnterpriseDashboard({
     <div className="min-h-screen bg-slate-50/50">
       {/* Sub-navigation bar */}
       <div className="border-b border-slate-100 bg-white shadow-xs">
-        <div className="flex items-center gap-0 overflow-x-auto px-4">
-          {NAV_ITEMS.map(item => {
-            const Icon = item.icon;
-            const isActive = item.id === internalModule;
-            return (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => setInternalModule(item.id)}
-                className={`flex shrink-0 items-center gap-2 border-b-2 px-3 py-3 text-xs font-bold transition ${
-                  isActive
-                    ? 'border-blue-600 text-blue-700'
-                    : 'border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50'
-                }`}
-              >
-                <Icon className="h-3.5 w-3.5" />
-                {item.label}
-              </button>
-            );
-          })}
+        <div className="flex items-center justify-between px-4">
+          <div className="flex items-center gap-0 overflow-x-auto">
+            {NAV_ITEMS.map(item => {
+              const Icon = item.icon;
+              const isActive = item.id === internalModule;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => setInternalModule(item.id)}
+                  className={`flex shrink-0 items-center gap-2 border-b-2 px-3 py-3 text-xs font-bold transition ${
+                    isActive
+                      ? 'border-blue-600 text-blue-700'
+                      : 'border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+                  }`}
+                >
+                  <Icon className="h-3.5 w-3.5" />
+                  {item.label}
+                </button>
+              );
+            })}
+          </div>
+          <button
+            type="button"
+            onClick={() => setHienModal(true)}
+            className="my-2 flex h-8 shrink-0 items-center gap-1.5 rounded-xl bg-blue-600 px-3.5 text-xs font-bold text-white shadow-sm hover:bg-blue-700 active:scale-95 transition-all"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            Thêm lead mới
+          </button>
         </div>
       </div>
 
@@ -153,6 +192,25 @@ export default function AdmissionsEnterpriseDashboard({
       <div className="p-5">
         {renderModule()}
       </div>
+
+      {/* Modal Thêm Lead */}
+      {hienModal && renderModal(
+        <div className="fixed inset-0 z-[9999] flex items-start justify-end">
+          {/* Overlay */}
+          <div
+            className="absolute inset-0 bg-slate-900/30 backdrop-blur-sm"
+            onClick={() => setHienModal(false)}
+          />
+          {/* Panel trượt từ bên phải */}
+          <div className="relative z-10 flex h-full w-full max-w-xl flex-col border-l border-slate-200 bg-white shadow-2xl">
+            <ModalThemLead
+              onDong={() => setHienModal(false)}
+              onLuu={handleLuuLead}
+              chuongTrinhList={chuongTrinhList.filter(c => c.hoatDong).map(c => c.ten)}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

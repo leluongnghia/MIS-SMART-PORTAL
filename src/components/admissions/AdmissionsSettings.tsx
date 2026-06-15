@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -18,6 +18,14 @@ interface GiaiDoanPipeline {
   sla: number;
   soLuong: number;
   dangSuDung: boolean;
+  moTa: string;
+}
+
+export interface ChuongTrinhHoc {
+  id: string;
+  ten: string;
+  cap: string;
+  hoatDong: boolean;
   moTa: string;
 }
 
@@ -111,18 +119,375 @@ function ModalGiaiDoan({ gd, onClose }: { gd?: GiaiDoanPipeline; onClose: () => 
   );
 }
 
+function ModalChuongTrinh({ ct, onClose, onSave }: { ct?: ChuongTrinhHoc; onClose: () => void; onSave: (data: Omit<ChuongTrinhHoc, 'id'>) => void }) {
+  const [ten, setTen] = useState(ct?.ten ?? '');
+  const [cap, setCap] = useState(ct?.cap ?? 'Tiểu học');
+  const [moTa, setMoTa] = useState(ct?.moTa ?? '');
+  const [hoatDong, setHoatDong] = useState(ct?.hoatDong ?? true);
+
+  const CAP_HOC = ['Mầm non', 'Tiểu học', 'THCS', 'THPT', 'Khác'];
+
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative z-10 w-full max-w-lg rounded-2xl bg-white shadow-2xl">
+        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+          <h3 className="font-black text-slate-900">{ct ? 'Sửa chương trình học' : 'Thêm chương trình học mới'}</h3>
+          <button type="button" onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100"><X className="h-4 w-4" /></button>
+        </div>
+        <div className="p-5 space-y-4">
+          <div>
+            <label className="mb-1 block text-xs font-bold text-slate-700">Tên chương trình học <span className="text-red-500">*</span></label>
+            <input type="text" value={ten} onChange={e => setTen(e.target.value)} placeholder="VD: THPT - A-Level"
+              className="h-9 w-full rounded-xl border border-slate-200 px-3 text-sm focus:border-blue-400 focus:outline-none" />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-bold text-slate-700">Cấp học</label>
+            <select value={cap} onChange={e => setCap(e.target.value)}
+              className="h-9 w-full rounded-xl border border-slate-200 px-3 text-sm focus:border-blue-400 focus:outline-none bg-white">
+              {CAP_HOC.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-bold text-slate-700">Mô tả</label>
+            <textarea rows={3} value={moTa} onChange={e => setMoTa(e.target.value)} placeholder="Nhập mô tả chi tiết về chương trình học..."
+              className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-blue-400 focus:outline-none resize-none" />
+          </div>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-bold text-slate-700 font-sans">Trạng thái hoạt động</p>
+              <p className="text-[10px] text-slate-400">Cho phép lựa chọn chương trình này khi thêm lead mới</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setHoatDong(!hoatDong)}
+              className={`relative h-5 w-9 rounded-full transition-colors ${hoatDong ? 'bg-blue-500' : 'bg-slate-200'}`}
+            >
+              <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${hoatDong ? 'translate-x-4' : 'translate-x-0.5'}`} />
+            </button>
+          </div>
+          <div className="flex gap-2 pt-2">
+            <button type="button" onClick={onClose} className="flex-1 rounded-xl border border-slate-200 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-50">Huỷ</button>
+            <button type="button" onClick={() => onSave({ ten, cap, moTa, hoatDong })} disabled={!ten}
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-blue-600 py-2.5 text-xs font-bold text-white hover:bg-blue-700 disabled:opacity-40">
+              <Save className="h-3.5 w-3.5" /> Lưu thông tin
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>,
+    // @ts-ignore
+    document.body
+  );
+}
+
 const TABS_CAIDAT = [
   { id: 'pipeline', nhan: '🔄 Pipeline' },
   { id: 'nguon',    nhan: '🌐 Nguồn lead' },
+  { id: 'chuong_trinh', nhan: '📚 Chương trình học' },
   { id: 'quy_tac',  nhan: '⚡ Quy tắc tự động' },
   { id: 'tich_hop', nhan: '🔗 Tích hợp' },
 ];
 
+function ModalSMTP({
+  config,
+  onClose,
+  onSave
+}: {
+  config: {
+    dungSmtpChung: boolean;
+    smtpChung: { host: string; port: number; user: string; pass: string; email: string };
+    smtpRieng: Record<string, { host: string; port: number; user: string; pass: string; email: string }>;
+  };
+  onClose: () => void;
+  onSave: (data: typeof config) => void;
+}) {
+  const [dungSmtpChung, setDungSmtpChung] = useState(config.dungSmtpChung);
+  const [smtpChung, setSmtpChung] = useState({ ...config.smtpChung });
+  const [smtpRieng, setSmtpRieng] = useState({ ...config.smtpRieng });
+  const [userDangSua, setUserDangSua] = useState<string | null>(null);
+
+  const [userSmtpHost, setUserSmtpHost] = useState('');
+  const [userSmtpPort, setUserSmtpPort] = useState(587);
+  const [userSmtpUser, setUserSmtpUser] = useState('');
+  const [userSmtpPass, setUserSmtpPass] = useState('');
+  const [userSmtpEmail, setUserSmtpEmail] = useState('');
+
+  const batDauSuaUser = (userName: string) => {
+    setUserDangSua(userName);
+    const uConfig = smtpRieng[userName] || { host: '', port: 587, user: '', pass: '', email: '' };
+    setUserSmtpHost(uConfig.host);
+    setUserSmtpPort(uConfig.port);
+    setUserSmtpUser(uConfig.user);
+    setUserSmtpPass(uConfig.pass);
+    setUserSmtpEmail(uConfig.email);
+  };
+
+  const luuSuaUser = (userName: string) => {
+    setSmtpRieng(prev => ({
+      ...prev,
+      [userName]: {
+        host: userSmtpHost,
+        port: userSmtpPort,
+        user: userSmtpUser,
+        pass: userSmtpPass,
+        email: userSmtpEmail
+      }
+    }));
+    setUserDangSua(null);
+  };
+
+  const handleLuuChinh = () => {
+    onSave({
+      dungSmtpChung,
+      smtpChung,
+      smtpRieng
+    });
+  };
+
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative z-10 w-full max-w-2xl rounded-2xl bg-white shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 shrink-0">
+          <div>
+            <h3 className="font-black text-slate-900 text-sm">Cấu hình Email SMTP gửi chiến dịch</h3>
+            <p className="text-xs text-slate-500">Thiết lập máy chủ gửi email tự động hoặc thủ công cho phòng Tuyển sinh</p>
+          </div>
+          <button type="button" onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100"><X className="h-4 w-4" /></button>
+        </div>
+
+        <div className="p-5 overflow-y-auto space-y-5 flex-1">
+          {/* Toggle Smtp Chung vs Rieng */}
+          <div className="flex items-center justify-between rounded-xl bg-slate-50 p-4 border border-slate-100">
+            <div className="space-y-0.5">
+              <p className="text-xs font-bold text-slate-800">Sử dụng cấu hình SMTP chung của trường</p>
+              <p className="text-[10px] text-slate-400">Tất cả email từ mọi tư vấn viên sẽ gửi qua hòm thư chung của trường</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setDungSmtpChung(!dungSmtpChung)}
+              className={`relative h-6 w-11 rounded-full transition-colors shrink-0 ${dungSmtpChung ? 'bg-blue-500' : 'bg-slate-300'}`}
+            >
+              <span className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow transition-transform ${dungSmtpChung ? 'translate-x-6' : 'translate-x-1'}`} />
+            </button>
+          </div>
+
+          {dungSmtpChung ? (
+            /* Cấu hình SMTP chung */
+            <div className="space-y-3">
+              <p className="text-xs font-black uppercase tracking-wide text-slate-400">Thông tin máy chủ SMTP chung</p>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="col-span-2">
+                  <label className="mb-1 block text-[10px] font-bold text-slate-500 uppercase">SMTP Host</label>
+                  <input
+                    type="text"
+                    value={smtpChung.host}
+                    onChange={e => setSmtpChung({ ...smtpChung, host: e.target.value })}
+                    className="h-9 w-full rounded-xl border border-slate-200 px-3 text-sm focus:border-blue-400 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-[10px] font-bold text-slate-500 uppercase">SMTP Port</label>
+                  <input
+                    type="number"
+                    value={smtpChung.port}
+                    onChange={e => setSmtpChung({ ...smtpChung, port: Number(e.target.value) })}
+                    className="h-9 w-full rounded-xl border border-slate-200 px-3 text-sm focus:border-blue-400 focus:outline-none"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="mb-1 block text-[10px] font-bold text-slate-500 uppercase">Tài khoản (Username)</label>
+                  <input
+                    type="text"
+                    value={smtpChung.user}
+                    onChange={e => setSmtpChung({ ...smtpChung, user: e.target.value })}
+                    className="h-9 w-full rounded-xl border border-slate-200 px-3 text-sm focus:border-blue-400 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-[10px] font-bold text-slate-500 uppercase">Mật khẩu (Password)</label>
+                  <input
+                    type="password"
+                    value={smtpChung.pass}
+                    onChange={e => setSmtpChung({ ...smtpChung, pass: e.target.value })}
+                    className="h-9 w-full rounded-xl border border-slate-200 px-3 text-sm focus:border-blue-400 focus:outline-none"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="mb-1 block text-[10px] font-bold text-slate-500 uppercase">Email người gửi</label>
+                <input
+                  type="email"
+                  value={smtpChung.email}
+                  onChange={e => setSmtpChung({ ...smtpChung, email: e.target.value })}
+                  className="h-9 w-full rounded-xl border border-slate-200 px-3 text-sm focus:border-blue-400 focus:outline-none"
+                />
+              </div>
+            </div>
+          ) : (
+            /* Cấu hình SMTP riêng cho từng user */
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-black uppercase tracking-wide text-slate-400">Danh sách SMTP riêng của tư vấn viên</p>
+                <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-700">Tắt SMTP chung</span>
+              </div>
+              <div className="divide-y divide-slate-100 rounded-xl border border-slate-100 overflow-hidden">
+                {Object.keys(smtpRieng).map(userName => {
+                  const uConfig = smtpRieng[userName];
+                  const isEditing = userDangSua === userName;
+                  return (
+                    <div key={userName} className="p-3 bg-white hover:bg-slate-50/30 transition">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-blue-50 text-[10px] font-black text-blue-700">
+                            {userName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}
+                          </div>
+                          <div>
+                            <p className="text-xs font-bold text-slate-800">{userName}</p>
+                            <p className="text-[10px] text-slate-400">
+                              {uConfig.host ? `${uConfig.host} · ${uConfig.email}` : 'Chưa cấu hình SMTP riêng'}
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => isEditing ? luuSuaUser(userName) : batDauSuaUser(userName)}
+                          className={`flex h-7 items-center gap-1 rounded-lg px-2 text-[10px] font-bold transition ${
+                            isEditing ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                          }`}
+                        >
+                          {isEditing ? 'Lưu lại' : 'Cấu hình'}
+                        </button>
+                      </div>
+
+                      {isEditing && (
+                        <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50/50 p-3.5 space-y-3.5 animate-fadeIn">
+                          <p className="text-[10px] font-black uppercase text-slate-500">Cấu hình SMTP cho {userName}</p>
+                          <div className="grid grid-cols-3 gap-2.5">
+                            <div className="col-span-2">
+                              <label className="mb-0.5 block text-[9px] font-bold text-slate-600">SMTP Host</label>
+                              <input
+                                type="text"
+                                value={userSmtpHost}
+                                onChange={e => setUserSmtpHost(e.target.value)}
+                                className="h-8 w-full rounded-lg border border-slate-200 bg-white px-2.5 text-xs focus:border-blue-400 focus:outline-none"
+                              />
+                            </div>
+                            <div>
+                              <label className="mb-0.5 block text-[9px] font-bold text-slate-600">Port</label>
+                              <input
+                                type="number"
+                                value={userSmtpPort}
+                                onChange={e => setUserSmtpPort(Number(e.target.value))}
+                                className="h-8 w-full rounded-lg border border-slate-200 bg-white px-2.5 text-xs focus:border-blue-400 focus:outline-none"
+                              />
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2.5">
+                            <div>
+                              <label className="mb-0.5 block text-[9px] font-bold text-slate-600">Tài khoản</label>
+                              <input
+                                type="text"
+                                value={userSmtpUser}
+                                onChange={e => setUserSmtpUser(e.target.value)}
+                                className="h-8 w-full rounded-lg border border-slate-200 bg-white px-2.5 text-xs focus:border-blue-400 focus:outline-none"
+                              />
+                            </div>
+                            <div>
+                              <label className="mb-0.5 block text-[9px] font-bold text-slate-600">Mật khẩu</label>
+                              <input
+                                type="password"
+                                value={userSmtpPass}
+                                onChange={e => setUserSmtpPass(e.target.value)}
+                                className="h-8 w-full rounded-lg border border-slate-200 bg-white px-2.5 text-xs focus:border-blue-400 focus:outline-none"
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <label className="mb-0.5 block text-[9px] font-bold text-slate-600">Email người gửi đại diện</label>
+                            <input
+                              type="email"
+                              value={userSmtpEmail}
+                              onChange={e => setUserSmtpEmail(e.target.value)}
+                              className="h-8 w-full rounded-lg border border-slate-200 bg-white px-2.5 text-xs focus:border-blue-400 focus:outline-none"
+                            />
+                          </div>
+                          <div className="flex justify-end gap-1.5 pt-0.5">
+                            <button
+                              type="button"
+                              onClick={() => setUserDangSua(null)}
+                              className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[10px] font-bold text-slate-600 hover:bg-slate-50"
+                            >
+                              Huỷ bỏ
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => luuSuaUser(userName)}
+                              className="rounded-lg bg-blue-600 px-3.5 py-1.5 text-[10px] font-bold text-white hover:bg-blue-700"
+                            >
+                              Hoàn tất
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="flex gap-2 border-t border-slate-100 p-4 shrink-0 bg-slate-50">
+          <button type="button" onClick={onClose} className="flex-1 rounded-xl border border-slate-200 bg-white py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-50">Huỷ bỏ</button>
+          <button type="button" onClick={handleLuuChinh} className="flex-1 rounded-xl bg-blue-600 py-2.5 text-xs font-bold text-white hover:bg-blue-700">Lưu cấu hình</button>
+        </div>
+      </div>
+    </div>,
+    // @ts-ignore
+    document.body
+  );
+}
+
 // ─── Component chính ─────────────────────────────────────────────────────────
-export default function AdmissionsSettings() {
-  const [tab, setTab] = useState<'pipeline' | 'nguon' | 'quy_tac' | 'tich_hop'>('pipeline');
+interface AdmissionsSettingsProps {
+  chuongTrinhList: ChuongTrinhHoc[];
+  setChuongTrinhList: React.Dispatch<React.SetStateAction<ChuongTrinhHoc[]>>;
+}
+
+export default function AdmissionsSettings({ chuongTrinhList, setChuongTrinhList }: AdmissionsSettingsProps) {
+  const [tab, setTab] = useState<'pipeline' | 'nguon' | 'chuong_trinh' | 'quy_tac' | 'tich_hop'>('pipeline');
   const [gdChon, setGdChon] = useState<GiaiDoanPipeline | null>(GIAI_DOAN_MAU[2]);
   const [modalGD, setModalGD] = useState<{ open: boolean; gd?: GiaiDoanPipeline }>({ open: false });
+  const [modalCT, setModalCT] = useState<{ open: boolean; ct?: ChuongTrinhHoc }>({ open: false });
+
+  const [smtpConfig, setSmtpConfig] = useState<{
+    dungSmtpChung: boolean;
+    smtpChung: { host: string; port: number; user: string; pass: string; email: string };
+    smtpRieng: Record<string, { host: string; port: number; user: string; pass: string; email: string }>;
+  }>({
+    dungSmtpChung: true,
+    smtpChung: {
+      host: 'smtp.school.edu.vn',
+      port: 587,
+      user: 'tuyensinh@school.edu.vn',
+      pass: '••••••••••••••••',
+      email: 'tuyensinh@school.edu.vn'
+    },
+    smtpRieng: {
+      'Nguyễn Thị Mai': { host: 'smtp.gmail.com', port: 587, user: 'mai.nt@school.edu.vn', pass: '••••••••••••••••', email: 'mai.nt@school.edu.vn' },
+      'Trần Minh Trí': { host: 'smtp.gmail.com', port: 587, user: 'tri.tm@school.edu.vn', pass: '••••••••••••••••', email: 'tri.tm@school.edu.vn' },
+      'Phạm Hải Yến': { host: 'smtp.gmail.com', port: 587, user: 'yen.ph@school.edu.vn', pass: '••••••••••••••••', email: 'yen.ph@school.edu.vn' },
+      'Lê Quỳnh Anh': { host: 'smtp.gmail.com', port: 587, user: 'anh.lq@school.edu.vn', pass: '••••••••••••••••', email: 'anh.lq@school.edu.vn' }
+    }
+  });
+  const [hienModalSmtp, setHienModalSmtp] = useState(false);
+  const moTaSmtp = smtpConfig.dungSmtpChung
+    ? `SMTP Chung: ${smtpConfig.smtpChung.host} · ${smtpConfig.smtpChung.email}`
+    : `SMTP Riêng: ${Object.values(smtpConfig.smtpRieng).filter(u => u.host).length} TVV`;
 
   return (
     <>
@@ -378,6 +743,85 @@ export default function AdmissionsSettings() {
             </div>
           )}
 
+          {/* Tab Chương trình học */}
+          {tab === 'chuong_trinh' && (
+            <div className="p-5 space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-black uppercase tracking-wide text-slate-400">Các chương trình đào tạo quan tâm</p>
+                  <p className="text-[11px] text-slate-400 mt-0.5">Cấu hình các chương trình học để phân loại và tư vấn cho học sinh/phụ huynh</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setModalCT({ open: true })}
+                  className="flex h-8 items-center gap-1.5 rounded-xl bg-blue-50 px-3.5 text-xs font-bold text-blue-700 hover:bg-blue-100 transition"
+                >
+                  <Plus className="h-3.5 w-3.5" /> Thêm chương trình
+                </button>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {chuongTrinhList.map(ct => (
+                  <div key={ct.id} className="flex flex-col justify-between rounded-xl border border-slate-100 p-4 hover:bg-slate-50/50 hover:shadow-xs transition">
+                    <div>
+                      <div className="flex items-start justify-between gap-3 mb-1.5">
+                        <div className="flex items-center gap-2">
+                          <span className="text-base shrink-0">📚</span>
+                          <p className="text-sm font-bold text-slate-800 leading-tight">{ct.ten}</p>
+                        </div>
+                        <span className={`shrink-0 rounded-lg px-2 py-0.5 text-[10px] font-black uppercase ${
+                          ct.cap === 'Mầm non' ? 'bg-pink-50 text-pink-700 border border-pink-200' :
+                          ct.cap === 'Tiểu học' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
+                          ct.cap === 'THCS' ? 'bg-blue-50 text-blue-700 border border-blue-200' :
+                          ct.cap === 'THPT' ? 'bg-purple-50 text-purple-700 border border-purple-200' :
+                          'bg-slate-50 text-slate-700 border border-slate-200'
+                        }`}>
+                          {ct.cap}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500 line-clamp-2 mb-3">{ct.moTa || 'Không có mô tả cho chương trình học này.'}</p>
+                    </div>
+                    <div className="flex items-center justify-between border-t border-slate-50 pt-2.5 mt-auto">
+                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${ct.hoatDong ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>
+                        {ct.hoatDong ? 'Đang kích hoạt' : 'Tạm ẩn'}
+                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => setModalCT({ open: true, ct })}
+                          className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition"
+                          title="Sửa chương trình"
+                        >
+                          <Edit2 className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (confirm(`Bạn có chắc chắn muốn xóa chương trình "${ct.ten}"?`)) {
+                              setChuongTrinhList(prev => prev.filter(item => item.id !== ct.id));
+                            }
+                          }}
+                          className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-600 transition"
+                          title="Xóa chương trình"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setChuongTrinhList(prev => prev.map(item => item.id === ct.id ? { ...item, hoatDong: !item.hoatDong } : item));
+                          }}
+                          className={`relative h-5 w-9 rounded-full transition-colors ${ct.hoatDong ? 'bg-blue-500' : 'bg-slate-200'}`}
+                        >
+                          <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${ct.hoatDong ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Tab Tích hợp */}
           {tab === 'tich_hop' && (
             <div className="p-5 space-y-4">
@@ -388,7 +832,7 @@ export default function AdmissionsSettings() {
                   { ten: 'Facebook Page', icon: '📘', trangThai: 'Đã kết nối', mau: 'bg-green-100 text-green-700', moTa: 'Page: MIS Smart · Meta API v18' },
                   { ten: 'Google Ads', icon: '🔍', trangThai: 'Chưa kết nối', mau: 'bg-slate-100 text-slate-600', moTa: 'Kết nối để đồng bộ leads từ Google' },
                   { ten: 'BIDV VietQR', icon: '🏦', trangThai: 'Đã kết nối', mau: 'bg-green-100 text-green-700', moTa: 'TK: 1234567890 · Branch: HCM' },
-                  { ten: 'Email SMTP', icon: '✉️', trangThai: 'Đã kết nối', mau: 'bg-green-100 text-green-700', moTa: 'smtp.gmail.com · tuyensinh@school.edu.vn' },
+                  { ten: 'Email SMTP', icon: '✉️', trangThai: 'Đã kết nối', mau: 'bg-green-100 text-green-700', moTa: moTaSmtp, handle: () => setHienModalSmtp(true) },
                   { ten: 'SMS Gateway', icon: '📱', trangThai: 'Chưa cấu hình', mau: 'bg-amber-100 text-amber-700', moTa: 'Cần cấu hình nhà cung cấp SMS' },
                 ].map(t => (
                   <div key={t.ten} className="rounded-xl border border-slate-100 p-4 hover:bg-slate-50 transition">
@@ -400,7 +844,11 @@ export default function AdmissionsSettings() {
                       </div>
                       <span className={`rounded-full px-2 py-0.5 text-[10px] font-black ${t.mau}`}>{t.trangThai}</span>
                     </div>
-                    <button type="button" className={`flex h-7 w-full items-center justify-center rounded-lg text-[10px] font-bold transition ${t.trangThai === 'Đã kết nối' ? 'border border-slate-200 text-slate-600 hover:bg-slate-100' : 'bg-blue-600 text-white hover:bg-blue-700'}`}>
+                    <button
+                      type="button"
+                      onClick={t.handle ? t.handle : undefined}
+                      className={`flex h-7 w-full items-center justify-center rounded-lg text-[10px] font-bold transition ${t.trangThai === 'Đã kết nối' ? 'border border-slate-200 text-slate-600 hover:bg-slate-100' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
+                    >
                       {t.trangThai === 'Đã kết nối' ? 'Cấu hình lại' : 'Kết nối ngay'}
                     </button>
                   </div>
@@ -413,6 +861,36 @@ export default function AdmissionsSettings() {
 
       {modalGD.open && (
         <ModalGiaiDoan gd={modalGD.gd} onClose={() => setModalGD({ open: false })} />
+      )}
+
+      {modalCT.open && (
+        <ModalChuongTrinh
+          ct={modalCT.ct}
+          onClose={() => setModalCT({ open: false })}
+          onSave={(data) => {
+            if (modalCT.ct) {
+              setChuongTrinhList(prev => prev.map(item => item.id === modalCT.ct!.id ? { ...item, ...data } : item));
+            } else {
+              const newCt = {
+                id: `ct_${Date.now()}`,
+                ...data
+              };
+              setChuongTrinhList(prev => [...prev, newCt]);
+            }
+            setModalCT({ open: false });
+          }}
+        />
+      )}
+
+      {hienModalSmtp && (
+        <ModalSMTP
+          config={smtpConfig}
+          onClose={() => setHienModalSmtp(false)}
+          onSave={(data) => {
+            setSmtpConfig(data);
+            setHienModalSmtp(false);
+          }}
+        />
       )}
     </>
   );

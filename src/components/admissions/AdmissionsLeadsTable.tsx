@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -10,9 +10,9 @@ import {
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-type TrangThai = 'Mới' | 'Đang tư vấn' | 'Đăng ký test' | 'Nộp hồ sơ' | 'Giữ chỗ' | 'Nhập học' | 'Không tiếp tục';
+export type TrangThai = 'Mới' | 'Đang tư vấn' | 'Đăng ký test' | 'Nộp hồ sơ' | 'Giữ chỗ' | 'Nhập học' | 'Không tiếp tục';
 
-interface Lead {
+export interface Lead {
   id: string;
   hoTen: string;
   sdt: string;
@@ -26,7 +26,7 @@ interface Lead {
   ngayTao: string;
 }
 
-interface FormThem {
+export interface FormThem {
   hoTenHocSinh: string;
   ngaySinh: string;
   gioiTinh: string;
@@ -44,7 +44,7 @@ interface FormThem {
 }
 
 // ─── Dữ liệu mẫu ─────────────────────────────────────────────────────────────
-const LEADS_MAU: Lead[] = [
+export const LEADS_MAU: Lead[] = [
   { id: 'l1', hoTen: 'Nguyễn Gia Bảo', sdt: '0912 345 678', email: 'giaobao@gmail.com', nguonLead: 'Website', khoi: 'Lớp 1', tvv: 'Lê Minh Khang', tvvAvatar: 'LK', trangThai: 'Đang tư vấn', diemLead: 85, ngayTao: '18/05/2025 09:15' },
   { id: 'l2', hoTen: 'Trần Bảo Ngọc', sdt: '0934 567 890', email: 'baongoc.tran@gmail.com', nguonLead: 'Facebook Ads', khoi: 'Lớp 6', tvv: 'Phạm Gia Huy', tvvAvatar: 'PH', trangThai: 'Đăng ký test', diemLead: 78, ngayTao: '18/05/2025 08:42' },
   { id: 'l3', hoTen: 'Phạm Minh Anh', sdt: '0901 234 567', email: 'minhanh.pm@gmail.com', nguonLead: 'Zalo OA', khoi: 'Lớp 3', tvv: 'Nguyễn Thu Hà', tvvAvatar: 'NH', trangThai: 'Giữ chỗ', diemLead: 92, ngayTao: '17/05/2025 16:30' },
@@ -148,7 +148,7 @@ function SelectField({ label, field, value, onChange, error, options, required =
 }
 
 // ─── Modal Thêm Lead ────────────────────────────────────────────────────
-function ModalThemLead({ onDong, onLuu }: { onDong: () => void; onLuu: (data: FormThem) => void }) {
+export function ModalThemLead({ onDong, onLuu, chuongTrinhList = DS_CHUONG_TRINH }: { onDong: () => void; onLuu: (data: FormThem) => void; chuongTrinhList?: string[] }) {
   const [buoc, setBuoc] = useState<1 | 2>(1);
   const [da_luu, setDaLuu] = useState(false);
   const [form, setForm] = useState<FormThem>({
@@ -268,7 +268,7 @@ function ModalThemLead({ onDong, onLuu }: { onDong: () => void; onLuu: (data: Fo
                 </div>
                 <InputField label="Trường hiện tại" field="truongHienTai" value={form.truongHienTai} onChange={v => capNhat('truongHienTai', v)} placeholder="THCS Cầu Giấy" />
                 <SelectField label="Khối đăng ký" field="khoi" value={form.khoi} onChange={v => capNhat('khoi', v)} error={loi.khoi} options={DS_KHOI.slice(1)} required />
-                <SelectField label="Chương trình quan tâm" field="chuongTrinh" value={form.chuongTrinh} onChange={v => capNhat('chuongTrinh', v)} options={DS_CHUONG_TRINH} />
+                <SelectField label="Chương trình quan tâm" field="chuongTrinh" value={form.chuongTrinh} onChange={v => capNhat('chuongTrinh', v)} options={chuongTrinhList} />
               </div>
             </div>
 
@@ -400,7 +400,13 @@ function ModalThemLead({ onDong, onLuu }: { onDong: () => void; onLuu: (data: Fo
 }
 
 // ─── Component chính ─────────────────────────────────────────────────────────
-export default function AdmissionsLeadsTable() {
+interface AdmissionsLeadsTableProps {
+  leads: Lead[];
+  setLeads: React.Dispatch<React.SetStateAction<Lead[]>>;
+  chuongTrinhList?: string[];
+}
+
+export default function AdmissionsLeadsTable({ leads, setLeads, chuongTrinhList }: AdmissionsLeadsTableProps) {
   const [timKiem, setTimKiem] = useState('');
   const [nguon, setNguon] = useState(DS_NGUON[0]);
   const [tvv, setTvv] = useState(DS_TVV[0]);
@@ -409,7 +415,6 @@ export default function AdmissionsLeadsTable() {
   const [daChon, setDaChon] = useState<Set<string>>(new Set());
   const [trang, setTrang] = useState(1);
   const [hienModal, setHienModal] = useState(false);
-  const [leads, setLeads] = useState<Lead[]>(LEADS_MAU);
   const tongTrang = 129;
 
   const chonTatCa = () => {
@@ -692,6 +697,7 @@ export default function AdmissionsLeadsTable() {
             <ModalThemLead
               onDong={() => setHienModal(false)}
               onLuu={handleLuuLead}
+              chuongTrinhList={chuongTrinhList}
             />
           </div>
         </div>,
