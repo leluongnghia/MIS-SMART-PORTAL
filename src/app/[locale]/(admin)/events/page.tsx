@@ -1,1 +1,27 @@
-'use client';\nimport { Card, CardContent, CardHeader, CardTitle } from '@/src/components/ui/card';\nimport { Calendar } from 'lucide-react';\n\nexport default function eventsPage() {\n  return (\n    <div className="space-y-6">\n      <div>\n        <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Lịch & Sự kiện</h2>\n        <p className="text-sm text-slate-500">Lịch công tác và sự kiện sắp tới</p>\n      </div>\n      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">\n        {[1,2,3].map(i => (\n          <Card key={i}>\n            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">\n              <CardTitle className="text-sm font-medium">Mục {i}</CardTitle>\n              <Calendar className="h-4 w-4 text-slate-500" />\n            </CardHeader>\n            <CardContent>\n              <div className="text-2xl font-bold">...</div>\n            </CardContent>\n          </Card>\n        ))}\n      </div>\n    </div>\n  );\n}\n
+'use client';
+import { Card, CardContent, CardHeader, CardTitle } from '@/src/components/ui/card';
+import { Calendar } from 'lucide-react';
+
+export default function eventsPage() {
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Lịch & Sự kiện</h2>
+        <p className="text-sm text-slate-500">Lịch công tác và sự kiện sắp tới</p>
+      </div>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {[1,2,3].map(i => (
+          <Card key={i}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Mục {i}</CardTitle>
+              <Calendar className="h-4 w-4 text-slate-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">...</div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
