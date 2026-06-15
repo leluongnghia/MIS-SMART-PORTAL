@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 
 import { cn } from "@/src/lib/utils";
 import {
@@ -81,9 +82,7 @@ export default function DashboardClient() {
                 </div>
               </div>
             </div>
-            <Button variant="ghost" size="sm" className="text-red-600 hover:bg-red-100 hover:text-red-700">
-              Xem chi tiết
-            </Button>
+            <Link href="students"><Button variant="ghost" size="sm" className="text-red-600 hover:bg-red-100 hover:text-red-700">Xem chi tiết</Button></Link>
           </CardContent>
         </Card>
 
@@ -101,9 +100,7 @@ export default function DashboardClient() {
                 </div>
               </div>
             </div>
-            <Button variant="ghost" size="sm" className="text-orange-600 hover:bg-orange-100 hover:text-orange-700">
-              Xem chi tiết
-            </Button>
+            <Link href="hrm"><Button variant="ghost" size="sm" className="text-orange-600 hover:bg-orange-100 hover:text-orange-700">Xem chi tiết</Button></Link>
           </CardContent>
         </Card>
 
@@ -121,9 +118,7 @@ export default function DashboardClient() {
                 </div>
               </div>
             </div>
-            <Button variant="ghost" size="sm" className="text-rose-600 hover:bg-rose-100 hover:text-rose-700">
-              Xem chi tiết
-            </Button>
+            <Link href="tasks"><Button variant="ghost" size="sm" className="text-rose-600 hover:bg-rose-100 hover:text-rose-700">Xem chi tiết</Button></Link>
           </CardContent>
         </Card>
       </div>
@@ -224,7 +219,7 @@ export default function DashboardClient() {
           <CardContent className="p-0">
             <div className="p-4 bg-slate-50/50 dark:bg-slate-900/50 text-xs font-bold text-slate-500 flex justify-between">
               <span>Phê duyệt khẩn cấp</span>
-              <a href="#" className="text-blue-600 font-medium">Xem tất cả</a>
+                <Link href="approvals" className="text-blue-600 font-medium">Xem tất cả</Link>
             </div>
             <div className="divide-y divide-slate-100 dark:divide-slate-800">
               {[
@@ -247,7 +242,7 @@ export default function DashboardClient() {
 
             <div className="p-4 bg-slate-50/50 dark:bg-slate-900/50 text-xs font-bold text-slate-500 flex justify-between border-t border-slate-100 dark:border-slate-800">
               <span>Công việc ưu tiên</span>
-              <a href="#" className="text-blue-600 font-medium">Xem tất cả</a>
+                <Link href="tasks" className="text-blue-600 font-medium">Xem tất cả</Link>
             </div>
             <div className="divide-y divide-slate-100 dark:divide-slate-800">
               {[
@@ -265,9 +260,7 @@ export default function DashboardClient() {
               ))}
             </div>
             <div className="p-3 text-center border-t border-slate-100 dark:border-slate-800">
-              <Button variant="ghost" className="w-full text-sm text-blue-600">
-                Xem tất cả công việc <ChevronRight className="h-4 w-4 ml-1" />
-              </Button>
+              <Link href="tasks" className="block w-full"><Button variant="ghost" className="w-full text-sm text-blue-600">Xem tất cả công việc <ChevronRight className="h-4 w-4 ml-1" /></Button></Link>
             </div>
           </CardContent>
         </Card>
@@ -323,9 +316,7 @@ export default function DashboardClient() {
                 </div>
               </div>
               <div className="mt-4 text-center">
-                <Button variant="ghost" className="text-sm text-blue-600 h-auto p-0">
-                  Xem phân tích chi tiết <ChevronRight className="h-4 w-4 ml-1" />
-                </Button>
+                <Link href="reports"><Button variant="ghost" className="text-sm text-blue-600 h-auto p-0">Xem phân tích chi tiết <ChevronRight className="h-4 w-4 ml-1" /></Button></Link>
               </div>
             </CardContent>
           </Card>
@@ -336,7 +327,7 @@ export default function DashboardClient() {
           <CardHeader className="p-4 pb-2 border-b border-slate-100 dark:border-slate-800">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base font-bold">Hoạt động gần đây</CardTitle>
-              <a href="#" className="text-xs font-medium text-blue-600">Xem tất cả</a>
+                <Link href="events" className="text-xs font-medium text-blue-600">Xem tất cả</Link>
             </div>
           </CardHeader>
           <CardContent className="p-4">
@@ -380,7 +371,7 @@ export default function DashboardClient() {
             <div className="flex-1 space-y-4">
                <div className="flex justify-between items-end mb-2">
                  <h4 className="text-sm font-bold">Rủi ro nổi bật</h4>
-                 <a href="#" className="text-xs text-blue-600 font-medium">Xem tất cả</a>
+                  <Link href="risk" className="text-xs text-blue-600 font-medium">Xem tất cả</Link>
                </div>
                <div className="space-y-3">
                  {[
@@ -418,9 +409,7 @@ export default function DashboardClient() {
               <span className="text-sm text-slate-500 font-medium">Funnel Chart Placeholder</span>
             </div>
             <div className="text-center">
-              <Button variant="ghost" className="text-sm text-blue-600">
-                Xem chi tiết phễu tuyển sinh <ChevronRight className="h-4 w-4 ml-1" />
-              </Button>
+              <Link href="admissions"><Button variant="ghost" className="text-sm text-blue-600">Xem chi tiết phễu tuyển sinh <ChevronRight className="h-4 w-4 ml-1" /></Button></Link>
             </div>
           </CardContent>
         </Card>
