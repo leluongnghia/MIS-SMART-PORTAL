@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
@@ -140,7 +140,8 @@ function UploaderTaiLieu({ taiLieu, onClose }: { taiLieu: TaiLieu; onClose: () =
         </div>
       </div>
     </div>,
-    typeof document !== 'undefined' ? document.body : document.createElement('div')
+    // @ts-ignore
+    document.body
   );
 }
 

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -185,7 +185,8 @@ function ModalTaoChienDich({ onClose }: { onClose: () => void }) {
         </div>
       </div>
     </div>,
-    typeof document !== 'undefined' ? document.body : document.createElement('div')
+    // @ts-ignore
+    document.body
   );
 }
 

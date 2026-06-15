@@ -1,6 +1,6 @@
-'use client';
+﻿'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
   Search, Plus, Download, Upload, Filter, Eye, Edit2, MoreHorizontal,
@@ -83,8 +83,71 @@ const DS_TVV = ['Tất cả tư vấn viên', 'Lê Minh Khang', 'Phạm Gia Huy'
 const DS_KHOI = ['Tất cả khối', 'Lớp 1', 'Lớp 2', 'Lớp 3', 'Lớp 4', 'Lớp 5', 'Lớp 6', 'Lớp 7', 'Lớp 8', 'Lớp 9', 'Lớp 10', 'Lớp 11', 'Lớp 12'];
 const DS_TRANG_THAI = ['Tất cả trạng thái', 'Mới', 'Đang tư vấn', 'Đăng ký test', 'Nộp hồ sơ', 'Giữ chỗ', 'Nhập học', 'Không tiếp tục'];
 const DS_CHUONG_TRINH = ['Tiểu học - Chương trình Quốc gia', 'THCS - Song ngữ Quốc tế', 'THPT - IB', 'THPT - A-Level', 'Mầm non'];
+// ─── Helper field components (defined OUTSIDE modal to prevent remount on every render) ──
+function InputField({ label, field, value, onChange, error, placeholder, type = 'text', required = false, icon }: {
+  label: string; field: string; value: string; onChange: (v: string) => void;
+  error?: string; placeholder?: string; type?: string; required?: boolean;
+  icon?: React.ReactNode;
+}) {
+  return (
+    <div>
+      <label className="mb-1 block text-xs font-bold text-slate-700">
+        {label} {required && <span className="text-red-500">*</span>}
+      </label>
+      <div className={icon ? 'relative' : undefined}>
+        {icon && <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2">{icon}</span>}
+        <input
+          type={type}
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          placeholder={placeholder}
+          className={`h-9 w-full rounded-xl border text-sm transition focus:outline-none focus:ring-2 ${
+            icon ? 'pl-9 pr-3' : 'px-3'
+          } ${
+            error ? 'border-red-300 bg-red-50 focus:border-red-400 focus:ring-red-100' : 'border-slate-200 bg-white focus:border-blue-400 focus:ring-blue-100'
+          }`}
+        />
+      </div>
+      {error && (
+        <p className="mt-1 flex items-center gap-1 text-[10px] font-semibold text-red-500">
+          <AlertCircle className="h-3 w-3" /> {error}
+        </p>
+      )}
+    </div>
+  );
+}
 
-// ─── Modal Thêm Lead ──────────────────────────────────────────────────────────
+function SelectField({ label, field, value, onChange, error, options, required = false }: {
+  label: string; field: string; value: string; onChange: (v: string) => void;
+  error?: string; options: string[]; required?: boolean;
+}) {
+  return (
+    <div>
+      <label className="mb-1 block text-xs font-bold text-slate-700">
+        {label} {required && <span className="text-red-500">*</span>}
+      </label>
+      <div className="relative">
+        <select
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          className={`h-9 w-full appearance-none rounded-xl border px-3 pr-8 text-sm transition focus:outline-none focus:ring-2 ${
+            error ? 'border-red-300 bg-red-50 focus:border-red-400 focus:ring-red-100' : 'border-slate-200 bg-white focus:border-blue-400 focus:ring-blue-100'
+          }`}>
+          <option value="">-- Chọn --</option>
+          {options.map(o => <option key={o} value={o}>{o}</option>)}
+        </select>
+        <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+      </div>
+      {error && (
+        <p className="mt-1 flex items-center gap-1 text-[10px] font-semibold text-red-500">
+          <AlertCircle className="h-3 w-3" /> {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
+// ─── Modal Thêm Lead ────────────────────────────────────────────────────
 function ModalThemLead({ onDong, onLuu }: { onDong: () => void; onLuu: (data: FormThem) => void }) {
   const [buoc, setBuoc] = useState<1 | 2>(1);
   const [da_luu, setDaLuu] = useState(false);
@@ -121,17 +184,11 @@ function ModalThemLead({ onDong, onLuu }: { onDong: () => void; onLuu: (data: Fo
     return Object.keys(newLoi).length === 0;
   };
 
-  const handleTiepTheo = () => {
-    if (kiemTraBuoc1()) setBuoc(2);
-  };
-
+  const handleTiepTheo = () => { if (kiemTraBuoc1()) setBuoc(2); };
   const handleLuu = () => {
     if (!kiemTraBuoc2()) return;
     setDaLuu(true);
-    setTimeout(() => {
-      onLuu(form);
-      onDong();
-    }, 1200);
+    setTimeout(() => { onLuu(form); onDong(); }, 1200);
   };
 
   if (da_luu) {
@@ -148,58 +205,8 @@ function ModalThemLead({ onDong, onLuu }: { onDong: () => void; onLuu: (data: Fo
     );
   }
 
-  const InputField = ({ label, field, placeholder, type = 'text', required = false }:
-    { label: string; field: keyof FormThem; placeholder?: string; type?: string; required?: boolean }) => (
-    <div>
-      <label className="mb-1 block text-xs font-bold text-slate-700">
-        {label} {required && <span className="text-red-500">*</span>}
-      </label>
-      <input
-        type={type}
-        value={form[field]}
-        onChange={e => capNhat(field, e.target.value)}
-        placeholder={placeholder}
-        className={`h-9 w-full rounded-xl border px-3 text-sm transition focus:outline-none focus:ring-2 ${
-          loi[field] ? 'border-red-300 bg-red-50 focus:border-red-400 focus:ring-red-100' : 'border-slate-200 bg-white focus:border-blue-400 focus:ring-blue-100'
-        }`}
-      />
-      {loi[field] && (
-        <p className="mt-1 flex items-center gap-1 text-[10px] font-semibold text-red-500">
-          <AlertCircle className="h-3 w-3" /> {loi[field]}
-        </p>
-      )}
-    </div>
-  );
-
-  const SelectField = ({ label, field, options, required = false }:
-    { label: string; field: keyof FormThem; options: string[]; required?: boolean }) => (
-    <div>
-      <label className="mb-1 block text-xs font-bold text-slate-700">
-        {label} {required && <span className="text-red-500">*</span>}
-      </label>
-      <div className="relative">
-        <select
-          value={form[field]}
-          onChange={e => capNhat(field, e.target.value)}
-          className={`h-9 w-full appearance-none rounded-xl border px-3 pr-8 text-sm transition focus:outline-none focus:ring-2 ${
-            loi[field] ? 'border-red-300 bg-red-50 focus:border-red-400 focus:ring-red-100' : 'border-slate-200 bg-white focus:border-blue-400 focus:ring-blue-100'
-          }`}>
-          <option value="">-- Chọn --</option>
-          {options.map(o => <option key={o} value={o}>{o}</option>)}
-        </select>
-        <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
-      </div>
-      {loi[field] && (
-        <p className="mt-1 flex items-center gap-1 text-[10px] font-semibold text-red-500">
-          <AlertCircle className="h-3 w-3" /> {loi[field]}
-        </p>
-      )}
-    </div>
-  );
-
   return (
     <div className="flex h-full flex-col">
-      {/* Header */}
       <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
         <div>
           <h2 className="text-lg font-black text-slate-900">Thêm lead mới</h2>
@@ -210,6 +217,7 @@ function ModalThemLead({ onDong, onLuu }: { onDong: () => void; onLuu: (data: Fo
           <X className="h-5 w-5" />
         </button>
       </div>
+
 
       {/* Thanh tiến trình */}
       <div className="flex items-center gap-0 border-b border-slate-100 px-5">
@@ -245,8 +253,8 @@ function ModalThemLead({ onDong, onLuu }: { onDong: () => void; onLuu: (data: Fo
                 <GraduationCap className="h-4 w-4 text-blue-500" /> Thông tin học sinh
               </p>
               <div className="grid gap-3 md:grid-cols-2">
-                <InputField label="Họ và tên học sinh" field="hoTenHocSinh" placeholder="Nguyễn Văn An" required />
-                <InputField label="Ngày sinh" field="ngaySinh" type="date" />
+                <InputField label="Họ và tên học sinh" field="hoTenHocSinh" value={form.hoTenHocSinh} onChange={v => capNhat('hoTenHocSinh', v)} error={loi.hoTenHocSinh} placeholder="Nguyễn Văn An" required />
+                <InputField label="Ngày sinh" field="ngaySinh" value={form.ngaySinh} onChange={v => capNhat('ngaySinh', v)} type="date" />
                 <div>
                   <label className="mb-1 block text-xs font-bold text-slate-700">Giới tính</label>
                   <div className="flex gap-2">
@@ -258,9 +266,9 @@ function ModalThemLead({ onDong, onLuu }: { onDong: () => void; onLuu: (data: Fo
                     ))}
                   </div>
                 </div>
-                <InputField label="Trường hiện tại" field="truongHienTai" placeholder="THCS Cầu Giấy" />
-                <SelectField label="Khối đăng ký" field="khoi" options={DS_KHOI.slice(1)} required />
-                <SelectField label="Chương trình quan tâm" field="chuongTrinh" options={DS_CHUONG_TRINH} />
+                <InputField label="Trường hiện tại" field="truongHienTai" value={form.truongHienTai} onChange={v => capNhat('truongHienTai', v)} placeholder="THCS Cầu Giấy" />
+                <SelectField label="Khối đăng ký" field="khoi" value={form.khoi} onChange={v => capNhat('khoi', v)} error={loi.khoi} options={DS_KHOI.slice(1)} required />
+                <SelectField label="Chương trình quan tâm" field="chuongTrinh" value={form.chuongTrinh} onChange={v => capNhat('chuongTrinh', v)} options={DS_CHUONG_TRINH} />
               </div>
             </div>
 
@@ -272,51 +280,10 @@ function ModalThemLead({ onDong, onLuu }: { onDong: () => void; onLuu: (data: Fo
                 <Users className="h-4 w-4 text-purple-500" /> Thông tin phụ huynh / người liên hệ
               </p>
               <div className="grid gap-3 md:grid-cols-2">
-                <InputField label="Họ và tên phụ huynh" field="hoTenPhuHuynh" placeholder="Nguyễn Văn Bình" required />
-                <div>
-                  <label className="mb-1 block text-xs font-bold text-slate-700">
-                    Số điện thoại <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
-                    <input
-                      type="tel"
-                      value={form.sdtPhuHuynh}
-                      onChange={e => capNhat('sdtPhuHuynh', e.target.value)}
-                      placeholder="0901 234 567"
-                      className={`h-9 w-full rounded-xl border pl-9 pr-3 text-sm transition focus:outline-none focus:ring-2 ${
-                        loi.sdtPhuHuynh ? 'border-red-300 bg-red-50 focus:border-red-400 focus:ring-red-100' : 'border-slate-200 focus:border-blue-400 focus:ring-blue-100'
-                      }`}
-                    />
-                  </div>
-                  {loi.sdtPhuHuynh && <p className="mt-1 flex items-center gap-1 text-[10px] font-semibold text-red-500"><AlertCircle className="h-3 w-3" />{loi.sdtPhuHuynh}</p>}
-                </div>
-                <div>
-                  <label className="mb-1 block text-xs font-bold text-slate-700">Email</label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
-                    <input
-                      type="email"
-                      value={form.emailPhuHuynh}
-                      onChange={e => capNhat('emailPhuHuynh', e.target.value)}
-                      placeholder="email@example.com"
-                      className="h-9 w-full rounded-xl border border-slate-200 pl-9 pr-3 text-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="mb-1 block text-xs font-bold text-slate-700">Địa chỉ</label>
-                  <div className="relative">
-                    <MapPin className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
-                    <input
-                      type="text"
-                      value={form.diaChiPhuHuynh}
-                      onChange={e => capNhat('diaChiPhuHuynh', e.target.value)}
-                      placeholder="Số nhà, đường, quận/huyện..."
-                      className="h-9 w-full rounded-xl border border-slate-200 pl-9 pr-3 text-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
-                    />
-                  </div>
-                </div>
+                <InputField label="Họ và tên phụ huynh" field="hoTenPhuHuynh" value={form.hoTenPhuHuynh} onChange={v => capNhat('hoTenPhuHuynh', v)} error={loi.hoTenPhuHuynh} placeholder="Nguyễn Văn Bình" required />
+                <InputField label="Số điện thoại" field="sdtPhuHuynh" value={form.sdtPhuHuynh} onChange={v => capNhat('sdtPhuHuynh', v)} error={loi.sdtPhuHuynh} type="tel" placeholder="0901 234 567" required icon={<Phone className="h-3.5 w-3.5 text-slate-400" />} />
+                <InputField label="Email" field="emailPhuHuynh" value={form.emailPhuHuynh} onChange={v => capNhat('emailPhuHuynh', v)} type="email" placeholder="email@example.com" icon={<Mail className="h-3.5 w-3.5 text-slate-400" />} />
+                <InputField label="Địa chỉ" field="diaChiPhuHuynh" value={form.diaChiPhuHuynh} onChange={v => capNhat('diaChiPhuHuynh', v)} placeholder="Số nhà, đường, quận/huyện..." icon={<MapPin className="h-3.5 w-3.5 text-slate-400" />} />
               </div>
             </div>
           </div>
@@ -330,8 +297,8 @@ function ModalThemLead({ onDong, onLuu }: { onDong: () => void; onLuu: (data: Fo
                 <MessageSquare className="h-4 w-4 text-green-500" /> Nguồn lead & Chiến dịch
               </p>
               <div className="grid gap-3 md:grid-cols-2">
-                <SelectField label="Nguồn lead" field="nguonLead" options={DS_NGUON.slice(1)} required />
-                <InputField label="Chiến dịch / Campaign" field="chiendich" placeholder="Tháng 5 - Ưu đãi học phí" />
+                <SelectField label="Nguồn lead" field="nguonLead" value={form.nguonLead} onChange={v => capNhat('nguonLead', v)} error={loi.nguonLead} options={DS_NGUON.slice(1)} required />
+                <InputField label="Chiến dịch / Campaign" field="chiendich" value={form.chiendich} onChange={v => capNhat('chiendich', v)} placeholder="Tháng 5 - Ưu đãi học phí" />
               </div>
             </div>
 
@@ -343,7 +310,7 @@ function ModalThemLead({ onDong, onLuu }: { onDong: () => void; onLuu: (data: Fo
                 <Users className="h-4 w-4 text-blue-500" /> Phân công tư vấn viên
               </p>
               <div className="grid gap-3 md:grid-cols-2">
-                <SelectField label="Tư vấn viên phụ trách" field="tvv" options={DS_TVV.slice(1)} required />
+                <SelectField label="Tư vấn viên phụ trách" field="tvv" value={form.tvv} onChange={v => capNhat('tvv', v)} error={loi.tvv} options={DS_TVV.slice(1)} required />
               </div>
 
               {/* Preview TVV */}
