@@ -673,7 +673,7 @@ export default function ExecutiveDashboard({
               actionItems.map((item, idx) => {
                 let dotColor = 'bg-slate-300';
                 let badgeColor = 'bg-slate-100 text-slate-600';
-                let badgeLabel = item.type;
+                let badgeLabel: string = item.type;
                 if (item.type === 'quá_hạn') {
                   dotColor = 'bg-rose-500';
                   badgeColor = 'bg-rose-50 text-rose-700 border border-rose-100';
