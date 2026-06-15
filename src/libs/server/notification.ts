@@ -36,8 +36,8 @@ export function getNotificationConfigStatus() {
     },
     zalo: {
       configured: Boolean(process.env.ZALO_OA_ID && process.env.ZALO_ACCESS_TOKEN),
-      oaIdConfigured: Boolean(process.env.ZALO_OA_ID),
-      appIdConfigured: Boolean(process.env.ZALO_APP_ID),
+      oaId: process.env.ZALO_OA_ID || '',
+      appId: process.env.ZALO_APP_ID || '',
       appSecretConfigured: Boolean(process.env.ZALO_APP_SECRET),
       accessTokenConfigured: Boolean(process.env.ZALO_ACCESS_TOKEN),
       refreshTokenConfigured: Boolean(process.env.ZALO_REFRESH_TOKEN),

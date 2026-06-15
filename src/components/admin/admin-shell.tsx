@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import type { ReactNode } from 'react';
 import Link from 'next/link';
@@ -216,12 +216,7 @@ export default function AdminShell({ locale, children }: { locale: string; child
           </div>
 
           <div className="flex items-center gap-4">
-             {/* School Selector */}
-             <div className="hidden sm:block">
-              <select className="block w-full rounded-md border-0 py-1.5 pl-3 pr-10 text-slate-900 ring-1 ring-inset ring-slate-200 focus:ring-2 focus:ring-blue-600 sm:text-sm sm:leading-6 dark:bg-slate-900 dark:text-slate-100 dark:ring-slate-700">
-                <option>Cơ sở 1 - Trường THPT Minh Khai</option>
-              </select>
-            </div>
+
 
             <Button variant="ghost" size="icon" className="relative text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300">
               <Bell className="h-5 w-5" />

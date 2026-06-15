@@ -60,7 +60,7 @@ type BroadcastDraft = {
 
 const BROADCAST_LOG_KEY = 'mis_zalo_broadcast_drafts';
 
-const envTemplate = `APP_URL=https://mis-smart-portal.onrender.com
+const envTemplate = `APP_URL=https://duong.nghiadev.vn
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_SECURE=false
@@ -123,6 +123,26 @@ export default function SystemSettingsModal({ onClose }: SystemSettingsModalProp
     }
   });
 
+  // SMTP Settings States
+  const [smtpHost, setSmtpHost] = useState('');
+  const [smtpPort, setSmtpPort] = useState('587');
+  const [smtpSecure, setSmtpSecure] = useState('false');
+  const [smtpUser, setSmtpUser] = useState('');
+  const [smtpPass, setSmtpPass] = useState('');
+  const [smtpFrom, setSmtpFrom] = useState('');
+
+  // Zalo Settings States
+  const [zaloOaId, setZaloOaId] = useState('');
+  const [zaloAppId, setZaloAppId] = useState('');
+  const [zaloAppSecret, setZaloAppSecret] = useState('');
+  const [zaloAccessToken, setZaloAccessToken] = useState('');
+  const [zaloRefreshToken, setZaloRefreshToken] = useState('');
+
+  // Gemini Settings States
+  const [geminiApiKey, setGeminiApiKey] = useState('');
+
+  const [savingConfig, setSavingConfig] = useState(false);
+
   const canTestEmail = useMemo(() => /\S+@\S+\.\S+/.test(testEmail), [testEmail]);
 
   const loadStatus = async () => {
@@ -134,10 +154,71 @@ export default function SystemSettingsModal({ onClose }: SystemSettingsModalProp
         throw new Error(data.error || 'Không thể tải trạng thái cấu hình.');
       }
       setConfig(data.config);
+
+      if (data.config) {
+        const smtp = data.config.smtp;
+        setSmtpHost(smtp.host || '');
+        setSmtpPort(smtp.port || '587');
+        setSmtpSecure(smtp.secure ? 'true' : 'false');
+        setSmtpUser(smtp.userConfigured ? '••••••••' : '');
+        setSmtpPass(smtp.passConfigured ? '••••••••' : '');
+        setSmtpFrom(smtp.from || '');
+
+        const zalo = data.config.zalo;
+        setZaloOaId(zalo.oaId || '');
+        setZaloAppId(zalo.appId || '');
+        setZaloAppSecret(zalo.appSecretConfigured ? '••••••••' : '');
+        setZaloAccessToken(zalo.accessTokenConfigured ? '••••••••' : '');
+        setZaloRefreshToken(zalo.refreshTokenConfigured ? '••••••••' : '');
+
+        const gemini = data.config.gemini;
+        setGeminiApiKey(gemini.configured ? '••••••••' : '');
+      }
     } catch (error: any) {
       setTestResult(`Không thể tải trạng thái cấu hình: ${error.message || error}`);
     } finally {
       setLoadingConfig(false);
+    }
+  };
+
+  const handleSaveConfig = async () => {
+    setSavingConfig(true);
+    setTestResult('');
+    try {
+      const response = await fetch('/api/notification/config-save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          smtp: {
+            host: smtpHost,
+            port: smtpPort,
+            secure: smtpSecure,
+            user: smtpUser,
+            pass: smtpPass,
+            from: smtpFrom,
+          },
+          zalo: {
+            oaId: zaloOaId,
+            appId: zaloAppId,
+            appSecret: zaloAppSecret,
+            accessToken: zaloAccessToken,
+            refreshToken: zaloRefreshToken,
+          },
+          gemini: {
+            apiKey: geminiApiKey,
+          },
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok || data.status !== 'success') {
+        throw new Error(data.error || 'Lưu cấu hình thất bại.');
+      }
+      setTestResult('Đã lưu cấu hình thành công vào file .env và cập nhật bộ nhớ!');
+      await loadStatus();
+    } catch (error: any) {
+      setTestResult(`Lỗi khi lưu cấu hình: ${error.message || error}`);
+    } finally {
+      setSavingConfig(false);
     }
   };
 
@@ -267,23 +348,53 @@ export default function SystemSettingsModal({ onClose }: SystemSettingsModalProp
         <div className="flex-1 overflow-y-auto p-6 bg-white">
           {activeTab === 'EMAIL' && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <section className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <Mail className="w-5 h-5 text-indigo-600" />
-                  <h3 className="text-sm font-black text-slate-900">Trạng thái SMTP</h3>
-                  {config?.smtp && <StatusPill active={config.smtp.configured} label={config.smtp.configured ? 'Đã cấu hình' : 'Chưa đủ env'} />}
+              <section className="space-y-4 bg-slate-50/50 p-5 rounded-2xl border border-slate-200">
+                <div className="flex items-center gap-2 mb-2">
+                  <Mail className="w-5 h-5 text-indigo-650" />
+                  <h3 className="text-sm font-black text-slate-900">Thiết lập SMTP</h3>
+                  {config?.smtp && <StatusPill active={config.smtp.configured} label={config.smtp.configured ? 'Đã cấu hình' : 'Chưa cấu hình'} />}
                 </div>
-                <div className="grid grid-cols-1 gap-2">
-                  <FieldStatus label="SMTP_HOST" active={Boolean(config?.smtp.host)} />
-                  <FieldStatus label="SMTP_USER" active={Boolean(config?.smtp.userConfigured)} />
-                  <FieldStatus label="SMTP_PASS" active={Boolean(config?.smtp.passConfigured)} />
-                  <FieldStatus label="EMAIL_FROM" active={Boolean(config?.smtp.from)} />
+
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-[10.5px] font-extrabold text-slate-400 mb-1 uppercase tracking-wider">SMTP Host</label>
+                    <input value={smtpHost} onChange={e => setSmtpHost(e.target.value)} placeholder="smtp.gmail.com" className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200 bg-white" />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[10.5px] font-extrabold text-slate-400 mb-1 uppercase tracking-wider">SMTP Port</label>
+                      <input value={smtpPort} onChange={e => setSmtpPort(e.target.value)} placeholder="587" className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200 bg-white" />
+                    </div>
+                    <div>
+                      <label className="block text-[10.5px] font-extrabold text-slate-400 mb-1 uppercase tracking-wider">Mã hóa (SSL/TLS)</label>
+                      <select value={smtpSecure} onChange={e => setSmtpSecure(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200 bg-white">
+                        <option value="false">STARTTLS (Port 587 - Gmail)</option>
+                        <option value="true">SSL (Port 465)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10.5px] font-extrabold text-slate-400 mb-1 uppercase tracking-wider">Tài khoản (SMTP User)</label>
+                    <input value={smtpUser} onChange={e => setSmtpUser(e.target.value)} placeholder="email_cua_ban@gmail.com" className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200 bg-white" />
+                  </div>
+
+                  <div>
+                    <label className="block text-[10.5px] font-extrabold text-slate-400 mb-1 uppercase tracking-wider">Mật khẩu (SMTP Pass)</label>
+                    <input type="password" value={smtpPass} onChange={e => setSmtpPass(e.target.value)} placeholder="Mật khẩu ứng dụng (App Password)" className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200 bg-white" />
+                  </div>
+
+                  <div>
+                    <label className="block text-[10.5px] font-extrabold text-slate-400 mb-1 uppercase tracking-wider">Tên & Email gửi (From)</label>
+                    <input value={smtpFrom} onChange={e => setSmtpFrom(e.target.value)} placeholder='"MIS Smart Portal" <noreply@mis.edu.vn>' className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200 bg-white" />
+                  </div>
                 </div>
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs text-slate-600 space-y-2">
-                  <p><strong>Host:</strong> {config?.smtp.host || 'Chưa cấu hình'}</p>
-                  <p><strong>Port:</strong> {config?.smtp.port || '587'} · <strong>Secure:</strong> {config?.smtp.secure ? 'true' : 'false'}</p>
-                  <p><strong>Người gửi:</strong> {config?.smtp.from || 'Chưa cấu hình'}</p>
-                </div>
+
+                <button onClick={handleSaveConfig} disabled={savingConfig} className="w-full mt-4 px-4 py-2.5 rounded-xl bg-indigo-650 hover:bg-indigo-700 text-white text-xs font-black uppercase tracking-wider disabled:opacity-60 flex items-center justify-center gap-2 transition-colors cursor-pointer">
+                  {savingConfig ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Settings className="w-4 h-4" />}
+                  Lưu cấu hình SMTP
+                </button>
               </section>
 
               <section className="space-y-4">
@@ -305,22 +416,52 @@ export default function SystemSettingsModal({ onClose }: SystemSettingsModalProp
 
           {activeTab === 'ZALO' && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <section className="space-y-4">
-                <div className="flex items-center gap-2">
+              <section className="space-y-4 bg-slate-50/50 p-5 rounded-2xl border border-slate-200">
+                <div className="flex items-center gap-2 mb-2">
                   <Megaphone className="w-5 h-5 text-sky-600" />
-                  <h3 className="text-sm font-black text-slate-900">Trạng thái Zalo OA</h3>
-                  {config?.zalo && <StatusPill active={config.zalo.configured} label={config.zalo.configured ? 'Có token' : 'Chưa đủ env'} />}
+                  <h3 className="text-sm font-black text-slate-900">Thiết lập Zalo OA & Gemini</h3>
+                  {config?.zalo && <StatusPill active={config.zalo.configured} label={config.zalo.configured ? 'Đã liên kết' : 'Chưa cấu hình'} />}
                 </div>
-                <div className="grid grid-cols-1 gap-2">
-                  <FieldStatus label="ZALO_OA_ID" active={Boolean(config?.zalo.oaIdConfigured)} />
-                  <FieldStatus label="ZALO_APP_ID" active={Boolean(config?.zalo.appIdConfigured)} />
-                  <FieldStatus label="ZALO_APP_SECRET" active={Boolean(config?.zalo.appSecretConfigured)} />
-                  <FieldStatus label="ZALO_ACCESS_TOKEN" active={Boolean(config?.zalo.accessTokenConfigured)} />
-                  <FieldStatus label="ZALO_REFRESH_TOKEN" active={Boolean(config?.zalo.refreshTokenConfigured)} />
+
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-[10.5px] font-extrabold text-slate-400 mb-1 uppercase tracking-wider">Zalo OA ID</label>
+                    <input value={zaloOaId} onChange={e => setZaloOaId(e.target.value)} placeholder="ID tài khoản OA" className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-200 bg-white" />
+                  </div>
+
+                  <div>
+                    <label className="block text-[10.5px] font-extrabold text-slate-400 mb-1 uppercase tracking-wider">Zalo App ID</label>
+                    <input value={zaloAppId} onChange={e => setZaloAppId(e.target.value)} placeholder="App ID Zalo Developer" className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-200 bg-white" />
+                  </div>
+
+                  <div>
+                    <label className="block text-[10.5px] font-extrabold text-slate-400 mb-1 uppercase tracking-wider">Zalo App Secret</label>
+                    <input type="password" value={zaloAppSecret} onChange={e => setZaloAppSecret(e.target.value)} placeholder="App Secret Key" className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-200 bg-white" />
+                  </div>
+
+                  <div>
+                    <label className="block text-[10.5px] font-extrabold text-slate-400 mb-1 uppercase tracking-wider">Zalo Access Token</label>
+                    <input type="password" value={zaloAccessToken} onChange={e => setZaloAccessToken(e.target.value)} placeholder="Zalo OA Access Token" className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-200 bg-white" />
+                  </div>
+
+                  <div>
+                    <label className="block text-[10.5px] font-extrabold text-slate-400 mb-1 uppercase tracking-wider">Zalo Refresh Token</label>
+                    <input type="password" value={zaloRefreshToken} onChange={e => setZaloRefreshToken(e.target.value)} placeholder="Zalo OA Refresh Token" className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-200 bg-white" />
+                  </div>
+
+                  <div className="pt-3 border-t border-slate-200">
+                    <label className="block text-[10.5px] font-extrabold text-slate-400 mb-1 uppercase tracking-wider flex items-center justify-between">
+                      <span>Mã khóa Gemini API Key</span>
+                      {config?.gemini && <StatusPill active={config.gemini.configured} label={config.gemini.configured ? 'OK' : 'Thiếu'} />}
+                    </label>
+                    <input type="password" value={geminiApiKey} onChange={e => setGeminiApiKey(e.target.value)} placeholder="Gemini AI Studio API Key" className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200 bg-white" />
+                  </div>
                 </div>
-                <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-900 leading-relaxed">
-                  Broadcast phù hợp thông báo chung theo nhóm người quan tâm OA. Không dùng broadcast cho điểm số, y tế, học phí cá nhân hoặc dữ liệu nhạy cảm.
-                </div>
+
+                <button onClick={handleSaveConfig} disabled={savingConfig} className="w-full mt-4 px-4 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-xs font-black uppercase tracking-wider disabled:opacity-60 flex items-center justify-center gap-2 transition-colors cursor-pointer">
+                  {savingConfig ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Settings className="w-4 h-4" />}
+                  Lưu cấu hình Zalo & Gemini
+                </button>
               </section>
 
               <section className="space-y-4">
