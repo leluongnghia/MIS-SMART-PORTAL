@@ -31,7 +31,7 @@ import LoginPortal from './components/LoginPortal';
 import WorkspaceManager from './components/WorkspaceManager';
 import StrategyOkrHub from './components/StrategyOkrHub';
 import WorkflowBuilder from './components/WorkflowBuilder';
-import SchoolCrmHub from './components/SchoolCrmHub';
+import AdmissionsEnterpriseDashboard from './components/AdmissionsEnterpriseDashboard';
 import StudentSuccessHub from './components/StudentSuccessHub';
 import RiskManagementCenter from './components/RiskManagementCenter';
 import ReportingAnalyticsBuilder from './components/ReportingAnalyticsBuilder';
@@ -658,6 +658,16 @@ function AppInner() {
     expandedBranches, setExpandedBranches, toggleBranch,
     expandedGroups, setExpandedGroups, toggleGroup
   } = appState;
+
+  const admissionsDefaultAppliedRef = useRef(false);
+
+  useEffect(() => {
+    if (!isLoggedIn || admissionsDefaultAppliedRef.current) return;
+    if (currentUser.workspaceId === 'TUYEN_SINH_PR') {
+      admissionsDefaultAppliedRef.current = true;
+      setOverviewTab('CRM_ADMISSIONS');
+    }
+  }, [currentUser.workspaceId, isLoggedIn, setOverviewTab]);
 
   useEffect(() => {
     if (!isLoggedIn || typeof window === 'undefined') return;
@@ -1628,7 +1638,7 @@ function AppInner() {
           )}
 
           {overviewTab === 'CRM_ADMISSIONS' && (
-            <SchoolCrmHub />
+            <AdmissionsEnterpriseDashboard />
           )}
 
           {overviewTab === 'STUDENT_SUCCESS' && (
