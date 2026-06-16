@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useTransition } from 'react';
+import { createTask } from './actions';
 import {
   FileText,
   Clock,
@@ -113,11 +114,63 @@ const isOverdueTask = (task: TaskRow) => {
 
 export default function TasksDashboard({ initialData }: { initialData?: { data?: TaskRow[] } }) {
   const tasksList = initialData?.data || [];
+  const workspaces = (initialData as any)?.workspaces || [];
+  const users = (initialData as any)?.users || [];
+
+  const [isPending, startTransition] = useTransition();
+
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [newTitle, setNewTitle] = useState('');
+  const [newDescription, setNewDescription] = useState('');
+  const [newWorkspaceId, setNewWorkspaceId] = useState('');
+  const [newAssignedId, setNewAssignedId] = useState('');
+  const [newPriority, setNewPriority] = useState('medium');
+  const [newDeadline, setNewDeadline] = useState('');
+  const [newTag, setNewTag] = useState('');
+
   const [selectedApproval, setSelectedApproval] = useState<any>(null);
   const [isApprovalOpen, setIsApprovalOpen] = useState(false);
   const [approvalNote, setApprovalNote] = useState('');
   const [selectedTask, setSelectedTask] = useState<any>(null);
   const [isTaskOpen, setIsTaskOpen] = useState(false);
+
+  const filteredUsers = newWorkspaceId 
+    ? users.filter((u: any) => u.workspaceId === newWorkspaceId)
+    : users;
+
+  const handleCreateTask = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTitle.trim() || !newWorkspaceId || !newAssignedId) {
+      alert('Vui lòng điền đầy đủ các thông tin bắt buộc (Tiêu đề, Phòng ban, Người phụ trách)');
+      return;
+    }
+
+    startTransition(async () => {
+      const res = await createTask({
+        title: newTitle,
+        description: newDescription,
+        workspaceId: newWorkspaceId,
+        assignedId: newAssignedId,
+        priority: newPriority,
+        deadline: newDeadline || undefined,
+        tag: newTag || undefined,
+      });
+
+      if (res.success) {
+        setIsCreateOpen(false);
+        setNewTitle('');
+        setNewDescription('');
+        setNewWorkspaceId('');
+        setNewAssignedId('');
+        setNewPriority('medium');
+        setNewDeadline('');
+        setNewTag('');
+      } else {
+        alert('Lỗi: ' + res.error);
+      }
+    });
+  };
+
   const getCardsByStatus = (statuses: string[]) => tasksList
     .filter(task => statuses.includes(String(task.status || '')))
     .map(task => ({
@@ -288,7 +341,11 @@ export default function TasksDashboard({ initialData }: { initialData?: { data?:
                       </div>
                     </div>
                   ))}
-                  <Button variant="ghost" className="w-full text-xs text-blue-600 gap-1 mt-2 bg-transparent hover:bg-slate-200/50 dark:hover:bg-slate-800">
+                  <Button 
+                    variant="ghost" 
+                    onClick={() => setIsCreateOpen(true)}
+                    className="w-full text-xs text-blue-600 gap-1 mt-2 bg-transparent hover:bg-slate-200/50 dark:hover:bg-slate-800"
+                  >
                     <Plus className="h-3 w-3" /> Thêm công việc
                   </Button>
                 </div>
@@ -597,6 +654,145 @@ export default function TasksDashboard({ initialData }: { initialData?: { data?:
             )}
           </div>
         )}
+      </Dialog>
+
+      {/* Modern Add Task Dialog */}
+      <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen} title="Tạo công việc mới">
+        <form onSubmit={handleCreateTask} className="space-y-4 pt-2">
+          {/* Title */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-slate-700 dark:text-slate-350 block">Tiêu đề công việc <span className="text-red-500">*</span></label>
+            <input
+              type="text"
+              required
+              value={newTitle}
+              onChange={(e) => setNewTitle(e.target.value)}
+              placeholder="Nhập tiêu đề công việc..."
+              className="w-full text-xs p-2.5 rounded-lg border border-slate-200 dark:bg-slate-900 dark:border-slate-800 focus:ring-1 focus:ring-blue-500 bg-white"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            {/* Workspace / Phòng ban */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-350 block">Tổ chuyên môn / Phòng ban <span className="text-red-500">*</span></label>
+              <select
+                required
+                value={newWorkspaceId}
+                onChange={(e) => {
+                  setNewWorkspaceId(e.target.value);
+                  setNewAssignedId(''); // reset assigned user when department changes
+                }}
+                className="w-full text-xs p-2.5 rounded-lg border border-slate-200 dark:bg-slate-900 dark:border-slate-800 focus:ring-1 focus:ring-blue-500 bg-white"
+              >
+                <option value="">-- Chọn phòng ban --</option>
+                {workspaces.map((w: any) => (
+                  <option key={w.id} value={w.id}>{w.name}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Người phụ trách */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-350 block">Người phụ trách <span className="text-red-500">*</span></label>
+              <select
+                required
+                value={newAssignedId}
+                onChange={(e) => setNewAssignedId(e.target.value)}
+                disabled={!newWorkspaceId}
+                className="w-full text-xs p-2.5 rounded-lg border border-slate-200 dark:bg-slate-900 dark:border-slate-800 focus:ring-1 focus:ring-blue-500 bg-white disabled:opacity-50"
+              >
+                <option value="">{newWorkspaceId ? "-- Chọn người phụ trách --" : "-- Hãy chọn phòng ban trước --"}</option>
+                {filteredUsers.map((u: any) => (
+                  <option key={u.id} value={u.id}>{u.name} ({u.roleName || u.role})</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            {/* Thời hạn */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-350 block">Hạn chót</label>
+              <input
+                type="date"
+                value={newDeadline}
+                onChange={(e) => setNewDeadline(e.target.value)}
+                className="w-full text-xs p-2.5 rounded-lg border border-slate-200 dark:bg-slate-900 dark:border-slate-800 focus:ring-1 focus:ring-blue-500 bg-white"
+              />
+            </div>
+
+            {/* Nhãn dán */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-350 block">Nhãn dán</label>
+              <input
+                type="text"
+                value={newTag}
+                onChange={(e) => setNewTag(e.target.value)}
+                placeholder="VD: Kế hoạch, Giáo án..."
+                className="w-full text-xs p-2.5 rounded-lg border border-slate-200 dark:bg-slate-900 dark:border-slate-800 focus:ring-1 focus:ring-blue-500 bg-white"
+              />
+            </div>
+          </div>
+
+          {/* Priority / Mức độ ưu tiên */}
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-slate-700 dark:text-slate-350 block">Mức độ ưu tiên</label>
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { val: 'low', label: 'Thấp', activeCol: 'bg-slate-100 border-slate-300 text-slate-700 dark:bg-slate-800 dark:text-slate-300' },
+                { val: 'medium', label: 'Trung bình', activeCol: 'bg-amber-100 border-amber-300 text-amber-700 dark:bg-amber-955/20 dark:text-amber-400' },
+                { val: 'high', label: 'Cao', activeCol: 'bg-red-100 border-red-300 text-red-700 dark:bg-red-955/20 dark:text-red-400' },
+              ].map((p) => (
+                <button
+                  type="button"
+                  key={p.val}
+                  onClick={() => setNewPriority(p.val)}
+                  className={cn(
+                    "py-2 px-3 text-xs border rounded-lg font-bold text-center transition-all cursor-pointer",
+                    newPriority === p.val 
+                      ? p.activeCol
+                      : "border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-900 text-slate-500"
+                  )}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Description */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-slate-700 dark:text-slate-350 block">Mô tả chi tiết</label>
+            <textarea
+              rows={3}
+              value={newDescription}
+              onChange={(e) => setNewDescription(e.target.value)}
+              placeholder="Nhập nội dung mô tả chi tiết công việc..."
+              className="w-full text-xs p-2.5 rounded-lg border border-slate-200 dark:bg-slate-900 dark:border-slate-800 focus:ring-1 focus:ring-blue-500 bg-white resize-none"
+            />
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex gap-2 pt-3 border-t border-slate-100 dark:border-slate-800 mt-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsCreateOpen(false)}
+              className="flex-1 text-xs h-9"
+              disabled={isPending}
+            >
+              Hủy bỏ
+            </Button>
+            <Button
+              type="submit"
+              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white border-0 text-xs h-9 font-bold"
+              disabled={isPending}
+            >
+              {isPending ? 'Đang tạo...' : 'Tạo công việc'}
+            </Button>
+          </div>
+        </form>
       </Dialog>
 
       {/* Bottom Row */}
