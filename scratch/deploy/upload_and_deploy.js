@@ -28,8 +28,6 @@ conn.on('ready', () => {
         return;
       }
       
-      console.log('Upload completed successfully!');
-      
       // 2. Run remote extraction and build commands
       const commands = [
         `cd ${projectDir}`,
@@ -37,6 +35,8 @@ conn.on('ready', () => {
         `tar -xzf project.tar.gz`,
         `rm project.tar.gz`,
         `npm install --legacy-peer-deps`,
+        `pkill -f "[n]ext build" || true`,
+        `pkill -f "[n]ext-build" || true`,
         `npm run build`,
         `pm2 restart duong-node-app || pm2 restart all`
       ].join(' && ');
@@ -65,7 +65,7 @@ conn.on('ready', () => {
 }).on('error', (err) => {
   console.error('SSH connection error:', err);
 }).connect({
-  host: '100.81.164.75',
+  host: '192.168.49.206',
   port: 22,
   username: 'duong',
   password: 'd123456'
