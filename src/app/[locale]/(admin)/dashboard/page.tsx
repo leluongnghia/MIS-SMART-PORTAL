@@ -1,4 +1,5 @@
-import DashboardClient from './dashboard-client';
+import DashboardClient from "./dashboard-client";
+import { getDashboardStats } from "./actions";
 
 export default async function DashboardPage({
   params,
@@ -9,7 +10,9 @@ export default async function DashboardPage({
 }) {
   const { locale } = await params;
   const resolvedSearchParams = await searchParams;
-  const tab = typeof resolvedSearchParams.tab === 'string' ? resolvedSearchParams.tab : undefined;
+  const tab = typeof resolvedSearchParams.tab === "string" ? resolvedSearchParams.tab : undefined;
+  
+  const initialData = await getDashboardStats();
 
-  return <DashboardClient tab={tab} />;
+  return <DashboardClient tab={tab} initialData={initialData} />;
 }

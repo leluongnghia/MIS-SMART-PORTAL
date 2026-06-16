@@ -569,3 +569,22 @@ export const certificationsRelations = relations(certifications, ({ one }) => ({
   }),
 }));
 
+
+export const risks = pgTable('risks', {
+  id: text('id').primaryKey(),
+  title: text('title').notNull(),
+  severity: text('severity').notNull(), // high, medium, low
+  status: text('status').notNull().default('open'),
+  payload: jsonb('payload').notNull().default({}),
+  ...timestamps,
+});
+
+export const events = pgTable('events', {
+  id: text('id').primaryKey(),
+  title: text('title').notNull(),
+  date: timestamp('date', { withTimezone: true }).notNull(),
+  department: text('department'),
+  payload: jsonb('payload').notNull().default({}),
+  ...timestamps,
+});
+
