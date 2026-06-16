@@ -1,5 +1,8 @@
 {
   "app": {
     "name": "MIS Smart Portal"
+  },
+  "Admin": {
+    "title": "MIS Smart Portal"
   }
 }
