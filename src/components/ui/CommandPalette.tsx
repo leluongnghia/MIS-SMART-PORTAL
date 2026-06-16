@@ -1,4 +1,6 @@
 'use client';
+import { serverStorage } from '../../libs/client/server-storage';
+
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
@@ -53,16 +55,16 @@ export default function CommandPalette({
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   
-  // State lưu lịch sử truy cập gần đây (lưu trữ trong localStorage)
+  // State lưu lịch sử truy cập gần đây (lưu trữ trong server storage)
   const [recentItems, setRecentItems] = useState<CommandItem[]>([]);
 
   useEffect(() => {
     if (isOpen) {
       setQuery('');
       setSelectedIndex(0);
-      // Load recent items from localStorage
+      // Load recent items from server storage
       try {
-        const saved = localStorage.getItem('mis_command_recent');
+        const saved = serverStorage.getItem('mis_command_recent');
         if (saved) {
           setRecentItems(JSON.parse(saved));
         }
@@ -79,7 +81,7 @@ export default function CommandPalette({
     const updated = [item, ...recentItems.filter(x => x.id !== item.id)].slice(0, 5);
     setRecentItems(updated);
     try {
-      localStorage.setItem('mis_command_recent', JSON.stringify(updated));
+      serverStorage.setItem('mis_command_recent', JSON.stringify(updated));
     } catch (e) {
       console.error(e);
     }

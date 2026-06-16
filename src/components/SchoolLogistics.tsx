@@ -1,3 +1,4 @@
+import { serverStorage } from '../libs/client/server-storage';
 import React, { useState, useEffect, useMemo } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { translateBooking, translateIssue } from '../utils/translations';
@@ -60,7 +61,7 @@ export default function SchoolLogistics({ currentUser }: SchoolLogisticsProps) {
 
   // Inventory & Library states
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>(() => {
-    const saved = localStorage.getItem('mis_inventory_items_v3');
+    const saved = serverStorage.getItem('mis_inventory_items_v3');
     if (saved) {
       try { return JSON.parse(saved); } catch (e) {}
     }
@@ -68,7 +69,7 @@ export default function SchoolLogistics({ currentUser }: SchoolLogisticsProps) {
   });
 
   const [borrowLogs, setBorrowLogs] = useState<BorrowLog[]>(() => {
-    const saved = localStorage.getItem('mis_borrow_logs_v3');
+    const saved = serverStorage.getItem('mis_borrow_logs_v3');
     if (saved) {
       try { return JSON.parse(saved); } catch (e) {}
     }
@@ -77,11 +78,11 @@ export default function SchoolLogistics({ currentUser }: SchoolLogisticsProps) {
 
   // Sync to local storage
   useEffect(() => {
-    localStorage.setItem('mis_inventory_items_v3', JSON.stringify(inventoryItems));
+    serverStorage.setItem('mis_inventory_items_v3', JSON.stringify(inventoryItems));
   }, [inventoryItems]);
 
   useEffect(() => {
-    localStorage.setItem('mis_borrow_logs_v3', JSON.stringify(borrowLogs));
+    serverStorage.setItem('mis_borrow_logs_v3', JSON.stringify(borrowLogs));
   }, [borrowLogs]);
 
   // Inventory filters and form states
@@ -213,7 +214,7 @@ export default function SchoolLogistics({ currentUser }: SchoolLogisticsProps) {
 
   // 1. Quản lý Đăng ký phòng
   const [bookings, setBookings] = useState<RoomBooking[]>(() => {
-    const saved = localStorage.getItem('mis_logistics_bookings');
+    const saved = serverStorage.getItem('mis_logistics_bookings');
     if (saved) {
       try { return JSON.parse(saved); } catch (e) { }
     }
@@ -243,7 +244,7 @@ export default function SchoolLogistics({ currentUser }: SchoolLogisticsProps) {
 
   // 2. Quản lý Báo hỏng thiết bị
   const [issues, setIssues] = useState<MaintenanceReport[]>(() => {
-    const saved = localStorage.getItem('mis_logistics_issues');
+    const saved = serverStorage.getItem('mis_logistics_issues');
     if (saved) {
       try { return JSON.parse(saved); } catch (e) { }
     }
@@ -272,11 +273,11 @@ export default function SchoolLogistics({ currentUser }: SchoolLogisticsProps) {
   });
 
   useEffect(() => {
-    localStorage.setItem('mis_logistics_bookings', JSON.stringify(bookings));
+    serverStorage.setItem('mis_logistics_bookings', JSON.stringify(bookings));
   }, [bookings]);
 
   useEffect(() => {
-    localStorage.setItem('mis_logistics_issues', JSON.stringify(issues));
+    serverStorage.setItem('mis_logistics_issues', JSON.stringify(issues));
   }, [issues]);
 
   // Form Booking States

@@ -6,7 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 export async function seedDashboardData() {
   const taskCount = await db.select({ count: sql<number>`count(*)` }).from(schema.tasks);
-  if (taskCount[0].count > 0) return; // already seeded
+  if (taskCount[0].count > 100) return; // already seeded
 
   console.log("Seeding dashboard data...");
 
@@ -86,6 +86,28 @@ export async function seedDashboardData() {
     { id: uuidv4(), employeeProfileId: employeeId, type: 'annual', startDate: new Date(), endDate: new Date(), reason: 'Nghỉ ốm', status: 'pending', payload: {} },
     { id: uuidv4(), employeeProfileId: employeeId, type: 'unpaid', startDate: new Date(), endDate: new Date(), reason: 'Việc gia đình', status: 'pending', payload: {} }
   ]);
+
+  const allLeads = await db.select().from(schema.leads);
+  if (allLeads.length === 0) {
+    console.log("Seeding leads and payments for reports...");
+    const l1 = uuidv4();
+    const l2 = uuidv4();
+    const l3 = uuidv4();
+    const l4 = uuidv4();
+
+    await db.insert(schema.leads).values([
+      { id: l1, fullName: "Học sinh A", status: "enrolled", source: "Facebook", grade: "Khối 10", phone: "0900000001", leadCode: "LD-SEED-001" },
+      { id: l2, fullName: "Học sinh B", status: "enrolled", source: "Google", grade: "Khối 10", phone: "0900000002", leadCode: "LD-SEED-002" },
+      { id: l3, fullName: "Học sinh C", status: "seat_reserved", source: "Facebook", grade: "Khối 11", phone: "0900000003", leadCode: "LD-SEED-003" },
+      { id: l4, fullName: "Học sinh D", status: "docs_submitted", source: "Website", grade: "Khối 10", phone: "0900000004", leadCode: "LD-SEED-004" },
+    ]);
+
+    await db.insert(schema.payments).values([
+      { id: uuidv4(), leadId: l1, type: "tuition", amount: 15000000, status: "paid", transferContent: "TS-SEED-001" },
+      { id: uuidv4(), leadId: l2, type: "tuition", amount: 15000000, status: "paid", transferContent: "TS-SEED-002" },
+      { id: uuidv4(), leadId: l3, type: "seat_reservation", amount: 5000000, status: "paid", transferContent: "TS-SEED-003" },
+    ]);
+  }
 
   console.log("Seeding complete!");
 }

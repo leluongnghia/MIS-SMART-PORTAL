@@ -404,9 +404,10 @@ interface AdmissionsLeadsTableProps {
   leads: Lead[];
   setLeads: React.Dispatch<React.SetStateAction<Lead[]>>;
   chuongTrinhList?: string[];
+  onViewDetail?: (leadId: string) => void;
 }
 
-export default function AdmissionsLeadsTable({ leads, setLeads, chuongTrinhList }: AdmissionsLeadsTableProps) {
+export default function AdmissionsLeadsTable({ leads, setLeads, chuongTrinhList, onViewDetail }: AdmissionsLeadsTableProps) {
   const [timKiem, setTimKiem] = useState('');
   const [nguon, setNguon] = useState(DS_NGUON[0]);
   const [tvv, setTvv] = useState(DS_TVV[0]);
@@ -415,7 +416,13 @@ export default function AdmissionsLeadsTable({ leads, setLeads, chuongTrinhList 
   const [daChon, setDaChon] = useState<Set<string>>(new Set());
   const [trang, setTrang] = useState(1);
   const [hienModal, setHienModal] = useState(false);
+  const [toast, setToast] = useState('');
   const tongTrang = 129;
+
+  const showToast = (msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(''), 2500);
+  };
 
   const chonTatCa = () => {
     if (daChon.size === leads.length) setDaChon(new Set());
@@ -447,6 +454,12 @@ export default function AdmissionsLeadsTable({ leads, setLeads, chuongTrinhList 
 
   return (
     <>
+      {/* Toast notification */}
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-[9999] flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white shadow-2xl animate-in fade-in slide-in-from-bottom-2">
+          <span>✓</span> {toast}
+        </div>
+      )}
       <div className="space-y-5">
         {/* Tiêu đề */}
         <div className="flex items-start justify-between gap-4">
@@ -629,13 +642,13 @@ export default function AdmissionsLeadsTable({ leads, setLeads, chuongTrinhList 
                       <td className="py-3 px-3 text-xs text-slate-500 whitespace-nowrap">{lead.ngayTao}</td>
                       <td className="py-3 px-3">
                         <div className="flex items-center justify-center gap-1">
-                          <button type="button" title="Xem chi tiết" className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700">
+                          <button type="button" title="Xem chi tiết" onClick={() => onViewDetail ? onViewDetail(lead.id) : showToast(`Xem chi tiết: ${lead.hoTen}`)} className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:bg-blue-50 hover:text-blue-600">
                             <Eye className="h-3.5 w-3.5" />
                           </button>
-                          <button type="button" title="Chỉnh sửa" className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700">
+                          <button type="button" title="Chỉnh sửa" onClick={() => showToast(`Chỉnh sửa lead: ${lead.hoTen}`)} className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:bg-amber-50 hover:text-amber-600">
                             <Edit2 className="h-3.5 w-3.5" />
                           </button>
-                          <button type="button" title="Thêm thao tác" className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700">
+                          <button type="button" title="Thêm thao tác" onClick={() => showToast(`Thao tác: ${lead.hoTen}`)} className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700">
                             <MoreHorizontal className="h-3.5 w-3.5" />
                           </button>
                         </div>

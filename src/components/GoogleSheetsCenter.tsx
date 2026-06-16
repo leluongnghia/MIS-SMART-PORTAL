@@ -1,3 +1,4 @@
+import { serverStorage } from '../libs/client/server-storage';
 import React, { useState, useEffect } from 'react';
 import { 
   FileSpreadsheet, 
@@ -162,23 +163,23 @@ export default function GoogleSheetsCenter({ tasks, onSyncComplete }: GoogleShee
 
   // Email report configuration state
   const [recipientEmails, setRecipientEmails] = useState(() => {
-    return localStorage.getItem('mis_recipient_emails') || 'duonghinhi225@gmail.com, principal@mis.edu.vn, board@mis.edu.vn';
+    return serverStorage.getItem('mis_recipient_emails') || 'duonghinhi225@gmail.com, principal@mis.edu.vn, board@mis.edu.vn';
   });
   const [isAutoReportActive, setIsAutoReportActive] = useState(() => {
-    return localStorage.getItem('mis_auto_report_active') === 'true';
+    return serverStorage.getItem('mis_auto_report_active') === 'true';
   });
 
   // Toggles for individual reports
   const [isDailyActive, setIsDailyActive] = useState(() => {
-    const val = localStorage.getItem('mis_daily_active');
+    const val = serverStorage.getItem('mis_daily_active');
     return val === null ? true : val === 'true';
   });
   const [isWeeklyActive, setIsWeeklyActive] = useState(() => {
-    const val = localStorage.getItem('mis_weekly_active');
+    const val = serverStorage.getItem('mis_weekly_active');
     return val === null ? true : val === 'true';
   });
   const [isMonthlyActive, setIsMonthlyActive] = useState(() => {
-    const val = localStorage.getItem('mis_monthly_active');
+    const val = serverStorage.getItem('mis_monthly_active');
     return val === null ? true : val === 'true';
   });
 
@@ -186,14 +187,14 @@ export default function GoogleSheetsCenter({ tasks, onSyncComplete }: GoogleShee
   const [currentTime, setCurrentTime] = useState(new Date());
 
   // Times
-  const [dailySendTime, setDailySendTime] = useState(() => localStorage.getItem('mis_daily_send_time') || '17:00');
-  const [weeklySendTime, setWeeklySendTime] = useState(() => localStorage.getItem('mis_weekly_send_time') || '17:00');
-  const [monthlySendTime, setMonthlySendTime] = useState(() => localStorage.getItem('mis_monthly_send_time') || '07:00');
+  const [dailySendTime, setDailySendTime] = useState(() => serverStorage.getItem('mis_daily_send_time') || '17:00');
+  const [weeklySendTime, setWeeklySendTime] = useState(() => serverStorage.getItem('mis_weekly_send_time') || '17:00');
+  const [monthlySendTime, setMonthlySendTime] = useState(() => serverStorage.getItem('mis_monthly_send_time') || '07:00');
 
   // Trackers
-  const [lastSentDailyDate, setLastSentDailyDate] = useState(() => localStorage.getItem('mis_last_sent_daily_date') || '');
-  const [lastSentWeeklyDate, setLastSentWeeklyDate] = useState(() => localStorage.getItem('mis_last_sent_weekly_date') || '');
-  const [lastSentMonthlyDate, setLastSentMonthlyDate] = useState(() => localStorage.getItem('mis_last_sent_monthly_date') || '');
+  const [lastSentDailyDate, setLastSentDailyDate] = useState(() => serverStorage.getItem('mis_last_sent_daily_date') || '');
+  const [lastSentWeeklyDate, setLastSentWeeklyDate] = useState(() => serverStorage.getItem('mis_last_sent_weekly_date') || '');
+  const [lastSentMonthlyDate, setLastSentMonthlyDate] = useState(() => serverStorage.getItem('mis_last_sent_monthly_date') || '');
 
   const [previewType, setPreviewType] = useState<'DAILY' | 'WEEKLY' | 'MONTHLY'>('DAILY');
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
@@ -210,35 +211,35 @@ export default function GoogleSheetsCenter({ tasks, onSyncComplete }: GoogleShee
 
   // Sync state modifications to local storage
   useEffect(() => {
-    localStorage.setItem('mis_recipient_emails', recipientEmails);
+    serverStorage.setItem('mis_recipient_emails', recipientEmails);
   }, [recipientEmails]);
 
   useEffect(() => {
-    localStorage.setItem('mis_auto_report_active', String(isAutoReportActive));
+    serverStorage.setItem('mis_auto_report_active', String(isAutoReportActive));
   }, [isAutoReportActive]);
 
   useEffect(() => {
-    localStorage.setItem('mis_daily_active', String(isDailyActive));
+    serverStorage.setItem('mis_daily_active', String(isDailyActive));
   }, [isDailyActive]);
 
   useEffect(() => {
-    localStorage.setItem('mis_weekly_active', String(isWeeklyActive));
+    serverStorage.setItem('mis_weekly_active', String(isWeeklyActive));
   }, [isWeeklyActive]);
 
   useEffect(() => {
-    localStorage.setItem('mis_monthly_active', String(isMonthlyActive));
+    serverStorage.setItem('mis_monthly_active', String(isMonthlyActive));
   }, [isMonthlyActive]);
 
   useEffect(() => {
-    localStorage.setItem('mis_daily_send_time', dailySendTime);
+    serverStorage.setItem('mis_daily_send_time', dailySendTime);
   }, [dailySendTime]);
 
   useEffect(() => {
-    localStorage.setItem('mis_weekly_send_time', weeklySendTime);
+    serverStorage.setItem('mis_weekly_send_time', weeklySendTime);
   }, [weeklySendTime]);
 
   useEffect(() => {
-    localStorage.setItem('mis_monthly_send_time', monthlySendTime);
+    serverStorage.setItem('mis_monthly_send_time', monthlySendTime);
   }, [monthlySendTime]);
 
   const addLog = (msg: string) => {
@@ -484,13 +485,13 @@ export default function GoogleSheetsCenter({ tasks, onSyncComplete }: GoogleShee
         
         const nowStr = new Date().toLocaleDateString('vi-VN');
         if (type === 'DAILY') {
-          localStorage.setItem('mis_last_sent_daily_date', nowStr);
+          serverStorage.setItem('mis_last_sent_daily_date', nowStr);
           setLastSentDailyDate(nowStr);
         } else if (type === 'WEEKLY') {
-          localStorage.setItem('mis_last_sent_weekly_date', nowStr);
+          serverStorage.setItem('mis_last_sent_weekly_date', nowStr);
           setLastSentWeeklyDate(nowStr);
         } else {
-          localStorage.setItem('mis_last_sent_monthly_date', nowStr);
+          serverStorage.setItem('mis_last_sent_monthly_date', nowStr);
           setLastSentMonthlyDate(nowStr);
         }
       } else {

@@ -19,6 +19,7 @@ import AdmissionsPayments from './admissions/AdmissionsPayments';
 import AdmissionsReports from './admissions/AdmissionsReports';
 import AdmissionsCampaigns from './admissions/AdmissionsCampaigns';
 import AdmissionsSettings, { type ChuongTrinhHoc } from './admissions/AdmissionsSettings';
+import { MOCK_USERS } from '@/src/mockData';
 
 const INITIAL_CHUONG_TRINH: ChuongTrinhHoc[] = [
   { id: 'ct1', ten: 'Tiểu học - Chương trình Quốc gia', cap: 'Tiểu học', hoatDong: true, moTa: 'Chương trình chuẩn của Bộ Giáo dục & Đào tạo Việt Nam kết hợp các môn bổ trợ phát triển thể chất và kỹ năng.' },
@@ -66,6 +67,8 @@ const NAV_ITEMS: NavItem[] = [
   { id: 'campaigns',    label: '📣 Chiến dịch',        desc: 'Email, Zalo OA, Marketing', icon: Megaphone },
   { id: 'settings',     label: '⚙️ Cài đặt',           desc: 'Giai đoạn, quy tắc, phân quyền', icon: Settings },
 ];
+
+const ADMISSIONS_TEAM = MOCK_USERS.filter(user => user.workspaceId === 'TUYEN_SINH_PR').slice(0, 3);
 
 // Map legacy module IDs to new modules
 const LEGACY_MAP: Partial<Record<AdmissionsModule, AdmissionsModule>> = {
@@ -134,10 +137,10 @@ export default function AdmissionsEnterpriseDashboard({
 
   const renderModule = () => {
     switch (internalModule) {
-      case 'dashboard':    return <AdmissionsDashboard />;
-      case 'leads':        return <AdmissionsLeadsTable leads={leads} setLeads={setLeads} chuongTrinhList={chuongTrinhList.filter(c => c.hoatDong).map(c => c.ten)} />;
+      case 'dashboard':    return <AdmissionsDashboard onNavigate={(tab) => setInternalModule(tab as AdmissionsModule)} />;
+      case 'leads':        return <AdmissionsLeadsTable leads={leads} setLeads={setLeads} chuongTrinhList={chuongTrinhList.filter(c => c.hoatDong).map(c => c.ten)} onViewDetail={() => setInternalModule('lead_detail')} />;
       case 'pipeline':     return <AdmissionsPipelineKanban />;
-      case 'lead_detail':  return <AdmissionsLeadDetail />;
+      case 'lead_detail':  return <AdmissionsLeadDetail onBack={() => setInternalModule('leads')} />;
       case 'appointments': return <AdmissionsAppointments />;
       case 'documents':    return <AdmissionsDocuments />;
       case 'payments':     return <AdmissionsPayments />;
@@ -153,38 +156,65 @@ export default function AdmissionsEnterpriseDashboard({
 
   return (
     <div className="min-h-screen bg-slate-50/50">
-      {/* Sub-navigation bar */}
-      <div className="border-b border-slate-100 bg-white shadow-xs">
-        <div className="flex items-center justify-between px-4">
-          <div className="flex items-center gap-0 overflow-x-auto">
-            {NAV_ITEMS.map(item => {
-              const Icon = item.icon;
-              const isActive = item.id === internalModule;
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => setInternalModule(item.id)}
-                  className={`flex shrink-0 items-center gap-2 border-b-2 px-3 py-3 text-xs font-bold transition ${
-                    isActive
-                      ? 'border-blue-600 text-blue-700'
-                      : 'border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50'
-                  }`}
-                >
-                  <Icon className="h-3.5 w-3.5" />
-                  {item.label}
-                </button>
-              );
-            })}
+      {/* Sticky admissions command bar */}
+      <div className="sticky top-0 z-40 border-b border-blue-100/80 bg-white/90 shadow-[0_14px_45px_rgba(15,23,42,0.08)] backdrop-blur-xl">
+        <div className="flex flex-col gap-3 px-4 py-3 xl:flex-row xl:items-center xl:justify-between">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="hidden h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 via-cyan-500 to-emerald-400 text-white shadow-lg shadow-blue-500/20 sm:flex">
+              <GraduationCap className="h-6 w-6" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[10px] font-black uppercase tracking-[0.22em] text-blue-600">Trung tâm tuyển sinh</p>
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="truncate text-lg font-black text-slate-950">Quản trị Phòng Tuyển sinh & PR</h1>
+                <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-black text-emerald-700">3 thành viên online</span>
+              </div>
+              <p className="text-xs font-semibold text-slate-500">Tổ tuyển sinh · phòng ban · thành viên · pipeline lead tập trung</p>
+            </div>
           </div>
-          <button
-            type="button"
-            onClick={() => setHienModal(true)}
-            className="my-2 flex h-8 shrink-0 items-center gap-1.5 rounded-xl bg-blue-600 px-3.5 text-xs font-bold text-white shadow-sm hover:bg-blue-700 active:scale-95 transition-all"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            Thêm lead mới
-          </button>
+
+          <div className="flex shrink-0 flex-wrap items-center gap-2">
+            {ADMISSIONS_TEAM.map(member => (
+              <div key={member.id} className="group flex h-9 items-center gap-2 rounded-full border border-slate-200 bg-white px-2 pr-3 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md">
+                <img src={member.avatar} alt={member.name} className="h-6 w-6 rounded-full object-cover ring-2 ring-white" />
+                <div className="hidden leading-none md:block">
+                  <p className="text-[10px] font-black text-slate-800">{member.name.replace(/^Cô |^Thầy /, '')}</p>
+                  <p className="text-[9px] font-bold text-slate-400">{member.role === 'MANAGER' ? 'Trưởng phòng' : 'TVV'}</p>
+                </div>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={() => setHienModal(true)}
+              className="group relative flex h-10 shrink-0 items-center gap-2 overflow-hidden rounded-2xl bg-gradient-to-r from-blue-600 via-sky-500 to-cyan-400 px-4 text-xs font-black text-white shadow-lg shadow-blue-500/25 transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-blue-500/30 active:scale-95"
+            >
+              <span className="absolute inset-0 -translate-x-full bg-white/20 transition-transform duration-500 group-hover:translate-x-full" />
+              <Plus className="relative h-4 w-4" />
+              <span className="relative">Thêm lead mới</span>
+            </button>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-0 overflow-x-auto px-4">
+          {NAV_ITEMS.map(item => {
+            const Icon = item.icon;
+            const isActive = item.id === internalModule;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => setInternalModule(item.id)}
+                className={`flex shrink-0 items-center gap-2 border-b-2 px-3 py-3 text-xs font-bold transition ${
+                  isActive
+                    ? 'border-blue-600 text-blue-700'
+                    : 'border-transparent text-slate-500 hover:bg-slate-50 hover:text-slate-800'
+                }`}
+              >
+                <Icon className="h-3.5 w-3.5" />
+                {item.label}
+              </button>
+            );
+          })}
         </div>
       </div>
 

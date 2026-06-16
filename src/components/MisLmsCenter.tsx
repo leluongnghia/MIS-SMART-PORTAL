@@ -1,4 +1,6 @@
 'use client';
+import { serverStorage } from '../libs/client/server-storage';
+
 
 import React, { useState, useEffect } from 'react';
 import { 
@@ -90,7 +92,7 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
       { id: 'SYNC001', date: '2026-06-02 08:30', operator: 'Thầy Trần Hoàng Nam', records: 425, status: 'SUCCESS' as const },
       { id: 'SYNC002', date: '2026-05-15 14:20', operator: 'Cô Lê Thị Thanh Nhàn', records: 418, status: 'SUCCESS' as const }
     ];
-    const saved = typeof window !== 'undefined' ? localStorage.getItem('mis_emis_sync_history') : null;
+    const saved = typeof window !== 'undefined' ? serverStorage.getItem('mis_emis_sync_history') : null;
     return saved ? JSON.parse(saved) : defaultHistory;
   });
 
@@ -129,7 +131,7 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
           };
           setSyncHistory(prev => {
             const updated = [newRecord, ...prev];
-            localStorage.setItem('mis_emis_sync_history', JSON.stringify(updated));
+            serverStorage.setItem('mis_emis_sync_history', JSON.stringify(updated));
             return updated;
           });
         }
@@ -256,7 +258,7 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
 
   // Operations States
   const [zoomClasses, setZoomClasses] = useState<any[]>(() => {
-    const saved = typeof window !== 'undefined' ? localStorage.getItem('mis_lms_zoom_classes') : null;
+    const saved = typeof window !== 'undefined' ? serverStorage.getItem('mis_lms_zoom_classes') : null;
     if (saved) {
       try { return JSON.parse(saved); } catch (e) { console.error(e); }
     }
@@ -267,7 +269,7 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
   });
 
   const [quizQuestions, setQuizQuestions] = useState<any[]>(() => {
-    const saved = typeof window !== 'undefined' ? localStorage.getItem('mis_lms_quiz_questions') : null;
+    const saved = typeof window !== 'undefined' ? serverStorage.getItem('mis_lms_quiz_questions') : null;
     if (saved) {
       try { return JSON.parse(saved); } catch (e) { console.error(e); }
     }
@@ -321,7 +323,7 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
   });
 
   const [reviewAssignments, setReviewAssignments] = useState<any[]>(() => {
-    const saved = typeof window !== 'undefined' ? localStorage.getItem('mis_lms_review_assignments') : null;
+    const saved = typeof window !== 'undefined' ? serverStorage.getItem('mis_lms_review_assignments') : null;
     if (saved) {
       try { return JSON.parse(saved); } catch (e) { console.error(e); }
     }
@@ -352,7 +354,7 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
   });
 
   const [reviewSubmissions, setReviewSubmissions] = useState<any[]>(() => {
-    const saved = typeof window !== 'undefined' ? localStorage.getItem('mis_lms_review_submissions') : null;
+    const saved = typeof window !== 'undefined' ? serverStorage.getItem('mis_lms_review_submissions') : null;
     if (saved) {
       try { return JSON.parse(saved); } catch (e) { console.error(e); }
     }
@@ -365,7 +367,7 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
 
   // Shared state: Tuition fees
   const [tuitionFees, setTuitionFees] = useState<any[]>(() => {
-    const saved = typeof window !== 'undefined' ? localStorage.getItem('mis_lms_tuition_fees') : null;
+    const saved = typeof window !== 'undefined' ? serverStorage.getItem('mis_lms_tuition_fees') : null;
     if (saved) {
       try { return JSON.parse(saved); } catch (e) { console.error(e); }
     }
@@ -393,7 +395,7 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem('mis_lms_tuition_fees', JSON.stringify(tuitionFees));
+      serverStorage.setItem('mis_lms_tuition_fees', JSON.stringify(tuitionFees));
     }
     const syncInvoices = async () => {
       try {

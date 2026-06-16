@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useTransition, useMemo } from 'react';
+import { useState, useTransition, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { cn } from '@/src/lib/utils';
+import { useToast } from '@/src/components/ui/Toast';
 import {
   useReactTable,
   getCoreRowModel,
@@ -21,6 +22,8 @@ import {
   Eye,
   ChevronLeft,
   ChevronRight,
+  ChevronUp,
+  ChevronDown as ChevronDownIcon,
   MoreVertical,
   FileSpreadsheet,
   Upload
@@ -37,6 +40,7 @@ import {
   createLead,
   updateLead,
   deleteLead,
+  getAllLeadsForExport,
   type LeadStatus,
 } from './actions';
 
@@ -175,12 +179,29 @@ export default function LeadsClient({
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [activeLead, setActiveLead] = useState<Lead | null>(null);
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
+  const [sortBy, setSortBy] = useState(filters.sortBy || 'createdAt');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>(filters.sortOrder || 'desc');
+  const [assignedFilter, setAssignedFilter] = useState('all');
 
-  // Search/Filters states
+  // Search/Filters states (must be before handleSort)
   const [search, setSearch] = useState(filters.search);
   const [status, setStatus] = useState(filters.status);
   const [source, setSource] = useState(filters.source);
   const [grade, setGrade] = useState(filters.grade);
+
+  const handleSort = useCallback((col: string) => {
+    const newOrder = sortBy === col && sortOrder === 'asc' ? 'desc' : 'asc';
+    setSortBy(col);
+    setSortOrder(newOrder);
+    const query = new URLSearchParams();
+    if (search) query.set('search', search);
+    if (status && status !== 'all') query.set('status', status);
+    if (source && source !== 'all') query.set('source', source);
+    if (grade && grade !== 'all') query.set('grade', grade);
+    query.set('sortBy', col);
+    query.set('sortOrder', newOrder);
+    startTransition(() => router.push(`/${locale}/leads?${query.toString()}`));
+  }, [sortBy, sortOrder, search, status, source, grade, locale, router]);
 
   // Forms
   const createForm = useForm<LeadFormValues>({
@@ -233,13 +254,17 @@ export default function LeadsClient({
     }
   };
 
-  // Mutations
+  const { success: toastSuccess, error: toastError } = useToast();
+
   const onSubmitCreate = async (values: LeadFormValues) => {
     const result = await createLead(values as any);
     if (result.success) {
       setCreateOpen(false);
       createForm.reset();
+      toastSuccess('Tạo lead thành công', `Đã thêm hồ sơ tuyển sinh mới`);
       router.refresh();
+    } else {
+      toastError('Tạo lead thất bại', 'Vui lòng kiểm tra lại thông tin');
     }
   };
 
@@ -249,7 +274,10 @@ export default function LeadsClient({
     if (result.success) {
       setEditOpen(false);
       setActiveLead(null);
+      toastSuccess('Cập nhật thành công', `Đã lưu thông tin hồ sơ ${activeLead.fullName}`);
       router.refresh();
+    } else {
+      toastError('Cập nhật thất bại', 'Vui lòng thử lại');
     }
   };
 
@@ -259,17 +287,28 @@ export default function LeadsClient({
     if (result.success) {
       setDeleteOpen(false);
       setActiveLead(null);
+      toastSuccess('Đã xóa lead', `Đã xóa hồ sơ ${activeLead.fullName} khỏi hệ thống`);
       router.refresh();
+    } else {
+      toastError('Xóa thất bại', 'Vui lòng thử lại');
     }
   };
 
-  // Excel / CSV Export function
-  const handleExportCSV = () => {
-    const data = initialData.data;
-    if (!data.length) {
-      alert('Không có dữ liệu để xuất!');
-      return;
-    }
+  // Export CSV — all leads from current filters via server action
+  const [isExporting, setIsExporting] = useState(false);
+  const handleExportCSV = async () => {
+    setIsExporting(true);
+    try {
+      const allLeads = await getAllLeadsForExport({
+        search: search || undefined,
+        status: status !== 'all' ? status : undefined,
+        source: source !== 'all' ? source : undefined,
+        grade: grade !== 'all' ? grade : undefined,
+      });
+      if (!allLeads.length) {
+        toastError('Không có dữ liệu', 'Không có lead nào để xuất với bộ lọc hiện tại');
+        return;
+      }
 
     const headers = [
       'Mã Lead',
@@ -291,7 +330,7 @@ export default function LeadsClient({
       'Ghi Chú',
     ];
 
-    const rows = data.map(l => [
+    const rows = allLeads.map((l: any) => [
       l.leadCode,
       l.fullName,
       l.dateOfBirth ? new Date(l.dateOfBirth).toLocaleDateString('vi-VN') : '',
@@ -304,7 +343,7 @@ export default function LeadsClient({
       l.currentClass || '',
       l.currentSchool || '',
       l.address || '',
-      statusLabels[l.status] || l.status,
+      statusLabels[l.status as LeadStatus] || l.status,
       l.nationalStudentId || '',
       l.insuranceId || '',
       l.moetStudentId || '',
@@ -313,7 +352,7 @@ export default function LeadsClient({
 
     let csvContent = '\uFEFF'; // UTF-8 BOM
     csvContent += headers.map(h => `"${h.replace(/"/g, '""')}"`).join(',') + '\n';
-    rows.forEach(row => {
+    rows.forEach((row: any[]) => {
       csvContent += row.map(val => `"${String(val || '').replace(/"/g, '""')}"`).join(',') + '\n';
     });
 
@@ -325,6 +364,12 @@ export default function LeadsClient({
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    toastSuccess('Xuất CSV thành công', `Đã xuất ${allLeads.length} lead`);
+    } catch (err) {
+      toastError('Xuất thất bại', 'Vui lòng thử lại');
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   // Excel / CSV Import function
@@ -409,22 +454,45 @@ export default function LeadsClient({
       }
 
       alert(`Đã xử lý: ${count} dòng. Nhập thành công: ${successCount} Leads tuyển sinh mới!`);
+      toastSuccess(`Nhập CSV thành công`, `Đã xử lý ${count} dòng, thêm được ${successCount} lead mới`);
       router.refresh();
     };
 
     reader.readAsText(file, 'utf-8');
   };
 
+  // Filtered data (client-side by assignedUser after server-side filters)
+  const displayData = useMemo(() => {
+    if (assignedFilter === 'all') return initialData.data;
+    return initialData.data.filter(l => l.assignedUserId === assignedFilter);
+  }, [initialData.data, assignedFilter]);
+
   // Table setup
   const columnHelper = createColumnHelper<Lead>();
+
+  const SortIcon = ({ col }: { col: string }) => {
+    if (sortBy !== col) return <ChevronDownIcon className="h-3 w-3 text-slate-300 ml-1" />;
+    return sortOrder === 'asc'
+      ? <ChevronUp className="h-3 w-3 text-blue-500 ml-1" />
+      : <ChevronDownIcon className="h-3 w-3 text-blue-500 ml-1" />;
+  };
+
   const columns = useMemo(
     () => [
       columnHelper.accessor('leadCode', {
-        header: 'Mã Lead',
+        header: () => (
+          <button type="button" className="flex items-center font-bold" onClick={() => handleSort('leadCode')}>
+            Mã Lead <SortIcon col="leadCode" />
+          </button>
+        ),
         cell: info => <span className="font-mono text-xs font-bold">{info.getValue()}</span>,
       }),
       columnHelper.accessor('fullName', {
-        header: 'Tên Học Sinh',
+        header: () => (
+          <button type="button" className="flex items-center font-bold" onClick={() => handleSort('fullName')}>
+            Tên Học Sinh <SortIcon col="fullName" />
+          </button>
+        ),
         cell: info => <span className="font-bold text-slate-950 dark:text-white">{info.getValue()}</span>,
       }),
       columnHelper.accessor('parentName', {
@@ -442,7 +510,11 @@ export default function LeadsClient({
         header: 'Nguồn',
       }),
       columnHelper.accessor('status', {
-        header: 'Trạng Thái',
+        header: () => (
+          <button type="button" className="flex items-center font-bold" onClick={() => handleSort('status')}>
+            Trạng Thái <SortIcon col="status" />
+          </button>
+        ),
         cell: info => {
           const val = info.getValue();
           return (
@@ -524,11 +596,11 @@ export default function LeadsClient({
         },
       }),
     ],
-    [activeMenuId, locale, columnHelper, editForm],
+    [activeMenuId, locale, columnHelper, editForm, sortBy, sortOrder, handleSort],
   );
 
   const table = useReactTable({
-    data: initialData.data,
+    data: displayData,
     columns,
     getCoreRowModel: getCoreRowModel(),
   });
@@ -549,10 +621,11 @@ export default function LeadsClient({
             type="button"
             variant="outline"
             onClick={handleExportCSV}
+            disabled={isExporting}
             className="w-full sm:w-auto text-xs font-bold border-slate-200 hover:bg-slate-50 text-slate-700 dark:border-slate-800 dark:text-slate-200"
           >
             <FileSpreadsheet className="mr-1.5 h-4 w-4 text-emerald-600" />
-            Xuất Excel (CSV)
+            {isExporting ? 'Đang xuất...' : 'Xuất Excel (CSV)'}
           </Button>
 
           {/* Import Excel Button */}
@@ -581,9 +654,9 @@ export default function LeadsClient({
       {/* Filter Toolbar */}
       <Card>
         <CardContent className="p-4">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-6">
             {/* Search */}
-            <div className="relative">
+            <div className="relative lg:col-span-2">
               <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
               <Input
                 placeholder="Tìm tên, SĐT, mã..."
@@ -605,9 +678,7 @@ export default function LeadsClient({
             >
               <option value="all">Tất cả trạng thái</option>
               {Object.entries(statusLabels).map(([key, label]) => (
-                <option key={key} value={key}>
-                  {label}
-                </option>
+                <option key={key} value={key}>{label}</option>
               ))}
             </Select>
             {/* Filter Source */}
@@ -620,9 +691,7 @@ export default function LeadsClient({
             >
               <option value="all">Tất cả nguồn</option>
               {leadSources.map(src => (
-                <option key={src} value={src}>
-                  {src}
-                </option>
+                <option key={src} value={src}>{src}</option>
               ))}
             </Select>
             {/* Filter Grade */}
@@ -635,20 +704,32 @@ export default function LeadsClient({
             >
               <option value="all">Tất cả khối lớp</option>
               {gradeLevels.map(gr => (
-                <option key={gr} value={gr}>
-                  {gr}
-                </option>
+                <option key={gr} value={gr}>{gr}</option>
               ))}
             </Select>
+            {/* Filter Assigned User */}
+            <Select
+              value={assignedFilter}
+              onChange={e => setAssignedFilter(e.target.value)}
+            >
+              <option value="all">Tất cả phụ trách</option>
+              {users.map(u => (
+                <option key={u.id} value={u.id}>{u.name}</option>
+              ))}
+            </Select>
+          </div>
+          <div className="mt-3 flex justify-end">
             {/* Reset Filters */}
             <Button
               variant="outline"
+              size="sm"
               className="font-bold border-slate-200 text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-200"
               onClick={() => {
                 setSearch('');
                 setStatus('all');
                 setSource('all');
                 setGrade('all');
+                setAssignedFilter('all');
                 router.push(`/${locale}/leads`);
               }}
             >
@@ -680,7 +761,8 @@ export default function LeadsClient({
                 table.getRowModel().rows.map(row => (
                   <TableRow
                     key={row.id}
-                    className="border-b border-slate-100 hover:bg-slate-50/50 dark:border-slate-800 dark:hover:bg-slate-900/30"
+                    onClick={() => router.push(`/${locale}/leads/${row.original.id}`)}
+                    className="border-b border-slate-100 hover:bg-blue-50/40 dark:border-slate-800 dark:hover:bg-slate-900/30 cursor-pointer"
                   >
                     {row.getVisibleCells().map(cell => (
                       <TableCell key={cell.id} className="py-3.5 text-sm">

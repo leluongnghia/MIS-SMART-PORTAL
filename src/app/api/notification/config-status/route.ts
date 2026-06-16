@@ -9,6 +9,6 @@ export async function GET(req: Request) {
 
   return NextResponse.json({
     status: 'success',
-    config: getNotificationConfigStatus(),
+    config: await getNotificationConfigStatus(),
   });
 }

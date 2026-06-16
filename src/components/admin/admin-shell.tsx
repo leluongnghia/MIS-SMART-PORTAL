@@ -1,4 +1,6 @@
 'use client';
+import { serverStorage } from '../../libs/client/server-storage';
+
 
 import type { ReactNode } from 'react';
 import Link from 'next/link';
@@ -44,7 +46,16 @@ import type { UserProfile } from '@/src/types';
 
 type MenuItemGroup = {
   title: string;
-  items: { label: string; href: string; icon: any }[];
+  items: { label: string; href: string; icon: any; badgeKey?: 'tasks' | 'directives' | 'announcements' }[];
+};
+
+type NotificationSummary = {
+  total: number;
+  tasks: number;
+  directives: number;
+  announcements: number;
+  urgent: number;
+  latest: { id: string; type: string; title: string; href: string }[];
 };
 
 const menuGroups: MenuItemGroup[] = [
@@ -67,11 +78,11 @@ const menuGroups: MenuItemGroup[] = [
   {
     title: 'VẬN HÀNH',
     items: [
-      { label: 'Công việc & Quy trình', href: 'tasks', icon: CheckSquare },
+      { label: 'Công việc & Quy trình', href: 'tasks', icon: CheckSquare, badgeKey: 'tasks' },
       { label: 'Phê duyệt', href: 'approvals', icon: UserCheck },
       { label: 'Lịch & Sự kiện', href: 'events', icon: Calendar },
-      { label: 'Chỉ đạo BGH', href: 'directives', icon: ClipboardCheck },
-      { label: 'Thông báo nội bộ', href: 'announcements', icon: Bell },
+      { label: 'Chỉ đạo BGH', href: 'directives', icon: ClipboardCheck, badgeKey: 'directives' },
+      { label: 'Thông báo nội bộ', href: 'announcements', icon: Bell, badgeKey: 'announcements' },
       { label: 'Quản trị Nhân sự HRM', href: 'hrm', icon: Users },
       { label: 'Quản trị Rủi ro', href: 'risk', icon: ShieldAlert },
       { label: 'Tuyển sinh & CRM', href: 'admissions', icon: Workflow },
@@ -93,7 +104,7 @@ const menuGroups: MenuItemGroup[] = [
 function segmentLabel(segment: string) {
   return segment
     .replace(/-/g, ' ')
-    .replace(/\b\w/g, letter => letter.toUpperCase());
+    .replace(/\\b\\w/g, letter => letter.toUpperCase());
 }
 
 export default function AdminShell({ locale, children }: { locale: string; children: ReactNode }) {
@@ -101,11 +112,21 @@ export default function AdminShell({ locale, children }: { locale: string; child
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userOpen, setUserOpen] = useState(false);
+  const [switcherOpen, setSwitcherOpen] = useState(false);
   const [dark, setDark] = useState(false);
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [isAuthReady, setIsAuthReady] = useState<boolean>(false);
   const [currentTab, setCurrentTab] = useState<string | null>(null);
+  const [notificationSummary, setNotificationSummary] = useState<NotificationSummary>({
+    total: 0,
+    tasks: 0,
+    directives: 0,
+    announcements: 0,
+    urgent: 0,
+    latest: [],
+  });
+  const [toastNotice, setToastNotice] = useState<string>('');
 
   useEffect(() => {
     const updateTab = () => {
@@ -118,8 +139,8 @@ export default function AdminShell({ locale, children }: { locale: string; child
   }, [pathname]);
 
   useEffect(() => {
-    const loggedIn = localStorage.getItem('mis_edutask_logged_in') === 'true';
-    const savedUserId = localStorage.getItem('mis_edutask_logged_in_user_id');
+    const loggedIn = serverStorage.getItem('mis_edutask_logged_in') === 'true';
+    const savedUserId = serverStorage.getItem('mis_edutask_logged_in_user_id');
     if (loggedIn && savedUserId) {
       const matched = MOCK_USERS.find(u => u.id === savedUserId);
       if (matched) {
@@ -136,7 +157,7 @@ export default function AdminShell({ locale, children }: { locale: string; child
   }, []);
 
   useEffect(() => {
-    const stored = typeof window !== 'undefined' ? localStorage.getItem('mis_admin_theme') : null;
+    const stored = typeof window !== 'undefined' ? serverStorage.getItem('mis_admin_theme') : null;
     const shouldDark = stored ? stored === 'dark' : document.documentElement.classList.contains('dark');
     setDark(shouldDark);
     document.documentElement.classList.toggle('dark', shouldDark);
@@ -146,16 +167,56 @@ export default function AdminShell({ locale, children }: { locale: string; child
     const next = !dark;
     setDark(next);
     document.documentElement.classList.toggle('dark', next);
-    localStorage.setItem('mis_admin_theme', next ? 'dark' : 'light');
+    serverStorage.setItem('mis_admin_theme', next ? 'dark' : 'light');
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('mis_edutask_logged_in');
-    localStorage.removeItem('mis_edutask_logged_in_user_id');
+    serverStorage.removeItem('mis_edutask_logged_in');
+    serverStorage.removeItem('mis_edutask_logged_in_user_id');
     setCurrentUser(null);
     setIsLoggedIn(false);
     setUserOpen(false);
+    setSwitcherOpen(false);
   };
+
+  useEffect(() => {
+    if (!currentUser) return;
+
+    let previousTotal: number | null = null;
+    let cancelled = false;
+
+    const loadSummary = async () => {
+      try {
+        const response = await fetch(`/api/notifications/summary?userId=${encodeURIComponent(currentUser.id)}`, { cache: 'no-store' });
+        if (!response.ok) return;
+        const data = await response.json();
+        if (cancelled || data?.status !== 'success') return;
+        const nextSummary: NotificationSummary = {
+          total: Number(data.total || 0),
+          tasks: Number(data.tasks || 0),
+          directives: Number(data.directives || 0),
+          announcements: Number(data.announcements || 0),
+          urgent: Number(data.urgent || 0),
+          latest: Array.isArray(data.latest) ? data.latest : [],
+        };
+        if (previousTotal !== null && nextSummary.total > previousTotal) {
+          setToastNotice(`Bạn có ${nextSummary.total - previousTotal} mục mới cần kiểm tra`);
+          window.setTimeout(() => setToastNotice(''), 3500);
+        }
+        previousTotal = nextSummary.total;
+        setNotificationSummary(nextSummary);
+      } catch (error) {
+        console.warn('Notification summary failed', error);
+      }
+    };
+
+    loadSummary();
+    const timer = window.setInterval(loadSummary, 12000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, [currentUser]);
 
   const getSimulatedEmail = (user: UserProfile) => {
     if (user.email) return user.email;
@@ -164,7 +225,7 @@ export default function AdminShell({ locale, children }: { locale: string; child
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
       .replace(/[đĐ]/g, 'd')
-      .replace(/\s+/g, '.');
+      .replace(/\\s+/g, '.');
     return `${cleanName}@mis.edu.vn`;
   };
 
@@ -185,8 +246,8 @@ export default function AdminShell({ locale, children }: { locale: string; child
     return (
       <LoginPortal
         onLoginSuccess={(user) => {
-          localStorage.setItem('mis_edutask_logged_in', 'true');
-          localStorage.setItem('mis_edutask_logged_in_user_id', user.id);
+          serverStorage.setItem('mis_edutask_logged_in', 'true');
+          serverStorage.setItem('mis_edutask_logged_in_user_id', user.id);
           setCurrentUser(user);
           setIsLoggedIn(true);
         }}
@@ -211,10 +272,12 @@ export default function AdminShell({ locale, children }: { locale: string; child
     {
       title: 'NGHIỆP VỤ BỘ PHẬN',
       items: [
-        { label: 'Công việc nội bộ', href: 'dashboard?tab=tasks', icon: CheckSquare },
+        { label: 'Công việc nội bộ', href: 'dashboard?tab=tasks', icon: CheckSquare, badgeKey: 'tasks' },
         { label: 'Duyệt giáo án', href: 'dashboard?tab=giaoan', icon: FileText },
         { label: 'Đề xuất nghỉ phép', href: 'dashboard?tab=nghiphep', icon: UserCheck },
         { label: 'Thành viên tổ', href: 'dashboard?tab=members', icon: Users },
+        { label: 'Chỉ đạo BGH', href: 'directives', icon: ClipboardCheck, badgeKey: 'directives' },
+        { label: 'Thông báo nội bộ', href: 'announcements', icon: Bell, badgeKey: 'announcements' },
       ],
     },
     {
@@ -222,6 +285,46 @@ export default function AdminShell({ locale, children }: { locale: string; child
       items: [
         { label: 'Thời khóa biểu & Lịch dạy', href: 'dashboard?tab=schedule', icon: CalendarDays },
         { label: 'Hồ sơ Học sinh 360', href: 'students', icon: GraduationCap },
+      ],
+    },
+    {
+      title: 'HỆ THỐNG',
+      items: [
+        { label: 'Cấu hình cá nhân', href: 'settings', icon: Settings },
+      ],
+    },
+  ];
+
+  const admissionsMenuGroups: MenuItemGroup[] = [
+    {
+      title: 'TỔNG QUAN',
+      items: [
+        { label: 'Tổng quan điều hành', href: 'dashboard', icon: LayoutDashboard },
+        { label: 'Báo cáo nhanh', href: 'reports', icon: FileBarChart },
+      ],
+    },
+    {
+      title: 'TUYỂN SINH & CRM',
+      items: [
+        { label: 'Dashboard', href: 'admissions?view=dashboard', icon: Workflow },
+        { label: 'Lead & Thí sinh', href: 'admissions?view=leads', icon: Users },
+        { label: 'Pipeline', href: 'admissions?view=pipeline', icon: Workflow },
+        { label: 'Lịch hẹn & Test', href: 'admissions?view=appointments', icon: Calendar },
+        { label: 'Hồ sơ tuyển sinh', href: 'admissions?view=documents', icon: FileText },
+        { label: 'Thanh toán', href: 'admissions?view=payments', icon: CreditCard },
+        { label: 'Báo cáo CRM', href: 'admissions?view=reports', icon: FileBarChart },
+        { label: 'Chiến dịch', href: 'admissions?view=campaigns', icon: Bell },
+        { label: 'Cài đặt Pipeline', href: 'admissions?view=settings', icon: Settings },
+        { label: 'Hồ sơ Học sinh 360', href: 'students', icon: GraduationCap },
+        { label: 'Lịch & Sự kiện', href: 'events', icon: Calendar },
+      ],
+    },
+    {
+      title: 'VẬN HÀNH BỘ PHẬN',
+      items: [
+        { label: 'Công việc & Quy trình', href: 'tasks', icon: CheckSquare, badgeKey: 'tasks' },
+        { label: 'Chỉ đạo BGH', href: 'directives', icon: ClipboardCheck, badgeKey: 'directives' },
+        { label: 'Thông báo nội bộ', href: 'announcements', icon: Bell, badgeKey: 'announcements' },
       ],
     },
     {
@@ -285,7 +388,7 @@ export default function AdminShell({ locale, children }: { locale: string; child
         { label: 'Danh mục', href: 'categories', icon: List }
       ]
     }
-  ] : isDepartment ? departmentMenuGroups : menuGroups;
+  ] : currentUser?.workspaceId === 'TUYEN_SINH_PR' ? admissionsMenuGroups : isDepartment ? departmentMenuGroups : menuGroups;
 
   const Sidebar = (
     <aside className={cn('flex h-full flex-col border-r border-slate-200 bg-white transition-all dark:border-slate-800 dark:bg-slate-950', collapsed ? 'w-20' : 'w-72')}>
@@ -347,6 +450,14 @@ export default function AdminShell({ locale, children }: { locale: string; child
                   >
                     <Icon className={cn("h-[18px] w-[18px] shrink-0", active ? "text-white" : "")} />
                     {!collapsed && <span className="truncate">{item.label}</span>}
+                    {item.badgeKey && notificationSummary[item.badgeKey] > 0 && (
+                      <span className={cn(
+                        'ml-auto flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-[10px] font-black',
+                        active ? 'bg-white text-blue-700' : 'bg-rose-500 text-white shadow-sm shadow-rose-500/30'
+                      )}>
+                        {notificationSummary[item.badgeKey] > 99 ? '99+' : notificationSummary[item.badgeKey]}
+                      </span>
+                    )}
                   </Link>
                 );
               })}
@@ -403,17 +514,82 @@ export default function AdminShell({ locale, children }: { locale: string; child
           <div className="flex items-center gap-4">
 
 
-            <Button variant="ghost" size="icon" className="relative text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300">
+            {toastNotice && (
+              <div className="fixed right-5 top-20 z-[9999] rounded-2xl border border-blue-100 bg-white px-4 py-3 text-sm font-bold text-slate-800 shadow-2xl shadow-blue-500/15">
+                🔔 {toastNotice}
+              </div>
+            )}
+
+            <Button variant="ghost" size="icon" className="relative text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300" title={`${notificationSummary.total} mục cần kiểm tra`}>
               <Bell className="h-5 w-5" />
-              <span className="absolute top-1.5 right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-blue-600 text-[10px] font-bold text-white">12</span>
+              {notificationSummary.total > 0 && (
+                <span className="absolute top-1.5 right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-blue-600 px-1 text-[10px] font-bold text-white">
+                  {notificationSummary.total > 99 ? '99+' : notificationSummary.total}
+                </span>
+              )}
             </Button>
             
             <Button variant="ghost" size="icon" onClick={toggleTheme} aria-label="Toggle theme" className="text-slate-500">
               {dark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
             </Button>
+
+            <div className="relative">
+              <Button
+                variant="ghost"
+                className="h-9 gap-2 rounded-full border border-slate-200 bg-white px-2.5 text-slate-600 shadow-sm hover:bg-blue-50 hover:text-blue-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-blue-950/30"
+                onClick={() => {
+                  setSwitcherOpen(value => !value);
+                  setUserOpen(false);
+                }}
+                title="Chuyển user test"
+              >
+                <Users className="h-4 w-4" />
+                <span className="hidden text-xs font-black md:inline">Đổi user</span>
+                <ChevronDown className="h-3.5 w-3.5" />
+              </Button>
+              {switcherOpen && (
+                <div className="absolute right-0 mt-2 w-72 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/10 dark:border-slate-800 dark:bg-slate-950">
+                  <div className="border-b border-slate-100 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-900/70">
+                    <div className="text-[10px] font-black uppercase tracking-[0.18em] text-blue-600 dark:text-blue-300">Chuyển user test</div>
+                    <div className="mt-0.5 text-xs font-semibold text-slate-500">Tách riêng để không bị đè menu avatar.</div>
+                  </div>
+                  <div className="max-h-80 overflow-y-auto p-2 custom-scrollbar">
+                    {MOCK_USERS.map(user => (
+                      <button
+                        key={user.id}
+                        type="button"
+                        onClick={() => {
+                          serverStorage.setItem('mis_edutask_logged_in', 'true');
+                          serverStorage.setItem('mis_edutask_logged_in_user_id', user.id);
+                          setCurrentUser(user);
+                          setIsLoggedIn(true);
+                          setSwitcherOpen(false);
+                          setUserOpen(false);
+                          window.location.reload();
+                        }}
+                        className={cn(
+                          'flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-blue-50 dark:hover:bg-blue-950/30',
+                          currentUser.id === user.id ? 'bg-blue-50 text-blue-700 ring-1 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-900/50' : 'text-slate-700 dark:text-slate-300'
+                        )}
+                      >
+                        <img src={user.avatar || `https://i.pravatar.cc/150?u=${user.id}`} alt="" className="h-8 w-8 rounded-full object-cover ring-2 ring-white dark:ring-slate-800" />
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-sm font-black">{user.name}</span>
+                          <span className="block truncate text-[11px] opacity-70">{user.title || user.roleName || user.workspaceId}</span>
+                        </span>
+                        {currentUser.id === user.id && <span className="rounded-full bg-blue-600 px-2 py-0.5 text-[10px] font-black text-white">Đang dùng</span>}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
             
             <div className="relative">
-              <Button variant="ghost" className="h-9 px-2 gap-2 flex items-center" onClick={() => setUserOpen(value => !value)}>
+              <Button variant="ghost" className="h-9 px-2 gap-2 flex items-center" onClick={() => {
+                setUserOpen(value => !value);
+                setSwitcherOpen(false);
+              }}>
                 <img src={currentUser.avatar || "https://i.pravatar.cc/150?u=a042581f4e29026704d"} alt="Avatar" className="h-8 w-8 rounded-full object-cover" />
                 <div className="hidden sm:flex flex-col items-start text-left">
                   <span className="text-sm font-bold text-slate-900 dark:text-white leading-tight">{currentUser.name}</span>
@@ -427,9 +603,11 @@ export default function AdminShell({ locale, children }: { locale: string; child
                     <div className="font-bold text-slate-900 dark:text-white">{currentUser.name}</div>
                     <div className="text-xs text-slate-500">{getSimulatedEmail(currentUser)}</div>
                   </div>
-                  <Link href={`/${locale}/settings`} onClick={() => setUserOpen(false)} className="block rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-900">
-                    Cài đặt tài khoản
-                  </Link>
+                  {!(currentUser?.workspaceId === 'TUYEN_SINH_PR' && currentUser?.role === 'STAFF') && (
+                    <Link href={`/${locale}/settings`} onClick={() => setUserOpen(false)} className="block rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-900">
+                      Cài đặt tài khoản
+                    </Link>
+                  )}
                   <button onClick={handleLogout} className="block w-full text-left rounded-lg px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/30 cursor-pointer">
                     Đăng xuất
                   </button>

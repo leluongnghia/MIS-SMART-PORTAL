@@ -7,7 +7,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ status: 'error', error: 'Broadcast title and content are required.' }, { status: 400 });
   }
 
-  const config = getNotificationConfigStatus().zalo;
+  const config = (await getNotificationConfigStatus()).zalo;
   return NextResponse.json({
     status: 'success',
     provider: 'ZaloOA-Broadcast-Manual',

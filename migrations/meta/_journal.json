@@ -29,6 +29,13 @@
       "when": 1781519077890,
       "tag": "0003_parallel_clea",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1781584918692,
+      "tag": "0004_magenta_mastermind",
+      "breakpoints": true
     }
   ]
 }

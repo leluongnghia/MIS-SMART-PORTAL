@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -116,17 +116,32 @@ export default function AdmissionsPayments() {
   const [locTrangThai, setLocTrangThai] = useState('Tất cả');
   const [timKiem, setTimKiem] = useState('');
   const [qrGD, setQrGD] = useState<GiaoDich | null>(null);
+  const [giaoDichList, setGiaoDichList] = useState<GiaoDich[]>(GIAO_DICH_MAU);
+  const [toast, setToast] = useState('');
 
-  const dsLoc = GIAO_DICH_MAU.filter(gd =>
+  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 2500); };
+
+  const xacNhanGD = (id: string) => {
+    setGiaoDichList(prev => prev.map(g => g.id === id ? { ...g, trangThai: 'Đã thanh toán' as const, ngayThanhToan: new Date().toLocaleDateString('vi-VN'), phuongThuc: 'Chuyển khoản' as const } : g));
+    showToast('✓ Xác nhận thanh toán thành công!');
+  };
+
+  const dsLoc = giaoDichList.filter(gd =>
     (locTrangThai === 'Tất cả' || gd.trangThai === locTrangThai) &&
     (!timKiem || gd.hoTen.toLowerCase().includes(timKiem.toLowerCase()) || gd.maGD.includes(timKiem))
   );
 
-  const tongDaThu = GIAO_DICH_MAU.filter(g => g.trangThai === 'Đã thanh toán').reduce((s, g) => s + g.soTien, 0);
-  const tongCho = GIAO_DICH_MAU.filter(g => g.trangThai === 'Chờ xác nhận').reduce((s, g) => s + g.soTien, 0);
+  const tongDaThu = giaoDichList.filter(g => g.trangThai === 'Đã thanh toán').reduce((s, g) => s + g.soTien, 0);
+  const tongCho = giaoDichList.filter(g => g.trangThai === 'Chờ xác nhận').reduce((s, g) => s + g.soTien, 0);
 
   return (
     <>
+      {/* Toast */}
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-[9999] flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white shadow-2xl">
+          <span>✓</span> {toast}
+        </div>
+      )}
       <div className="space-y-5">
         {/* Tiêu đề */}
         <div className="flex items-start justify-between gap-4">
@@ -172,10 +187,10 @@ export default function AdmissionsPayments() {
             <p className="text-xs font-black uppercase tracking-wide text-slate-400 mb-3">Chờ xác nhận thanh toán</p>
             <p className="text-3xl font-black text-amber-600">{fSoTien(tongCho)}</p>
             <div className="mt-2 flex items-center gap-2">
-              <button type="button" className="flex items-center gap-1 rounded-xl bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-700 hover:bg-amber-100 transition">
+              <button type="button" onClick={() => showToast('Đối soát ngày – Không có sai lệch!')} className="flex items-center gap-1 rounded-xl bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-700 hover:bg-amber-100 transition">
                 <RefreshCw className="h-3 w-3" /> Đối soát ngay
               </button>
-              <button type="button" className="flex items-center gap-1 rounded-xl bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-700 hover:bg-blue-100 transition">
+              <button type="button" onClick={() => showToast(`Gửi nhắc thanh toán đến ${giaoDichList.filter(g=>g.trangThai==='Chờ xác nhận').length} khách hàng`)} className="flex items-center gap-1 rounded-xl bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-700 hover:bg-blue-100 transition">
                 <Send className="h-3 w-3" /> Nhắc thanh toán
               </button>
             </div>
@@ -277,7 +292,7 @@ export default function AdmissionsPayments() {
                             </button>
                           )}
                           {gd.trangThai === 'Chờ xác nhận' && (
-                            <button type="button"
+                            <button type="button" onClick={() => xacNhanGD(gd.id)}
                               className="flex h-7 items-center gap-1 rounded-lg bg-blue-50 px-2 text-[10px] font-bold text-blue-700 hover:bg-blue-100 transition">
                               <CheckCircle2 className="h-3 w-3" /> Xác nhận
                             </button>

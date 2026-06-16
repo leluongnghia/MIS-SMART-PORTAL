@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import {
   X, Phone, Mail, Clock, ArrowRight, ChevronDown, Filter, Settings,
-  Plus, RefreshCw, Calendar, MessageSquare, Send, Zap
+  Plus, RefreshCw, Calendar, MessageSquare, Send, Zap, Check
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -32,7 +32,7 @@ interface TheKanban {
   hoatDongCuoi: string;
   buocTiep: string;
   hanChot?: string;
-  tienDoHoSo?: string; // vd: "2/4"
+  tienDoHoSo?: string;
 }
 
 // ─── Cấu hình giai đoạn ─────────────────────────────────────────────────────
@@ -57,19 +57,19 @@ const MAU_UU_TIEN: Record<DoUuTien, string> = {
 };
 
 // ─── Dữ liệu mẫu ─────────────────────────────────────────────────────────────
-const THE_MAU: TheKanban[] = [
-  { id: 'k1', hoTen: 'Lê Minh Khang', khoi: 'Lớp 6', nguon: 'Website', tvv: 'Trần Bảo Ngọc', tvvKyHieu: 'TN', diemLead: 68, doUuTien: 'Cao', giaiDoan: 'Tiếp nhận mới', hoatDongCuoi: '18/05 09:12', buocTiep: 'Gọi điện tư vấn' },
-  { id: 'k2', hoTen: 'Nguyễn Gia Bảo', khoi: 'Lớp 3', nguon: 'Zalo OA', tvv: 'Trần Bảo Ngọc', tvvKyHieu: 'TN', diemLead: 72, doUuTien: 'Cao', giaiDoan: 'Tiếp nhận mới', hoatDongCuoi: '18/05 10:15', buocTiep: 'Gửi tài liệu' },
-  { id: 'k3', hoTen: 'Võ Thị Hoa', khoi: 'Lớp 2', nguon: 'Facebook', tvv: 'Trần Bảo Ngọc', tvvKyHieu: 'TN', diemLead: 45, doUuTien: 'Thấp', giaiDoan: 'Tiếp nhận mới', hoatDongCuoi: '17/05 16:05', buocTiep: 'Gửi Zalo' },
-  { id: 'k4', hoTen: 'Trần Bảo Ngọc', khoi: 'Lớp 7', nguon: 'Website', tvv: 'Phạm Gia Huy', tvvKyHieu: 'PH', diemLead: 75, doUuTien: 'Cao', giaiDoan: 'Đang tư vấn', hoatDongCuoi: '18/05 10:15', buocTiep: 'Tư vấn chuyên sâu' },
-  { id: 'k5', hoTen: 'Phạm Minh Châu', khoi: 'Lớp 4', nguon: 'Facebook', tvv: 'Nguyễn Phương Linh', tvvKyHieu: 'NL', diemLead: 60, doUuTien: 'Trung bình', giaiDoan: 'Đang tư vấn', hoatDongCuoi: '18/05 09:45', buocTiep: 'Tư vấn học phí' },
-  { id: 'k6', hoTen: 'Nguyễn Minh Anh', khoi: 'Lớp 6', nguon: 'Website', tvv: 'Phạm Gia Huy', tvvKyHieu: 'PH', diemLead: 80, doUuTien: 'Cao', giaiDoan: 'Đặt lịch test', hoatDongCuoi: '18/05 10:02', buocTiep: 'Nhắc lịch test', hanChot: '20/05 14:00' },
-  { id: 'k7', hoTen: 'Lê Gia Bảo', khoi: 'Lớp 5', nguon: 'Zalo OA', tvv: 'Nguyễn Phương Linh', tvvKyHieu: 'NL', diemLead: 65, doUuTien: 'Trung bình', giaiDoan: 'Đặt lịch test', hoatDongCuoi: '18/05 09:20', buocTiep: 'Nhắc lịch test', hanChot: '19/05 09:00' },
-  { id: 'k8', hoTen: 'Hoàn An Nhiên', khoi: 'Lớp 9', nguon: 'Giới thiệu', tvv: 'Phạm Gia Huy', tvvKyHieu: 'PH', diemLead: 85, doUuTien: 'Cao', giaiDoan: 'Đã thi test', hoatDongCuoi: '18/05 11:20', buocTiep: 'Phân tích kết quả' },
-  { id: 'k9', hoTen: 'Phan Gia Huy', khoi: 'Lớp 6', nguon: 'Website', tvv: 'Lê Hoàng Minh', tvvKyHieu: 'LM', diemLead: 88, doUuTien: 'Cao', giaiDoan: 'Nộp hồ sơ', hoatDongCuoi: '18/05 11:05', buocTiep: 'Nhận nộp hồ sơ', tienDoHoSo: '2/4' },
-  { id: 'k10', hoTen: 'Đỗ Bảo Ngọc', khoi: 'Lớp 5', nguon: 'Facebook Ads', tvv: 'Trần Bảo Ngọc', tvvKyHieu: 'TN', diemLead: 90, doUuTien: 'Cao', giaiDoan: 'Giữ chỗ', hoatDongCuoi: '18/05 11:30', buocTiep: 'Ký hợp đồng', hanChot: '18/05' },
-  { id: 'k11', hoTen: 'Phạm Gia Hân', khoi: 'Lớp 3', nguon: 'Website', tvv: 'Phạm Gia Huy', tvvKyHieu: 'PH', diemLead: 92, doUuTien: 'Cao', giaiDoan: 'Nhập học', hoatDongCuoi: '18/05 09:00', buocTiep: 'Nhập học thành công' },
-  { id: 'k12', hoTen: 'Lê Anh Khoa', khoi: 'Lớp 4', nguon: 'Facebook Ads', tvv: 'Lê Hoàng Minh', tvvKyHieu: 'LM', diemLead: 30, doUuTien: 'Thấp', giaiDoan: 'Không tiếp tục', hoatDongCuoi: '15/05 15:00', buocTiep: 'Ghi nhận lý do' },
+const THE_MAU_KHOI_TAO: TheKanban[] = [
+  { id: 'k1',  hoTen: 'Lê Minh Khang',    khoi: 'Lớp 6', nguon: 'Website',     tvv: 'Trần Bảo Ngọc',       tvvKyHieu: 'TN', diemLead: 68, doUuTien: 'Cao',       giaiDoan: 'Tiếp nhận mới', hoatDongCuoi: '18/05 09:12', buocTiep: 'Gọi điện tư vấn' },
+  { id: 'k2',  hoTen: 'Nguyễn Gia Bảo',   khoi: 'Lớp 3', nguon: 'Zalo OA',    tvv: 'Trần Bảo Ngọc',       tvvKyHieu: 'TN', diemLead: 72, doUuTien: 'Cao',       giaiDoan: 'Tiếp nhận mới', hoatDongCuoi: '18/05 10:15', buocTiep: 'Gửi tài liệu' },
+  { id: 'k3',  hoTen: 'Võ Thị Hoa',       khoi: 'Lớp 2', nguon: 'Facebook',   tvv: 'Trần Bảo Ngọc',       tvvKyHieu: 'TN', diemLead: 45, doUuTien: 'Thấp',      giaiDoan: 'Tiếp nhận mới', hoatDongCuoi: '17/05 16:05', buocTiep: 'Gửi Zalo' },
+  { id: 'k4',  hoTen: 'Trần Bảo Ngọc',    khoi: 'Lớp 7', nguon: 'Website',    tvv: 'Phạm Gia Huy',         tvvKyHieu: 'PH', diemLead: 75, doUuTien: 'Cao',       giaiDoan: 'Đang tư vấn',   hoatDongCuoi: '18/05 10:15', buocTiep: 'Tư vấn chuyên sâu' },
+  { id: 'k5',  hoTen: 'Phạm Minh Châu',   khoi: 'Lớp 4', nguon: 'Facebook',   tvv: 'Nguyễn Phương Linh',   tvvKyHieu: 'NL', diemLead: 60, doUuTien: 'Trung bình', giaiDoan: 'Đang tư vấn',   hoatDongCuoi: '18/05 09:45', buocTiep: 'Tư vấn học phí' },
+  { id: 'k6',  hoTen: 'Nguyễn Minh Anh',  khoi: 'Lớp 6', nguon: 'Website',    tvv: 'Phạm Gia Huy',         tvvKyHieu: 'PH', diemLead: 80, doUuTien: 'Cao',       giaiDoan: 'Đặt lịch test', hoatDongCuoi: '18/05 10:02', buocTiep: 'Nhắc lịch test', hanChot: '20/05 14:00' },
+  { id: 'k7',  hoTen: 'Lê Gia Bảo',       khoi: 'Lớp 5', nguon: 'Zalo OA',    tvv: 'Nguyễn Phương Linh',   tvvKyHieu: 'NL', diemLead: 65, doUuTien: 'Trung bình', giaiDoan: 'Đặt lịch test', hoatDongCuoi: '18/05 09:20', buocTiep: 'Nhắc lịch test', hanChot: '19/05 09:00' },
+  { id: 'k8',  hoTen: 'Hoàn An Nhiên',    khoi: 'Lớp 9', nguon: 'Giới thiệu', tvv: 'Phạm Gia Huy',         tvvKyHieu: 'PH', diemLead: 85, doUuTien: 'Cao',       giaiDoan: 'Đã thi test',   hoatDongCuoi: '18/05 11:20', buocTiep: 'Phân tích kết quả' },
+  { id: 'k9',  hoTen: 'Phan Gia Huy',     khoi: 'Lớp 6', nguon: 'Website',    tvv: 'Lê Hoàng Minh',        tvvKyHieu: 'LM', diemLead: 88, doUuTien: 'Cao',       giaiDoan: 'Nộp hồ sơ',    hoatDongCuoi: '18/05 11:05', buocTiep: 'Nhận nộp hồ sơ', tienDoHoSo: '2/4' },
+  { id: 'k10', hoTen: 'Đỗ Bảo Ngọc',     khoi: 'Lớp 5', nguon: 'Facebook Ads', tvv: 'Trần Bảo Ngọc',     tvvKyHieu: 'TN', diemLead: 90, doUuTien: 'Cao',       giaiDoan: 'Giữ chỗ',      hoatDongCuoi: '18/05 11:30', buocTiep: 'Ký hợp đồng', hanChot: '18/05' },
+  { id: 'k11', hoTen: 'Phạm Gia Hân',    khoi: 'Lớp 3', nguon: 'Website',     tvv: 'Phạm Gia Huy',         tvvKyHieu: 'PH', diemLead: 92, doUuTien: 'Cao',       giaiDoan: 'Nhập học',     hoatDongCuoi: '18/05 09:00', buocTiep: 'Nhập học thành công' },
+  { id: 'k12', hoTen: 'Lê Anh Khoa',     khoi: 'Lớp 4', nguon: 'Facebook Ads', tvv: 'Lê Hoàng Minh',      tvvKyHieu: 'LM', diemLead: 30, doUuTien: 'Thấp',      giaiDoan: 'Không tiếp tục', hoatDongCuoi: '15/05 15:00', buocTiep: 'Ghi nhận lý do' },
 ];
 
 const THU_TU_GIAI_DOAN: GiaiDoan[] = [
@@ -127,9 +127,76 @@ function TheKanbanItem({ the, onClick }: { the: TheKanban; onClick: () => void }
   );
 }
 
+// ─── Quick Add Form ───────────────────────────────────────────────────────────
+function QuickAddForm({ giaiDoan, onAdd, onCancel }: { giaiDoan: GiaiDoan; onAdd: (the: TheKanban) => void; onCancel: () => void }) {
+  const [hoTen, setHoTen] = useState('');
+  const [khoi, setKhoi] = useState('Lớp 6');
+
+  const handleSubmit = () => {
+    if (!hoTen.trim()) return;
+    const newThe: TheKanban = {
+      id: `k_${Date.now()}`,
+      hoTen: hoTen.trim(),
+      khoi,
+      nguon: 'Thủ công',
+      tvv: 'Chưa phân công',
+      tvvKyHieu: '?',
+      diemLead: 50,
+      doUuTien: 'Trung bình',
+      giaiDoan,
+      hoatDongCuoi: new Date().toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }),
+      buocTiep: 'Xử lý tiếp',
+    };
+    onAdd(newThe);
+  };
+
+  return (
+    <div className="rounded-xl border-2 border-blue-200 bg-white p-2.5 shadow-sm space-y-2">
+      <input
+        autoFocus
+        type="text"
+        value={hoTen}
+        onChange={e => setHoTen(e.target.value)}
+        onKeyDown={e => { if (e.key === 'Enter') handleSubmit(); if (e.key === 'Escape') onCancel(); }}
+        placeholder="Tên học sinh..."
+        className="h-8 w-full rounded-lg border border-slate-200 px-2.5 text-xs focus:border-blue-400 focus:outline-none"
+      />
+      <select value={khoi} onChange={e => setKhoi(e.target.value)}
+        className="h-7 w-full rounded-lg border border-slate-200 px-2 text-xs focus:outline-none bg-white">
+        {['Lớp 1','Lớp 2','Lớp 3','Lớp 4','Lớp 5','Lớp 6','Lớp 7','Lớp 8','Lớp 9','Lớp 10','Lớp 11','Lớp 12'].map(k => (
+          <option key={k}>{k}</option>
+        ))}
+      </select>
+      <div className="flex gap-1.5">
+        <button type="button" onClick={handleSubmit} disabled={!hoTen.trim()}
+          className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-blue-600 py-1.5 text-[10px] font-bold text-white hover:bg-blue-700 disabled:opacity-40">
+          <Check className="h-3 w-3" /> Thêm
+        </button>
+        <button type="button" onClick={onCancel}
+          className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 text-slate-400 hover:bg-slate-50">
+          <X className="h-3 w-3" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ─── Panel chi tiết (slide-over) ─────────────────────────────────────────────
-function PanelChiTiet({ the, onDong }: { the: TheKanban; onDong: () => void }) {
+function PanelChiTiet({
+  the,
+  onDong,
+  onChuyenGiaiDoan,
+  showToast,
+}: {
+  the: TheKanban;
+  onDong: () => void;
+  onChuyenGiaiDoan: (id: string, giaiDoanMoi: GiaiDoan) => void;
+  showToast: (msg: string) => void;
+}) {
   const cfg = CAU_HINH_GIAI_DOAN[the.giaiDoan];
+  const [showGiaiDoanMenu, setShowGiaiDoanMenu] = useState(false);
+
+  const giaoDoanTiep = THU_TU_GIAI_DOAN.filter(gd => gd !== the.giaiDoan);
 
   return (
     <div className="flex h-full flex-col overflow-hidden bg-white">
@@ -181,10 +248,11 @@ function PanelChiTiet({ the, onDong }: { the: TheKanban; onDong: () => void }) {
           ].map((item, i) => {
             const Icon = item.icon;
             return (
-              <div key={i} className="flex items-center gap-2 rounded-xl border border-slate-100 p-2 text-xs">
+              <button key={i} type="button" onClick={() => showToast(`Gọi ${item.label}`)}
+                className="flex w-full items-center gap-2 rounded-xl border border-slate-100 p-2 text-xs hover:bg-slate-50 transition">
                 <Icon className="h-4 w-4 text-slate-400" />
                 <span className="font-semibold text-slate-700">{item.label}</span>
-              </div>
+              </button>
             );
           })}
         </div>
@@ -197,7 +265,7 @@ function PanelChiTiet({ the, onDong }: { the: TheKanban; onDong: () => void }) {
           </div>
         </div>
 
-        {/* Bước tiến */}
+        {/* Lịch sử giai đoạn */}
         <div className="space-y-2">
           <p className="text-[10px] font-black uppercase tracking-wide text-slate-400">Lịch sử giai đoạn</p>
           <div className="flex flex-wrap gap-1">
@@ -230,7 +298,7 @@ function PanelChiTiet({ the, onDong }: { the: TheKanban; onDong: () => void }) {
           ].map(a => {
             const Icon = a.icon;
             return (
-              <button key={a.label} type="button"
+              <button key={a.label} type="button" onClick={() => showToast(`${a.label}: ${the.hoTen}`)}
                 className="flex flex-col items-center gap-1 rounded-xl border border-slate-200 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition">
                 <Icon className="h-4 w-4" />
                 {a.label}
@@ -238,25 +306,95 @@ function PanelChiTiet({ the, onDong }: { the: TheKanban; onDong: () => void }) {
             );
           })}
         </div>
-        <button type="button" className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 py-2.5 text-sm font-bold text-white hover:bg-blue-700 transition">
-          <Zap className="h-4 w-4" /> Chuyển giai đoạn <ChevronDown className="h-4 w-4" />
-        </button>
+
+        {/* Chuyển giai đoạn dropdown */}
+        <div className="relative">
+          <button type="button" onClick={() => setShowGiaiDoanMenu(v => !v)}
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 py-2.5 text-sm font-bold text-white hover:bg-blue-700 transition">
+            <Zap className="h-4 w-4" /> Chuyển giai đoạn <ChevronDown className={`h-4 w-4 transition-transform ${showGiaiDoanMenu ? 'rotate-180' : ''}`} />
+          </button>
+          {showGiaiDoanMenu && (
+            <div className="absolute bottom-full left-0 right-0 mb-1 z-10 rounded-xl border border-slate-200 bg-white shadow-xl overflow-hidden">
+              <p className="px-3 py-2 text-[10px] font-black uppercase tracking-wide text-slate-400">Chọn giai đoạn mới</p>
+              <div className="max-h-52 overflow-y-auto divide-y divide-slate-50">
+                {giaoDoanTiep.map(gd => {
+                  const c = CAU_HINH_GIAI_DOAN[gd];
+                  return (
+                    <button key={gd} type="button"
+                      onClick={() => {
+                        onChuyenGiaiDoan(the.id, gd);
+                        setShowGiaiDoanMenu(false);
+                        showToast(`✓ Chuyển "${the.hoTen}" → ${gd}`);
+                        onDong();
+                      }}
+                      className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left hover:bg-slate-50 transition">
+                      <div className="h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: c.mauNen }} />
+                      <span className="text-xs font-bold text-slate-700">{gd}</span>
+                      <span className="ml-auto text-[10px] text-slate-400">{c.soLuong}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
 }
 
 // ─── Component chính ──────────────────────────────────────────────────────────
+const VISIBLE_LIMIT = 3;
+
 export default function AdmissionsPipelineKanban() {
+  const [danhSachThe, setDanhSachThe] = useState<TheKanban[]>(THE_MAU_KHOI_TAO);
   const [theChon, setTheChon] = useState<TheKanban | null>(null);
   const [locTvv, setLocTvv] = useState('Tất cả tư vấn viên');
   const [locNguon, setLocNguon] = useState('Tất cả nguồn');
+  const [quickAddCol, setQuickAddCol] = useState<GiaiDoan | null>(null);
+  const [expandedCols, setExpandedCols] = useState<Set<GiaiDoan>>(new Set());
+  const [toast, setToast] = useState('');
 
-  const layTheoGiaiDoan = (gd: GiaiDoan) => THE_MAU.filter(c => c.giaiDoan === gd);
+  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 2500); };
+
+  const chuyenGiaiDoan = (id: string, giaiDoanMoi: GiaiDoan) => {
+    setDanhSachThe(prev => prev.map(t => t.id === id ? { ...t, giaiDoan: giaiDoanMoi } : t));
+    // cập nhật theChon nếu đang mở
+    setTheChon(prev => prev?.id === id ? { ...prev, giaiDoan: giaiDoanMoi } : prev);
+  };
+
+  const themThe = (newThe: TheKanban) => {
+    setDanhSachThe(prev => [newThe, ...prev]);
+    setQuickAddCol(null);
+    showToast(`✓ Đã thêm lead: ${newThe.hoTen}`);
+  };
+
+  const toggleExpand = (gd: GiaiDoan) => {
+    setExpandedCols(prev => {
+      const next = new Set(prev);
+      if (next.has(gd)) next.delete(gd); else next.add(gd);
+      return next;
+    });
+  };
+
+  const layTheoGiaiDoan = (gd: GiaiDoan) => {
+    let ds = danhSachThe.filter(c => c.giaiDoan === gd);
+    if (locTvv !== 'Tất cả tư vấn viên') ds = ds.filter(c => c.tvv === locTvv);
+    if (locNguon !== 'Tất cả nguồn') ds = ds.filter(c => c.nguon === locNguon);
+    return ds;
+  };
+
   const tongLead = Object.values(CAU_HINH_GIAI_DOAN).reduce((s, c) => s + c.soLuong, 0);
 
   return (
     <div className="flex h-[calc(100vh-88px)] flex-col gap-4 overflow-hidden">
+      {/* Toast */}
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-[9999] flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white shadow-2xl">
+          {toast}
+        </div>
+      )}
+
       {/* Tiêu đề */}
       <div className="flex shrink-0 flex-wrap items-center justify-between gap-3">
         <div>
@@ -278,10 +416,12 @@ export default function AdmissionsPipelineKanban() {
           <div className="flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-600">
             <Calendar className="h-3.5 w-3.5 text-slate-400" /> 12/05/2025 - 18/05/2025
           </div>
-          <button type="button" className="flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 hover:bg-slate-50">
+          <button type="button" onClick={() => showToast('Mở bộ lọc nâng cao')}
+            className="flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 hover:bg-slate-50">
             <Filter className="h-3.5 w-3.5" /> Bộ lọc
           </button>
-          <button type="button" className="flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 hover:bg-slate-50">
+          <button type="button" onClick={() => showToast('Mở tuỳ chỉnh pipeline')}
+            className="flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 hover:bg-slate-50">
             <Settings className="h-3.5 w-3.5" /> Tuỳ chỉnh
           </button>
         </div>
@@ -320,7 +460,10 @@ export default function AdmissionsPipelineKanban() {
         {THU_TU_GIAI_DOAN.map((giaiDoan) => {
           const cfg = CAU_HINH_GIAI_DOAN[giaiDoan];
           const danhSach = layTheoGiaiDoan(giaiDoan);
-          const soConLai = cfg.soLuong - danhSach.length;
+          const isExpanded = expandedCols.has(giaiDoan);
+          const visible = isExpanded ? danhSach : danhSach.slice(0, VISIBLE_LIMIT);
+          const hidden = danhSach.length - VISIBLE_LIMIT;
+          const isAddingHere = quickAddCol === giaiDoan;
 
           return (
             <div key={giaiDoan}
@@ -334,24 +477,34 @@ export default function AdmissionsPipelineKanban() {
                     <p className="text-[11px] font-black" style={{ color: cfg.mauNen }}>{giaiDoan}</p>
                   </div>
                   <span className="rounded-full px-1.5 py-0.5 text-[10px] font-black"
-                    style={{ background: cfg.mauNen + '22', color: cfg.mauNen }}>{cfg.soLuong}</span>
+                    style={{ background: cfg.mauNen + '22', color: cfg.mauNen }}>{danhSach.length}</span>
                 </div>
                 <button type="button"
+                  onClick={() => setQuickAddCol(isAddingHere ? null : giaiDoan)}
                   className="mt-1.5 flex w-full items-center justify-center gap-1 rounded-lg border py-1 text-[10px] font-bold transition hover:opacity-80"
                   style={{ borderColor: cfg.mauNen + '44', color: cfg.mauNen, background: cfg.mauNen + '11' }}>
-                  <Plus className="h-3 w-3" /> Thêm lead
+                  <Plus className="h-3 w-3" /> {isAddingHere ? 'Huỷ thêm' : 'Thêm lead'}
                 </button>
               </div>
 
               {/* Danh sách thẻ */}
               <div className="flex-1 overflow-y-auto p-2 space-y-2">
-                {danhSach.map(the => (
+                {isAddingHere && (
+                  <QuickAddForm giaiDoan={giaiDoan} onAdd={themThe} onCancel={() => setQuickAddCol(null)} />
+                )}
+                {visible.map(the => (
                   <TheKanbanItem key={the.id} the={the} onClick={() => setTheChon(the)} />
                 ))}
-                {soConLai > 0 && (
-                  <button type="button"
+                {!isExpanded && hidden > 0 && (
+                  <button type="button" onClick={() => toggleExpand(giaiDoan)}
                     className="w-full rounded-xl border border-dashed border-slate-200 py-2 text-xs font-bold text-slate-400 hover:border-slate-300 hover:text-slate-600 transition">
-                    + {soConLai} lead khác...
+                    + {hidden} lead khác... (bấm để xem)
+                  </button>
+                )}
+                {isExpanded && danhSach.length > VISIBLE_LIMIT && (
+                  <button type="button" onClick={() => toggleExpand(giaiDoan)}
+                    className="w-full rounded-xl border border-dashed border-slate-200 py-2 text-xs font-bold text-slate-400 hover:border-slate-300 hover:text-slate-500 transition">
+                    ↑ Thu gọn
                   </button>
                 )}
               </div>
@@ -365,7 +518,12 @@ export default function AdmissionsPipelineKanban() {
         <div className="fixed inset-0 z-50 flex justify-end">
           <div className="absolute inset-0 bg-slate-900/20 backdrop-blur-sm" onClick={() => setTheChon(null)} />
           <div className="relative z-10 h-full w-[360px] border-l border-slate-200 bg-white shadow-2xl">
-            <PanelChiTiet the={theChon} onDong={() => setTheChon(null)} />
+            <PanelChiTiet
+              the={theChon}
+              onDong={() => setTheChon(null)}
+              onChuyenGiaiDoan={chuyenGiaiDoan}
+              showToast={showToast}
+            />
           </div>
         </div>
       )}

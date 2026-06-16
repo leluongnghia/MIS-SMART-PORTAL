@@ -40,26 +40,27 @@ export async function getDashboardStats() {
   const nhapHoc = allLeads.filter(l => ["enrolled"].includes(l.status)).length;
 
   const funnel = [
-    { label: "Ti?p c?n", value: tiepCan, pct: tiepCan ? "100%" : "0%" },
-    { label: "Quan t�m", value: quanTam, pct: tiepCan ? Math.round((quanTam/tiepCan)*100) + "%" : "0%" },
-    { label: "Tu v?n", value: tuVan, pct: tiepCan ? Math.round((tuVan/tiepCan)*100) + "%" : "0%" },
-    { label: "�ang k�", value: dangKy, pct: tiepCan ? Math.round((dangKy/tiepCan)*100) + "%" : "0%" },
-    { label: "Nh?p h?c", value: nhapHoc, pct: tiepCan ? Math.round((nhapHoc/tiepCan)*100) + "%" : "0%" }
+    { label: "Tiếp cận", value: tiepCan, pct: tiepCan ? "100%" : "0%" },
+    { label: "Quan tâm", value: quanTam, pct: tiepCan ? Math.round((quanTam/tiepCan)*100) + "%" : "0%" },
+    { label: "Tư vấn", value: tuVan, pct: tiepCan ? Math.round((tuVan/tiepCan)*100) + "%" : "0%" },
+    { label: "Đăng ký", value: dangKy, pct: tiepCan ? Math.round((dangKy/tiepCan)*100) + "%" : "0%" },
+    { label: "Nhập học", value: nhapHoc, pct: tiepCan ? Math.round((nhapHoc/tiepCan)*100) + "%" : "0%" }
   ];
 
   // Heatmap calculation
-  const categories = ["T�i ch�nh", "Ho?t d?ng", "Nh�n s?", "Tu�n th?", "Danh ti?ng"];
+  const categories = ["Tài chính", "Hoạt động", "Nhân sự", "Tuân thủ", "Danh tiếng"];
   // We place risks into the grid [row][col] -> count. rows = categories (0-4), cols = severity (0-4)
   const heatmapData = Array(5).fill(0).map(() => Array(5).fill(0));
   
   allRisks.forEach(r => {
     // Generate pseudo-random position if payload is empty so it looks nice with real data
-    let catIdx = categories.indexOf(r.payload?.category);
+    const payload = r.payload as any;
+    let catIdx = categories.indexOf(payload?.category);
     if (catIdx === -1) catIdx = r.title.length % 5;
     
     let sevIdx = r.severity === "high" ? 4 : r.severity === "medium" ? 2 : 1;
-    if (r.payload?.probability !== undefined) {
-      sevIdx = r.payload.probability;
+    if (payload?.probability !== undefined) {
+      sevIdx = payload.probability;
     }
     heatmapData[catIdx][sevIdx]++;
   });

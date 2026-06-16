@@ -1,6 +1,7 @@
+import { serverStorage } from './libs/client/server-storage';
 import { Task, TaskPriority, TaskStatus } from './types';
 
-// Caching structure in localStorage
+// Caching structure in server storage
 const KEYS = {
   CLIENT_ID: 'google_sheets_client_id',
   SPREADSHEET_ID: 'google_sheets_spreadsheet_id',
@@ -17,22 +18,22 @@ export interface SheetsConfig {
 
 export const loadSheetsConfig = (): SheetsConfig => {
   return {
-    clientId: localStorage.getItem(KEYS.CLIENT_ID) || '',
-    spreadsheetId: localStorage.getItem(KEYS.SPREADSHEET_ID) || '',
-    appsScriptUrl: localStorage.getItem(KEYS.APPS_SCRIPT_URL) || '',
-    accessToken: localStorage.getItem(KEYS.ACCESS_TOKEN) || '',
+    clientId: serverStorage.getItem(KEYS.CLIENT_ID) || '',
+    spreadsheetId: serverStorage.getItem(KEYS.SPREADSHEET_ID) || '',
+    appsScriptUrl: serverStorage.getItem(KEYS.APPS_SCRIPT_URL) || '',
+    accessToken: serverStorage.getItem(KEYS.ACCESS_TOKEN) || '',
   };
 };
 
 export const saveSheetsConfig = (config: Partial<SheetsConfig>) => {
-  if (config.clientId !== undefined) localStorage.setItem(KEYS.CLIENT_ID, config.clientId);
-  if (config.spreadsheetId !== undefined) localStorage.setItem(KEYS.SPREADSHEET_ID, config.spreadsheetId);
-  if (config.appsScriptUrl !== undefined) localStorage.setItem(KEYS.APPS_SCRIPT_URL, config.appsScriptUrl);
-  if (config.accessToken !== undefined) localStorage.setItem(KEYS.ACCESS_TOKEN, config.accessToken);
+  if (config.clientId !== undefined) serverStorage.setItem(KEYS.CLIENT_ID, config.clientId);
+  if (config.spreadsheetId !== undefined) serverStorage.setItem(KEYS.SPREADSHEET_ID, config.spreadsheetId);
+  if (config.appsScriptUrl !== undefined) serverStorage.setItem(KEYS.APPS_SCRIPT_URL, config.appsScriptUrl);
+  if (config.accessToken !== undefined) serverStorage.setItem(KEYS.ACCESS_TOKEN, config.accessToken);
 };
 
 export const clearSheetsToken = () => {
-  localStorage.removeItem(KEYS.ACCESS_TOKEN);
+  serverStorage.removeItem(KEYS.ACCESS_TOKEN);
 };
 
 /**

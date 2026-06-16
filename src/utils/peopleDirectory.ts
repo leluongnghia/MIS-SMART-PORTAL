@@ -1,3 +1,4 @@
+import { serverStorage } from '../libs/client/server-storage';
 import { Task, UserProfile } from '../types';
 import { db } from '../firebase';
 import { collection, doc, setDoc, getDocs } from 'firebase/firestore';
@@ -229,7 +230,7 @@ export function initializeUnifiedDatabase(
   defaultCrmLeads: any[] = []
 ): UnifiedStudent[] {
   if (typeof window === 'undefined') return [];
-  const stored = localStorage.getItem('mis_student_directory');
+  const stored = serverStorage.getItem('mis_student_directory');
   if (stored) {
     try {
       return JSON.parse(stored);
@@ -239,7 +240,7 @@ export function initializeUnifiedDatabase(
   }
 
   // Migrate or initialize
-  const sisSaved = localStorage.getItem('mis_sis_students_v3');
+  const sisSaved = serverStorage.getItem('mis_sis_students_v3');
   let sisStudents = defaultSisStudents;
   if (sisSaved) {
     try {
@@ -249,7 +250,7 @@ export function initializeUnifiedDatabase(
     }
   }
 
-  const crmSaved = localStorage.getItem('school_crm_leads');
+  const crmSaved = serverStorage.getItem('school_crm_leads');
   let crmLeads = defaultCrmLeads;
   if (crmSaved) {
     try {
@@ -314,12 +315,12 @@ export function initializeUnifiedDatabase(
   });
 
   const unifiedList = Array.from(unifiedMap.values()) as UnifiedStudent[];
-  localStorage.setItem('mis_student_directory', JSON.stringify(unifiedList));
+  serverStorage.setItem('mis_student_directory', JSON.stringify(unifiedList));
   
   // Also sync the backward-compatible keys initially
   const enrolledOnly = unifiedList.filter(s => s.enrollmentStatus === 'ENROLLED');
-  localStorage.setItem('mis_sis_students_v3', JSON.stringify(enrolledOnly));
-  localStorage.setItem('mis_lms_students', JSON.stringify(enrolledOnly));
+  serverStorage.setItem('mis_sis_students_v3', JSON.stringify(enrolledOnly));
+  serverStorage.setItem('mis_lms_students', JSON.stringify(enrolledOnly));
   
   const leadsOnly = unifiedList.filter(s => s.enrollmentStatus !== 'ENROLLED').map(s => ({
     ...s,
@@ -328,7 +329,7 @@ export function initializeUnifiedDatabase(
     phone: s.parentPhone,
     email: s.parentEmail,
   }));
-  localStorage.setItem('school_crm_leads', JSON.stringify(leadsOnly));
+  serverStorage.setItem('school_crm_leads', JSON.stringify(leadsOnly));
 
   // Sync default profiles to Firestore if empty
   const syncDefaultsToCloud = async () => {
@@ -350,7 +351,7 @@ export function initializeUnifiedDatabase(
 
 export function getUnifiedStudents(): UnifiedStudent[] {
   if (typeof window === 'undefined') return [];
-  const stored = localStorage.getItem('mis_student_directory');
+  const stored = serverStorage.getItem('mis_student_directory');
   if (stored) {
     try {
       return JSON.parse(stored);
@@ -363,11 +364,11 @@ export function getUnifiedStudents(): UnifiedStudent[] {
 
 export function saveUnifiedStudents(students: UnifiedStudent[]) {
   if (typeof window === 'undefined') return;
-  localStorage.setItem('mis_student_directory', JSON.stringify(students));
+  serverStorage.setItem('mis_student_directory', JSON.stringify(students));
   
   // Backward compatibility: keep mis_sis_students_v3 synced
   const enrolledOnly = students.filter(s => s.enrollmentStatus === 'ENROLLED');
-  localStorage.setItem('mis_sis_students_v3', JSON.stringify(enrolledOnly));
+  serverStorage.setItem('mis_sis_students_v3', JSON.stringify(enrolledOnly));
 
   // Backward compatibility: keep school_crm_leads synced
   const leadsOnly = students.filter(s => s.enrollmentStatus !== 'ENROLLED').map(s => ({
@@ -377,10 +378,10 @@ export function saveUnifiedStudents(students: UnifiedStudent[]) {
     phone: s.parentPhone,
     email: s.parentEmail,
   }));
-  localStorage.setItem('school_crm_leads', JSON.stringify(leadsOnly));
+  serverStorage.setItem('school_crm_leads', JSON.stringify(leadsOnly));
 
   // Backward compatibility: keep mis_lms_students synced
-  localStorage.setItem('mis_lms_students', JSON.stringify(enrolledOnly));
+  serverStorage.setItem('mis_lms_students', JSON.stringify(enrolledOnly));
 
   // Sync to Firestore in background
   const syncToCloud = async () => {

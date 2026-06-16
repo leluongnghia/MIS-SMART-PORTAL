@@ -1,3 +1,4 @@
+import { serverStorage } from '../libs/client/server-storage';
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { translateRequest, translateTitle } from '../utils/translations';
@@ -62,9 +63,9 @@ export default function SchoolRequests({ currentUser }: SchoolRequestsProps) {
     return false;
   };
 
-  // LocalStorage State
+  // Server-backed State
   const [requests, setRequests] = useState<SchoolRequestItem[]>(() => {
-    const saved = localStorage.getItem('mis_school_requests');
+    const saved = serverStorage.getItem('mis_school_requests');
     if (saved) {
       try { return JSON.parse(saved); } catch (e) { }
     }
@@ -129,7 +130,7 @@ export default function SchoolRequests({ currentUser }: SchoolRequestsProps) {
   });
 
   useEffect(() => {
-    localStorage.setItem('mis_school_requests', JSON.stringify(requests));
+    serverStorage.setItem('mis_school_requests', JSON.stringify(requests));
   }, [requests]);
 
   // UI States

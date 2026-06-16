@@ -1,3 +1,4 @@
+import { serverStorage } from '../libs/client/server-storage';
 import React, { useState, useMemo, useEffect } from "react";
 import {
   FileText,
@@ -387,7 +388,7 @@ export default function DocumentCenter() {
   const [searchQuery, setSearchQuery] = useState("");
   const [documents, setDocuments] = useState<Document[]>(() => {
     try {
-      const saved = localStorage.getItem(DOCUMENT_STORAGE_KEY);
+      const saved = serverStorage.getItem(DOCUMENT_STORAGE_KEY);
       return saved ? JSON.parse(saved) : MOCK_DOCUMENTS;
     } catch {
       return MOCK_DOCUMENTS;
@@ -422,7 +423,7 @@ export default function DocumentCenter() {
 
   useEffect(() => {
     try {
-      localStorage.setItem(DOCUMENT_STORAGE_KEY, JSON.stringify(documents));
+      serverStorage.setItem(DOCUMENT_STORAGE_KEY, JSON.stringify(documents));
     } catch {
       setActionMessage("Không thể lưu thêm vào trình duyệt vì dung lượng lưu trữ cục bộ đã đầy.");
     }

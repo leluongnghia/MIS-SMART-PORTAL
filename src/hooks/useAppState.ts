@@ -1,3 +1,4 @@
+import { serverStorage } from '../libs/client/server-storage';
 import { useState } from 'react';
 import { TaskStatus } from '../types';
 
@@ -32,7 +33,7 @@ export function useAppState() {
   const [visiblePanels, setVisiblePanels] = useState<Record<string, boolean>>(() => {
     if (typeof window !== 'undefined') {
       try {
-        const saved = localStorage.getItem('mis_visible_panels');
+        const saved = serverStorage.getItem('mis_visible_panels');
         if (saved) return JSON.parse(saved);
       } catch (e) {}
     }
@@ -50,7 +51,7 @@ export function useAppState() {
         [panelKey]: !prev[panelKey]
       };
       if (typeof window !== 'undefined') {
-        localStorage.setItem('mis_visible_panels', JSON.stringify(updated));
+        serverStorage.setItem('mis_visible_panels', JSON.stringify(updated));
       }
       return updated;
     });

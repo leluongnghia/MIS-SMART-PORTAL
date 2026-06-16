@@ -1,6 +1,8 @@
+import { serverStorage } from '../libs/client/server-storage';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   Award,
+  CalendarClock,
   CheckCircle2,
   ClipboardList,
   Download,
@@ -12,6 +14,7 @@ import {
   Search,
   Send,
   Target,
+  Zap,
   Upload,
   Users,
   WalletCards,
@@ -210,6 +213,25 @@ const defaultChecklist = (): DocumentChecklist => ({
 const buildVietQrUrl = (payment: Pick<CrmPayment, 'bankBin' | 'bankAccountNo' | 'amount' | 'code'>) =>
   `https://img.vietqr.io/image/${payment.bankBin}-${payment.bankAccountNo}-compact2.png?amount=${payment.amount}&addInfo=${encodeURIComponent(payment.code)}&accountName=${encodeURIComponent(defaultBankConfig.bankAccountName)}`;
 
+const getTestAverage = (lead: Pick<AdmissionLead, 'mathScore' | 'englishScore' | 'vietnameseScore'>) => {
+  const scores = [lead.mathScore, lead.englishScore, lead.vietnameseScore]
+    .map(value => Number(value))
+    .filter(value => Number.isFinite(value) && value > 0);
+  return scores.length ? scores.reduce((sum, value) => sum + value, 0) / scores.length : 0;
+};
+
+const hasTestScore = (lead: Pick<AdmissionLead, 'mathScore' | 'englishScore' | 'vietnameseScore'>) => getTestAverage(lead) > 0;
+
+const getNextAction = (lead: AdmissionLead) => {
+  if (!lead.testDate || !lead.testTime) return 'Đặt lịch test';
+  if (!hasTestScore(lead)) return `Test ${lead.testDate} ${lead.testTime}`;
+  if (getTestAverage(lead) >= 8 && lead.stage !== 'SCHOLARSHIP_REVIEW') return 'Duyệt học bổng';
+  if (!lead.payments.length) return 'Tạo QR giữ chỗ';
+  if (lead.payments.some(item => item.status === 'PENDING')) return 'Chờ đối soát';
+  if (!Object.values(lead.docChecklist).every(Boolean)) return 'Bổ sung hồ sơ';
+  return 'Sẵn sàng nhập học';
+};
+
 const computeLeadScore = (lead: AdmissionLead) => {
   const stageScore = Math.max(0, stageMeta.findIndex(item => item.key === lead.stage)) * 5;
   const interactionScore = Math.min(18, lead.interactions.length * 3);
@@ -350,7 +372,7 @@ const seedLeads: AdmissionLead[] = [
 
 const readStoredLeads = () => {
   try {
-    const raw = localStorage.getItem(CRM_LEADS_STORAGE_KEY);
+    const raw = serverStorage.getItem(CRM_LEADS_STORAGE_KEY);
     if (!raw) return seedLeads;
     const parsed = JSON.parse(raw);
     return Array.isArray(parsed) && parsed.length ? parsed.map(normalizeLead) : seedLeads;
@@ -360,7 +382,7 @@ const readStoredLeads = () => {
 };
 
 const writeStoredLeads = (leads: AdmissionLead[]) => {
-  localStorage.setItem(CRM_LEADS_STORAGE_KEY, JSON.stringify(leads));
+  serverStorage.setItem(CRM_LEADS_STORAGE_KEY, JSON.stringify(leads));
 };
 
 const exportCsv = (leads: AdmissionLead[]) => {
@@ -442,8 +464,38 @@ export default function SchoolCrmHub() {
 
   const selectedLead = useMemo(() => leads.find(lead => lead.id === selectedLeadId) || leads[0] || null, [leads, selectedLeadId]);
 
-  const persistLead = async (incoming: AdmissionLead) => {
-    const nextLead = normalizeLead({ ...incoming, updatedAt: nowIso() });
+  const persistLead = async (incoming: AdmissionLead, options: { skipAutomation?: boolean } = {}) => {
+    const original = leads.find(item => item.id === incoming.id);
+    let automated = normalizeLead({ ...incoming, updatedAt: nowIso() });
+
+    if (!options.skipAutomation) {
+      const logs: WorkflowLog[] = [];
+      const pushRule = (name: string, channel: WorkflowLog['channel'] = 'SYSTEM', status: WorkflowStatus = 'SENT') => {
+        logs.push({ id: `wf_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`, name, channel, status, createdAt: nowIso() });
+      };
+      const stageRank = (stage: LeadStage) => stageMeta.findIndex(item => item.key === stage);
+      const testScheduled = Boolean(automated.testDate && automated.testTime);
+      const testAverage = getTestAverage(automated);
+
+      if (testScheduled && stageRank(automated.stage) < stageRank('ENTRANCE_TEST_REGISTERED')) {
+        automated = { ...automated, stage: 'ENTRANCE_TEST_REGISTERED' };
+        pushRule(`Auto: có lịch ${automated.testDate} ${automated.testTime} → đăng ký test`, automated.email ? 'EMAIL' : 'SYSTEM', automated.email ? 'SENT' : 'SKIPPED');
+      }
+      if (testAverage > 0 && stageRank(automated.stage) < stageRank('TEST_COMPLETED')) {
+        automated = { ...automated, stage: 'TEST_COMPLETED' };
+        pushRule(`Auto: đã nhập điểm test TB ${testAverage.toFixed(1)} → đã test`, automated.email ? 'EMAIL' : 'SYSTEM', automated.email ? 'SENT' : 'SKIPPED');
+      }
+      if (testAverage >= 8 && stageRank(automated.stage) < stageRank('SCHOLARSHIP_REVIEW')) {
+        automated = { ...automated, stage: 'SCHOLARSHIP_REVIEW', leadTemperature: 'HOT' };
+        pushRule(`Auto: điểm TB ${testAverage.toFixed(1)} ≥ 8.0 → duyệt học bổng`, 'SYSTEM');
+      }
+      if (automated.stage === 'DOCUMENTS_PENDING' && Object.values(automated.docChecklist).every(Boolean)) {
+        pushRule('Auto: hồ sơ đã đủ → sẵn sàng đồng bộ nhập học', 'SYSTEM');
+      }
+      if (logs.length) automated = normalizeLead({ ...automated, workflowLogs: [...logs, ...automated.workflowLogs] });
+    }
+
+    const nextLead = normalizeLead({ ...automated, updatedAt: nowIso(), createdAt: original?.createdAt || automated.createdAt });
     setLeads(current => current.map(item => item.id === nextLead.id ? nextLead : item));
     setSaving(true);
     try {
@@ -473,7 +525,7 @@ export default function SchoolCrmHub() {
       next = addWorkflowLog(next, 'Đồng bộ Student 360, LMS, PHHS và công nợ', 'SYSTEM');
       syncEnrolledCrmLeadsToLifecycle([next]);
     }
-    await persistLead(next);
+    await persistLead(next, { skipAutomation: true });
   };
 
   const addLead = async () => {
@@ -579,7 +631,7 @@ export default function SchoolCrmHub() {
     });
     setLeads(nextLeads);
     writeStoredLeads(nextLeads);
-    localStorage.setItem(CRM_IMPORT_BATCHES_STORAGE_KEY, JSON.stringify([{ id: `batch_${Date.now()}`, type: 'PAYMENT_RECONCILE', lines, createdAt: nowIso() }]));
+    serverStorage.setItem(CRM_IMPORT_BATCHES_STORAGE_KEY, JSON.stringify([{ id: `batch_${Date.now()}`, type: 'PAYMENT_RECONCILE', lines, createdAt: nowIso() }]));
     await Promise.all(nextLeads.map(lead => setDoc(doc(db, 'crm_leads', lead.id), lead).catch(() => undefined)));
     setNotice('Đã đối soát sao kê và cập nhật trạng thái thanh toán.');
   };
@@ -626,9 +678,9 @@ export default function SchoolCrmHub() {
             <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-emerald-300">
               <Target className="h-4 w-4" /> Admissions CRM SaaS
             </div>
-            <h2 className="mt-2 text-2xl md:text-3xl font-black leading-tight">Tuyển sinh: Lead đến nhập học</h2>
+            <h2 className="mt-2 text-2xl md:text-3xl font-black leading-tight">Pipeline tuyển sinh tự động: Lead → Test → Nhập học</h2>
             <p className="mt-2 max-w-3xl text-sm text-slate-300">
-              Quản lý pipeline, test, học bổng, VietQR, đối soát và đồng bộ hồ sơ học sinh trên cùng một màn hình vận hành.
+              Lịch hẹn/Test tự đẩy trạng thái, rule automation ghi log rõ ràng, Kanban theo dõi next action và SLA tuyển sinh.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -685,12 +737,12 @@ export default function SchoolCrmHub() {
         <div className="overflow-x-auto pb-4">
           <div className="flex gap-3 min-w-max">
             {stageMeta.map(stage => {
-              const stageLeads = leads.filter(l => l.stage === stage.key);
+              const stageLeads = filteredLeads.filter(l => l.stage === stage.key);
               const isOver = dragOverStage === stage.key;
               return (
                 <div
                   key={stage.key}
-                  className={`w-64 flex-shrink-0 rounded-xl border transition-all duration-150 ${isOver ? 'ring-2 ring-indigo-400 border-indigo-300 bg-indigo-50/40 dark:bg-indigo-950/20' : 'border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60'}`}
+                  className={`w-72 flex-shrink-0 rounded-2xl border shadow-sm transition-all duration-150 ${isOver ? 'ring-2 ring-indigo-400 border-indigo-300 bg-indigo-50/40 dark:bg-indigo-950/20' : 'border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60'}`}
                   onDragOver={e => handleDragOver(e, stage.key)}
                   onDrop={e => handleDrop(e, stage.key)}
                   onDragLeave={() => setDragOverStage(null)}
@@ -698,7 +750,7 @@ export default function SchoolCrmHub() {
                   {/* Column header */}
                   <div className={`px-3 py-2.5 rounded-t-xl border-b border-slate-200 dark:border-slate-700/60 flex items-center justify-between`}>
                     <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-black border ${stage.color}`}>{stage.short}</span>
-                    <span className="text-[10px] font-black text-slate-400">{stageLeads.length}</span>
+                    <span className="text-[10px] font-black text-slate-400">{stageLeads.length} lead</span>
                   </div>
                   {/* Cards */}
                   <div className="p-2 space-y-2 min-h-[120px]">
@@ -720,6 +772,7 @@ export default function SchoolCrmHub() {
                             <span className="shrink-0 text-sm">{tempIcon}</span>
                           </div>
                           <div className="text-[10px] text-slate-400 mt-0.5 truncate">{lead.parentName} · {lead.phone}</div>
+                          <div className="mt-2 rounded-lg border border-dashed border-slate-200 bg-slate-50 px-2 py-1 text-[10px] font-bold text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">⚡ {getNextAction(lead)}</div>
                           <div className="flex items-center justify-between mt-2">
                             <span className="text-[9px] px-1.5 py-0.5 bg-slate-100 dark:bg-slate-700 text-slate-500 rounded font-mono truncate max-w-[80px]">{lead.source}</span>
                             <span className={`text-[9px] px-1.5 py-0.5 rounded font-black ${scoreColor}`}>{lead.leadScore}pt</span>
@@ -817,6 +870,7 @@ export default function SchoolCrmHub() {
                   <th className="px-4 py-3 font-black text-[11px] uppercase tracking-wide">Pipeline</th>
                   <th className="px-4 py-3 font-black text-[11px] uppercase tracking-wide">Marketing</th>
                   <th className="px-4 py-3 font-black text-[11px] uppercase tracking-wide">Score</th>
+                  <th className="px-4 py-3 font-black text-[11px] uppercase tracking-wide">Lịch/Test</th>
                   <th className="px-4 py-3 font-black text-[11px] uppercase tracking-wide">Thanh toán</th>
                 </tr>
               </thead>
@@ -849,6 +903,9 @@ export default function SchoolCrmHub() {
                             <div className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-sky-500" style={{ width: `${lead.leadScore}%` }} />
                           </div>
                         </div>
+                      </td>
+                      <td className="px-4 py-3 text-[11px] font-bold text-slate-600 dark:text-slate-300">
+                        {getNextAction(lead)}
                       </td>
                       <td className="px-4 py-3 text-[11px]">
                         {payment ? <span className={payment.status === 'MATCHED' ? 'font-bold text-emerald-600' : 'font-bold text-amber-600'}>{payment.status === 'MATCHED' ? '✅' : '⏳'} {money(payment.amount)}</span> : <span className="text-slate-400">Chưa tạo QR</span>}
@@ -979,6 +1036,28 @@ export default function SchoolCrmHub() {
             {/* Tab 2: ASSESSMENT */}
             {activeTab === 'ASSESSMENT' && (
               <div className="mt-4 space-y-4">
+                <div className="rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 via-white to-sky-50 p-4 dark:border-emerald-900/60 dark:from-emerald-950/30 dark:via-slate-900 dark:to-sky-950/20">
+                  <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-300">
+                    <CalendarClock className="h-4 w-4" />
+                    <h4 className="text-sm font-black">Lịch hẹn & Test hoạt động thế nào?</h4>
+                  </div>
+                  <div className="mt-3 grid gap-2 text-[11px] font-semibold text-slate-600 dark:text-slate-300">
+                    <div className="rounded-xl bg-white/70 p-2 dark:bg-slate-950/40">1. Nhập ngày + giờ test → tự chuyển <b>Đăng ký test</b> + log gửi lịch.</div>
+                    <div className="rounded-xl bg-white/70 p-2 dark:bg-slate-950/40">2. Nhập điểm → tự chuyển <b>Đã test</b>; TB ≥ 8.0 → <b>Duyệt học bổng</b>.</div>
+                    <div className="rounded-xl bg-white/70 p-2 dark:bg-slate-950/40">3. Tạo QR/đối soát → tự đẩy giữ chỗ, hồ sơ, nhập học.</div>
+                  </div>
+                </div>
+
+                <div className="grid gap-2 rounded-2xl border border-slate-200 bg-slate-50/70 p-3 dark:border-slate-800 dark:bg-slate-950/40">
+                  <div className="flex items-center justify-between">
+                    <span className="inline-flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wide text-slate-500"><Zap className="h-3.5 w-3.5 text-amber-500" /> Quy tắc tự động</span>
+                    <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-black text-emerald-700">ON</span>
+                  </div>
+                  {['Có lịch → Đăng ký test', 'Có điểm → Đã test', 'TB ≥ 8.0 → Duyệt học bổng', 'Đủ hồ sơ → Sẵn sàng nhập học'].map(rule => (
+                    <div key={rule} className="flex items-center gap-2 text-[11px] font-semibold text-slate-600 dark:text-slate-300"><CheckCircle2 className="h-3 w-3 text-emerald-500" /> {rule}</div>
+                  ))}
+                </div>
+
                 <div className="grid gap-2">
                   <label className="text-[11px] font-black uppercase text-slate-500">Chuyển pipeline</label>
                   <select

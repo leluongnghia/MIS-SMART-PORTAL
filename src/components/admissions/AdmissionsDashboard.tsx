@@ -128,7 +128,7 @@ function SectionCard({ title, action, onAction, children }: {
 }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
-export default function AdmissionsDashboard() {
+export default function AdmissionsDashboard({ onNavigate }: { onNavigate?: (tab: string) => void }) {
   const [revenueTab, setRevenueTab] = useState<'week' | 'month' | 'quarter'>('week');
 
   return (
@@ -239,7 +239,7 @@ export default function AdmissionsDashboard() {
         </SectionCard>
 
         {/* Lead nóng cần xử lý */}
-        <SectionCard title={<><span className="text-orange-500">🔥</span> Lead nóng cần xử lý</>} action="Xem tất cả">
+        <SectionCard title={<><span className="text-orange-500">🔥</span> Lead nóng cần xử lý</>} action="Xem tất cả" onAction={() => onNavigate?.('leads')}>
           <div className="space-y-0">
             {/* Header */}
             <div className="grid grid-cols-[1fr_auto_80px] text-[10px] font-black uppercase tracking-wide text-slate-400 mb-2">
@@ -269,7 +269,7 @@ export default function AdmissionsDashboard() {
       <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-5">
 
         {/* Lead cần gọi lại */}
-        <SectionCard title={<><Phone className="h-4 w-4 text-green-500" /> Lead cần gọi lại</>} action="Xem tất cả">
+        <SectionCard title={<><Phone className="h-4 w-4 text-green-500" /> Lead cần gọi lại</>} action="Xem tất cả" onAction={() => onNavigate?.('leads')}>
           <div className="space-y-2">
             {callbackLeads.map((item) => (
               <div key={item.name}
@@ -290,7 +290,7 @@ export default function AdmissionsDashboard() {
         </SectionCard>
 
         {/* Lịch test sắp tới */}
-        <SectionCard title={<><CalendarCheck className="h-4 w-4 text-blue-500" /> Lịch test sắp tới</>} action="Xem tất cả">
+        <SectionCard title={<><CalendarCheck className="h-4 w-4 text-blue-500" /> Lịch test sắp tới</>} action="Xem tất cả" onAction={() => onNavigate?.('appointments')}>
           <div className="space-y-2">
             <div className="grid grid-cols-[1fr_40px_auto] text-[10px] font-black uppercase tracking-wide text-slate-400 mb-1">
               <span>Học sinh</span><span>Lớp</span><span>Thời gian</span>
@@ -309,7 +309,7 @@ export default function AdmissionsDashboard() {
         </SectionCard>
 
         {/* Hồ sơ thiếu giấy tờ */}
-        <SectionCard title={<><AlertTriangle className="h-4 w-4 text-amber-500" /> Hồ sơ thiếu giấy tờ</>} action="Xem tất cả">
+        <SectionCard title={<><AlertTriangle className="h-4 w-4 text-amber-500" /> Hồ sơ thiếu giấy tờ</>} action="Xem tất cả" onAction={() => onNavigate?.('documents')}>
           <div className="space-y-2">
             {missingDocs.map((item) => (
               <div key={item.name} className="flex items-center gap-2 rounded-xl border border-slate-100 p-2 text-xs hover:bg-slate-50 cursor-pointer">
@@ -325,7 +325,7 @@ export default function AdmissionsDashboard() {
         </SectionCard>
 
         {/* Thanh toán chờ xác nhận */}
-        <SectionCard title={<><CreditCard className="h-4 w-4 text-indigo-500" /> Thanh toán chờ xác nhận</>} action="Xem tất cả">
+        <SectionCard title={<><CreditCard className="h-4 w-4 text-indigo-500" /> Thanh toán chờ xác nhận</>} action="Xem tất cả" onAction={() => onNavigate?.('payments')}>
           <div className="space-y-2">
             {pendingPayments.map((item) => (
               <div key={item.txn} className="rounded-xl border border-slate-100 p-2 text-xs hover:bg-slate-50 cursor-pointer">
@@ -341,7 +341,7 @@ export default function AdmissionsDashboard() {
         </SectionCard>
 
         {/* Top nguồn lead - Pie chart */}
-        <SectionCard title={<><BarChart3 className="h-4 w-4 text-purple-500" /> Top nguồn lead</>} action="Xem báo cáo">
+        <SectionCard title={<><BarChart3 className="h-4 w-4 text-purple-500" /> Top nguồn lead</>} action="Xem báo cáo" onAction={() => onNavigate?.('reports')}>
           <div className="flex flex-col items-center">
             <div className="h-32 w-32">
               <ResponsiveContainer width="100%" height="100%">

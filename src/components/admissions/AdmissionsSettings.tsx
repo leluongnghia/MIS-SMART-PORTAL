@@ -484,13 +484,36 @@ export default function AdmissionsSettings({ chuongTrinhList, setChuongTrinhList
       'Lê Quỳnh Anh': { host: 'smtp.gmail.com', port: 587, user: 'anh.lq@school.edu.vn', pass: '••••••••••••••••', email: 'anh.lq@school.edu.vn' }
     }
   });
+  const [toast, setToast] = useState('');
+  const [showPreview, setShowPreview] = useState(false);
+  const [nguonList, setNguonList] = useState(NGUON_LEAD);
+  const [quyTacList, setQuyTacList] = useState(QUY_TAC_TU_DONG);
+  const [hienModal, setHienModal] = useState(false);
   const [hienModalSmtp, setHienModalSmtp] = useState(false);
+
+  // Hành động tự động cho tab pipeline (per stage)
+  const [hanhDongList, setHanhDongList] = useState([
+    { icon: 'Mail', ten: 'Gửi email xác nhận lịch hẹn kiểm tra cho phụ huynh', bat: true, thoiGian: 'Ngay lập tức' },
+    { icon: 'Bell', ten: 'Tạo lịch hẹn kiểm tra trên hệ thống', bat: true, thoiGian: 'Ngay lập tức' },
+    { icon: 'MessageSquare', ten: 'Thông báo cho tư vấn viên phụ trách', bat: true, thoiGian: 'Ngay lập tức' },
+  ]);
+  const [themHanhDong, setThemHanhDong] = useState(false);
+  const [tenHanhDongMoi, setTenHanhDongMoi] = useState('');
+
+  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 2500); };
+
   const moTaSmtp = smtpConfig.dungSmtpChung
     ? `SMTP Chung: ${smtpConfig.smtpChung.host} · ${smtpConfig.smtpChung.email}`
     : `SMTP Riêng: ${Object.values(smtpConfig.smtpRieng).filter(u => u.host).length} TVV`;
 
   return (
     <>
+      {/* Toast */}
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-[9999] flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white shadow-2xl">
+          {toast}
+        </div>
+      )}
       <div className="space-y-5">
         {/* Tiêu đề */}
         <div className="flex items-start justify-between gap-4">
@@ -499,14 +522,35 @@ export default function AdmissionsSettings({ chuongTrinhList, setChuongTrinhList
             <p className="mt-0.5 text-xs font-medium text-slate-500">Quản lý pipeline, nguồn lead, email template và các quy tắc tự động</p>
           </div>
           <div className="flex items-center gap-2">
-            <button type="button" className="flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 shadow-xs hover:bg-slate-50">
-              <Eye className="h-3.5 w-3.5" /> Xem trước pipeline
+            <button type="button" onClick={() => setShowPreview(v => !v)}
+              className={`flex h-9 items-center gap-1.5 rounded-xl border px-3 text-xs font-bold shadow-xs transition ${showPreview ? 'bg-blue-600 text-white border-blue-600' : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'}`}>
+              <Eye className="h-3.5 w-3.5" /> {showPreview ? 'Ẩn xem trước' : 'Xem trước pipeline'}
             </button>
-            <button type="button" className="flex h-9 items-center gap-1.5 rounded-xl bg-blue-600 px-4 text-xs font-bold text-white hover:bg-blue-700">
+            <button type="button" onClick={() => showToast('✓ Đã lưu cấu hình CRM tuyển sinh!')} className="flex h-9 items-center gap-1.5 rounded-xl bg-blue-600 px-4 text-xs font-bold text-white hover:bg-blue-700">
               <Save className="h-3.5 w-3.5" /> Lưu thay đổi
             </button>
           </div>
         </div>
+
+        {/* Preview Pipeline */}
+        {showPreview && (
+          <div className="rounded-2xl border border-blue-100 bg-blue-50/60 p-4">
+            <p className="mb-3 text-[10px] font-black uppercase tracking-wide text-blue-700">Xem trước pipeline</p>
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              {GIAI_DOAN_MAU.map((gd, i) => (
+                <div key={gd.id} className="flex shrink-0 items-center gap-1.5">
+                  <div className="flex min-w-[120px] flex-col items-center rounded-xl border bg-white px-3 py-2 text-center shadow-xs">
+                    <div className="h-1.5 w-full rounded-full mb-1.5" style={{ background: gd.mauSac }} />
+                    <p className="text-[10px] font-black text-slate-700 leading-tight">{gd.tenHienThi}</p>
+                    <p className="text-lg font-black text-slate-900">{gd.soLuong.toLocaleString()}</p>
+                    <p className="text-[9px] text-slate-400">SLA: {gd.sla > 0 ? `${gd.sla} ngày` : '∞'}</p>
+                  </div>
+                  {i < GIAI_DOAN_MAU.length - 1 && <div className="text-slate-300 text-lg shrink-0">→</div>}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Tabs */}
         <div className="rounded-2xl border border-slate-100 bg-white shadow-sm overflow-hidden">
@@ -600,12 +644,8 @@ export default function AdmissionsSettings({ chuongTrinhList, setChuongTrinhList
                     <div>
                       <p className="mb-2 text-[10px] font-black uppercase tracking-wide text-slate-400">Hành động tự động khi chuyển vào giai đoạn này</p>
                       <div className="space-y-2">
-                        {[
-                          { icon: Mail, ten: 'Gửi email xác nhận lịch hẹn kiểm tra cho phụ huynh', bat: true },
-                          { icon: Bell, ten: 'Tạo lịch hẹn kiểm tra trên hệ thống', bat: true },
-                          { icon: MessageSquare, ten: 'Thông báo cho tư vấn viên phụ trách', bat: true },
-                        ].map((hd, i) => {
-                          const Icon = hd.icon;
+                        {hanhDongList.map((hd, i) => {
+                          const Icon = hd.icon === 'Mail' ? Mail : hd.icon === 'Bell' ? Bell : MessageSquare;
                           return (
                             <div key={i} className="flex items-center gap-3 rounded-xl border border-slate-100 p-3">
                               <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50">
@@ -613,19 +653,42 @@ export default function AdmissionsSettings({ chuongTrinhList, setChuongTrinhList
                               </div>
                               <p className="flex-1 text-xs font-semibold text-slate-700">{hd.ten}</p>
                               <div className="flex items-center gap-2">
-                                <select className="h-7 rounded-lg border border-slate-200 px-2 text-[10px] focus:outline-none">
+                                <select value={hd.thoiGian}
+                                  onChange={e => setHanhDongList(prev => prev.map((h, j) => j === i ? { ...h, thoiGian: e.target.value } : h))}
+                                  className="h-7 rounded-lg border border-slate-200 px-2 text-[10px] focus:outline-none">
                                   <option>Ngay lập tức</option>
                                   <option>Sau 1 giờ</option>
                                   <option>Sau 24 giờ</option>
                                 </select>
-                                <button type="button" className={`relative h-5 w-9 rounded-full transition-colors ${hd.bat ? 'bg-blue-500' : 'bg-slate-200'}`}>
+                                <button type="button"
+                                  onClick={() => setHanhDongList(prev => prev.map((h, j) => j === i ? { ...h, bat: !h.bat } : h))}
+                                  className={`relative h-5 w-9 rounded-full transition-colors ${hd.bat ? 'bg-blue-500' : 'bg-slate-200'}`}>
                                   <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${hd.bat ? 'translate-x-4' : 'translate-x-0.5'}`} />
                                 </button>
                               </div>
                             </div>
                           );
                         })}
-                        <button type="button" className="flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-700">
+                        {themHanhDong && (
+                          <div className="flex items-center gap-2 rounded-xl border-2 border-blue-200 bg-white p-2">
+                            <input autoFocus type="text" value={tenHanhDongMoi} onChange={e => setTenHanhDongMoi(e.target.value)}
+                              onKeyDown={e => {
+                                if (e.key === 'Enter' && tenHanhDongMoi.trim()) {
+                                  setHanhDongList(prev => [...prev, { icon: 'Zap', ten: tenHanhDongMoi.trim(), bat: true, thoiGian: 'Ngay lập tức' }]);
+                                  setTenHanhDongMoi(''); setThemHanhDong(false);
+                                  showToast('✓ Đã thêm hành động tự động!');
+                                }
+                                if (e.key === 'Escape') { setThemHanhDong(false); setTenHanhDongMoi(''); }
+                              }}
+                              placeholder="Tên hành động... (Enter để lưu)" className="flex-1 h-7 rounded-lg border border-slate-200 px-2 text-xs focus:border-blue-400 focus:outline-none" />
+                            <button type="button" onClick={() => { setThemHanhDong(false); setTenHanhDongMoi(''); }}
+                              className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100">
+                              <X className="h-3 w-3" />
+                            </button>
+                          </div>
+                        )}
+                        <button type="button" onClick={() => setThemHanhDong(true)}
+                          className="flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-700">
                           <Plus className="h-3.5 w-3.5" /> Thêm hành động
                         </button>
                       </div>
@@ -656,7 +719,8 @@ export default function AdmissionsSettings({ chuongTrinhList, setChuongTrinhList
                         <p className="text-xs font-bold text-slate-700">Trạng thái</p>
                         <p className="text-[10px] text-slate-400">Tắt để ẩn giai đoạn này khỏi pipeline (không xóa dữ liệu)</p>
                       </div>
-                      <button type="button" className="relative h-5 w-9 rounded-full bg-blue-500 transition-colors">
+                      <button type="button" onClick={() => showToast('Đã cập nhật trạng thái giai đoạn!')}
+                        className="relative h-5 w-9 rounded-full bg-blue-500 transition-colors">
                         <span className="absolute top-0.5 right-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform" />
                       </button>
                     </div>
@@ -680,7 +744,7 @@ export default function AdmissionsSettings({ chuongTrinhList, setChuongTrinhList
                 </button>
               </div>
               <div className="space-y-2">
-                {NGUON_LEAD.map(n => (
+                {nguonList.map(n => (
                   <div key={n.id} className="flex items-center gap-3 rounded-xl border border-slate-100 p-3 hover:bg-slate-50">
                     <div className={`flex h-8 w-8 items-center justify-center rounded-xl ${n.hoatDong ? 'bg-green-50' : 'bg-slate-50'}`}>
                       <span className="text-base">🌐</span>
@@ -690,10 +754,12 @@ export default function AdmissionsSettings({ chuongTrinhList, setChuongTrinhList
                       <p className="text-[10px] text-slate-400">{n.soLuong} leads từ nguồn này</p>
                     </div>
                     <div className="flex items-center gap-2">
-                      <button type="button" className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100">
+                      <button type="button" onClick={() => showToast(`Sửa nguồn: ${n.ten}`)} className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100">
                         <Edit2 className="h-3.5 w-3.5" />
                       </button>
-                      <button type="button" className={`relative h-5 w-9 rounded-full transition-colors ${n.hoatDong ? 'bg-blue-500' : 'bg-slate-200'}`}>
+                      <button type="button"
+                        onClick={() => { setNguonList(prev => prev.map(x => x.id === n.id ? { ...x, hoatDong: !x.hoatDong } : x)); showToast(`${n.hoatDong ? 'Tắt' : 'Bật'} nguồn: ${n.ten}`); }}
+                        className={`relative h-5 w-9 rounded-full transition-colors ${n.hoatDong ? 'bg-blue-500' : 'bg-slate-200'}`}>
                         <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${n.hoatDong ? 'translate-x-4' : 'translate-x-0.5'}`} />
                       </button>
                     </div>
@@ -707,13 +773,13 @@ export default function AdmissionsSettings({ chuongTrinhList, setChuongTrinhList
           {tab === 'quy_tac' && (
             <div className="p-5 space-y-4">
               <div className="flex items-center justify-between">
-                <p className="text-xs font-black uppercase tracking-wide text-slate-400">Quy tắc tự động ({QUY_TAC_TU_DONG.length})</p>
-                <button type="button" className="flex h-7 items-center gap-1 rounded-xl bg-blue-50 px-2 text-[10px] font-bold text-blue-700 hover:bg-blue-100">
+                <p className="text-xs font-black uppercase tracking-wide text-slate-400">Quy tắc tự động ({quyTacList.length})</p>
+                <button type="button" onClick={() => showToast('Mở form tạo quy tắc mới')} className="flex h-7 items-center gap-1 rounded-xl bg-blue-50 px-2 text-[10px] font-bold text-blue-700 hover:bg-blue-100">
                   <Plus className="h-3 w-3" /> Tạo quy tắc
                 </button>
               </div>
               <div className="space-y-2">
-                {QUY_TAC_TU_DONG.map(r => {
+                {quyTacList.map(r => {
                   const LoaiIcon = r.loai === 'Email' ? Mail : r.loai === 'Zalo' ? MessageSquare : Zap;
                   const mauLoai = r.loai === 'Email' ? 'bg-blue-50 text-blue-600' : r.loai === 'Zalo' ? 'bg-cyan-50 text-cyan-600' : 'bg-purple-50 text-purple-600';
                   return (
@@ -729,10 +795,12 @@ export default function AdmissionsSettings({ chuongTrinhList, setChuongTrinhList
                         <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${r.hoatDong ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>
                           {r.hoatDong ? 'Đang bật' : 'Đã tắt'}
                         </span>
-                        <button type="button" className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100">
+                        <button type="button" onClick={() => showToast(`Sửa quy tắc: ${r.ten}`)} className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100">
                           <Edit2 className="h-3.5 w-3.5" />
                         </button>
-                        <button type="button" className={`relative h-5 w-9 rounded-full transition-colors ${r.hoatDong ? 'bg-blue-500' : 'bg-slate-200'}`}>
+                        <button type="button"
+                          onClick={() => { setQuyTacList(prev => prev.map(x => x.id === r.id ? { ...x, hoatDong: !x.hoatDong } : x)); showToast(`${r.hoatDong ? 'Tắt' : 'Bật'} quy tắc: ${r.ten}`); }}
+                          className={`relative h-5 w-9 rounded-full transition-colors ${r.hoatDong ? 'bg-blue-500' : 'bg-slate-200'}`}>
                           <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${r.hoatDong ? 'translate-x-4' : 'translate-x-0.5'}`} />
                         </button>
                       </div>

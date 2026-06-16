@@ -1,3 +1,4 @@
+import { serverStorage } from '../libs/client/server-storage';
 import React, { useMemo, useState, useEffect, useRef } from 'react';
 import {
   AlertTriangle,
@@ -248,7 +249,7 @@ const initialAttendance = generatedData.attendanceList;
 // Secure local storage helpers — data is encrypted at rest
 function readStored<T>(key: string, fallback: T): T {
   try {
-    const saved = localStorage.getItem(key);
+    const saved = serverStorage.getItem(key);
     if (!saved) return fallback;
     // Try decrypting first; falls back to plain JSON for backward compatibility
     const decrypted = decryptData(saved);
@@ -260,7 +261,7 @@ function readStored<T>(key: string, fallback: T): T {
 }
 
 function writeStored(key: string, data: any): void {
-  localStorage.setItem(key, encryptData(data));
+  serverStorage.setItem(key, encryptData(data));
 }
 
 function gradeAverage(grade: GradeEntry) {

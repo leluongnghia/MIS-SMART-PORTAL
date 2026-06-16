@@ -14,3 +14,18 @@ if (process.env.NODE_ENV !== 'production') {
 
 export const db = drizzle(pgliteClient, { schema });
 export { schema };
+
+let isConfigLoaded = false;
+
+export async function loadConfigFromDb(force = false) {
+  if (isConfigLoaded && !force) return;
+  try {
+    const settings = await db.select().from(schema.systemSettings);
+    for (const setting of settings) {
+      process.env[setting.key] = setting.value;
+    }
+    isConfigLoaded = true;
+  } catch (e) {
+    console.error('Failed to load configurations from DB:', e);
+  }
+}

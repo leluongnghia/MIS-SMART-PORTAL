@@ -17,7 +17,9 @@ import {
   Area,
 } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/src/components/ui/card';
-import { BarChart3, PieChartIcon, TrendingUp, DollarSign, GraduationCap } from 'lucide-react';
+import { Button } from '@/src/components/ui/button';
+import { useToast } from '@/src/components/ui/Toast';
+import { BarChart3, PieChartIcon, TrendingUp, DollarSign, GraduationCap, FileSpreadsheet } from 'lucide-react';
 
 interface ChartItem {
   name: string;
@@ -76,16 +78,52 @@ export default function ReportsClient({ locale, data }: ReportsClientProps) {
     return `${val.toLocaleString('vi-VN')} đ`;
   };
 
+  const { success: toastSuccess } = useToast();
+
+  const handleExportReportCSV = () => {
+    const sections = [
+      { title: 'Phễu Chuyển Đổi', headers: ['Giai Đoạn', 'Số Lượng'], rows: data.conversionFunnel.map(d => [d.name, d.count]) },
+      { title: 'Nguồn Lead', headers: ['Nguồn', 'Số Lượng'], rows: data.leadsBySource.map(d => [d.name, d.value]) },
+      { title: 'Trạng Thái Lead', headers: ['Trạng Thái', 'Số Lượng'], rows: data.leadsByStatus.map(d => [d.name, d.value]) },
+      { title: 'Doanh Thu', headers: ['Loại Phí', 'Số Tiền (VND)'], rows: data.revenueByPaymentType.map(d => [d.name, d.value]) },
+      { title: 'Nhập Học Theo Khối', headers: ['Khối Lớp', 'Số Học Sinh'], rows: data.enrollmentByGrade.map(d => [d.name, d.value]) },
+    ];
+    let csv = '\uFEFF';
+    sections.forEach(section => {
+      csv += `"=== ${section.title} ===\n"`;
+      csv += section.headers.map(h => `"${h}"`).join(',') + '\n';
+      section.rows.forEach((row: any[]) => {
+        csv += row.map(v => `"${String(v)}"`).join(',') + '\n';
+      });
+      csv += '\n';
+    });
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `MIS_Reports_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toastSuccess('Xuất báo cáo thành công', 'Báo cáo CSV đã được tải xuống');
+  };
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent dark:from-blue-400 dark:to-indigo-400">
-          Báo Cáo & Phân Tích Tuyển Sinh
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent dark:from-blue-400 dark:to-indigo-400">
+            Báo Cáo & Phân Tích Tuyển Sinh
           </h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400">
-          Phân tích chuyên sâu nguồn học sinh, hiệu quả chuyển đổi phễu tuyển sinh và doanh thu nhập học.
-        </p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            Phân tích chuyên sâu nguồn học sinh, hiệu quả chuyển đổi phễu tuyển sinh và doanh thu nhập học.
+          </p>
+        </div>
+        <Button variant="outline" onClick={handleExportReportCSV} className="hidden sm:flex gap-2 shrink-0">
+          <FileSpreadsheet className="h-4 w-4 text-emerald-600" />
+          Xuất báo cáo CSV
+        </Button>
       </div>
 
       {/* Grid containing reports */}

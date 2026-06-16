@@ -1,11 +1,11 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { serverStorage } from '../../../../libs/client/server-storage';
+
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useParams, useRouter } from 'next/navigation';
 import { cn } from "@/src/lib/utils";
-import KhaoThiDashboard from '@/src/components/KhaoThiDashboard';
-import AdmissionsEnterpriseDashboard from '@/src/components/AdmissionsEnterpriseDashboard';
-import DepartmentDashboard from '@/src/components/DepartmentDashboard';
-import { MOCK_USERS, INITIAL_TASKS, WORKSPACES } from '@/src/mockData';
+import { MOCK_USERS } from '@/src/mockData';
 import {
   AlertCircle,
   Calendar,
@@ -47,10 +47,13 @@ const performanceData = [
 export default function DashboardClient({ tab, initialData }: { tab?: string, initialData?: any }) {
   const [currentUser, setCurrentUser] = React.useState<any>(null);
   const [isReady, setIsReady] = React.useState(false);
+  const params = useParams();
+  const locale = (params?.locale as string) || 'vi';
+  const router = useRouter();
 
   React.useEffect(() => {
-    const loggedIn = localStorage.getItem("mis_edutask_logged_in") === "true";
-    const savedUserId = localStorage.getItem("mis_edutask_logged_in_user_id");
+    const loggedIn = serverStorage.getItem("mis_edutask_logged_in") === "true";
+    const savedUserId = serverStorage.getItem("mis_edutask_logged_in_user_id");
     if (loggedIn && savedUserId) {
       import("@/src/mockData").then(({ MOCK_USERS }) => {
         const matched = MOCK_USERS.find(u => u.id === savedUserId);
@@ -59,6 +62,12 @@ export default function DashboardClient({ tab, initialData }: { tab?: string, in
     }
     setIsReady(true);
   }, []);
+
+  // Use real data from DB, fall back to empty arrays
+  const recentActivities: any[] = initialData?.recentActivities || [];
+  const risks: any[] = initialData?.risks || [];
+  const priorityTasks: any[] = initialData?.actionCenter?.priorityTasks || [];
+
   return (
     <div className="space-y-6">
       {/* Header controls */}
@@ -77,7 +86,7 @@ export default function DashboardClient({ tab, initialData }: { tab?: string, in
               <option>Thứ Sáu, 16/05/2025</option>
             </select>
           </div>
-          <Button variant="outline" className="gap-2">
+          <Button variant="outline" className="gap-2" disabled title="Tính năng tùy chỉnh dashboard sẽ ra mắt trong phiên bản tới">
             <SettingsIcon className="h-4 w-4" />
             Tùy chỉnh
           </Button>
@@ -100,7 +109,7 @@ export default function DashboardClient({ tab, initialData }: { tab?: string, in
                 </div>
               </div>
             </div>
-            <Link href="tasks"><Button variant="ghost" size="sm" className="text-red-600 hover:bg-red-100 hover:text-red-700">Xem chi tiết</Button></Link>
+            <Link href={`/${locale}/tasks`}><Button variant="ghost" size="sm" className="text-red-600 hover:bg-red-100 hover:text-red-700">Xem chi tiết</Button></Link>
           </CardContent>
         </Card>
 
@@ -118,7 +127,7 @@ export default function DashboardClient({ tab, initialData }: { tab?: string, in
                 </div>
               </div>
             </div>
-            <Link href="approvals"><Button variant="ghost" size="sm" className="text-orange-600 hover:bg-orange-100 hover:text-orange-700">Xem chi tiết</Button></Link>
+            <Link href={`/${locale}/approvals`}><Button variant="ghost" size="sm" className="text-orange-600 hover:bg-orange-100 hover:text-orange-700">Xem chi tiết</Button></Link>
           </CardContent>
         </Card>
 
@@ -136,7 +145,7 @@ export default function DashboardClient({ tab, initialData }: { tab?: string, in
                 </div>
               </div>
             </div>
-            <Link href="risk"><Button variant="ghost" size="sm" className="text-rose-600 hover:bg-rose-100 hover:text-rose-700">Xem chi tiết</Button></Link>
+            <Link href={`/${locale}/risk`}><Button variant="ghost" size="sm" className="text-rose-600 hover:bg-rose-100 hover:text-rose-700">Xem chi tiết</Button></Link>
           </CardContent>
         </Card>
       </div>
@@ -144,19 +153,20 @@ export default function DashboardClient({ tab, initialData }: { tab?: string, in
       {/* OKRs */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {[
-          { title: 'Tuyển sinh', val: 72, target: '1.200 HS', actual: '864 HS', color: 'text-blue-600', status: 'Đang tốt', statusColor: 'text-emerald-500' },
-          { title: 'Đào tạo', val: 68, target: '95%', actual: '64.6%', color: 'text-blue-500', status: 'Đang tốt', statusColor: 'text-emerald-500' },
-          { title: 'Nhân sự', val: 85, target: '100%', actual: '85%', color: 'text-blue-600', status: 'Đang tốt', statusColor: 'text-emerald-500' },
-          { title: 'Vận hành', val: 61, target: '100%', actual: '61%', color: 'text-blue-500', status: 'Cần cải thiện', statusColor: 'text-orange-500' },
+          { title: 'Tuyển sinh', val: 72, target: '1.200 HS', actual: '864 HS', color: 'text-blue-600', status: 'Đang tốt', statusColor: 'text-emerald-500', href: 'leads' },
+          { title: 'Đào tạo', val: 68, target: '95%', actual: '64.6%', color: 'text-blue-500', status: 'Đang tốt', statusColor: 'text-emerald-500', href: 'reports' },
+          { title: 'Nhân sự', val: 85, target: '100%', actual: '85%', color: 'text-blue-600', status: 'Đang tốt', statusColor: 'text-emerald-500', href: 'hrm' },
+          { title: 'Vận hành', val: 61, target: '100%', actual: '61%', color: 'text-blue-500', status: 'Cần cải thiện', statusColor: 'text-orange-500', href: 'tasks' },
         ].map((okr, i) => (
-          <Card key={i}>
+          <Link key={i} href={`/${locale}/${okr.href}`}>
+          <Card className="hover:shadow-md transition-shadow cursor-pointer">
             <CardContent className="p-5">
               <div className="flex justify-between items-start mb-4">
                 <div>
                   <h4 className="font-bold text-slate-900 dark:text-white">{okr.title}</h4>
                   <p className="text-xs text-slate-500">OKR Q2/2025</p>
                 </div>
-                <ChevronRight className="h-4 w-4 text-slate-400" />
+                <ChevronRight className="h-4 w-4 text-blue-400" />
               </div>
               <div className="flex items-center gap-4">
                 {/* SVG Radial Progress */}
@@ -196,6 +206,7 @@ export default function DashboardClient({ tab, initialData }: { tab?: string, in
               </div>
             </CardContent>
           </Card>
+          </Link>
         ))}
       </div>
 
@@ -237,15 +248,15 @@ export default function DashboardClient({ tab, initialData }: { tab?: string, in
           <CardContent className="p-0">
             <div className="p-4 bg-slate-50/50 dark:bg-slate-900/50 text-xs font-bold text-slate-500 flex justify-between">
               <span>Phê duyệt khẩn cấp</span>
-                <Link href="approvals" className="text-blue-600 font-medium">Xem tất cả</Link>
+                <Link href={`/${locale}/approvals`} className="text-blue-600 font-medium">Xem tất cả</Link>
             </div>
             <div className="divide-y divide-slate-100 dark:divide-slate-800">
               {[
-                { task: 'Đề xuất mua sắm thiết bị phòng Tin học', dept: 'Phòng CNTT', tag: 'Quá hạn 2 ngày' },
-                { task: 'Kế hoạch ngoại khóa Khối 11', dept: 'Đoàn trường', tag: 'Quá hạn 1 ngày' },
-                { task: 'Điều chỉnh phân công giảng dạy HKII', dept: 'Phòng Đào tạo', tag: 'Hôm nay', tagColor: 'bg-orange-100 text-orange-600' }
+                { task: 'Đề xuất mua sắm thiết bị phòng Tin học', dept: 'Phòng CNTT', tag: 'Quá hạn 2 ngày', href: `/${locale}/approvals` },
+                { task: 'Kế hoạch ngoại khóa Khối 11', dept: 'Đoàn trường', tag: 'Quá hạn 1 ngày', href: `/${locale}/approvals` },
+                { task: 'Điều chỉnh phân công giảng dạy HKII', dept: 'Phòng Đào tạo', tag: 'Hôm nay', tagColor: 'bg-orange-100 text-orange-600', href: `/${locale}/approvals` }
               ].map((act, i) => (
-                <div key={i} className="p-4 flex gap-3 hover:bg-slate-50 dark:hover:bg-slate-900 cursor-pointer transition-colors">
+                <Link key={i} href={act.href} className="p-4 flex gap-3 hover:bg-slate-50 dark:hover:bg-slate-900 cursor-pointer transition-colors block">
                   <div className="mt-0.5"><CheckSquare className="h-4 w-4 text-slate-400" /></div>
                   <div className="flex-1">
                     <p className="text-sm font-medium text-slate-900 dark:text-slate-100 leading-tight mb-1">{act.task}</p>
@@ -254,31 +265,40 @@ export default function DashboardClient({ tab, initialData }: { tab?: string, in
                   <Badge  className={cn("shrink-0 text-[10px] font-medium border-0", act.tagColor || "bg-red-100 text-red-600")}>
                     {act.tag}
                   </Badge>
-                </div>
+                </Link>
               ))}
             </div>
 
             <div className="p-4 bg-slate-50/50 dark:bg-slate-900/50 text-xs font-bold text-slate-500 flex justify-between border-t border-slate-100 dark:border-slate-800">
               <span>Công việc ưu tiên</span>
-                <Link href="tasks" className="text-blue-600 font-medium">Xem tất cả</Link>
+                <Link href={`/${locale}/tasks`} className="text-blue-600 font-medium">Xem tất cả</Link>
             </div>
             <div className="divide-y divide-slate-100 dark:divide-slate-800">
-              {[
-                { task: 'Báo cáo tài chính Quý II/2025', dept: 'Phòng Tài chính', date: '20/05/2025' },
-                { task: 'Rà soát hồ sơ học sinh lớp 10', dept: 'Phòng Tuyển sinh', date: '19/05/2025' },
-              ].map((act, i) => (
-                <div key={i} className="p-4 flex gap-3 hover:bg-slate-50 dark:hover:bg-slate-900 cursor-pointer transition-colors">
+              {priorityTasks.length > 0 ? priorityTasks.map((act: any, i: number) => (
+                <Link key={i} href={`/${locale}/tasks`} className="p-4 flex gap-3 hover:bg-slate-50 dark:hover:bg-slate-900 cursor-pointer transition-colors block">
                   <div className="mt-0.5"><CheckSquare className="h-4 w-4 text-slate-400" /></div>
                   <div className="flex-1">
                     <p className="text-sm font-medium text-slate-900 dark:text-slate-100 leading-tight mb-1">{act.task}</p>
                     <p className="text-xs text-slate-500">{act.dept}</p>
                   </div>
                   <span className="text-xs text-slate-500 shrink-0">{act.date}</span>
-                </div>
+                </Link>
+              )) : [
+                { task: 'Báo cáo tài chính Quý II/2025', dept: 'Phòng Tài chính', date: '20/05/2025' },
+                { task: 'Rà soát hồ sơ học sinh lớp 10', dept: 'Phòng Tuyển sinh', date: '19/05/2025' },
+              ].map((act, i) => (
+                <Link key={i} href={`/${locale}/tasks`} className="p-4 flex gap-3 hover:bg-slate-50 dark:hover:bg-slate-900 cursor-pointer transition-colors block">
+                  <div className="mt-0.5"><CheckSquare className="h-4 w-4 text-slate-400" /></div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-slate-900 dark:text-slate-100 leading-tight mb-1">{act.task}</p>
+                    <p className="text-xs text-slate-500">{act.dept}</p>
+                  </div>
+                  <span className="text-xs text-slate-500 shrink-0">{act.date}</span>
+                </Link>
               ))}
             </div>
             <div className="p-3 text-center border-t border-slate-100 dark:border-slate-800">
-              <Link href="tasks" className="block w-full"><Button variant="ghost" className="w-full text-sm text-blue-600">Xem tất cả công việc <ChevronRight className="h-4 w-4 ml-1" /></Button></Link>
+              <Link href={`/${locale}/tasks`} className="block w-full"><Button variant="ghost" className="w-full text-sm text-blue-600">Xem tất cả công việc <ChevronRight className="h-4 w-4 ml-1" /></Button></Link>
             </div>
           </CardContent>
         </Card>
@@ -334,7 +354,7 @@ export default function DashboardClient({ tab, initialData }: { tab?: string, in
                 </div>
               </div>
               <div className="mt-4 text-center">
-                <Link href="reports"><Button variant="ghost" className="text-sm text-blue-600 h-auto p-0">Xem phân tích chi tiết <ChevronRight className="h-4 w-4 ml-1" /></Button></Link>
+                <Link href={`/${locale}/reports`}><Button variant="ghost" className="text-sm text-blue-600 h-auto p-0">Xem phân tích chi tiết <ChevronRight className="h-4 w-4 ml-1" /></Button></Link>
               </div>
             </CardContent>
           </Card>
@@ -345,18 +365,18 @@ export default function DashboardClient({ tab, initialData }: { tab?: string, in
           <CardHeader className="p-4 pb-2 border-b border-slate-100 dark:border-slate-800">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base font-bold">Hoạt động gần đây</CardTitle>
-                <Link href="events" className="text-xs font-medium text-blue-600">Xem tất cả</Link>
+                <Link href={`/${locale}/events`} className="text-xs font-medium text-blue-600">Xem tất cả</Link>
             </div>
           </CardHeader>
           <CardContent className="p-4">
             <div className="space-y-6">
-              {[
+              {(recentActivities.length > 0 ? recentActivities : [
                 { time: '16/05/2025 09:24', text: 'Nguyễn Văn Nam đã phê duyệt Kế hoạch dạy học HKII', dept: 'Phòng Đào tạo' },
                 { time: '16/05/2025 08:15', text: 'Phê duyệt đề xuất mua sắm 30 bộ máy tính', dept: 'Phòng Tài chính' },
                 { time: '15/05/2025 17:30', text: 'Cập nhật điểm danh học sinh 11A1', dept: 'GVCN - Trần Thị Mai' },
                 { time: '15/05/2025 16:45', text: 'Đăng thông báo: Lịch thi thử THPTQG đợt 2', dept: 'Phòng Đào tạo' },
                 { time: '15/05/2025 14:12', text: 'Hệ thống tự động sao lưu dữ liệu thành công', dept: 'Hệ thống' },
-              ].map((act, i) => (
+              ]).map((act: any, i: number) => (
                 <div key={i} className="relative pl-6">
                   {/* Timeline dot */}
                   <div className="absolute left-0 top-1 h-2.5 w-2.5 rounded-full bg-blue-600 border-[2px] border-white dark:border-slate-950 z-10" />
@@ -371,6 +391,7 @@ export default function DashboardClient({ tab, initialData }: { tab?: string, in
             </div>
           </CardContent>
         </Card>
+
       </div>
       
       {/* Risk and Funnel */}
@@ -431,14 +452,14 @@ export default function DashboardClient({ tab, initialData }: { tab?: string, in
             <div className="flex-1 space-y-4">
                <div className="flex justify-between items-end mb-2">
                  <h4 className="text-sm font-bold">Rủi ro nổi bật</h4>
-                  <Link href="risk" className="text-xs text-blue-600 font-medium">Xem tất cả</Link>
+                  <Link href={`/${locale}/risk`} className="text-xs text-blue-600 font-medium">Xem tất cả</Link>
                </div>
                <div className="space-y-3">
-                 {[
+                 {(risks.length > 0 ? risks : [
                    { id: '3', text: 'Rủi ro về thiếu GV bộ môn Toán', tag: 'Cao' },
                    { id: '2', text: 'Tiến độ tuyển sinh thấp hơn kế hoạch', tag: 'Cao' },
                    { id: '1', text: 'Chậm phê duyệt thanh toán', tag: 'Trung bình', tagColor: 'bg-orange-100 text-orange-600' },
-                 ].map((r, i) => (
+                 ]).map((r: any, i: number) => (
                    <div key={i} className="flex items-center justify-between gap-3">
                      <div className="flex items-center gap-2 min-w-0">
                        <div className={cn("w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0", r.tag === 'Cao' ? 'bg-orange-500' : 'bg-yellow-500')}>
@@ -501,7 +522,7 @@ export default function DashboardClient({ tab, initialData }: { tab?: string, in
   </div>
 
             <div className="text-center">
-              <Link href="admissions"><Button variant="ghost" className="text-sm text-blue-600">Xem chi tiết phễu tuyển sinh <ChevronRight className="h-4 w-4 ml-1" /></Button></Link>
+              <Link href={`/${locale}/admissions`}><Button variant="ghost" className="text-sm text-blue-600">Xem chi tiết phễu tuyển sinh <ChevronRight className="h-4 w-4 ml-1" /></Button></Link>
             </div>
           </CardContent>
         </Card>
@@ -549,3 +570,4 @@ function CheckSquare(props: React.SVGProps<SVGSVGElement>) {
     </svg>
   );
 }
+

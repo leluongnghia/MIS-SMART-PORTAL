@@ -1,4 +1,6 @@
 'use client';
+import { serverStorage } from '../libs/client/server-storage';
+
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useLanguage } from '../context/LanguageContext';
@@ -110,7 +112,7 @@ export default function HrmCenter({ currentUser, users, onUpdateUsers, hasCapabi
 
   // State: Nghỉ phép
   const [leaves, setLeaves] = useState<LeaveRequest[]>(() => {
-    const saved = localStorage.getItem('mis_hrm_leaves');
+    const saved = serverStorage.getItem('mis_hrm_leaves');
     if (saved) {
       try { return JSON.parse(saved); } catch (e) {}
     }
@@ -143,12 +145,12 @@ export default function HrmCenter({ currentUser, users, onUpdateUsers, hasCapabi
   });
 
   useEffect(() => {
-    localStorage.setItem('mis_hrm_leaves', JSON.stringify(leaves));
+    serverStorage.setItem('mis_hrm_leaves', JSON.stringify(leaves));
   }, [leaves]);
 
   // State: Chấm công
   const [attendanceRecords] = useState<AttendanceRecord[]>(() => {
-    const saved = localStorage.getItem('mis_hrm_attendance');
+    const saved = serverStorage.getItem('mis_hrm_attendance');
     if (saved) {
       try { return JSON.parse(saved); } catch (e) {}
     }
@@ -164,7 +166,7 @@ export default function HrmCenter({ currentUser, users, onUpdateUsers, hasCapabi
 
   // State: Lương
   const [salaryRecords, setSalaryRecords] = useState<SalaryRecord[]>(() => {
-    const saved = localStorage.getItem('mis_hrm_salary');
+    const saved = serverStorage.getItem('mis_hrm_salary');
     if (saved) {
       try { return JSON.parse(saved); } catch (e) {}
     }
@@ -178,7 +180,7 @@ export default function HrmCenter({ currentUser, users, onUpdateUsers, hasCapabi
   });
 
   useEffect(() => {
-    localStorage.setItem('mis_hrm_salary', JSON.stringify(salaryRecords));
+    serverStorage.setItem('mis_hrm_salary', JSON.stringify(salaryRecords));
   }, [salaryRecords]);
 
   // Selected Profile

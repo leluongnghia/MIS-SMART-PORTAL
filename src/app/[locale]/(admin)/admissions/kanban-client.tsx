@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useMemo, useState, useTransition } from 'react';
+import { useEffect, useMemo, useState, useTransition, type ComponentType } from 'react';
 import Link from 'next/link';
+import { useToast } from '@/src/components/ui/Toast';
 import {
   addAdmissionCareActivity,
   updateAdmissionDocumentStatus,
@@ -24,8 +25,14 @@ import {
   Plus,
   QrCode,
   Search,
+  Target,
   User,
   Users,
+  Upload,
+  PlayCircle,
+  Settings,
+  WalletCards,
+  Workflow as WorkflowIcon,
 } from 'lucide-react';
 import { Badge } from '@/src/components/ui/badge';
 import { Card } from '@/src/components/ui/card';
@@ -85,6 +92,7 @@ interface KanbanClientProps {
   users: DbUser[];
   activities: Activity[];
   documents: DocumentItem[];
+  initialView?: 'dashboard' | 'pipeline' | 'import' | 'payments' | 'workflow' | 'config';
 }
 
 const statuses: { value: LeadStatus; label: string; color: string; bg: string; text: string }[] = [
@@ -140,6 +148,7 @@ export default function KanbanClient({
   users,
   activities: initialActivities,
   documents: initialDocuments,
+  initialView,
 }: KanbanClientProps) {
   const [leads, setLeads] = useState<Lead[]>(initialLeads);
   const [activities, setActivities] = useState<Activity[]>(initialActivities);
@@ -148,9 +157,22 @@ export default function KanbanClient({
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<LeadStatus | 'all'>('all');
   const [activeTab, setActiveTab] = useState<'care' | 'assessment' | 'documents' | 'personal'>('care');
+  const [crmView, setCrmView] = useState(initialView || 'pipeline');
+  const [importText, setImportText] = useState('');
+  const [importPreview, setImportPreview] = useState<any>(null);
+  const [paymentLeadId, setPaymentLeadId] = useState(initialLeads[0]?.id || '');
+  const [paymentType, setPaymentType] = useState<'RESERVATION' | 'ENROLLMENT'>('RESERVATION');
+  const [paymentResult, setPaymentResult] = useState<any>(null);
+  const [reconcileText, setReconcileText] = useState('');
+  const [reconcileResult, setReconcileResult] = useState<any>(null);
+  const [workflowLeadId, setWorkflowLeadId] = useState(initialLeads[0]?.id || '');
+  const [workflowResult, setWorkflowResult] = useState<any>(null);
+  const [configStatus, setConfigStatus] = useState<any>(null);
   const [careChannel, setCareChannel] = useState('phone');
   const [careNote, setCareNote] = useState('');
   const [isPending, startTransition] = useTransition();
+  const [pendingStatusChange, setPendingStatusChange] = useState<{leadId: string; status: LeadStatus} | null>(null);
+  const { success: toastSuccess, error: toastError } = useToast();
 
   useEffect(() => {
     setLeads(initialLeads);
@@ -207,9 +229,25 @@ export default function KanbanClient({
   };
 
   const changeStatus = (leadId: string, status: LeadStatus) => {
+    const irreversibleStatuses: LeadStatus[] = ['seat_reserved', 'enrolled'];
+    if (irreversibleStatuses.includes(status)) {
+      // Show confirm for high-stakes transitions
+      setPendingStatusChange({ leadId, status });
+      return;
+    }
+    applyStatusChange(leadId, status);
+  };
+
+  const applyStatusChange = (leadId: string, status: LeadStatus) => {
     setLeads(prev => prev.map(lead => (lead.id === leadId ? { ...lead, status, updatedAt: new Date() } : lead)));
+    setPendingStatusChange(null);
     startTransition(async () => {
-      await updateLeadStatusKanban(leadId, status, 'Cập nhật từ Focused Counselor View');
+      try {
+        await updateLeadStatusKanban(leadId, status, 'Cập nhật từ Focused Counselor View');
+        toastSuccess('Cập nhật thành công', `Trạng thái đã được chuyển`);
+      } catch {
+        toastError('Cập nhật thất bại', 'Vui lòng thử lại');
+      }
     });
   };
 
@@ -270,8 +308,184 @@ export default function KanbanClient({
   }
 
   const statusMeta = getStatusMeta(selectedLead.status);
+  const crmViews = [
+    { key: 'dashboard', label: 'Tổng quan CRM', icon: Target },
+    { key: 'pipeline', label: 'Pipeline tư vấn', icon: WorkflowIcon },
+    { key: 'import', label: 'Import lead', icon: Upload },
+    { key: 'payments', label: 'Thanh toán & VietQR', icon: WalletCards },
+    { key: 'workflow', label: 'Workflow chăm sóc', icon: PlayCircle },
+    { key: 'config', label: 'Cấu hình', icon: Settings },
+  ] as const;
+  const funnelStats = statuses.map(status => ({ ...status, count: leads.filter(lead => lead.status === status.value).length }));
+  const newLeadCount = leads.filter(lead => lead.status === 'received').length;
+  const reservedCount = leads.filter(lead => lead.status === 'seat_reserved').length;
+  const enrolledCount = leads.filter(lead => lead.status === 'enrolled').length;
+  const missingDocsCount = leads.filter(lead => !documents.some(doc => doc.leadId === lead.id && (doc.status === 'submitted' || doc.status === 'approved'))).length;
+
+  const previewImport = async () => {
+    const res = await fetch('/api/crm/import/preview', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: importText }),
+    });
+    setImportPreview(await res.json());
+  };
+
+  const createPreviewLeads = async () => {
+    const rows = importPreview?.batch?.leads || [];
+    for (const lead of rows) {
+      await fetch('/api/crm/leads/intake', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(lead),
+      });
+    }
+    toastSuccess('Import thành công', `Đã gửi ${rows.length} lead vào CRM`);
+  };
+
+  const createPayment = async () => {
+    const res = await fetch('/api/crm/payments/vietqr', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ leadId: paymentLeadId, type: paymentType }),
+    });
+    setPaymentResult(await res.json());
+  };
+
+  const reconcilePayments = async () => {
+    const res = await fetch('/api/crm/payments/reconcile', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: reconcileText }),
+    });
+    setReconcileResult(await res.json());
+  };
+
+  const runWorkflow = async () => {
+    const res = await fetch('/api/crm/workflows/run', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ leadId: workflowLeadId, workflow: 'AUTO_STAGE_WORKFLOW' }),
+    });
+    setWorkflowResult(await res.json());
+  };
+
+  const loadConfigStatus = async () => {
+    const res = await fetch('/api/notification/config-status');
+    setConfigStatus(await res.json());
+  };
+
+  const CommandTabs = (
+    <div className="mb-4 rounded-3xl border border-slate-200 bg-white/90 p-2 shadow-sm dark:border-slate-800 dark:bg-slate-950/90">
+      <div className="flex flex-wrap gap-2">
+        {crmViews.map(view => {
+          const Icon = view.icon;
+          const active = crmView === view.key;
+          return (
+            <button
+              key={view.key}
+              type="button"
+              onClick={() => setCrmView(view.key)}
+              className={cn('inline-flex items-center gap-2 rounded-2xl px-3 py-2 text-xs font-black transition-all', active ? 'bg-slate-950 text-white shadow-lg dark:bg-white dark:text-slate-950' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-900')}
+            >
+              <Icon className="h-4 w-4" /> {view.label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+
+  if (crmView !== 'pipeline') {
+    return (
+      <div className="min-h-[680px] space-y-5 overflow-hidden rounded-[2rem] bg-[radial-gradient(circle_at_top_left,#ecfeff,transparent_34%),radial-gradient(circle_at_top_right,#fff7ed,transparent_28%),linear-gradient(135deg,#f8fafc,#eef2ff)] p-4 dark:bg-slate-950">
+        <div className="rounded-[2rem] bg-slate-950 p-6 text-white shadow-2xl">
+          <p className="text-xs font-black uppercase tracking-[0.35em] text-cyan-300">Admissions CRM Command Center</p>
+          <h1 className="mt-2 text-3xl font-black tracking-tight">Tuyển sinh & CRM đầy đủ chức năng</h1>
+          <p className="mt-2 max-w-3xl text-sm text-slate-300">Dashboard, pipeline, import lead, VietQR, đối soát, workflow chăm sóc và cấu hình vận hành trong một màn hình.</p>
+        </div>
+        {CommandTabs}
+
+        {crmView === 'dashboard' && (
+          <div className="grid gap-4 lg:grid-cols-[1fr_0.9fr]">
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              {([
+                ['Tổng lead', leads.length, Users, 'from-blue-500 to-cyan-400'],
+                ['Lead mới', newLeadCount, Plus, 'from-amber-500 to-orange-400'],
+                ['Giữ chỗ', reservedCount, CreditCard, 'from-violet-500 to-fuchsia-400'],
+                ['Nhập học', enrolledCount, GraduationCap, 'from-emerald-500 to-teal-400'],
+              ] as Array<[string, number, ComponentType<{ className?: string }>, string]>).map(([label, value, Icon, gradient]) => (
+                <Card key={label as string} className="overflow-hidden border-0 bg-white/85 p-4 shadow-sm backdrop-blur">
+                  <div className={`mb-4 flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br ${gradient as string} text-white shadow-lg`}><Icon className="h-5 w-5" /></div>
+                  <p className="text-xs font-bold uppercase tracking-wider text-slate-400">{label as string}</p>
+                  <p className="mt-1 text-3xl font-black text-slate-950">{value as number}</p>
+                </Card>
+              ))}
+            </div>
+            <Card className="border-0 bg-white/90 p-5 shadow-sm backdrop-blur">
+              <h2 className="text-sm font-black text-slate-950">Funnel theo trạng thái</h2>
+              <div className="mt-4 space-y-3">
+                {funnelStats.map(item => (
+                  <div key={item.value}>
+                    <div className="mb-1 flex justify-between text-xs font-bold text-slate-500"><span>{item.label}</span><span>{item.count}</span></div>
+                    <div className="h-2 overflow-hidden rounded-full bg-slate-100"><div className={cn('h-full rounded-full', item.color)} style={{ width: `${leads.length ? Math.max(6, (item.count / leads.length) * 100) : 0}%` }} /></div>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-3 text-xs font-bold text-amber-800">{missingDocsCount} lead chưa có hồ sơ gốc đã nộp.</div>
+            </Card>
+          </div>
+        )}
+
+        {crmView === 'import' && (
+          <Card className="border-0 bg-white/90 p-5 shadow-sm">
+            <h2 className="text-lg font-black text-slate-950">Import lead CSV/TSV</h2>
+            <Textarea value={importText} onChange={e => setImportText(e.target.value)} rows={8} className="mt-4" placeholder="Học sinh, Phụ huynh, SĐT, Email, Nguồn, Chiến dịch, Trạng thái" />
+            <div className="mt-3 flex gap-2"><button onClick={previewImport} className="rounded-xl bg-slate-950 px-4 py-2 text-xs font-black text-white">Preview & check trùng</button><button onClick={createPreviewLeads} disabled={!importPreview?.batch?.leads?.length} className="rounded-xl bg-emerald-600 px-4 py-2 text-xs font-black text-white disabled:opacity-40">Tạo lead hợp lệ</button></div>
+            {importPreview && <pre className="mt-4 max-h-80 overflow-auto rounded-2xl bg-slate-950 p-4 text-xs text-emerald-200">{JSON.stringify(importPreview, null, 2)}</pre>}
+          </Card>
+        )}
+
+        {crmView === 'payments' && (
+          <div className="grid gap-4 lg:grid-cols-2">
+            <Card className="border-0 bg-white/90 p-5 shadow-sm">
+              <h2 className="text-lg font-black text-slate-950">Tạo VietQR</h2>
+              <select value={paymentLeadId} onChange={e => setPaymentLeadId(e.target.value)} className="mt-4 h-11 w-full rounded-xl border border-slate-200 px-3 text-sm">{leads.map(lead => <option key={lead.id} value={lead.id}>{lead.fullName} · {lead.leadCode}</option>)}</select>
+              <select value={paymentType} onChange={e => setPaymentType(e.target.value as any)} className="mt-3 h-11 w-full rounded-xl border border-slate-200 px-3 text-sm"><option value="RESERVATION">Phí giữ chỗ</option><option value="ENROLLMENT">Phí nhập học</option></select>
+              <button onClick={createPayment} className="mt-3 rounded-xl bg-blue-600 px-4 py-2 text-xs font-black text-white">Tạo mã QR</button>
+              {paymentResult?.payment && <div className="mt-4 rounded-2xl border border-blue-100 bg-blue-50 p-4"><img src={paymentResult.payment.vietQrUrl} alt="VietQR" className="mx-auto h-56 w-56 rounded-xl bg-white object-contain" /><p className="mt-3 text-center text-sm font-black text-blue-900">{paymentResult.payment.code}</p><p className="text-center text-sm text-blue-700">{paymentResult.payment.amount?.toLocaleString('vi-VN')}đ</p></div>}
+            </Card>
+            <Card className="border-0 bg-white/90 p-5 shadow-sm">
+              <h2 className="text-lg font-black text-slate-950">Đối soát sao kê</h2>
+              <Textarea value={reconcileText} onChange={e => setReconcileText(e.target.value)} rows={8} className="mt-4" placeholder="Dán sao kê chứa mã GCHO_... hoặc NHAPHOC_..." />
+              <button onClick={reconcilePayments} className="mt-3 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-black text-white">Đối soát</button>
+              {reconcileResult && <pre className="mt-4 max-h-72 overflow-auto rounded-2xl bg-slate-950 p-4 text-xs text-emerald-200">{JSON.stringify(reconcileResult, null, 2)}</pre>}
+            </Card>
+          </div>
+        )}
+
+        {crmView === 'workflow' && (
+          <Card className="border-0 bg-white/90 p-5 shadow-sm">
+            <h2 className="text-lg font-black text-slate-950">Workflow chăm sóc tự động</h2>
+            <select value={workflowLeadId} onChange={e => setWorkflowLeadId(e.target.value)} className="mt-4 h-11 w-full rounded-xl border border-slate-200 px-3 text-sm">{leads.map(lead => <option key={lead.id} value={lead.id}>{lead.fullName} · {getStatusMeta(lead.status).label}</option>)}</select>
+            <button onClick={runWorkflow} className="mt-3 rounded-xl bg-fuchsia-600 px-4 py-2 text-xs font-black text-white">Chạy workflow</button>
+            {workflowResult && <pre className="mt-4 max-h-80 overflow-auto rounded-2xl bg-slate-950 p-4 text-xs text-fuchsia-100">{JSON.stringify(workflowResult, null, 2)}</pre>}
+          </Card>
+        )}
+
+        {crmView === 'config' && (
+          <Card className="border-0 bg-white/90 p-5 shadow-sm">
+            <h2 className="text-lg font-black text-slate-950">Cấu hình CRM</h2>
+            <div className="mt-4 flex gap-2"><button onClick={loadConfigStatus} className="rounded-xl bg-slate-950 px-4 py-2 text-xs font-black text-white">Kiểm tra cấu hình</button><Link href={`/${locale}/settings`} className="rounded-xl bg-blue-600 px-4 py-2 text-xs font-black text-white">Mở Settings</Link></div>
+            {configStatus && <pre className="mt-4 max-h-80 overflow-auto rounded-2xl bg-slate-950 p-4 text-xs text-cyan-100">{JSON.stringify(configStatus, null, 2)}</pre>}
+          </Card>
+        )}
+      </div>
+    );
+  }
 
   return (
+    <>
     <div className="flex h-[calc(100vh-88px)] min-h-[680px] flex-col gap-4 overflow-hidden">
       <div className="flex shrink-0 flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
@@ -639,6 +853,37 @@ export default function KanbanClient({
         </main>
       </div>
     </div>
+
+    {/* Confirm Status Change Dialog */}
+    {pendingStatusChange && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/55 p-4">
+        <div className="w-full max-w-sm rounded-xl border border-slate-200 bg-white shadow-xl dark:border-slate-800 dark:bg-slate-950 p-6 space-y-4">
+          <h3 className="font-black text-slate-900 dark:text-white text-base">Xác nhận chuyển trạng thái</h3>
+          <p className="text-sm text-slate-500">
+            Bạn có chắc chắn muốn chuyển sang trạng thái <strong className="text-blue-600">{pendingStatusChange.status === 'seat_reserved' ? 'Đã giữ chỗ' : 'Đã nhập học'}</strong>? Thao tác này sẽ được ghi nhận vào lịch sử hồ sơ.
+          </p>
+          <div className="flex gap-2 pt-2">
+            <button
+              type="button"
+              className="flex-1 h-10 rounded-lg border border-slate-200 text-sm font-bold text-slate-700 hover:bg-slate-50"
+              onClick={() => setPendingStatusChange(null)}
+              disabled={isPending}
+            >
+              Hủy
+            </button>
+            <button
+              type="button"
+              className="flex-1 h-10 rounded-lg bg-blue-600 text-sm font-bold text-white hover:bg-blue-700 disabled:opacity-60"
+              onClick={() => applyStatusChange(pendingStatusChange.leadId, pendingStatusChange.status)}
+              disabled={isPending}
+            >
+              {isPending ? 'Đang xử lý...' : 'Xác nhận'}
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 }
 

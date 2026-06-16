@@ -1,3 +1,4 @@
+import { serverStorage } from '../libs/client/server-storage';
 import { normalizeStudentProfile, getUnifiedStudents, saveUnifiedStudents } from './peopleDirectory';
 
 export const CRM_LEADS_STORAGE_KEY = 'school_crm_leads';
@@ -110,7 +111,7 @@ const todayIso = () => new Date().toISOString().slice(0, 10);
 const readStoredArray = <T,>(key: string, fallback: T[] = []): T[] => {
   if (typeof window === 'undefined') return fallback;
   try {
-    const value = window.localStorage.getItem(key);
+    const value = serverStorage.getItem(key);
     if (!value) return fallback;
     const parsed = JSON.parse(value);
     return Array.isArray(parsed) ? parsed : fallback;
@@ -121,7 +122,7 @@ const readStoredArray = <T,>(key: string, fallback: T[] = []): T[] => {
 
 const writeStoredArray = (key: string, value: any[]) => {
   if (typeof window === 'undefined') return;
-  window.localStorage.setItem(key, JSON.stringify(value));
+  serverStorage.setItem(key, JSON.stringify(value));
 };
 
 export const readCrmLeadsFromStorage = () =>
@@ -319,7 +320,7 @@ export const syncEnrolledCrmLeadsToLifecycle = (
         });
       }
     });
-    localStorage.setItem('mis_student_directory', JSON.stringify(nextUnified));
+    serverStorage.setItem('mis_student_directory', JSON.stringify(nextUnified));
   }
 
   return {

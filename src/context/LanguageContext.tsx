@@ -1,5 +1,6 @@
 'use client';
 
+import { serverStorage } from '../libs/client/server-storage';
 import React, { createContext, useContext, useState } from 'react';
 import { translations } from '../utils/translations';
 
@@ -16,13 +17,13 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [lang, setLangState] = useState<Lang>(() => {
     if (typeof window === 'undefined') return 'vi';
-    return (localStorage.getItem('mis_lang') as Lang) || 'vi';
+    return (serverStorage.getItem('mis_lang') as Lang) || 'vi';
   });
 
   const setLang = (newLang: Lang) => {
     setLangState(newLang);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('mis_lang', newLang);
+      serverStorage.setItem('mis_lang', newLang);
     }
   };
 

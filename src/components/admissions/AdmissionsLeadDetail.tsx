@@ -54,7 +54,7 @@ const RELATED_TASKS = [
   { title: 'Gọi nhắc lịch test cho phụ huynh', date: '13/05/2025', by: 'Trần Bảo Ngọc', status: 'Chưa bắt đầu' },
 ];
 
-export default function AdmissionsLeadDetail() {
+export default function AdmissionsLeadDetail({ onBack }: { onBack?: () => void }) {
   const [activeTab, setActiveTab] = useState<Tab>('overview');
 
   const TABS: { id: Tab; label: string; icon: React.ElementType }[] = [
@@ -76,14 +76,14 @@ export default function AdmissionsLeadDetail() {
       {/* Breadcrumb + Header */}
       <div className="shrink-0 flex items-center justify-between border-b border-slate-100 bg-white px-4 py-3">
         <div className="flex items-center gap-2 text-sm text-slate-500">
-          <button type="button" className="flex items-center gap-1 font-semibold hover:text-slate-800">
+          <button type="button" onClick={onBack} className="flex items-center gap-1 font-semibold hover:text-slate-800">
             <ArrowLeft className="h-4 w-4" /> Leads
           </button>
           <ChevronRight className="h-3 w-3" />
           <span className="font-bold text-slate-900">Chi tiết Lead</span>
         </div>
         <div className="flex items-center gap-2">
-          <button type="button" className="flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 px-3 text-xs font-bold text-slate-700 hover:bg-slate-50">
+          <button type="button" onClick={onBack} className="flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 px-3 text-xs font-bold text-slate-700 hover:bg-slate-50">
             <ArrowLeft className="h-3.5 w-3.5" /> Quay lại
           </button>
           <button type="button" className="flex h-9 items-center gap-1.5 rounded-xl bg-blue-600 px-4 text-xs font-bold text-white hover:bg-blue-700">
@@ -377,7 +377,7 @@ export default function AdmissionsLeadDetail() {
           <div>
             <div className="flex items-center justify-between mb-2">
               <p className="text-xs font-black uppercase tracking-wide text-slate-400">Ghi chú gần đây</p>
-              <button type="button" className="text-xs font-bold text-blue-600">Xem tất cả</button>
+              <button type="button" onClick={() => setActiveTab('activity')} className="text-xs font-bold text-blue-600 hover:text-blue-700">Xem tất cả</button>
             </div>
             <div className="space-y-2">
               {[
@@ -398,7 +398,7 @@ export default function AdmissionsLeadDetail() {
           <div>
             <div className="flex items-center justify-between mb-2">
               <p className="text-xs font-black uppercase tracking-wide text-slate-400">Công việc liên quan</p>
-              <button type="button" className="text-xs font-bold text-blue-600">Xem tất cả</button>
+              <button type="button" onClick={() => setActiveTab('activity')} className="text-xs font-bold text-blue-600 hover:text-blue-700">Xem tất cả</button>
             </div>
             {RELATED_TASKS.map(task => (
               <div key={task.title} className="rounded-xl border border-slate-100 p-2.5">

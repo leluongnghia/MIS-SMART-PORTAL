@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
@@ -152,6 +152,9 @@ export default function AdmissionsDocuments() {
   const [uploadTaiLieu, setUploadTaiLieu] = useState<TaiLieu | null>(null);
   const [timKiem, setTimKiem] = useState('');
   const [locTrangThai, setLocTrangThai] = useState('Tất cả');
+  const [toast, setToast] = useState('');
+
+  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 2500); };
 
   const NHOM: NhomHoSo[] = ['Bắt buộc', 'Bổ sung', 'Ưu tiên'];
   const daNop = DANH_SACH_TAI_LIEU.filter(d => d.trangThai === 'Đã nộp').length;
@@ -159,6 +162,12 @@ export default function AdmissionsDocuments() {
 
   return (
     <>
+      {/* Toast */}
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-[9999] flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white shadow-2xl">
+          <span>✓</span> {toast}
+        </div>
+      )}
       <div className="space-y-5">
         {/* Tiêu đề */}
         <div className="flex items-start justify-between gap-4">
@@ -167,10 +176,10 @@ export default function AdmissionsDocuments() {
             <p className="mt-0.5 text-xs font-medium text-slate-500">Quản lý và xác minh hồ sơ tuyển sinh của học sinh</p>
           </div>
           <div className="flex items-center gap-2">
-            <button type="button" className="flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 shadow-xs hover:bg-slate-50">
+            <button type="button" onClick={() => showToast('Xuất danh sách hồ sơ thành công!')} className="flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 shadow-xs hover:bg-slate-50">
               <Download className="h-3.5 w-3.5" /> Xuất danh sách
             </button>
-            <button type="button" className="flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 shadow-xs hover:bg-slate-50">
+            <button type="button" onClick={() => showToast(`Gửi nhắc nộp hồ sơ đến ${HO_SO_DANH_SACH.filter(h=>h.trangThai==='Thiếu giấy tờ').length} học sinh`)} className="flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 shadow-xs hover:bg-slate-50">
               <Send className="h-3.5 w-3.5" /> Gửi nhắc nộp HS
             </button>
           </div>
@@ -279,13 +288,13 @@ export default function AdmissionsDocuments() {
                 </div>
 
                 <div className="mt-3 flex gap-2">
-                  <button type="button" className="flex items-center gap-1.5 rounded-xl bg-blue-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-blue-700">
+                  <button type="button" onClick={() => showToast(`Gửi nhắc nộp hồ sơ đến ${hoSoChon?.hoTen}`)} className="flex items-center gap-1.5 rounded-xl bg-blue-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-blue-700">
                     <Send className="h-3.5 w-3.5" /> Nhắc nộp hồ sơ
                   </button>
-                  <button type="button" className="flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50">
+                  <button type="button" onClick={() => showToast(`Tải tất cả tài liệu của ${hoSoChon?.hoTen}...`)} className="flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50">
                     <Download className="h-3.5 w-3.5" /> Tải tất cả
                   </button>
-                  <button type="button" className="flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50">
+                  <button type="button" onClick={() => showToast('Cập nhật hồ sơ thành công!')} className="flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50">
                     <RefreshCw className="h-3.5 w-3.5" /> Cập nhật
                   </button>
                 </div>
@@ -331,12 +340,12 @@ export default function AdmissionsDocuments() {
                               </div>
                               <div className="flex items-center gap-1 shrink-0">
                                 {tl.file && (
-                                  <button type="button" className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100" title="Xem file">
+                                  <button type="button" onClick={() => showToast(`Xem file: ${tl.file}`)} className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:bg-blue-50 hover:text-blue-600" title="Xem file">
                                     <Eye className="h-3.5 w-3.5" />
                                   </button>
                                 )}
                                 {tl.file && (
-                                  <button type="button" className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100" title="Tải về">
+                                  <button type="button" onClick={() => showToast(`Tải về: ${tl.file}`)} className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:bg-green-50 hover:text-green-600" title="Tải về">
                                     <Download className="h-3.5 w-3.5" />
                                   </button>
                                 )}

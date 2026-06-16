@@ -1,4 +1,6 @@
 'use client';
+import { serverStorage } from '../../libs/client/server-storage';
+
 
 import React, { useState, useEffect } from 'react';
 import { 
@@ -85,7 +87,7 @@ export default function LmsFinancials({
 
   // Certificate Issuance list (Persistent)
   const [certStudents, setCertStudents] = useState<CertStudent[]>(() => {
-    const saved = typeof window !== 'undefined' ? localStorage.getItem('mis_lms_cert_students') : null;
+    const saved = typeof window !== 'undefined' ? serverStorage.getItem('mis_lms_cert_students') : null;
     if (saved) {
       try {
         return JSON.parse(saved);
@@ -100,7 +102,7 @@ export default function LmsFinancials({
   });
 
   useEffect(() => {
-    localStorage.setItem('mis_lms_cert_students', JSON.stringify(certStudents));
+    serverStorage.setItem('mis_lms_cert_students', JSON.stringify(certStudents));
   }, [certStudents]);
 
   const [activeCert, setActiveCert] = useState<CertStudent | null>(null);

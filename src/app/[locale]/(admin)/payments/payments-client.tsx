@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { cn } from '@/src/lib/utils';
 import { generateVietQRPayment } from '@/src/lib/vietqr';
+import { useToast } from '@/src/components/ui/Toast';
 import { confirmPayment, createPayment, getPayments } from './actions';
 import {
   CreditCard,
@@ -19,6 +20,7 @@ import {
   Copy,
   Check,
   Eye,
+  FileSpreadsheet,
 } from 'lucide-react';
 import { Button } from '@/src/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/src/components/ui/card';
@@ -109,6 +111,9 @@ export default function PaymentsClient({
 
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [confirmPaymentId, setConfirmPaymentId] = useState<string | null>(null);
+  const { success: toastSuccess, error: toastError } = useToast();
 
   // React Hook Form for Create Payment
   const {
@@ -180,12 +185,14 @@ export default function PaymentsClient({
         if (res.success) {
           setIsCreateOpen(false);
           reset();
-          // Reload payments list (server action revalidate handles the backend update)
+          toastSuccess('Tạo hóa đơn thành công', 'Hóa đơn mới đã được tạo và QR đã sẵn sàng');
           const latestList = await getPayments();
           setPayments(latestList as any);
+        } else {
+          toastError('Tạo hóa đơn thất bại', 'Vui lòng kiểm tra lại thông tin');
         }
       } catch (error) {
-        console.error('Failed to create payment:', error);
+        toastError('Lỗi hệ thống', 'Không thể tạo hóa đơn, vui lòng thử lại');
       }
     });
   };
@@ -197,14 +204,48 @@ export default function PaymentsClient({
         if (res.success) {
           setIsDetailOpen(false);
           setSelectedPayment(null);
-          // Refresh list
+          setIsConfirmOpen(false);
+          setConfirmPaymentId(null);
+          toastSuccess('Xác nhận thành công', 'Trạng thái thanh toán đã được cập nhật');
           const latestList = await getPayments();
           setPayments(latestList as any);
+        } else {
+          toastError('Xác nhận thất bại', 'Vui lòng thử lại');
         }
       } catch (error) {
-        console.error('Failed to confirm payment:', error);
+        toastError('Lỗi hệ thống', 'Không thể xác nhận thanh toán');
       }
     });
+  };
+
+  const handleExportPaymentsCSV = () => {
+    if (!filteredPayments.length) {
+      toastError('Không có dữ liệu', 'Không có giao dịch nào để xuất');
+      return;
+    }
+    const headers = ['Học Sinh', 'Mã Hồ Sơ', 'Loại Phí', 'Số Tiền (VND)', 'Nội Dung CK', 'Trạng Thái', 'Ngày Tạo', 'Đã Thanh Toán'];
+    const rows = filteredPayments.map(row => [
+      row.lead.fullName,
+      row.lead.leadCode,
+      typeLabels[row.payment.type] || row.payment.type,
+      row.payment.amount,
+      row.payment.transferContent,
+      statusLabels[row.payment.status],
+      new Date(row.payment.createdAt).toLocaleDateString('vi-VN'),
+      row.payment.paidAt ? new Date(row.payment.paidAt).toLocaleDateString('vi-VN') : '',
+    ]);
+    let csv = '\uFEFF';
+    csv += headers.map(h => `"${h}"`).join(',') + '\n';
+    rows.forEach(row => { csv += row.map(v => `"${String(v || '').replace(/"/g, '""')}"`).join(',') + '\n'; });
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `MIS_Payments_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toastSuccess('Xuất thành công', `Đã xuất ${filteredPayments.length} giao dịch`);
   };
 
   // VietQR Config defaults
@@ -243,9 +284,19 @@ export default function PaymentsClient({
             Xem danh sách các khoản phí, hóa đơn giữ chỗ, học phí và xuất mã thanh toán VietQR.
           </p>
         </div>
-        <Button onClick={() => setIsCreateOpen(true)} className="w-full sm:w-auto shadow-md">
-          <Plus className="mr-2 h-4 w-4" /> Tạo hóa đơn thu phí
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={handleExportPaymentsCSV}
+            className="hidden sm:flex gap-2"
+          >
+            <FileSpreadsheet className="h-4 w-4 text-emerald-600" />
+            Xuất CSV
+          </Button>
+          <Button onClick={() => setIsCreateOpen(true)} className="w-full sm:w-auto shadow-md">
+            <Plus className="mr-2 h-4 w-4" /> Tạo hóa đơn thu phí
+          </Button>
+        </div>
       </div>
 
       {/* Filter panel */}
@@ -598,13 +649,35 @@ export default function PaymentsClient({
               {/* Confirm Actions */}
               <div className="border-t border-slate-100 dark:border-slate-900 pt-4 mt-2 flex flex-col gap-2">
                 {selectedPayment.payment.status === 'pending' ? (
-                  <Button
-                    onClick={() => handleConfirmPayment(selectedPayment.payment.id)}
-                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white dark:bg-emerald-600 dark:hover:bg-emerald-700"
-                    disabled={isPending}
-                  >
-                    {isPending ? 'Đang cập nhật...' : 'Xác nhận Đã Nhận Tiền (Manual Confirm)'}
-                  </Button>
+                  <>
+                    <Button
+                      onClick={() => {
+                        setConfirmPaymentId(selectedPayment.payment.id);
+                        setIsConfirmOpen(true);
+                      }}
+                      className="w-full bg-emerald-600 hover:bg-emerald-700 text-white dark:bg-emerald-600 dark:hover:bg-emerald-700"
+                      disabled={isPending}
+                    >
+                      Xác nhận Đã Nhận Tiền (Manual Confirm)
+                    </Button>
+                    {/* Confirm Dialog */}
+                    {isConfirmOpen && confirmPaymentId && (
+                      <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/55 p-4">
+                        <div className="w-full max-w-sm rounded-xl border border-slate-200 bg-white shadow-xl dark:border-slate-800 dark:bg-slate-950 p-6 space-y-4">
+                          <h3 className="font-black text-slate-900 dark:text-white text-base">Xác nhận thanh toán</h3>
+                          <p className="text-sm text-slate-500">Bạn có chắc chắn đã nhận được tiền chuyển khoản cho hóa đơn này? Thao tác này không thể hoàn tác.</p>
+                          <div className="flex gap-2 pt-2">
+                            <Button variant="outline" className="flex-1" onClick={() => { setIsConfirmOpen(false); setConfirmPaymentId(null); }} disabled={isPending}>
+                              Hủy
+                            </Button>
+                            <Button className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => handleConfirmPayment(confirmPaymentId)} disabled={isPending}>
+                              {isPending ? 'Đang xử lý...' : 'Xác nhận'}
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </>
                 ) : (
                   <div className="flex items-center justify-center gap-1.5 p-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-300 text-xs font-bold border border-emerald-100 dark:border-emerald-900">
                     <CheckCircle className="h-4.5 w-4.5 shrink-0" />

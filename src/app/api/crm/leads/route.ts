@@ -1,13 +1,12 @@
+import { desc } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
-import { crmStore } from '../../../../libs/server/crm';
 import { verifyApiAuth } from '../../../../libs/server/auth';
+import { db, schema } from '../../../../libs/server/db';
 
 export async function GET(req: Request) {
-  // Verify auth (Only Admissions & PR workspace or ADMIN can fetch CRM leads)
   const { errorResponse } = await verifyApiAuth(req, { requiredWorkspace: 'TUYEN_SINH_PR' });
   if (errorResponse) return errorResponse;
 
-  const leads = Array.from(crmStore.leads.values())
-    .sort((a, b) => String(b.updatedAt || '').localeCompare(String(a.updatedAt || '')));
+  const leads = await db.select().from(schema.leads).orderBy(desc(schema.leads.updatedAt));
   return NextResponse.json({ status: 'success', leads, count: leads.length });
 }

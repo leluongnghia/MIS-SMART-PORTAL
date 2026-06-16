@@ -1,4 +1,6 @@
 'use client';
+import { serverStorage } from './libs/client/server-storage';
+
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useLanguage } from './context/LanguageContext';
@@ -215,7 +217,7 @@ const LOCAL_USER_OVERRIDES_KEY = 'school_task_manager_user_overrides';
 
 function readLocalJson<T>(key: string, fallback: T): T {
   try {
-    const saved = localStorage.getItem(key);
+    const saved = serverStorage.getItem(key);
     if (!saved) return fallback;
     if (key === LOCAL_RBAC_KEY || key === LOCAL_DIRECTIVES_KEY) {
       return decryptData(saved) || fallback;
@@ -230,9 +232,9 @@ function readLocalJson<T>(key: string, fallback: T): T {
 function writeLocalJson<T>(key: string, value: T) {
   try {
     if (key === LOCAL_RBAC_KEY || key === LOCAL_DIRECTIVES_KEY) {
-      localStorage.setItem(key, encryptData(value));
+      serverStorage.setItem(key, encryptData(value));
     } else {
-      localStorage.setItem(key, JSON.stringify(value));
+      serverStorage.setItem(key, JSON.stringify(value));
     }
   } catch (error) {
     console.warn(`[Local fallback] Cannot write ${key}:`, error);
@@ -329,16 +331,16 @@ function AppInner() {
   }, []);
 
   const [darkMode, setDarkMode] = useState<boolean>(() => {
-    return localStorage.getItem('mis_theme') === 'dark';
+    return serverStorage.getItem('mis_theme') === 'dark';
   });
 
   useEffect(() => {
     if (darkMode) {
       document.documentElement.classList.add('dark');
-      localStorage.setItem('mis_theme', 'dark');
+      serverStorage.setItem('mis_theme', 'dark');
     } else {
       document.documentElement.classList.remove('dark');
-      localStorage.setItem('mis_theme', 'light');
+      serverStorage.setItem('mis_theme', 'light');
     }
   }, [darkMode]);
 
@@ -359,7 +361,7 @@ function AppInner() {
 
   // Stateful users directory
   const [users, setUsers] = useState<UserProfile[]>(() => {
-    const saved = localStorage.getItem('school_task_manager_users_profiles');
+    const saved = serverStorage.getItem('school_task_manager_users_profiles');
     if (saved) {
       try {
         // Try decrypting first; fallback to plain JSON for backward compatibility
@@ -382,14 +384,14 @@ function AppInner() {
         kpiLocked: false
       }, index);
     });
-    localStorage.setItem('school_task_manager_users_profiles', encryptData(initUsers));
+    serverStorage.setItem('school_task_manager_users_profiles', encryptData(initUsers));
     return initUsers;
   });
 
   const saveUsers = (updatedUsers: UserProfile[]) => {
     const normalizedUsers = normalizeUserProfiles(updatedUsers);
     setUsers(normalizedUsers);
-    localStorage.setItem('school_task_manager_users_profiles', encryptData(normalizedUsers));
+    serverStorage.setItem('school_task_manager_users_profiles', encryptData(normalizedUsers));
   };
 
   const [selectedStaffProfile, setSelectedStaffProfile] = useState<UserProfile | null>(null);
@@ -400,12 +402,12 @@ function AppInner() {
   const [isSandboxOpen, setIsSandboxOpen] = useState(false);
 
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
-    return localStorage.getItem('mis_edutask_logged_in') === 'true';
+    return serverStorage.getItem('mis_edutask_logged_in') === 'true';
   });
   
   const [currentUser, setCurrentUser] = useState<UserProfile>(() => {
-    const savedUserId = localStorage.getItem('mis_edutask_logged_in_user_id');
-    const localUsersStr = localStorage.getItem('school_task_manager_users_profiles');
+    const savedUserId = serverStorage.getItem('mis_edutask_logged_in_user_id');
+    const localUsersStr = serverStorage.getItem('school_task_manager_users_profiles');
     if (localUsersStr) {
       try {
         const decrypted = decryptData(localUsersStr);
@@ -517,7 +519,7 @@ function AppInner() {
 
   const saveRbacConfig = async (updatedConfig: RbacConfig) => {
     setRbacConfig(updatedConfig);
-    localStorage.setItem('school_task_manager_rbac', encryptData(updatedConfig));
+    serverStorage.setItem('school_task_manager_rbac', encryptData(updatedConfig));
     try {
       await setDoc(doc(db, 'config', 'rbac'), { config: updatedConfig });
     } catch (e) {
@@ -680,9 +682,9 @@ function AppInner() {
     if (!isLoggedIn || typeof window === 'undefined') return;
 
     const url = new URL(window.location.href);
-    const requestedTab = url.searchParams.get('tab') || localStorage.getItem('mis_pending_overview_tab');
+    const requestedTab = url.searchParams.get('tab') || serverStorage.getItem('mis_pending_overview_tab');
     if (requestedTab === 'CRM_ADMISSIONS') {
-      localStorage.removeItem('mis_pending_overview_tab');
+      serverStorage.removeItem('mis_pending_overview_tab');
       if (canRoleAccessTab(currentUser.role, currentUser.workspaceId, 'CRM_ADMISSIONS')) {
         setActiveAdmissionsModule('dashboard');
         setOverviewTab('CRM_ADMISSIONS');
@@ -768,12 +770,12 @@ function AppInner() {
 
   const saveAnnouncements = (updated: Announcement[]) => {
     setAnnouncements(updated);
-    localStorage.setItem('school_task_manager_announcements', encryptData(updated));
+    serverStorage.setItem('school_task_manager_announcements', encryptData(updated));
   };
 
   const saveDirectives = (updated: BoardDirective[]) => {
     setDirectives(updated);
-    localStorage.setItem('school_task_manager_directives', encryptData(updated));
+    serverStorage.setItem('school_task_manager_directives', encryptData(updated));
   };
 
   // central effect to trigger silent anonymous auth
@@ -1161,7 +1163,7 @@ function AppInner() {
 
   const saveWorkspaces = async (updatedWorkspaces: Workspace[]) => {
     setWorkspaces(updatedWorkspaces);
-    localStorage.setItem('school_task_manager_workspaces', JSON.stringify(updatedWorkspaces));
+    serverStorage.setItem('school_task_manager_workspaces', JSON.stringify(updatedWorkspaces));
     try {
       for (const w of updatedWorkspaces) {
         await setDoc(doc(db, 'workspaces', w.id), w);
@@ -1175,8 +1177,8 @@ function AppInner() {
   const handleUserSwitch = (user: UserProfile) => {
     const normalizedUser = normalizeUserProfile(user);
     setCurrentUser(normalizedUser);
-    localStorage.setItem('mis_edutask_logged_in_user_id', user.id);
-    localStorage.setItem('mis_edutask_logged_in', 'true');
+    serverStorage.setItem('mis_edutask_logged_in_user_id', user.id);
+    serverStorage.setItem('mis_edutask_logged_in', 'true');
     // If the selected user belongs to a specific department and is NOT Admin, filter that department initially
     if (normalizedUser.role !== 'ADMIN') {
       setSelectedWorkspace(normalizedUser.workspaceId);
@@ -1464,8 +1466,8 @@ function AppInner() {
           const normalizedUser = normalizeUserProfile(user);
           setCurrentUser(normalizedUser);
           setIsLoggedIn(true);
-          localStorage.setItem('mis_edutask_logged_in', 'true');
-          localStorage.setItem('mis_edutask_logged_in_user_id', user.id);
+          serverStorage.setItem('mis_edutask_logged_in', 'true');
+          serverStorage.setItem('mis_edutask_logged_in_user_id', user.id);
           if (normalizedUser.role !== 'ADMIN') {
             setSelectedWorkspace(normalizedUser.workspaceId);
           } else {
@@ -1486,8 +1488,8 @@ function AppInner() {
         currentUser={currentUser} 
         onLogout={() => {
           setIsLoggedIn(false);
-          localStorage.removeItem('mis_edutask_logged_in');
-          localStorage.removeItem('mis_edutask_logged_in_user_id');
+          serverStorage.removeItem('mis_edutask_logged_in');
+          serverStorage.removeItem('mis_edutask_logged_in_user_id');
         }}
       />
     );
@@ -1515,8 +1517,8 @@ function AppInner() {
         getSafeAvatar={getSafeAvatar}
         onLogout={() => {
           setIsLoggedIn(false);
-          localStorage.removeItem('mis_edutask_logged_in');
-          localStorage.removeItem('mis_edutask_logged_in_user_id');
+          serverStorage.removeItem('mis_edutask_logged_in');
+          serverStorage.removeItem('mis_edutask_logged_in_user_id');
         }}
         onOpenNotifications={() => setIsNotificationsOpen(true)}
         onOpenActionCenter={() => setIsActionCenterOpen(true)}

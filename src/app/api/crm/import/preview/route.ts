@@ -1,5 +1,7 @@
+import { or, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
-import { crmStore, normalizeCrmLead } from '../../../../../libs/server/crm';
+import { db, schema } from '../../../../../libs/server/db';
+import { normalizeCrmLead } from '../../../../../libs/server/crm';
 
 export async function POST(request: Request) {
   const body = await request.json();
@@ -22,11 +24,18 @@ export async function POST(request: Request) {
     });
   });
 
+  const duplicateChecks = await Promise.all(leads.map(async (lead: any) => {
+    if (!lead.phone && !lead.email) return false;
+    const where = lead.email
+      ? or(eq(schema.leads.phone, lead.phone), eq(schema.leads.email, lead.email))
+      : eq(schema.leads.phone, lead.phone);
+    const [existing] = await db.select({ id: schema.leads.id }).from(schema.leads).where(where).limit(1);
+    return Boolean(existing);
+  }));
+
   const errors = leads
     .map((lead: any, index: number) => {
-      const duplicate = Array.from(crmStore.leads.values()).some((item: any) =>
-        item.phone === lead.phone || (lead.email && item.email === lead.email)
-      );
+      const duplicate = duplicateChecks[index];
       const missing = !lead.studentName || !lead.parentName || !lead.phone;
       return missing || duplicate
         ? {
@@ -48,8 +57,6 @@ export async function POST(request: Request) {
     errors,
     createdAt: new Date().toISOString(),
   };
-  crmStore.importBatches.unshift(batch);
-  if (crmStore.importBatches.length > 50) crmStore.importBatches.pop();
 
   return NextResponse.json({ status: 'success', batch });
 }

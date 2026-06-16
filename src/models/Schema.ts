@@ -588,3 +588,9 @@ export const events = pgTable('events', {
   ...timestamps,
 });
 
+export const systemSettings = pgTable('system_settings', {
+  key: text('key').primaryKey(),
+  value: text('value').notNull(),
+  ...timestamps,
+});
+

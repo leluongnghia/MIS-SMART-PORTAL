@@ -79,6 +79,29 @@ export async function getUsers() {
   return await db.select().from(schema.users);
 }
 
+export async function getAllLeadsForExport(params?: { search?: string; status?: string; source?: string; grade?: string }) {
+  const conditions = [];
+  if (params?.search) {
+    const searchPattern = `%${params.search}%`;
+    conditions.push(or(
+      like(schema.leads.fullName, searchPattern),
+      like(schema.leads.phone, searchPattern),
+      like(schema.leads.leadCode, searchPattern),
+    ));
+  }
+  if (params?.status && params.status !== 'all') {
+    conditions.push(eq(schema.leads.status, params.status as any));
+  }
+  if (params?.source && params.source !== 'all') {
+    conditions.push(eq(schema.leads.source, params.source));
+  }
+  if (params?.grade && params.grade !== 'all') {
+    conditions.push(eq(schema.leads.grade, params.grade));
+  }
+  const where = conditions.length > 0 ? and(...conditions) : undefined;
+  return await db.select().from(schema.leads).where(where).orderBy(desc(schema.leads.createdAt));
+}
+
 export async function createLead(data: {
   fullName: string;
   parentName?: string;

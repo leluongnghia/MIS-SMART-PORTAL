@@ -1,3 +1,4 @@
+import { serverStorage } from '../libs/client/server-storage';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   AlertCircle,
@@ -118,7 +119,7 @@ export default function SystemSettingsModal({ onClose, currentUserId }: SystemSe
   const [broadcastResult, setBroadcastResult] = useState('');
   const [broadcastLogs, setBroadcastLogs] = useState<BroadcastDraft[]>(() => {
     try {
-      return JSON.parse(localStorage.getItem(BROADCAST_LOG_KEY) || '[]');
+      return JSON.parse(serverStorage.getItem(BROADCAST_LOG_KEY) || '[]');
     } catch {
       return [];
     }
@@ -300,7 +301,7 @@ export default function SystemSettingsModal({ onClose, currentUserId }: SystemSe
       }
       const updated = [data.draft as BroadcastDraft, ...broadcastLogs].slice(0, 20);
       setBroadcastLogs(updated);
-      localStorage.setItem(BROADCAST_LOG_KEY, JSON.stringify(updated));
+      serverStorage.setItem(BROADCAST_LOG_KEY, JSON.stringify(updated));
       setBroadcastResult(
         data.configured
           ? 'Đã tạo nháp broadcast. OA đã có token môi trường, có thể triển khai bước gửi qua OA/Zalo.'

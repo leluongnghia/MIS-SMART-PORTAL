@@ -36,6 +36,68 @@ export function normalizeCrmStage(stage: unknown) {
   return CRM_STAGE_SET.has(value) ? value : legacy[value] || 'NEW_LEAD';
 }
 
+export function crmStageToLeadStatus(stage: unknown) {
+  const normalized = normalizeCrmStage(stage);
+  const map: Record<string, string> = {
+    NEW_LEAD: 'received',
+    CONTACTED: 'consulting',
+    CONSULTING: 'consulting',
+    APPOINTMENT_BOOKED: 'consulting',
+    ENTRANCE_TEST_REGISTERED: 'test_scheduled',
+    TEST_COMPLETED: 'test_participated',
+    SCHOLARSHIP_REVIEW: 'test_participated',
+    OFFER_SENT: 'test_participated',
+    SEAT_RESERVATION_PAYMENT: 'seat_reserved',
+    SEAT_RESERVED: 'seat_reserved',
+    ENROLLMENT_PAYMENT: 'docs_submitted',
+    DOCUMENTS_PENDING: 'docs_submitted',
+    ENROLLED: 'enrolled',
+    LOST: 'cancelled',
+  };
+  return map[normalized] || 'received';
+}
+
+export function leadStatusToCrmStage(status: unknown) {
+  const map: Record<string, string> = {
+    received: 'NEW_LEAD',
+    consulting: 'CONSULTING',
+    test_scheduled: 'ENTRANCE_TEST_REGISTERED',
+    test_participated: 'TEST_COMPLETED',
+    seat_reserved: 'SEAT_RESERVED',
+    docs_submitted: 'DOCUMENTS_PENDING',
+    enrolled: 'ENROLLED',
+    cancelled: 'LOST',
+  };
+  return map[String(status)] || normalizeCrmStage(status);
+}
+
+export function crmPaymentTypeToDb(type: unknown) {
+  return String(type || '').toUpperCase() === 'ENROLLMENT' ? 'tuition' : 'seat_reservation';
+}
+
+export function dbPaymentTypeToCrm(type: unknown) {
+  return String(type) === 'tuition' ? 'ENROLLMENT' : 'RESERVATION';
+}
+
+export function dbLeadToCrmLead(lead: any) {
+  const payload = (lead?.payload || {}) as Record<string, any>;
+  return {
+    ...payload,
+    id: lead.id,
+    leadCode: lead.leadCode,
+    studentName: lead.fullName,
+    parentName: lead.parentName || payload.parentName || '',
+    phone: lead.phone,
+    email: lead.email || '',
+    grade: lead.grade,
+    stage: leadStatusToCrmStage(lead.status),
+    source: lead.source,
+    notes: lead.notes || '',
+    createdAt: lead.createdAt,
+    updatedAt: lead.updatedAt,
+  };
+}
+
 function createCrmCode(prefix: string) {
   return `${prefix}_${new Date().getFullYear()}_${Date.now().toString(36).toUpperCase()}`;
 }
@@ -50,12 +112,12 @@ export function normalizeCrmLead(raw: any) {
     contactId: String(raw.contactId || `ct_${leadCode.toLowerCase()}`),
     opportunityId: String(raw.opportunityId || `opp_${leadCode.toLowerCase()}`),
     enrollmentCode: String(raw.enrollmentCode || `ENR_${leadCode}`),
-    studentName: String(raw.studentName || raw.student_name || raw.name || '').trim(),
+    studentName: String(raw.studentName || raw.student_name || raw.name || raw.fullName || '').trim(),
     parentName: String(raw.parentName || raw.parent_name || raw.contactName || '').trim(),
     phone: String(raw.phone || raw.mobile || raw.parentPhone || '').trim(),
     email: String(raw.email || raw.parentEmail || '').trim(),
     grade: String(raw.grade || raw.className || 'Lớp 10').trim(),
-    stage: normalizeCrmStage(raw.stage),
+    stage: normalizeCrmStage(raw.stage || raw.status),
     source: String(raw.source || raw.utm_source || raw.utmSource || 'Website').trim(),
     campaign: String(raw.campaign || raw.campaignName || raw.utm_campaign || raw.utmCampaign || 'Tuyển sinh 2026').trim(),
     adSet: String(raw.adSet || '').trim(),
@@ -76,8 +138,8 @@ export function normalizeCrmLead(raw: any) {
     englishScore: raw.englishScore ?? '',
     vietnameseScore: raw.vietnameseScore ?? '',
     scholarshipPercent: Number(raw.scholarshipPercent || 0),
-    baseTuitionFee: Number(raw.baseTuitionFee || 60000000),
-    reservationFee: Number(raw.reservationFee || 5000000),
+    baseTuitionFee: Number(raw.baseTuitionFee || process.env.CRM_BASE_TUITION_FEE || 60000000),
+    reservationFee: Number(raw.reservationFee || process.env.CRM_RESERVATION_FEE || 5000000),
     notes: String(raw.notes || raw.message || ''),
     createdAt: raw.createdAt || now,
     updatedAt: now,

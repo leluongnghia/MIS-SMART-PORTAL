@@ -1,3 +1,4 @@
+import { serverStorage } from '../libs/client/server-storage';
 import React, { useState, useEffect, useMemo } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { translateLessonPlan, translateSubject, translateTitle } from '../utils/translations';
@@ -106,7 +107,7 @@ export default function AcademicOperations({ currentUser, users, onNavigateTab }
   const [filterRoom, setFilterRoom] = useState('P.302');
 
   const [timetable, setTimetable] = useState<TimetableSlot[]>(() => {
-    const saved = localStorage.getItem('mis_timetable_slots_v3');
+    const saved = serverStorage.getItem('mis_timetable_slots_v3');
     if (saved) {
       try { return JSON.parse(saved); } catch (e) {}
     }
@@ -114,7 +115,7 @@ export default function AcademicOperations({ currentUser, users, onNavigateTab }
   });
 
   useEffect(() => {
-    localStorage.setItem('mis_timetable_slots_v3', JSON.stringify(timetable));
+    serverStorage.setItem('mis_timetable_slots_v3', JSON.stringify(timetable));
   }, [timetable]);
 
   // Form states for adding slot
@@ -205,7 +206,7 @@ export default function AcademicOperations({ currentUser, users, onNavigateTab }
   
   // Quản lý Giáo án (Lesson Plans)
   const [lessonPlans, setLessonPlans] = useState<LessonPlan[]>(() => {
-    const saved = localStorage.getItem('mis_academic_lesson_plans');
+    const saved = serverStorage.getItem('mis_academic_lesson_plans');
     if (saved) {
       try { return JSON.parse(saved); } catch (e) { console.error(e); }
     }
@@ -276,7 +277,7 @@ export default function AcademicOperations({ currentUser, users, onNavigateTab }
   };
 
   useEffect(() => {
-    localStorage.setItem('mis_academic_lesson_plans', JSON.stringify(lessonPlans));
+    serverStorage.setItem('mis_academic_lesson_plans', JSON.stringify(lessonPlans));
   }, [lessonPlans]);
 
   // Form thêm giáo án mới

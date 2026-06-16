@@ -1,4 +1,6 @@
 'use client';
+import { serverStorage } from '../../libs/client/server-storage';
+
 
 import React, { useState, useEffect } from 'react';
 import { 
@@ -21,7 +23,7 @@ export default function LmsSecurityUx({ t }: LmsSecurityUxProps) {
 
   const [securityLogs, setSecurityLogs] = useState<string[]>(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('mis_lms_security_logs');
+      const saved = serverStorage.getItem('mis_lms_security_logs');
       if (saved) {
         try {
           return JSON.parse(saved);
@@ -40,7 +42,7 @@ export default function LmsSecurityUx({ t }: LmsSecurityUxProps) {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem('mis_lms_security_logs', JSON.stringify(securityLogs));
+      serverStorage.setItem('mis_lms_security_logs', JSON.stringify(securityLogs));
     }
   }, [securityLogs]);
 
