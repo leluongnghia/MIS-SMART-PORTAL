@@ -56,3 +56,17 @@ export async function createTask(formData: {
     return { success: false, error: error.message };
   }
 }
+
+export async function updateTaskStatus(taskId: string, status: string) {
+  try {
+    await db
+      .update(schema.tasks)
+      .set({ status, updatedAt: new Date() })
+      .where(eq(schema.tasks.id, taskId));
+
+    revalidatePath("/[locale]/tasks", "page");
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}

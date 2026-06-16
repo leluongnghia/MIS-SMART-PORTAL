@@ -22,3 +22,8 @@ export function TabsTrigger({ active, children, onClick }: { active: boolean; ch
     </button>
   );
 }
+
+export function TabsContent({ value, activeValue, children, className }: { value: string; activeValue?: string; children: ReactNode; className?: string }) {
+  if (activeValue && activeValue !== value) return null;
+  return <div className={cn('mt-4', className)}>{children}</div>;
+}

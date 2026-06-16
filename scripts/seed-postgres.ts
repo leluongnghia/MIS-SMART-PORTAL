@@ -17,6 +17,20 @@ async function seed() {
     })),
   ).onConflictDoNothing();
 
+  // Seed departments
+  await db.insert(schema.departments).values(
+    WORKSPACES.filter((w: any) => w.id !== 'ALL').map((w: any) => ({
+      id: w.id,
+      name: w.name,
+      code: w.id,
+      description: w.description || '',
+      managerId: MOCK_USERS.find((u: any) => u.workspaceId === w.id && (u.role === 'MANAGER' || u.role === 'ADMIN'))?.id || null,
+      payload: w,
+      createdAt: now,
+      updatedAt: now,
+    }))
+  ).onConflictDoNothing();
+
   await db.insert(schema.users).values(
     MOCK_USERS.map((user: any) => ({
       id: user.id,
@@ -27,6 +41,10 @@ async function seed() {
       title: user.title || '',
       email: user.email || user.personalEmail || null,
       workspaceId: user.workspaceId || '',
+      phone: user.phone || user.phoneNumber || null,
+      avatarUrl: user.avatar || null,
+      departmentId: user.workspaceId && user.workspaceId !== 'ALL' ? user.workspaceId : null,
+      status: 'ACTIVE',
       payload: user,
       createdAt: now,
       updatedAt: now,
@@ -255,6 +273,192 @@ async function seed() {
       }).onConflictDoNothing();
     }
   }
+
+  // Seed default chat conversations
+  console.log("Seeding chat conversations and members...");
+  const conversations = [
+    {
+      id: 'conv_school_ann',
+      type: 'SCHOOL_ANNOUNCEMENT',
+      name: 'Thông báo toàn trường',
+      description: 'Kênh thông báo chính thức toàn trường',
+      createdBy: 'user_chutich',
+      status: 'ACTIVE',
+      isPinned: true,
+      createdAt: now,
+      updatedAt: now,
+    },
+    {
+      id: 'conv_dept_tuyen_sinh',
+      type: 'DEPARTMENT_CHANNEL',
+      name: 'Kênh Tuyển sinh & PR',
+      description: 'Kênh làm việc của Phòng Tuyển sinh & Truyền thông',
+      departmentId: 'TUYEN_SINH_PR',
+      createdBy: 'user_tuan', // Truong phong
+      status: 'ACTIVE',
+      isPinned: false,
+      createdAt: now,
+      updatedAt: now,
+    },
+    {
+      id: 'conv_dept_bgh',
+      type: 'DEPARTMENT_CHANNEL',
+      name: 'Kênh Ban Giám hiệu',
+      description: 'Kênh trao đổi nội bộ Ban Giám hiệu',
+      departmentId: 'BGH',
+      createdBy: 'user_chutich',
+      status: 'ACTIVE',
+      isPinned: false,
+      createdAt: now,
+      updatedAt: now,
+    },
+    {
+      id: 'conv_dm_triet_ceo',
+      type: 'DIRECT_MESSAGE',
+      name: null,
+      description: null,
+      createdBy: 'user_triet',
+      status: 'ACTIVE',
+      isPinned: false,
+      createdAt: now,
+      updatedAt: now,
+    }
+  ];
+
+  await db.insert(schema.chatConversations).values(conversations).onConflictDoNothing();
+
+  // Seed chat members
+  const members: any[] = [];
+  
+  // School Ann - all users
+  for (const user of MOCK_USERS) {
+    members.push({
+      id: `member_school_${user.id}`,
+      conversationId: 'conv_school_ann',
+      userId: user.id,
+      role: user.role === 'ADMIN' ? 'OWNER' : 'MEMBER',
+      joinedAt: now,
+      createdAt: now,
+      updatedAt: now,
+    });
+  }
+
+  // Dept Tuyen Sinh
+  for (const user of MOCK_USERS.filter(u => u.workspaceId === 'TUYEN_SINH_PR')) {
+    members.push({
+      id: `member_tuyen_sinh_${user.id}`,
+      conversationId: 'conv_dept_tuyen_sinh',
+      userId: user.id,
+      role: user.role === 'MANAGER' ? 'OWNER' : 'MEMBER',
+      joinedAt: now,
+      createdAt: now,
+      updatedAt: now,
+    });
+  }
+
+  // Dept BGH
+  for (const user of MOCK_USERS.filter(u => u.workspaceId === 'BGH')) {
+    members.push({
+      id: `member_bgh_${user.id}`,
+      conversationId: 'conv_dept_bgh',
+      userId: user.id,
+      role: user.role === 'ADMIN' ? 'OWNER' : 'MEMBER',
+      joinedAt: now,
+      createdAt: now,
+      updatedAt: now,
+    });
+  }
+
+  // DM Triet - CEO
+  members.push(
+    {
+      id: 'member_dm_triet',
+      conversationId: 'conv_dm_triet_ceo',
+      userId: 'user_triet',
+      role: 'MEMBER',
+      joinedAt: now,
+      createdAt: now,
+      updatedAt: now,
+    },
+    {
+      id: 'member_dm_ceo',
+      conversationId: 'conv_dm_triet_ceo',
+      userId: 'user_ceo',
+      role: 'MEMBER',
+      joinedAt: now,
+      createdAt: now,
+      updatedAt: now,
+    }
+  );
+
+  await db.insert(schema.chatMembers).values(members).onConflictDoNothing();
+
+  // Seed message samples
+  const messages = [
+    {
+      id: 'msg_ann_1',
+      conversationId: 'conv_school_ann',
+      senderId: 'user_chutich',
+      content: 'Chào mừng các thầy cô đến với hệ thống quản lý MIS Smart Portal mới. Hãy cập nhật đầy đủ thông tin cá nhân của mình.',
+      type: 'TEXT',
+      createdAt: new Date(now.getTime() - 24 * 60 * 60 * 1000), // 1 day ago
+      updatedAt: new Date(now.getTime() - 24 * 60 * 60 * 1000),
+    },
+    {
+      id: 'msg_ts_1',
+      conversationId: 'conv_dept_tuyen_sinh',
+      senderId: 'user_tuan',
+      content: 'Mọi người chuẩn bị báo cáo số liệu tuyển sinh tuần này để nộp cho BGH nhé.',
+      type: 'TEXT',
+      createdAt: new Date(now.getTime() - 2 * 60 * 60 * 1000), // 2 hours ago
+      updatedAt: new Date(now.getTime() - 2 * 60 * 60 * 1000),
+    },
+    {
+      id: 'msg_dm_1',
+      conversationId: 'conv_dm_triet_ceo',
+      senderId: 'user_triet',
+      content: 'Anh Luân ơi, chiều nay có lịch họp liên tịch lúc 14h, anh tham dự được không ạ?',
+      type: 'TEXT',
+      createdAt: new Date(now.getTime() - 30 * 60 * 1000), // 30 mins ago
+      updatedAt: new Date(now.getTime() - 30 * 60 * 1000),
+    }
+  ];
+
+  await db.insert(schema.chatMessages).values(messages).onConflictDoNothing();
+
+  // Seed default categories
+  const defaultCategories = [
+    // years
+    { id: 'cat_yr_25_26', group: 'school_year', code: '2025-2026', name: 'Năm học 2025-2026', description: 'Năm học 2025-2026', sortOrder: 1, status: 'ACTIVE' },
+    { id: 'cat_yr_26_27', group: 'school_year', code: '2026-2027', name: 'Năm học 2026-2027', description: 'Năm học 2026-2027', sortOrder: 2, status: 'ACTIVE' },
+    // semesters
+    { id: 'cat_sem_1', group: 'semester', code: 'SEM1', name: 'Học kỳ I', description: 'Học kỳ 1', sortOrder: 1, status: 'ACTIVE' },
+    { id: 'cat_sem_2', group: 'semester', code: 'SEM2', name: 'Học kỳ II', description: 'Học kỳ 2', sortOrder: 2, status: 'ACTIVE' },
+    // campuses
+    { id: 'cat_cam_cg', group: 'campus', code: 'CAU_GIAY', name: 'Cơ sở Cầu Giấy', description: 'Cơ sở Cầu Giấy', sortOrder: 1, status: 'ACTIVE' },
+    { id: 'cat_cam_lh', group: 'campus', code: 'LANG_HA', name: 'Cơ sở Láng Hạ', description: 'Cơ sở Láng Hạ', sortOrder: 2, status: 'ACTIVE' },
+    // grades
+    { id: 'cat_gr_6', group: 'grade_level', code: 'GRADE_6', name: 'Khối 6', description: 'Khối 6 THCS', sortOrder: 6, status: 'ACTIVE' },
+    { id: 'cat_gr_10', group: 'grade_level', code: 'GRADE_10', name: 'Khối 10', description: 'Khối 10 THPT', sortOrder: 10, status: 'ACTIVE' },
+    // document types
+    { id: 'cat_doc_qc', group: 'document_type', code: 'QUY_CHE', name: 'Quy chế học vụ', description: 'Quy định, quy chế nội bộ', sortOrder: 1, status: 'ACTIVE' },
+    { id: 'cat_doc_bm', group: 'document_type', code: 'BIEU_MAU', name: 'Biểu mẫu chuẩn', description: 'Các mẫu import/export', sortOrder: 2, status: 'ACTIVE' },
+    { id: 'cat_doc_cv', group: 'document_type', code: 'CONG_VAN', name: 'Công văn nội bộ', description: 'Văn bản điều hành', sortOrder: 3, status: 'ACTIVE' },
+  ];
+  await db.insert(schema.systemCategories).values(defaultCategories.map(c => ({ ...c, createdAt: now, updatedAt: now }))).onConflictDoNothing();
+
+  // Seed default settings
+  const defaultSettings = [
+    { key: 'school_info:name', value: 'Trường Tiểu học & THCS MIS', group: 'school_info', label: 'Tên trường', description: 'Tên chính thức của trường', isSecret: false, isEditable: true },
+    { key: 'school_info:hotline', value: '024 1234 5678', group: 'school_info', label: 'Hotline tuyển sinh', description: 'Hotline hỗ trợ', isSecret: false, isEditable: true },
+    { key: 'academics:default_year', value: '2026-2027', group: 'academics', label: 'Năm học mặc định', description: 'Năm học hiện tại hệ thống', isSecret: false, isEditable: true },
+    { key: 'academics:default_semester', value: 'SEM1', group: 'academics', label: 'Học kỳ mặc định', description: 'Học kỳ hiện tại hệ thống', isSecret: false, isEditable: true },
+    { key: 'chat:allow_dm', value: 'true', group: 'chat', label: 'Cho phép chat DM', description: 'Cho phép chat 1-1', isSecret: false, isEditable: true },
+    { key: 'chat:allow_tag_department', value: 'true', group: 'chat', label: 'Cho phép tag phòng ban', description: 'Cho phép tag @Tên phòng', isSecret: false, isEditable: true },
+    { key: 'chat:allow_tag_all', value: 'true', group: 'chat', label: 'Cho phép tag @all', description: 'Cho phép tag toàn trường', isSecret: false, isEditable: true },
+    { key: 'chat:mention_limit', value: '20', group: 'chat', label: 'Hạn mức mention', description: 'Hạn mức cảnh báo số người', isSecret: false, isEditable: true },
+  ];
+  await db.insert(schema.systemSettings).values(defaultSettings.map(s => ({ ...s, createdAt: now, updatedAt: now }))).onConflictDoNothing();
 
   console.log(`Seeded ${WORKSPACES.length} workspaces, ${MOCK_USERS.length} users, ${INITIAL_TASKS.length} tasks, ${mockLeads.length} leads.`);
 }

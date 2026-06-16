@@ -37,6 +37,7 @@ import {
   GraduationCap,
   CalendarDays,
   ClipboardCheck,
+  MessageSquare,
 } from 'lucide-react';
 import { Button } from '@/src/components/ui/button';
 import { cn } from '@/src/lib/utils';
@@ -91,12 +92,12 @@ const menuGroups: MenuItemGroup[] = [
     ],
   },
   {
-    title: 'DỮ LIỆU & HỆ THỐNG',
+    title: 'DỮ LIỆU HỆ THỐNG',
     items: [
-      { label: 'Danh mục', href: 'categories', icon: List },
-      { label: 'Báo cáo', href: 'system-reports', icon: FileBarChart },
-      { label: 'Kho dữ liệu', href: 'data', icon: Database },
-      { label: 'Cấu hình hệ thống', href: 'settings', icon: Settings },
+      { label: 'Danh mục', href: 'system-data/categories', icon: List },
+      { label: 'Báo cáo', href: 'system-data/reports', icon: FileBarChart },
+      { label: 'Kho dữ liệu', href: 'system-data/storage', icon: Database },
+      { label: 'Cấu hình hệ thống', href: 'system-data/settings', icon: Settings },
     ],
   },
 ];
@@ -234,28 +235,6 @@ export default function AdminShell({ locale, children }: { locale: string; child
     return parts.length ? parts : ['dashboard'];
   }, [pathname]);
 
-  if (!isAuthReady) {
-    return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-500"></div>
-      </div>
-    );
-  }
-
-  if (!isLoggedIn || !currentUser) {
-    return (
-      <LoginPortal
-        onLoginSuccess={(user) => {
-          serverStorage.setItem('mis_edutask_logged_in', 'true');
-          serverStorage.setItem('mis_edutask_logged_in_user_id', user.id);
-          setCurrentUser(user);
-          setIsLoggedIn(true);
-        }}
-        initialUser={MOCK_USERS[0]}
-      />
-    );
-  }
-
   const isDepartment = currentUser?.workspaceId &&
     currentUser.workspaceId !== 'BGH' &&
     currentUser.workspaceId !== 'KHAO_THI' &&
@@ -335,7 +314,7 @@ export default function AdminShell({ locale, children }: { locale: string; child
     },
   ];
 
-  const activeMenuGroups = currentUser?.workspaceId === 'KHAO_THI' ? [
+  const rawMenuGroups = currentUser?.workspaceId === 'KHAO_THI' ? [
     {
       title: 'TỔNG QUAN',
       items: [
@@ -389,6 +368,77 @@ export default function AdminShell({ locale, children }: { locale: string; child
       ]
     }
   ] : currentUser?.workspaceId === 'TUYEN_SINH_PR' ? admissionsMenuGroups : isDepartment ? departmentMenuGroups : menuGroups;
+
+  const activeMenuGroups = useMemo(() => {
+    const mapped = rawMenuGroups.map(group => {
+      const targetTitles = ['VẬN HÀNH', 'NGHIỆP VỤ BỘ PHẬN', 'VẬN HÀNH BỘ PHẬN', 'CÀI ĐẶT'];
+      if (targetTitles.includes(group.title)) {
+        const extraItems: { label: string; href: string; icon: any; badgeKey?: 'tasks' | 'directives' | 'announcements' }[] = [
+          { label: 'Chat nội bộ', href: 'chat', icon: MessageSquare }
+        ];
+        if (currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER') {
+          extraItems.push({ label: 'Quản lý thành viên', href: 'users', icon: Users });
+        }
+        
+        // Remove duplicate hrefs if any
+        const existingHrefs = new Set(group.items.map(i => i.href.split('?')[0]));
+        const filteredExtra = extraItems.filter(item => !existingHrefs.has(item.href));
+        
+        return {
+          ...group,
+          items: [...group.items, ...filteredExtra]
+        };
+      }
+      return group;
+    });
+
+    const finalGroups = mapped.filter(g => g.title !== 'DỮ LIỆU HỆ THỐNG' && g.title !== 'DỮ LIỆU & HỆ THỐNG');
+
+    const systemDataItems: any[] = [];
+    if (currentUser?.role === 'ADMIN') {
+      systemDataItems.push({ label: 'Danh mục', href: 'system-data/categories', icon: List });
+      systemDataItems.push({ label: 'Báo cáo', href: 'system-data/reports', icon: FileBarChart });
+      systemDataItems.push({ label: 'Kho dữ liệu', href: 'system-data/storage', icon: Database });
+      systemDataItems.push({ label: 'Cấu hình hệ thống', href: 'system-data/settings', icon: Settings });
+    } else if (currentUser?.role === 'MANAGER') {
+      systemDataItems.push({ label: 'Danh mục', href: 'system-data/categories', icon: List });
+      systemDataItems.push({ label: 'Báo cáo', href: 'system-data/reports', icon: FileBarChart });
+      systemDataItems.push({ label: 'Kho dữ liệu', href: 'system-data/storage', icon: Database });
+    } else if (currentUser?.role === 'STAFF') {
+      systemDataItems.push({ label: 'Kho dữ liệu', href: 'system-data/storage', icon: Database });
+    }
+
+    if (systemDataItems.length > 0) {
+      finalGroups.push({
+        title: 'DỮ LIỆU HỆ THỐNG',
+        items: systemDataItems,
+      });
+    }
+
+    return finalGroups;
+  }, [rawMenuGroups, currentUser]);
+
+  if (!isAuthReady) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-500"></div>
+      </div>
+    );
+  }
+
+  if (!isLoggedIn || !currentUser) {
+    return (
+      <LoginPortal
+        onLoginSuccess={(user) => {
+          serverStorage.setItem('mis_edutask_logged_in', 'true');
+          serverStorage.setItem('mis_edutask_logged_in_user_id', user.id);
+          setCurrentUser(user);
+          setIsLoggedIn(true);
+        }}
+        initialUser={MOCK_USERS[0]}
+      />
+    );
+  }
 
   const Sidebar = (
     <aside className={cn('flex h-full flex-col border-r border-slate-200 bg-white transition-all dark:border-slate-800 dark:bg-slate-950', collapsed ? 'w-20' : 'w-72')}>

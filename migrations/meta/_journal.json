@@ -36,6 +36,27 @@
       "when": 1781584918692,
       "tag": "0004_magenta_mastermind",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1781600183550,
+      "tag": "0005_famous_colleen_wing",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1781602064168,
+      "tag": "0006_yielding_zarek",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1781602987743,
+      "tag": "0007_concerned_skin",
+      "breakpoints": true
     }
   ]
 }

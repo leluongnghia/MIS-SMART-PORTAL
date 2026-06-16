@@ -15,7 +15,29 @@ export const users = pgTable('users', {
   title: text('title'),
   email: text('email'),
   workspaceId: text('workspace_id'),
-  payload: jsonb('payload').notNull(),
+  phone: text('phone'),
+  avatarUrl: text('avatar_url'),
+  departmentId: text('department_id'),
+  status: text('status').notNull().default('ACTIVE'),
+  
+  employeeCode: text('employee_code'),
+  staffType: text('staff_type'),
+  joinedAt: timestamp('joined_at', { withTimezone: true }),
+  managerId: text('manager_id'),
+  teachingLevel: text('teaching_level'),
+  subject: text('subject'),
+  homeroomClassId: text('homeroom_class_id'),
+  
+  emailVerifiedAt: timestamp('email_verified_at', { withTimezone: true }),
+  passwordChangedAt: timestamp('password_changed_at', { withTimezone: true }),
+  mustChangePassword: boolean('must_change_password').default(false).notNull(),
+  internalNote: text('internal_note'),
+
+  lastLoginAt: timestamp('last_login_at', { withTimezone: true }),
+  deletedAt: timestamp('deleted_at', { withTimezone: true }),
+  createdBy: text('created_by'),
+  updatedBy: text('updated_by'),
+  payload: jsonb('payload').notNull().default({}),
   ...timestamps,
 });
 
@@ -591,6 +613,152 @@ export const events = pgTable('events', {
 export const systemSettings = pgTable('system_settings', {
   key: text('key').primaryKey(),
   value: text('value').notNull(),
+  group: text('group'),
+  label: text('label'),
+  description: text('description'),
+  isSecret: boolean('is_secret').default(false).notNull(),
+  isEditable: boolean('is_editable').default(true).notNull(),
+  updatedBy: text('updated_by'),
   ...timestamps,
+});
+
+export const systemCategories = pgTable('system_categories', {
+  id: text('id').primaryKey(),
+  group: text('group').notNull(),
+  code: text('code').notNull(),
+  name: text('name').notNull(),
+  description: text('description'),
+  sortOrder: integer('sort_order').default(0).notNull(),
+  status: text('status').default('ACTIVE').notNull(),
+  metadata: jsonb('metadata'),
+  createdBy: text('created_by'),
+  updatedBy: text('updated_by'),
+  deletedAt: timestamp('deleted_at', { withTimezone: true }),
+  ...timestamps,
+}, table => [
+  index('sys_categories_group_idx').on(table.group),
+  index('sys_categories_status_idx').on(table.status),
+  index('sys_categories_deleted_idx').on(table.deletedAt),
+  index('sys_categories_group_code_idx').on(table.group, table.code),
+]);
+
+export const dataFiles = pgTable('data_files', {
+  id: text('id').primaryKey(),
+  fileName: text('file_name').notNull(),
+  originalName: text('original_name').notNull(),
+  fileUrl: text('file_url').notNull(),
+  fileType: text('file_type').notNull(),
+  fileSize: integer('file_size').notNull(),
+  documentType: text('document_type'),
+  tags: jsonb('tags'),
+  visibility: text('visibility').default('SCHOOL').notNull(),
+  departmentId: text('department_id'),
+  version: integer('version').default(1).notNull(),
+  parentFileId: text('parent_file_id'),
+  uploadedBy: text('uploaded_by'),
+  status: text('status').default('ACTIVE').notNull(),
+  deletedAt: timestamp('deleted_at', { withTimezone: true }),
+  ...timestamps,
+}, table => [
+  index('data_files_visibility_idx').on(table.visibility),
+  index('data_files_uploaded_by_idx').on(table.uploadedBy),
+  index('data_files_status_idx').on(table.status),
+]);
+
+export const dataImportJobs = pgTable('data_import_jobs', {
+  id: text('id').primaryKey(),
+  module: text('module').notNull(),
+  fileId: text('file_id'),
+  status: text('status').default('PENDING').notNull(),
+  totalRows: integer('total_rows').default(0).notNull(),
+  successRows: integer('success_rows').default(0).notNull(),
+  failedRows: integer('failed_rows').default(0).notNull(),
+  errorSummary: jsonb('error_summary'),
+  mappingConfig: jsonb('mapping_config'),
+  createdBy: text('created_by'),
+  completedAt: timestamp('completed_at', { withTimezone: true }),
+  ...timestamps,
+});
+
+export const dataExportJobs = pgTable('data_export_jobs', {
+  id: text('id').primaryKey(),
+  module: text('module').notNull(),
+  fileId: text('file_id'),
+  filters: jsonb('filters'),
+  status: text('status').default('PENDING').notNull(),
+  createdBy: text('created_by'),
+  completedAt: timestamp('completed_at', { withTimezone: true }),
+  ...timestamps,
+});
+
+export const chatConversations = pgTable('chat_conversations', {
+  id: text('id').primaryKey(),
+  type: text('type').notNull(), // 'SCHOOL_ANNOUNCEMENT', 'DEPARTMENT_CHANNEL', 'GROUP_CHAT', 'DIRECT_MESSAGE'
+  name: text('name'),
+  description: text('description'),
+  departmentId: text('department_id'),
+  createdBy: text('created_by'),
+  status: text('status').notNull().default('ACTIVE'), // 'ACTIVE', 'ARCHIVED', 'LOCKED'
+  isPinned: boolean('is_pinned').default(false).notNull(),
+  deletedAt: timestamp('deleted_at', { withTimezone: true }),
+  ...timestamps,
+});
+
+export const chatMembers = pgTable('chat_members', {
+  id: text('id').primaryKey(),
+  conversationId: text('conversation_id').notNull(),
+  userId: text('user_id').notNull(),
+  role: text('role').notNull().default('MEMBER'), // 'OWNER', 'MODERATOR', 'MEMBER'
+  joinedAt: timestamp('joined_at', { withTimezone: true }).defaultNow().notNull(),
+  lastReadMessageId: text('last_read_message_id'),
+  lastReadAt: timestamp('last_read_at', { withTimezone: true }),
+  mutedUntil: timestamp('muted_until', { withTimezone: true }),
+  ...timestamps,
+});
+
+export const chatMessages = pgTable('chat_messages', {
+  id: text('id').primaryKey(),
+  conversationId: text('conversation_id').notNull(),
+  senderId: text('sender_id').notNull(),
+  content: text('content').notNull(),
+  type: text('type').notNull().default('TEXT'), // 'TEXT', 'SYSTEM', 'FILE', 'IMAGE'
+  replyToMessageId: text('reply_to_message_id'),
+  isPinned: boolean('is_pinned').default(false).notNull(),
+  isEdited: boolean('is_edited').default(false).notNull(),
+  editedAt: timestamp('edited_at', { withTimezone: true }),
+  deletedAt: timestamp('deleted_at', { withTimezone: true }),
+  deletedBy: text('deleted_by'),
+  ...timestamps,
+});
+
+export const chatMentions = pgTable('chat_mentions', {
+  id: text('id').primaryKey(),
+  messageId: text('message_id').notNull(),
+  conversationId: text('conversation_id').notNull(),
+  mentionType: text('mention_type').notNull(), // 'USER', 'DEPARTMENT', 'SCHOOL'
+  mentionedUserId: text('mentioned_user_id'),
+  mentionedDepartmentId: text('mentioned_department_id'),
+  createdBy: text('created_by'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const chatMentionRecipients = pgTable('chat_mention_recipients', {
+  id: text('id').primaryKey(),
+  mentionId: text('mention_id').notNull(),
+  userId: text('user_id').notNull(),
+  notificationStatus: text('notification_status').notNull().default('UNREAD'), // 'UNREAD', 'READ', 'DISMISSED'
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  readAt: timestamp('read_at', { withTimezone: true }),
+});
+
+export const chatAttachments = pgTable('chat_attachments', {
+  id: text('id').primaryKey(),
+  messageId: text('message_id').notNull(),
+  fileName: text('file_name').notNull(),
+  fileUrl: text('file_url').notNull(),
+  fileType: text('file_type').notNull(),
+  fileSize: integer('file_size').notNull(),
+  uploadedBy: text('uploaded_by'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
 

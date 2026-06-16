@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { createTask } from './actions';
+import { createTask, updateTaskStatus } from './actions';
 import {
   FileText,
   Clock,
@@ -83,6 +83,8 @@ const APPROVAL_DETAILS = {
 type TaskRow = {
   id?: string;
   title?: string;
+  description?: string | null;
+  workspaceId?: string;
   assignedName?: string | null;
   assignedId?: string | null;
   deadline?: string | null;
@@ -92,10 +94,10 @@ type TaskRow = {
 };
 
 const STATUS_COLUMNS = [
-  { title: 'Cần làm', statuses: ['todo', 'received', 'open', 'new'] },
-  { title: 'Đang xử lý', statuses: ['in_progress', 'doing', 'processing'] },
-  { title: 'Chờ duyệt', statuses: ['pending_approval', 'pending', 'review'] },
-  { title: 'Hoàn thành', statuses: ['completed', 'done', 'closed'] },
+  { title: 'Cần làm', statuses: ['CHUA_BAT_DA', 'todo', 'received', 'open', 'new'] },
+  { title: 'Đang xử lý', statuses: ['DANG_TIEN_HANH', 'in_progress', 'doing', 'processing'] },
+  { title: 'Chờ duyệt', statuses: ['CHO_DUYET', 'pending_approval', 'pending', 'review'] },
+  { title: 'Hoàn thành', statuses: ['HOAN_THANH', 'completed', 'done', 'closed'] },
 ];
 
 const formatTaskDate = (deadline?: string | null) => {
@@ -106,7 +108,7 @@ const formatTaskDate = (deadline?: string | null) => {
 };
 
 const isOverdueTask = (task: TaskRow) => {
-  if (!task.deadline || task.status === 'completed' || task.status === 'done') return false;
+  if (!task.deadline || task.status === 'completed' || task.status === 'done' || task.status === 'HOAN_THANH') return false;
   const date = new Date(task.deadline);
   return !Number.isNaN(date.getTime()) && date < new Date();
 };
@@ -133,6 +135,38 @@ export default function TasksDashboard({ initialData }: { initialData?: { data?:
   const [approvalNote, setApprovalNote] = useState('');
   const [selectedTask, setSelectedTask] = useState<any>(null);
   const [isTaskOpen, setIsTaskOpen] = useState(false);
+  const [activeFilter, setActiveFilter] = useState<'in_progress' | 'overdue' | 'pending' | 'completed' | null>(null);
+
+  const scrollToSection = (id: string) => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  const handleApproveTask = (taskId: string) => {
+    startTransition(async () => {
+      const res = await updateTaskStatus(taskId, 'HOAN_THANH');
+      if (res.success) {
+        setIsTaskOpen(false);
+        setSelectedTask(null);
+      } else {
+        alert('Lỗi phê duyệt: ' + res.error);
+      }
+    });
+  };
+
+  const handleRejectTask = (taskId: string) => {
+    startTransition(async () => {
+      const res = await updateTaskStatus(taskId, 'DANG_TIEN_HANH');
+      if (res.success) {
+        setIsTaskOpen(false);
+        setSelectedTask(null);
+      } else {
+        alert('Lỗi yêu cầu chỉnh sửa: ' + res.error);
+      }
+    });
+  };
 
   const filteredUsers = newWorkspaceId 
     ? users.filter((u: any) => u.workspaceId === newWorkspaceId)
@@ -172,9 +206,26 @@ export default function TasksDashboard({ initialData }: { initialData?: { data?:
   };
 
   const getCardsByStatus = (statuses: string[]) => tasksList
-    .filter(task => statuses.includes(String(task.status || '')))
+    .filter(task => {
+      if (!statuses.includes(String(task.status || ''))) return false;
+      if (activeFilter === 'in_progress') {
+        return ['DANG_TIEN_HANH', 'in_progress', 'doing', 'processing'].includes(String(task.status));
+      }
+      if (activeFilter === 'overdue') {
+        return isOverdueTask(task);
+      }
+      if (activeFilter === 'pending') {
+        return ['CHO_DUYET', 'pending_approval', 'pending', 'review'].includes(String(task.status));
+      }
+      if (activeFilter === 'completed') {
+        return ['HOAN_THANH', 'completed', 'done', 'closed'].includes(String(task.status));
+      }
+      return true;
+    })
     .map(task => ({
+      id: task.id,
       title: task.title || 'Công việc chưa đặt tên',
+      description: task.description || '',
       user: task.assignedName || task.assignedId || 'Chưa phân công',
       date: formatTaskDate(task.deadline),
       tag: task.priority === 'high' || isOverdueTask(task) ? (isOverdueTask(task) ? 'Quá hạn' : 'Ưu tiên') : task.tag || undefined,
@@ -185,10 +236,13 @@ export default function TasksDashboard({ initialData }: { initialData?: { data?:
     return { ...column, count: cards.length, cards };
   });
   const totalTasks = tasksList.length;
-  const inProgressCount = tasksList.filter(task => ['in_progress', 'doing', 'processing'].includes(String(task.status))).length;
+  const pendingApprovalTasks = tasksList.filter(task => 
+    ['CHO_DUYET', 'pending_approval', 'pending', 'review'].includes(String(task.status || ''))
+  );
+  const inProgressCount = tasksList.filter(task => ['DANG_TIEN_HANH', 'in_progress', 'doing', 'processing'].includes(String(task.status))).length;
   const overdueCount = tasksList.filter(isOverdueTask).length;
-  const pendingCount = tasksList.filter(task => ['pending_approval', 'pending', 'review'].includes(String(task.status))).length;
-  const completedCount = tasksList.filter(task => ['completed', 'done', 'closed'].includes(String(task.status))).length;
+  const pendingCount = tasksList.filter(task => ['CHO_DUYET', 'pending_approval', 'pending', 'review'].includes(String(task.status))).length;
+  const completedCount = tasksList.filter(task => ['HOAN_THANH', 'completed', 'done', 'closed'].includes(String(task.status))).length;
   const completionRate = totalTasks ? Math.round((completedCount / totalTasks) * 100) : 0;
   const taskStatsData = [
     { name: 'Cần làm', value: kanbanColumns[0]?.count || 0, color: '#3b82f6' },
@@ -222,7 +276,16 @@ export default function TasksDashboard({ initialData }: { initialData?: { data?:
 
       {/* Top Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="border-blue-100 shadow-sm dark:border-blue-900/30">
+        <Card 
+          className={cn(
+            "border-blue-100 shadow-sm dark:border-blue-900/30 transition-all cursor-pointer hover:shadow-md",
+            activeFilter === 'in_progress' && "ring-2 ring-blue-500 bg-blue-50/50 dark:bg-blue-950/20"
+          )}
+          onClick={() => {
+            setActiveFilter(activeFilter === 'in_progress' ? null : 'in_progress');
+            scrollToSection('kanban-board');
+          }}
+        >
           <CardContent className="p-4 flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0">
@@ -240,7 +303,16 @@ export default function TasksDashboard({ initialData }: { initialData?: { data?:
           </CardContent>
         </Card>
 
-        <Card className="border-orange-100 shadow-sm dark:border-orange-900/30">
+        <Card 
+          className={cn(
+            "border-orange-100 shadow-sm dark:border-orange-900/30 transition-all cursor-pointer hover:shadow-md",
+            activeFilter === 'overdue' && "ring-2 ring-orange-500 bg-orange-50/50 dark:bg-orange-950/20"
+          )}
+          onClick={() => {
+            setActiveFilter(activeFilter === 'overdue' ? null : 'overdue');
+            scrollToSection('kanban-board');
+          }}
+        >
           <CardContent className="p-4 flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-xl bg-orange-500 text-white flex items-center justify-center shrink-0">
@@ -258,7 +330,16 @@ export default function TasksDashboard({ initialData }: { initialData?: { data?:
           </CardContent>
         </Card>
 
-        <Card className="border-purple-100 shadow-sm dark:border-purple-900/30">
+        <Card 
+          className={cn(
+            "border-purple-100 shadow-sm dark:border-purple-900/30 transition-all cursor-pointer hover:shadow-md",
+            activeFilter === 'pending' && "ring-2 ring-purple-500 bg-purple-50/50 dark:bg-purple-950/20"
+          )}
+          onClick={() => {
+            setActiveFilter(activeFilter === 'pending' ? null : 'pending');
+            scrollToSection('approvals-section');
+          }}
+        >
           <CardContent className="p-4 flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-xl bg-purple-600 text-white flex items-center justify-center shrink-0">
@@ -276,7 +357,16 @@ export default function TasksDashboard({ initialData }: { initialData?: { data?:
           </CardContent>
         </Card>
 
-        <Card className="border-emerald-100 shadow-sm dark:border-emerald-900/30">
+        <Card 
+          className={cn(
+            "border-emerald-100 shadow-sm dark:border-emerald-900/30 transition-all cursor-pointer hover:shadow-md",
+            activeFilter === 'completed' && "ring-2 ring-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/20"
+          )}
+          onClick={() => {
+            setActiveFilter(activeFilter === 'completed' ? null : 'completed');
+            scrollToSection('kanban-board');
+          }}
+        >
           <CardContent className="p-4 flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-xl bg-emerald-500 text-white flex items-center justify-center shrink-0">
@@ -296,7 +386,7 @@ export default function TasksDashboard({ initialData }: { initialData?: { data?:
       </div>
 
       {/* Standalone full-width Kanban Row */}
-      <div className="w-full">
+      <div className="w-full" id="kanban-board">
         <Card className="flex flex-col h-[650px] w-full">
           <CardHeader className="p-4 pb-2 border-b border-slate-100 dark:border-slate-800 flex flex-row items-center justify-between flex-wrap gap-2">
             <CardTitle className="text-base font-bold">Bảng công việc (Kanban)</CardTitle>
@@ -307,6 +397,23 @@ export default function TasksDashboard({ initialData }: { initialData?: { data?:
               </select>
             </div>
           </CardHeader>
+          {activeFilter && (
+            <div className="mx-4 mt-2 px-3 py-2 bg-blue-50/80 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 text-xs font-semibold rounded-lg border border-blue-100 dark:border-blue-900/30 flex items-center justify-between animate-in fade-in slide-in-from-top-1 duration-205">
+              <span>
+                Đang hiển thị danh sách: <strong className="text-blue-900 dark:text-blue-200">{
+                  activeFilter === 'in_progress' ? 'Việc đang thực hiện' :
+                  activeFilter === 'overdue' ? 'Việc quá hạn' :
+                  activeFilter === 'pending' ? 'Việc chờ phê duyệt' : 'Việc đã hoàn thành'
+                }</strong>
+              </span>
+              <button 
+                onClick={() => setActiveFilter(null)} 
+                className="text-blue-700 dark:text-blue-400 hover:text-blue-950 dark:hover:text-blue-200 font-bold underline cursor-pointer"
+              >
+                Hiển thị tất cả
+              </button>
+            </div>
+          )}
           <CardContent className="p-4 flex-1 overflow-x-auto custom-scrollbar flex gap-4 bg-slate-50/50 dark:bg-slate-900/30">
             {/* Columns */}
             {kanbanColumns.map((col, i) => (
@@ -435,46 +542,42 @@ export default function TasksDashboard({ initialData }: { initialData?: { data?:
         </Card>
 
         {/* Right Panel: Pending Approvals in the sidebar */}
-        <div className="xl:col-span-5 space-y-6 h-[650px] flex flex-col">
+        <div className="xl:col-span-5 space-y-6 h-[650px] flex flex-col" id="approvals-section">
           <Card className="flex-1 flex flex-col overflow-hidden">
             <CardHeader className="p-4 pb-0 border-b border-transparent">
               <CardTitle className="text-base font-bold">Danh sách chờ phê duyệt</CardTitle>
             </CardHeader>
             <div className="flex border-b border-slate-200 dark:border-slate-800 px-4 pt-2 font-bold text-xs gap-4">
-              <button className="pb-2 border-b-2 border-blue-600 text-blue-600">Của tôi (6)</button>
-              <button className="pb-2 border-b-2 border-transparent text-slate-500 hover:text-slate-700">Tất cả (14)</button>
+              <button className="pb-2 border-b-2 border-blue-600 text-blue-600">Của tôi ({pendingApprovalTasks.length})</button>
+              <button className="pb-2 border-b-2 border-transparent text-slate-500 hover:text-slate-700">Tất cả ({pendingApprovalTasks.length})</button>
             </div>
             <CardContent className="p-0 flex-1 overflow-y-auto custom-scrollbar divide-y divide-slate-100 dark:divide-slate-800">
-              {[
-                { title: 'Đề xuất mua sắm thiết bị CNTT', code: 'DXMS-2025-0007 · Tin học', user: 'Trần Thị Mai', deadline: 'Hạn: 16/05/2025 17:00' },
-                { title: 'Kế hoạch tổ chức Ngày hội STEM', code: 'KH-STEM-2025-002 · Đoàn trường', user: 'Trần Thị Mai', deadline: 'Hạn: 17/05/2025 17:00' },
-                { title: 'Quy chế chi tiêu nội bộ 2025-2026', code: 'QCCT-2025-001 · Kế toán', user: 'Nguyễn Văn Nam', deadline: 'Hạn: 18/05/2025 17:00' },
-              ].map((appr, i) => (
-                <div 
-                  key={i} 
-                  onClick={() => {
-                    const matchedDetail = APPROVAL_DETAILS[appr.title as keyof typeof APPROVAL_DETAILS];
-                    setSelectedApproval({ title: appr.title, ...matchedDetail });
-                    setIsApprovalOpen(true);
-                  }}
-                  className="p-4 space-y-3 hover:bg-slate-50 dark:hover:bg-slate-900/50 cursor-pointer transition-colors"
-                >
-                  <div>
-                    <h4 className="text-sm font-bold text-slate-900 dark:text-white leading-tight mb-1">{appr.title}</h4>
-                    <p className="text-[10px] text-slate-500">{appr.code}</p>
+              {pendingApprovalTasks.length === 0 ? (
+                <div className="p-6 text-center text-xs text-slate-400">Không có yêu cầu chờ phê duyệt nào</div>
+              ) : (
+                pendingApprovalTasks.map((task, i) => (
+                  <div 
+                    key={task.id || i} 
+                    onClick={() => {
+                      setSelectedTask({ ...task, status: 'Chờ duyệt' });
+                      setIsTaskOpen(true);
+                    }}
+                    className="p-4 space-y-3 hover:bg-slate-50 dark:hover:bg-slate-900/50 cursor-pointer transition-colors"
+                  >
+                    <div>
+                      <h4 className="text-sm font-bold text-slate-900 dark:text-white leading-tight mb-1">{task.title}</h4>
+                      <p className="text-[10px] text-slate-500">Mã: {task.id} · Phòng ban: {task.workspaceId}</p>
+                    </div>
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300"><UserCircle className="h-3 w-3" /> {task.assignedName || 'Chưa phân công'}</span>
+                      <span className="text-red-500 font-medium">{formatTaskDate(task.deadline)}</span>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="outline" className="flex-1 h-7 text-emerald-600 border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 text-xs">Xem & Duyệt</Button>
+                    </div>
                   </div>
-                  <div className="flex justify-between items-center text-xs">
-                    <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300"><UserCircle className="h-3 w-3" /> {appr.user}</span>
-                    <span className="text-red-500 font-medium">{appr.deadline}</span>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button variant="outline" className="flex-1 h-7 text-emerald-600 border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 text-xs">Xem & Duyệt</Button>
-                  </div>
-                </div>
-              ))}
-              <div className="p-3 text-center">
-                <Button variant="ghost" className="text-xs font-bold text-blue-600 h-auto p-0">Xem thêm (3) <ChevronRight className="h-3 w-3 ml-1" /></Button>
-              </div>
+                ))
+              )}
             </CardContent>
           </Card>
         </div>
@@ -618,7 +721,7 @@ export default function TasksDashboard({ initialData }: { initialData?: { data?:
             <div className="space-y-1 text-xs">
               <span className="text-slate-500 block">Mô tả công việc:</span>
               <p className="p-3 bg-slate-50 dark:bg-slate-900 rounded border border-slate-100 dark:border-slate-800 text-slate-600 dark:text-slate-400 leading-relaxed">
-                Nhiệm vụ thuộc kế hoạch chiến lược phát triển chuyên môn học kỳ. Cần rà soát số liệu thực tế, phối hợp cùng các thành viên tổ bộ phận liên quan để hoàn thiện đúng hạn chót BGH đề ra.
+                {selectedTask.description || 'Nhiệm vụ thuộc kế hoạch chiến lược phát triển chuyên môn học kỳ.'}
               </p>
             </div>
 
@@ -626,21 +729,15 @@ export default function TasksDashboard({ initialData }: { initialData?: { data?:
             {selectedTask.status === 'Chờ duyệt' ? (
               <div className="flex gap-2 pt-4 border-t border-slate-100 dark:border-slate-800">
                 <Button 
-                  onClick={() => {
-                    alert('Đã duyệt hoàn thành công việc: ' + selectedTask.title);
-                    setIsTaskOpen(false);
-                  }}
-                  className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white border-0 text-xs h-9"
+                  onClick={() => handleApproveTask(selectedTask.id)}
+                  className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white border-0 text-xs h-9 font-bold"
                 >
                   Duyệt hoàn thành
                 </Button>
                 <Button 
-                  onClick={() => {
-                    alert('Đã yêu cầu chỉnh sửa lại công việc: ' + selectedTask.title);
-                    setIsTaskOpen(false);
-                  }}
+                  onClick={() => handleRejectTask(selectedTask.id)}
                   variant="outline"
-                  className="flex-1 text-orange-600 border-orange-200 hover:bg-orange-50 hover:text-orange-700 text-xs h-9"
+                  className="flex-1 text-orange-600 border-orange-200 hover:bg-orange-50 hover:text-orange-700 text-xs h-9 font-bold"
                 >
                   Yêu cầu chỉnh sửa
                 </Button>
