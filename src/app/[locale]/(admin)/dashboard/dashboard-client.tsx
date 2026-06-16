@@ -218,22 +218,24 @@ export default function DashboardClient({ tab, initialData }: { tab?: string, in
           { title: 'Giáo viên', val: '88.6', up: '7.3', icon: Target, color: 'bg-blue-500' },
           { title: 'Học sinh', val: '82.1', up: '4.8', icon: GraduationCap, color: 'bg-slate-700' },
         ].map((kpi, i) => (
-          <Card key={i}>
-            <CardContent className="p-4 flex items-center gap-4">
-              <div className={cn("h-10 w-10 shrink-0 rounded-lg flex items-center justify-center text-white", kpi.color)}>
-                <kpi.icon className="h-5 w-5" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-medium text-slate-500 truncate">{kpi.title}</p>
-                <div className="flex items-baseline gap-1 mt-0.5">
-                  <h4 className="text-lg font-bold text-slate-900 dark:text-white">{kpi.val}</h4>
-                  <span className="text-xs text-slate-500">/100</span>
+          <Link key={i} href={`/${locale}/kpi`} className="block">
+            <Card className="hover:shadow-md transition-shadow cursor-pointer">
+              <CardContent className="p-4 flex items-center gap-4">
+                <div className={cn("h-10 w-10 shrink-0 rounded-lg flex items-center justify-center text-white", kpi.color)}>
+                  <kpi.icon className="h-5 w-5" />
                 </div>
-                <p className="text-xs text-emerald-600 font-medium mt-0.5">↑ {kpi.up} điểm so với tháng trước</p>
-              </div>
-              <ChevronRight className="h-4 w-4 text-slate-300" />
-            </CardContent>
-          </Card>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium text-slate-500 truncate">{kpi.title}</p>
+                  <div className="flex items-baseline gap-1 mt-0.5">
+                    <h4 className="text-lg font-bold text-slate-900 dark:text-white">{kpi.val}</h4>
+                    <span className="text-xs text-slate-500">/100</span>
+                  </div>
+                  <p className="text-xs text-emerald-600 font-medium mt-0.5">↑ {kpi.up} điểm so với tháng trước</p>
+                </div>
+                <ChevronRight className="h-4 w-4 text-blue-400 dark:text-blue-500" />
+              </CardContent>
+            </Card>
+          </Link>
         ))}
       </div>
 
