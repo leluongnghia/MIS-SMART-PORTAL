@@ -28,36 +28,53 @@ conn.on('ready', () => {
         return;
       }
       
-      // 2. Run remote extraction and build commands
-      const commands = [
-        `cd ${projectDir}`,
-        `rm -rf .next dist`,
-        `tar -xzf project.tar.gz`,
-        `rm project.tar.gz`,
-        `npm install --legacy-peer-deps`,
-        `pkill -f "[n]ext build" || true`,
-        `pkill -f "[n]ext-build" || true`,
-        `npm run build`,
-        `pm2 restart duong-node-app || pm2 restart all`
-      ].join(' && ');
+      // Upload .env file
+      const rootDir = path.resolve(__dirname, '../..');
+      const localEnvPath = path.join(rootDir, '.env');
+      const remoteEnvPath = '/home/duong/duong-node-app/.env';
+      console.log(`Uploading .env from ${localEnvPath} to ${remoteEnvPath}...`);
       
-      console.log('Executing build and deployment commands on remote server...');
-      console.log(commands);
-      
-      conn.exec(commands, (execErr, stream) => {
-        if (execErr) {
-          console.error('Execution error:', execErr);
+      sftp.fastPut(localEnvPath, remoteEnvPath, {}, (envErr) => {
+        if (envErr) {
+          console.error('Upload of .env failed:', envErr);
           conn.end();
           return;
         }
         
-        stream.on('close', (code, signal) => {
-          console.log(`\nDeployment finished. Remote commands exited with code ${code}`);
-          conn.end();
-        }).on('data', (data) => {
-          process.stdout.write(data.toString());
-        }).stderr.on('data', (data) => {
-          process.stderr.write(data.toString());
+        // 2. Run remote extraction, environment update, build and migration commands
+        const commands = [
+          `cd ${projectDir}`,
+          `rm -rf .next dist`,
+          `tar -xzf project.tar.gz`,
+          `rm project.tar.gz`,
+          `sed -i 's|DATABASE_URL="./local.db"|DATABASE_URL="/home/duong/duong-node-app/local.db"|g' .env`,
+          `npm install --legacy-peer-deps`,
+          `pkill -f "[n]ext build" || true`,
+          `pkill -f "[n]ext-build" || true`,
+          `npm run build`,
+          `npm run db:migrate`,
+          `npm run db:seed`,
+          `pm2 restart duong-node-app || pm2 restart all`
+        ].join(' && ');
+        
+        console.log('Executing build and deployment commands on remote server...');
+        console.log(commands);
+        
+        conn.exec(commands, (execErr, stream) => {
+          if (execErr) {
+            console.error('Execution error:', execErr);
+            conn.end();
+            return;
+          }
+          
+          stream.on('close', (code, signal) => {
+            console.log(`\nDeployment finished. Remote commands exited with code ${code}`);
+            conn.end();
+          }).on('data', (data) => {
+            process.stdout.write(data.toString());
+          }).stderr.on('data', (data) => {
+            process.stderr.write(data.toString());
+          });
         });
       });
     });
