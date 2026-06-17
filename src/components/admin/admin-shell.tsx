@@ -4,7 +4,7 @@ import { serverStorage } from '../../libs/client/server-storage';
 
 import type { ReactNode } from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import {
   BarChart3,
@@ -43,8 +43,7 @@ import { Button } from '@/src/components/ui/button';
 import { cn } from '@/src/lib/utils';
 import LoginPortal from '@/src/components/LoginPortal';
 import { MOCK_USERS } from '@/src/mockData';
-import type { UserProfile, Announcement, BoardDirective, Task } from '@/src/types';
-import NotificationDrawer from '@/src/components/NotificationDrawer';
+import type { UserProfile } from '@/src/types';
 
 type MenuItemGroup = {
   title: string;
@@ -111,7 +110,6 @@ function segmentLabel(segment: string) {
 
 export default function AdminShell({ locale, children }: { locale: string; children: ReactNode }) {
   const pathname = usePathname();
-  const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userOpen, setUserOpen] = useState(false);
@@ -130,14 +128,6 @@ export default function AdminShell({ locale, children }: { locale: string; child
     latest: [],
   });
   const [toastNotice, setToastNotice] = useState<string>('');
-
-  const [notificationOpen, setNotificationOpen] = useState(false);
-  const [notificationsData, setNotificationsData] = useState<{
-    announcements: Announcement[];
-    directives: BoardDirective[];
-    tasks: Task[];
-  }>({ announcements: [], directives: [], tasks: [] });
-  const [loadingNotifications, setLoadingNotifications] = useState(false);
 
   useEffect(() => {
     const updateTab = () => {
@@ -228,31 +218,6 @@ export default function AdminShell({ locale, children }: { locale: string; child
       window.clearInterval(timer);
     };
   }, [currentUser]);
-
-  useEffect(() => {
-    if (!notificationOpen || !currentUser) return;
-    
-    const fetchNotifications = async () => {
-      setLoadingNotifications(true);
-      try {
-        const res = await fetch(`/api/notifications/list?userId=${encodeURIComponent(currentUser.id)}`);
-        if (res.ok) {
-          const data = await res.json();
-          setNotificationsData({
-            announcements: data.announcements || [],
-            directives: data.directives || [],
-            tasks: data.tasks || [],
-          });
-        }
-      } catch (err) {
-        console.error('Failed to load notifications list', err);
-      } finally {
-        setLoadingNotifications(false);
-      }
-    };
-    
-    fetchNotifications();
-  }, [notificationOpen, currentUser]);
 
   const getSimulatedEmail = (user: UserProfile) => {
     if (user.email) return user.email;
@@ -605,13 +570,7 @@ export default function AdminShell({ locale, children }: { locale: string; child
               </div>
             )}
 
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setNotificationOpen(true)}
-              className="relative text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300"
-              title={`${notificationSummary.total} mục cần kiểm tra`}
-            >
+            <Button variant="ghost" size="icon" className="relative text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300" title={`${notificationSummary.total} mục cần kiểm tra`}>
               <Bell className="h-5 w-5" />
               {notificationSummary.total > 0 && (
                 <span className="absolute top-1.5 right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-blue-600 px-1 text-[10px] font-bold text-white">
@@ -709,20 +668,6 @@ export default function AdminShell({ locale, children }: { locale: string; child
         </header>
         <main className="p-4 md:p-6">{children}</main>
       </div>
-      <NotificationDrawer
-        isOpen={notificationOpen}
-        onClose={() => setNotificationOpen(false)}
-        announcements={notificationsData.announcements}
-        directives={notificationsData.directives}
-        tasks={notificationsData.tasks}
-        currentUser={currentUser}
-        onViewTask={(task) => {
-          router.push(`/${locale}/tasks?id=${task.id}`);
-        }}
-        onViewDirective={(directive) => {
-          router.push(`/${locale}/directives?id=${directive.id}`);
-        }}
-      />
     </div>
   );
 }
