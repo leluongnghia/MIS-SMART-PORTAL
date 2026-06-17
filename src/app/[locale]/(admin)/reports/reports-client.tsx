@@ -19,7 +19,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/src/components/ui/card';
 import { Button } from '@/src/components/ui/button';
 import { useToast } from '@/src/components/ui/Toast';
-import { BarChart3, PieChartIcon, TrendingUp, DollarSign, GraduationCap, FileSpreadsheet } from 'lucide-react';
+import { BarChart3, PieChartIcon, TrendingUp, DollarSign, GraduationCap, FileSpreadsheet, Download, Eye } from 'lucide-react';
 
 interface ChartItem {
   name: string;
@@ -73,39 +73,65 @@ export default function ReportsClient({ locale, data }: ReportsClientProps) {
     );
   }
 
-  // Format currency helper
   const formatCurrency = (val: number) => {
     return `${val.toLocaleString('vi-VN')} đ`;
   };
 
   const { success: toastSuccess } = useToast();
 
-  const handleExportReportCSV = () => {
+  const escapeExcel = (value: unknown) => String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+
+  const buildReadableExcel = () => {
+    const today = new Date().toLocaleDateString('vi-VN');
     const sections = [
-      { title: 'Phễu Chuyển Đổi', headers: ['Giai Đoạn', 'Số Lượng'], rows: data.conversionFunnel.map(d => [d.name, d.count]) },
-      { title: 'Nguồn Lead', headers: ['Nguồn', 'Số Lượng'], rows: data.leadsBySource.map(d => [d.name, d.value]) },
-      { title: 'Trạng Thái Lead', headers: ['Trạng Thái', 'Số Lượng'], rows: data.leadsByStatus.map(d => [d.name, d.value]) },
-      { title: 'Doanh Thu', headers: ['Loại Phí', 'Số Tiền (VND)'], rows: data.revenueByPaymentType.map(d => [d.name, d.value]) },
-      { title: 'Nhập Học Theo Khối', headers: ['Khối Lớp', 'Số Học Sinh'], rows: data.enrollmentByGrade.map(d => [d.name, d.value]) },
+      { title: 'Phễu Chuyển Đổi', headers: ['Giai đoạn', 'Số lượng', 'Ghi chú'], rows: data.conversionFunnel.map(d => [d.name, d.count, 'Theo thứ tự trong phễu tuyển sinh']) },
+      { title: 'Nguồn Lead', headers: ['Nguồn', 'Số lượng', 'Tỷ trọng'], rows: data.leadsBySource.map(d => [d.name, d.value, `${Math.round((d.value / Math.max(1, data.leadsBySource.reduce((sum, item) => sum + item.value, 0))) * 100)}%`]) },
+      { title: 'Trạng Thái Lead', headers: ['Trạng thái', 'Số lượng', 'Mục đích đọc'], rows: data.leadsByStatus.map(d => [d.name, d.value, 'Theo dõi tình trạng hồ sơ']) },
+      { title: 'Doanh Thu', headers: ['Loại phí', 'Số tiền (VND)', 'Hiển thị'], rows: data.revenueByPaymentType.map(d => [d.name, d.value, formatCurrency(d.value)]) },
+      { title: 'Nhập Học Theo Khối', headers: ['Khối lớp', 'Số học sinh', 'Nhóm báo cáo'], rows: data.enrollmentByGrade.map(d => [d.name, d.value, 'Học sinh đã nhập học']) },
     ];
-    let csv = '\uFEFF';
-    sections.forEach(section => {
-      csv += `"=== ${section.title} ===\n"`;
-      csv += section.headers.map(h => `"${h}"`).join(',') + '\n';
-      section.rows.forEach((row: any[]) => {
-        csv += row.map(v => `"${String(v)}"`).join(',') + '\n';
-      });
-      csv += '\n';
-    });
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+
+    return `<!doctype html>
+<html><head><meta charset="utf-8" />
+<style>
+  body { font-family: Arial, sans-serif; color: #0f172a; }
+  .title { font-size: 22px; font-weight: 800; color: #1d4ed8; }
+  .meta { color: #64748b; font-size: 12px; margin-bottom: 16px; }
+  .section { margin-top: 22px; font-size: 16px; font-weight: 800; color: #065f46; }
+  table { border-collapse: collapse; width: 100%; margin-top: 8px; }
+  th { background: #1d4ed8; color: white; font-weight: 800; text-align: left; padding: 9px; border: 1px solid #93c5fd; }
+  td { padding: 8px; border: 1px solid #dbeafe; }
+  tr:nth-child(even) td { background: #f8fafc; }
+  .number { text-align: right; font-weight: 700; color: #047857; }
+</style></head><body>
+  <div class="title">MIS SMART PORTAL - Báo cáo nhanh tuyển sinh</div>
+  <div class="meta">Ngày xuất: ${today} • Định dạng tối ưu để mở bằng Excel</div>
+  ${sections.map(section => `
+    <div class="section">${escapeExcel(section.title)}</div>
+    <table>
+      <thead><tr>${section.headers.map(header => `<th>${escapeExcel(header)}</th>`).join('')}</tr></thead>
+      <tbody>${section.rows.map(row => `<tr>${row.map((cell, index) => `<td class="${typeof cell === 'number' || index === 1 ? 'number' : ''}">${escapeExcel(cell)}</td>`).join('')}</tr>`).join('')}</tbody>
+    </table>
+  `).join('')}
+</body></html>`;
+  };
+
+  const handleExportReportExcel = () => {
+    const excelHtml = buildReadableExcel();
+    const blob = new Blob(['\uFEFF', excelHtml], { type: 'application/vnd.ms-excel;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.setAttribute('href', url);
-    link.setAttribute('download', `MIS_Reports_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute('download', `MIS_Bao_Cao_Nhanh_${new Date().toISOString().split('T')[0]}.xls`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    toastSuccess('Xuất báo cáo thành công', 'Báo cáo CSV đã được tải xuống');
+    URL.revokeObjectURL(url);
+    toastSuccess('Xuất Excel thành công', 'File .xls đã có tiêu đề, bảng rõ ràng, màu header và số căn phải');
   };
 
   return (
@@ -120,11 +146,74 @@ export default function ReportsClient({ locale, data }: ReportsClientProps) {
             Phân tích chuyên sâu nguồn học sinh, hiệu quả chuyển đổi phễu tuyển sinh và doanh thu nhập học.
           </p>
         </div>
-        <Button variant="outline" onClick={handleExportReportCSV} className="hidden sm:flex gap-2 shrink-0">
-          <FileSpreadsheet className="h-4 w-4 text-emerald-600" />
-          Xuất báo cáo CSV
+        <Button variant="outline" onClick={handleExportReportExcel} className="hidden sm:flex gap-2 shrink-0 border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-emerald-300">
+          <FileSpreadsheet className="h-4 w-4" />
+          Xuất Excel dễ đọc
         </Button>
       </div>
+
+      <Card className="overflow-hidden border-emerald-100 bg-gradient-to-br from-emerald-50 via-white to-blue-50 shadow-sm dark:border-emerald-950 dark:from-emerald-950/30 dark:via-slate-950 dark:to-blue-950/20">
+        <CardContent className="p-0">
+          <div className="grid gap-0 lg:grid-cols-[0.9fr_1.1fr]">
+            <div className="p-5 sm:p-6">
+              <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-white/80 px-3 py-1 text-xs font-black text-emerald-700 shadow-sm dark:border-emerald-900/60 dark:bg-slate-950/70 dark:text-emerald-300">
+                <Download className="h-3.5 w-3.5" />
+                Xuất Excel tối ưu
+              </div>
+              <h2 className="mt-4 text-xl font-black text-slate-950 dark:text-white">File Excel rõ ràng, mở ra đọc ngay</h2>
+              <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">
+                Báo cáo xuất ra dạng <b>.xls</b> có tiêu đề, ngày xuất, từng nhóm bảng riêng, header màu xanh, số liệu căn phải và dòng xen kẽ để dễ đọc/in ấn.
+              </p>
+              <div className="mt-4 grid gap-2 text-xs font-semibold text-slate-600 dark:text-slate-300">
+                <div className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-emerald-500" />Không còn CSV rời rạc khó nhìn</div>
+                <div className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-blue-500" />Mỗi phần báo cáo có bảng riêng</div>
+                <div className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-amber-500" />Dễ copy, lọc, in hoặc gửi BGH</div>
+              </div>
+              <Button onClick={handleExportReportExcel} className="mt-5 gap-2 bg-emerald-600 hover:bg-emerald-700">
+                <FileSpreadsheet className="h-4 w-4" />
+                Tải file Excel mẫu
+              </Button>
+            </div>
+            <div className="border-t border-emerald-100 bg-white/80 p-4 dark:border-emerald-950 dark:bg-slate-950/60 lg:border-l lg:border-t-0">
+              <div className="mb-2 flex items-center justify-between">
+                <div className="flex items-center gap-2 text-xs font-black text-slate-500"><Eye className="h-4 w-4" /> Ảnh ví dụ khi mở bằng Excel</div>
+                <span className="rounded-full bg-emerald-100 px-2 py-1 text-[10px] font-black text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">MIS_Bao_Cao_Nhanh.xls</span>
+              </div>
+              <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl dark:border-slate-800 dark:bg-slate-900">
+                <div className="flex items-center gap-1.5 border-b border-slate-200 bg-slate-100 px-3 py-2 dark:border-slate-800 dark:bg-slate-800">
+                  <span className="h-2.5 w-2.5 rounded-full bg-rose-400" />
+                  <span className="h-2.5 w-2.5 rounded-full bg-amber-400" />
+                  <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
+                  <span className="ml-3 text-[10px] font-bold text-slate-500">Excel Preview</span>
+                </div>
+                <div className="p-3 text-[10px]">
+                  <div className="mb-2 text-base font-black text-blue-700">MIS SMART PORTAL - Báo cáo nhanh tuyển sinh</div>
+                  <div className="mb-3 text-slate-500">Ngày xuất: 16/06/2026 • Định dạng tối ưu để mở bằng Excel</div>
+                  <div className="mb-1 font-black text-emerald-700">Phễu Chuyển Đổi</div>
+                  <table className="w-full border-collapse overflow-hidden text-left">
+                    <thead>
+                      <tr className="bg-blue-700 text-white">
+                        <th className="border border-blue-200 px-2 py-1.5">Giai đoạn</th>
+                        <th className="border border-blue-200 px-2 py-1.5 text-right">Số lượng</th>
+                        <th className="border border-blue-200 px-2 py-1.5">Ghi chú</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {data.conversionFunnel.slice(0, 4).map((item, index) => (
+                        <tr key={item.name} className={index % 2 ? 'bg-slate-50 dark:bg-slate-800/70' : ''}>
+                          <td className="border border-blue-100 px-2 py-1.5">{item.name}</td>
+                          <td className="border border-blue-100 px-2 py-1.5 text-right font-black text-emerald-700">{item.count}</td>
+                          <td className="border border-blue-100 px-2 py-1.5 text-slate-500">Theo thứ tự trong phễu</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Grid containing reports */}
       <div className="grid gap-6 md:grid-cols-2">

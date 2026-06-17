@@ -22,6 +22,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/src/components/ui/card';
 import { Badge } from '@/src/components/ui/badge';
 import { Button } from '@/src/components/ui/button';
+import { Dialog } from '@/src/components/ui/dialog';
 import {
   Area,
   AreaChart,
@@ -47,6 +48,17 @@ const performanceData = [
 export default function DashboardClient({ tab, initialData }: { tab?: string, initialData?: any }) {
   const [currentUser, setCurrentUser] = React.useState<any>(null);
   const [isReady, setIsReady] = React.useState(false);
+  const [customizeOpen, setCustomizeOpen] = React.useState(false);
+  const [visibleSections, setVisibleSections] = React.useState<Record<string, boolean>>({
+    alerts: true,
+    okrs: true,
+    kpis: true,
+    actionCenter: true,
+    chart: true,
+    activity: true,
+    risk: true,
+    funnel: true,
+  });
   const params = useParams();
   const locale = (params?.locale as string) || 'vi';
   const router = useRouter();
@@ -60,8 +72,52 @@ export default function DashboardClient({ tab, initialData }: { tab?: string, in
         if (matched) setCurrentUser(matched);
       });
     }
+
+    const storedLayout = serverStorage.getItem("mis_dashboard_visible_sections");
+    if (storedLayout) {
+      try {
+        setVisibleSections(current => ({ ...current, ...JSON.parse(storedLayout) }));
+      } catch {
+        serverStorage.removeItem("mis_dashboard_visible_sections");
+      }
+    }
+
     setIsReady(true);
   }, []);
+
+  const updateSectionVisibility = (key: string, enabled: boolean) => {
+    setVisibleSections(current => {
+      const next = { ...current, [key]: enabled };
+      serverStorage.setItem("mis_dashboard_visible_sections", JSON.stringify(next));
+      return next;
+    });
+  };
+
+  const resetDashboardLayout = () => {
+    const next = {
+      alerts: true,
+      okrs: true,
+      kpis: true,
+      actionCenter: true,
+      chart: true,
+      activity: true,
+      risk: true,
+      funnel: true,
+    };
+    setVisibleSections(next);
+    serverStorage.setItem("mis_dashboard_visible_sections", JSON.stringify(next));
+  };
+
+  const dashboardSections = [
+    { key: 'alerts', label: 'Cảnh báo đầu trang', desc: 'Quá hạn, phê duyệt tồn, rủi ro nghiêm trọng' },
+    { key: 'okrs', label: 'OKR chiến lược', desc: 'Tuyển sinh, đào tạo, nhân sự, vận hành' },
+    { key: 'kpis', label: 'KPI nhanh', desc: 'Chỉ số toàn trường và từng mảng' },
+    { key: 'actionCenter', label: 'Action Center', desc: 'Phê duyệt khẩn cấp và công việc ưu tiên' },
+    { key: 'chart', label: 'Biểu đồ hiệu quả', desc: 'Xu hướng hiệu quả 6 tháng' },
+    { key: 'activity', label: 'Hoạt động gần đây', desc: 'Dòng thời gian cập nhật mới nhất' },
+    { key: 'risk', label: 'Risk Heatmap', desc: 'Bản đồ nhiệt và rủi ro nổi bật' },
+    { key: 'funnel', label: 'Phễu tuyển sinh', desc: 'Tổng quan chuyển đổi tuyển sinh' },
+  ];
 
   // Use real data from DB, fall back to empty arrays
   const recentActivities: any[] = initialData?.recentActivities || [];
@@ -86,7 +142,7 @@ export default function DashboardClient({ tab, initialData }: { tab?: string, in
               <option>Thứ Sáu, 16/05/2025</option>
             </select>
           </div>
-          <Button variant="outline" className="gap-2" disabled title="Tính năng tùy chỉnh dashboard sẽ ra mắt trong phiên bản tới">
+          <Button variant="outline" className="gap-2" onClick={() => setCustomizeOpen(true)} title="Tùy chỉnh bố cục dashboard">
             <SettingsIcon className="h-4 w-4" />
             Tùy chỉnh
           </Button>
@@ -94,7 +150,7 @@ export default function DashboardClient({ tab, initialData }: { tab?: string, in
       </div>
 
       {/* Top Alerts */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {visibleSections.alerts && <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="border-red-100 bg-red-50/50 dark:border-red-900/30 dark:bg-red-950/20">
           <CardContent className="p-4 flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -148,10 +204,10 @@ export default function DashboardClient({ tab, initialData }: { tab?: string, in
             <Link href={`/${locale}/risk`}><Button variant="ghost" size="sm" className="text-rose-600 hover:bg-rose-100 hover:text-rose-700">Xem chi tiết</Button></Link>
           </CardContent>
         </Card>
-      </div>
+      </div>}
 
       {/* OKRs */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      {visibleSections.okrs && <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {[
           { title: 'Tuyển sinh', val: 72, target: '1.200 HS', actual: '864 HS', color: 'text-blue-600', status: 'Đang tốt', statusColor: 'text-emerald-500', href: 'leads' },
           { title: 'Đào tạo', val: 68, target: '95%', actual: '64.6%', color: 'text-blue-500', status: 'Đang tốt', statusColor: 'text-emerald-500', href: 'reports' },
@@ -208,10 +264,10 @@ export default function DashboardClient({ tab, initialData }: { tab?: string, in
           </Card>
           </Link>
         ))}
-      </div>
+      </div>}
 
       {/* KPI mini stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      {visibleSections.kpis && <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {[
           { title: 'KPI toàn trường', val: '83.4', up: '6.2', icon: LineChart, color: 'bg-blue-600' },
           { title: 'Tuyển sinh', val: '71.8', up: '5.1', icon: Users, color: 'bg-indigo-500' },
@@ -237,11 +293,11 @@ export default function DashboardClient({ tab, initialData }: { tab?: string, in
             </Card>
           </Link>
         ))}
-      </div>
+      </div>}
 
       <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
         {/* Action Center */}
-        <Card className="xl:col-span-1">
+        {visibleSections.actionCenter && <Card className="xl:col-span-1">
           <CardHeader className="p-4 pb-2 border-b border-slate-100 dark:border-slate-800">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base font-bold">Action Center <span className="ml-1 rounded-full bg-red-100 px-2 py-0.5 text-xs text-red-600">8</span></CardTitle>
@@ -303,10 +359,10 @@ export default function DashboardClient({ tab, initialData }: { tab?: string, in
               <Link href={`/${locale}/tasks`} className="block w-full"><Button variant="ghost" className="w-full text-sm text-blue-600">Xem tất cả công việc <ChevronRight className="h-4 w-4 ml-1" /></Button></Link>
             </div>
           </CardContent>
-        </Card>
+        </Card>}
 
         {/* Charts Section */}
-        <div className="xl:col-span-2 space-y-6">
+        {visibleSections.chart && <div className="xl:col-span-2 space-y-6">
           <Card>
             <CardHeader className="p-4 pb-2">
               <div className="flex justify-between items-center">
@@ -360,10 +416,10 @@ export default function DashboardClient({ tab, initialData }: { tab?: string, in
               </div>
             </CardContent>
           </Card>
-        </div>
+        </div>}
 
         {/* Activity Timeline */}
-        <Card className="xl:col-span-1">
+        {visibleSections.activity && <Card className="xl:col-span-1">
           <CardHeader className="p-4 pb-2 border-b border-slate-100 dark:border-slate-800">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base font-bold">Hoạt động gần đây</CardTitle>
@@ -392,14 +448,14 @@ export default function DashboardClient({ tab, initialData }: { tab?: string, in
               ))}
             </div>
           </CardContent>
-        </Card>
+        </Card>}
 
       </div>
       
       {/* Risk and Funnel */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Mock Risk Heatmap */}
-        <Card>
+        {visibleSections.risk && <Card>
           <CardHeader className="p-4 pb-0">
             <CardTitle className="text-base font-bold flex items-center gap-2">
               Risk Heatmap <AlertCircle className="h-4 w-4 text-slate-400" />
@@ -477,10 +533,10 @@ export default function DashboardClient({ tab, initialData }: { tab?: string, in
                </div>
             </div>
           </CardContent>
-        </Card>
+        </Card>}
 
         {/* Funnel */}
-        <Card>
+        {visibleSections.funnel && <Card>
           <CardHeader className="p-4 pb-0 flex flex-row items-center justify-between">
             <CardTitle className="text-base font-bold">Phễu tuyển sinh nhanh</CardTitle>
             <select className="text-xs border-slate-200 rounded-md bg-transparent">
@@ -527,8 +583,40 @@ export default function DashboardClient({ tab, initialData }: { tab?: string, in
               <Link href={`/${locale}/admissions`}><Button variant="ghost" className="text-sm text-blue-600">Xem chi tiết phễu tuyển sinh <ChevronRight className="h-4 w-4 ml-1" /></Button></Link>
             </div>
           </CardContent>
-        </Card>
+        </Card>}
       </div>
+
+      <Dialog
+        open={customizeOpen}
+        onOpenChange={setCustomizeOpen}
+        title="Tùy chỉnh dashboard"
+        description="Bật/tắt các khối thông tin để dashboard gọn theo nhu cầu sử dụng."
+        className="max-w-3xl"
+      >
+        <div className="grid gap-3 sm:grid-cols-2">
+          {dashboardSections.map(section => (
+            <label
+              key={section.key}
+              className="group flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50/70 p-4 transition hover:border-blue-200 hover:bg-blue-50/50 dark:border-slate-800 dark:bg-slate-900/70 dark:hover:border-blue-900/60"
+            >
+              <input
+                type="checkbox"
+                checked={visibleSections[section.key]}
+                onChange={(event) => updateSectionVisibility(section.key, event.target.checked)}
+                className="mt-1 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+              />
+              <span className="min-w-0">
+                <span className="block text-sm font-black text-slate-900 dark:text-white">{section.label}</span>
+                <span className="mt-1 block text-xs leading-relaxed text-slate-500 dark:text-slate-400">{section.desc}</span>
+              </span>
+            </label>
+          ))}
+        </div>
+        <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <Button variant="outline" onClick={resetDashboardLayout}>Khôi phục mặc định</Button>
+          <Button onClick={() => setCustomizeOpen(false)}>Lưu bố cục</Button>
+        </div>
+      </Dialog>
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import { PGlite } from '@electric-sql/pglite';
+import { NodeFS } from '@electric-sql/pglite/nodefs';
 import { drizzle } from 'drizzle-orm/pglite';
 import * as schema from '../../models/Schema';
 
@@ -17,7 +18,10 @@ async function getClient(): Promise<PGlite> {
     let retries = 15;
     while (retries > 0) {
       try {
-        clientInstance = new PGlite(dbPath);
+        clientInstance = new PGlite({
+          dataDir: dbPath,
+          fs: new NodeFS(dbPath)
+        });
         await clientInstance.waitReady;
         break;
       } catch (err: any) {
