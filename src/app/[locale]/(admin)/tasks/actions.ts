@@ -70,3 +70,39 @@ export async function updateTaskStatus(taskId: string, status: string) {
     return { success: false, error: error.message };
   }
 }
+
+export async function seedTasks(seedData: any[]) {
+  try {
+    const existing = await db.select({ id: schema.tasks.id }).from(schema.tasks).limit(1);
+    if (existing.length > 5) return { success: true, message: 'Already seeded' };
+
+    // Find default workspace and user to assign
+    const workspaces = await db.select({ id: schema.workspaces.id }).from(schema.workspaces).limit(1);
+    const users = await db.select({ id: schema.users.id, name: schema.users.name }).from(schema.users).limit(1);
+
+    const defaultWorkspaceId = workspaces[0]?.id || 'workspace_1';
+    const defaultUserId = users[0]?.id || 'user_1';
+    const defaultUserName = users[0]?.name || 'Admin';
+
+    for (const task of seedData) {
+      await db.insert(schema.tasks).values({
+        id: `task_${Math.random().toString(36).substring(2, 9)}`,
+        title: task.title,
+        description: `Seed data task for ${task.dept}`,
+        workspaceId: defaultWorkspaceId,
+        assignedId: defaultUserId,
+        assignedName: defaultUserName,
+        status: task.status,
+        priority: task.priority,
+        deadline: new Date(Date.now() + Math.random() * 10 * 24 * 60 * 60 * 1000).toISOString(),
+        tag: task.tag,
+        payload: {},
+      });
+    }
+
+    revalidatePath("/[locale]/tasks", "page");
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}

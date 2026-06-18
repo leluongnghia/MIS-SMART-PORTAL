@@ -1,7 +1,28 @@
 'use client';
 
 import { useState, useTransition, useMemo } from 'react';
-import { createTask, updateTaskStatus } from './actions';
+import { createTask, updateTaskStatus, seedTasks } from './actions';
+import { APPROVAL_MOCK_DATA, SEED_TASKS } from './tasks.constants';
+import {
+  DndContext,
+  DragOverlay,
+  closestCorners,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragStartEvent,
+  DragOverEvent,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  arrayMove,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import {
   FileText,
   Clock,
@@ -23,62 +44,10 @@ import { Button } from '@/src/components/ui/button';
 import { Dialog } from '@/src/components/ui/dialog';
 import { cn } from '@/src/lib/utils';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/src/components/ui/tabs';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/src/components/ui/table';
 
-const APPROVAL_DETAILS = {
-  'Đề xuất mua sắm thiết bị CNTT': {
-    code: 'DXMS-2025-0007',
-    dept: 'Tin học',
-    user: 'Trần Thị Mai',
-    deadline: '16/05/2025 17:00',
-    purpose: 'Trang bị bổ sung máy tính phục vụ giảng dạy và học tập thực hành môn Tin học theo chương trình mới GDPT 2018.',
-    budget: '180,000,000đ',
-    items: [
-      { name: 'Máy tính để bàn Dell Inspiron 3020', qty: 10, price: '15,000,000đ', total: '150,000,000đ' },
-      { name: 'Máy tính bảng Apple iPad Gen 9 WiFi', qty: 5, price: '6,000,000đ', total: '30,000,000đ' }
-    ],
-    attachments: ['De_xuat_mua_sam_CNTT.pdf', 'Bao_gia_thiet_bi.pdf', 'Cau_hinh_ky_thuat.xlsx'],
-    timeline: [
-      { step: 1, role: 'Lập đề xuất', user: 'Trần Thị Mai', date: '15/05/2025 09:12', done: true },
-      { step: 2, role: 'Trưởng bộ phận', user: 'Phạm Quang Minh', date: '15/05/2025 14:20', done: true },
-      { step: 3, role: 'Ban Giám hiệu', user: 'Chờ duyệt', date: '', active: true }
-    ]
-  },
-  'Kế hoạch tổ chức Ngày hội STEM': {
-    code: 'KH-STEM-2025-002',
-    dept: 'Đoàn trường',
-    user: 'Trần Thị Mai',
-    deadline: '17/05/2025 17:00',
-    purpose: 'Tổ chức ngày hội trải nghiệm khoa học STEM nhằm nâng cao tinh thần tự học, nghiên cứu và sáng tạo kỹ thuật cho học sinh toàn trường.',
-    budget: '25,000,000đ',
-    items: [
-      { name: 'Kinh phí vật tư mô hình trưng bày', qty: 1, price: '8,000,000đ', total: '8,000,000đ' },
-      { name: 'Giải thưởng cuộc thi chế tạo Robotics', qty: 1, price: '5,000,000đ', total: '5,000,000đ' },
-      { name: 'Thuê âm thanh, ánh sáng, backdrop sân khấu', qty: 1, price: '12,000,000đ', total: '12,000,000đ' }
-    ],
-    attachments: ['Ke_hoach_ngay_hoi_STEM_2025.docx', 'Du_tru_chi_tiet_STEM.xlsx'],
-    timeline: [
-      { step: 1, role: 'Lập đề xuất', user: 'Trần Thị Mai', date: '16/05/2025 08:30', done: true },
-      { step: 2, role: 'Ban Giám hiệu', user: 'Chờ duyệt', date: '', active: true }
-    ]
-  },
-  'Quy chế chi tiêu nội bộ 2025-2026': {
-    code: 'QCCT-2025-001',
-    dept: 'Kế toán',
-    user: 'Nguyễn Văn Nam',
-    deadline: '18/05/2025 17:00',
-    purpose: 'Cập nhật định mức thanh toán chi tiêu nội bộ, tiền làm thêm giờ (overtime) của giáo viên chuyên môn và cán bộ văn phòng phù hợp với ngân sách năm học mới.',
-    budget: 'Theo định mức chi tiêu thực tế',
-    items: [
-      { name: 'Định mức thanh toán công tác phí', qty: 1, price: 'Tăng 10%', total: 'Theo thực chi' },
-      { name: 'Định mức phụ cấp ngoài giờ giáo viên', qty: 1, price: '45,000đ/tiết', total: 'Theo thực dạy' }
-    ],
-    attachments: ['Quy_che_chi_tieu_noi_bo_2025_2026_Trinh_Ky.pdf'],
-    timeline: [
-      { step: 1, role: 'Lập đề xuất', user: 'Nguyễn Văn Nam', date: '16/05/2025 11:15', done: true },
-      { step: 2, role: 'Ban Giám hiệu', user: 'Chờ duyệt', date: '', active: true }
-    ]
-  }
-};
+// constants moved to tasks.constants.ts
 
 type TaskRow = {
   id?: string;
@@ -138,11 +107,57 @@ export default function TasksDashboard({ initialData }: { initialData?: { data?:
   const [isTaskOpen, setIsTaskOpen] = useState(false);
   const [selectedApprovalTaskId, setSelectedApprovalTaskId] = useState<string>('');
   const [activeFilter, setActiveFilter] = useState<'in_progress' | 'overdue' | 'pending' | 'completed' | null>(null);
+  const [activeView, setActiveView] = useState<'kanban' | 'list'>('kanban');
 
   const scrollToSection = (id: string) => {
     const el = document.getElementById(id);
     if (el) {
       el.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const [activeId, setActiveId] = useState<string | null>(null);
+
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(event.active.id as string);
+  };
+
+  const handleDragOver = (event: DragOverEvent) => {
+    // optional logic during drag over
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveId(null);
+    
+    if (!over) return;
+
+    const activeIdStr = String(active.id);
+    const overIdStr = String(over.id);
+
+    // active.data could have current status
+    const overStatus = over.data.current?.status;
+    const task = tasksList.find(t => t.id === activeIdStr);
+
+    if (task && overStatus && task.status !== overStatus) {
+      // Optimistic update logic could go here, or just trigger server action
+      startTransition(async () => {
+        const res = await updateTaskStatus(activeIdStr, overStatus);
+        if (!res.success) {
+          alert('Lỗi cập nhật: ' + res.error);
+        }
+      });
     }
   };
 
@@ -249,10 +264,10 @@ export default function TasksDashboard({ initialData }: { initialData?: { data?:
   const approvalDetails = useMemo(() => {
     if (!selectedApprovalTask) return null;
     const title = selectedApprovalTask.title || '';
-    const matchedKey = Object.keys(APPROVAL_DETAILS).find(key => title.toLowerCase().includes(key.toLowerCase()) || key.toLowerCase().includes(title.toLowerCase()));
+    const matchedKey = Object.keys(APPROVAL_MOCK_DATA).find(key => title.toLowerCase().includes(key.toLowerCase()) || key.toLowerCase().includes(title.toLowerCase()));
     
     if (matchedKey) {
-      return (APPROVAL_DETAILS as any)[matchedKey];
+      return (APPROVAL_MOCK_DATA as any)[matchedKey];
     }
     
     return {
@@ -297,13 +312,16 @@ export default function TasksDashboard({ initialData }: { initialData?: { data?:
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <select className="block w-48 rounded-md border-0 py-1.5 pl-3 pr-10 text-slate-900 ring-1 ring-inset ring-slate-200 focus:ring-2 focus:ring-blue-600 sm:text-sm sm:leading-6 dark:bg-slate-900 dark:text-slate-100 dark:ring-slate-700">
+          <select className="block w-40 rounded-md border-0 py-1.5 pl-3 pr-8 text-slate-900 ring-1 ring-inset ring-slate-200 focus:ring-2 focus:ring-blue-600 sm:text-sm sm:leading-6 dark:bg-slate-900 dark:text-slate-100 dark:ring-slate-700">
             <option>Tất cả quy trình</option>
           </select>
           <div className="flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-sm dark:bg-slate-900 dark:border-slate-700">
             <CalendarDays className="h-4 w-4 text-slate-400" />
             <span>12/05/2025 - 16/05/2025</span>
           </div>
+          <Button onClick={() => setIsCreateOpen(true)} className="bg-blue-600 hover:bg-blue-700 text-white gap-2">
+            <Plus className="h-4 w-4" /> Tạo công việc
+          </Button>
         </div>
       </div>
 
@@ -418,20 +436,28 @@ export default function TasksDashboard({ initialData }: { initialData?: { data?:
         </Card>
       </div>
 
-      {/* Standalone full-width Kanban Row */}
+      {/* Work board: Kanban + List View */}
       <div className="w-full" id="kanban-board">
-        <Card className="flex flex-col h-[650px] w-full">
-          <CardHeader className="p-4 pb-2 border-b border-slate-100 dark:border-slate-800 flex flex-row items-center justify-between flex-wrap gap-2">
-            <CardTitle className="text-base font-bold">Bảng công việc (Kanban)</CardTitle>
-            <div className="flex items-center gap-2 text-xs">
-              <span className="text-slate-500">Nhóm theo:</span>
-              <select className="bg-transparent font-medium border-0 focus:ring-0 p-0">
-                <option>Trạng thái</option>
-              </select>
-            </div>
-          </CardHeader>
+        <Tabs className="w-full">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <TabsList className="w-fit border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-950">
+              <TabsTrigger active={activeView === 'kanban'} onClick={() => setActiveView('kanban')}>
+                Kanban
+              </TabsTrigger>
+              <TabsTrigger active={activeView === 'list'} onClick={() => setActiveView('list')}>
+                List View
+              </TabsTrigger>
+            </TabsList>
+            <Button
+              onClick={() => setIsCreateOpen(true)}
+              className="h-10 bg-emerald-600 px-5 font-bold text-white shadow-lg shadow-emerald-600/20 hover:bg-emerald-700"
+            >
+              <Plus className="mr-2 h-4 w-4" /> Thêm công việc mới
+            </Button>
+          </div>
+
           {activeFilter && (
-            <div className="mx-4 mt-2 px-3 py-2 bg-blue-50/80 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 text-xs font-semibold rounded-lg border border-blue-100 dark:border-blue-900/30 flex items-center justify-between animate-in fade-in slide-in-from-top-1 duration-205">
+            <div className="px-3 py-2 bg-blue-50/80 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 text-xs font-semibold rounded-lg border border-blue-100 dark:border-blue-900/30 flex items-center justify-between animate-in fade-in slide-in-from-top-1 duration-205">
               <span>
                 Đang hiển thị danh sách: <strong className="text-blue-900 dark:text-blue-200">{
                   activeFilter === 'in_progress' ? 'Việc đang thực hiện' :
@@ -447,52 +473,116 @@ export default function TasksDashboard({ initialData }: { initialData?: { data?:
               </button>
             </div>
           )}
-          <CardContent className="p-4 flex-1 overflow-x-auto custom-scrollbar flex gap-4 bg-slate-50/50 dark:bg-slate-900/30">
-            {/* Columns */}
-            {kanbanColumns.map((col, i) => (
-              <div key={i} className="min-w-[220px] flex-1 flex flex-col gap-3">
-                <div className="flex items-center gap-2 font-bold text-sm">
-                  {col.title} <Badge  className={cn("px-1.5 py-0", col.title === 'Cần làm' ? 'bg-blue-100 text-blue-700' : col.title === 'Đang xử lý' ? 'bg-blue-100 text-blue-700' : col.title === 'Chờ duyệt' ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700')}>{col.count}</Badge>
-                </div>
-                <div className="flex-1 overflow-y-auto space-y-3 custom-scrollbar pr-1">
-                  {col.cards.map((card, j) => (
-                    <div 
-                      key={j} 
-                      onClick={() => {
-                        setSelectedTask({ ...card, status: col.title });
-                        setIsTaskOpen(true);
-                      }}
-                      className="bg-white dark:bg-slate-950 p-3 rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm relative group cursor-pointer hover:border-blue-400 dark:hover:border-blue-800 transition-colors"
-                    >
-                      <Button variant="ghost" size="icon" className="h-6 w-6 absolute top-2 right-2 opacity-0 group-hover:opacity-100"><MoreVertical className="h-3 w-3" /></Button>
-                      <h4 className="text-xs font-bold leading-snug pr-6 mb-2">{card.title}</h4>
-                      <div className="flex items-center gap-1.5 text-[10px] text-slate-500 mb-1">
-                        <UserCircle className="h-3 w-3" /> {card.user}
+
+          <TabsContent value="kanban" activeValue={activeView} className="mt-0">
+            <Card className="flex flex-col h-[650px] w-full overflow-hidden">
+              <DndContext 
+                sensors={sensors}
+                collisionDetection={closestCorners}
+                onDragStart={handleDragStart}
+                onDragOver={handleDragOver}
+                onDragEnd={handleDragEnd}
+              >
+                <CardContent className="p-4 flex-1 overflow-x-auto custom-scrollbar flex gap-4 bg-slate-50/50 dark:bg-slate-900/30">
+                  {kanbanColumns.map((col, i) => (
+                    <div key={i} className="min-w-[220px] flex-1 flex flex-col gap-3">
+                      <div className="flex items-center gap-2 font-bold text-sm">
+                        {col.title} <Badge className={cn("px-1.5 py-0", col.title === 'Cần làm' ? 'bg-blue-100 text-blue-700' : col.title === 'Đang xử lý' ? 'bg-blue-100 text-blue-700' : col.title === 'Chờ duyệt' ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700')}>{col.count}</Badge>
                       </div>
-                      <div className="flex items-center gap-1.5 text-[10px] text-slate-500 mb-3">
-                        <CalendarIcon className="h-3 w-3" /> {card.date}
-                      </div>
-                      <div className="flex justify-between items-end">
-                        {card.tag ? <Badge  className={cn("text-[9px] py-0 border-0", card.tagCol)}>{card.tag}</Badge> : <div />}
-                        <div className="flex -space-x-1">
-                          <img src={`https://i.pravatar.cc/150?u=${i}${j}1`} className="w-5 h-5 rounded-full border border-white dark:border-slate-950 object-cover" />
-                          <img src={`https://i.pravatar.cc/150?u=${i}${j}2`} className="w-5 h-5 rounded-full border border-white dark:border-slate-950 object-cover" />
-                        </div>
+                      <div className="flex-1 overflow-y-auto space-y-3 custom-scrollbar pr-1">
+                        {col.cards.map((card, j) => (
+                          <div 
+                            key={card.id || j} 
+                            onClick={() => {
+                              setSelectedTask({ ...card, status: col.title });
+                              setIsTaskOpen(true);
+                            }}
+                            className="bg-white dark:bg-slate-950 p-3 rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm relative group cursor-pointer hover:border-blue-400 dark:hover:border-blue-800 transition-colors"
+                          >
+                            <Button variant="ghost" size="icon" className="h-6 w-6 absolute top-2 right-2 opacity-0 group-hover:opacity-100"><MoreVertical className="h-3 w-3" /></Button>
+                            <h4 className="text-xs font-bold leading-snug pr-6 mb-2">{card.title}</h4>
+                            <div className="flex items-center gap-1.5 text-[10px] text-slate-500 mb-1">
+                              <UserCircle className="h-3 w-3" /> {card.user}
+                            </div>
+                            <div className="flex items-center gap-1.5 text-[10px] text-slate-500 mb-3">
+                              <CalendarIcon className="h-3 w-3" /> {card.date}
+                            </div>
+                            <div className="flex justify-between items-end">
+                              {card.tag ? <Badge className={cn("text-[9px] py-0 border-0", card.tagCol)}>{card.tag}</Badge> : <div />}
+                              <div className="flex -space-x-1">
+                                <img src={`https://i.pravatar.cc/150?u=${i}${j}1`} className="w-5 h-5 rounded-full border border-white dark:border-slate-950 object-cover" alt="Người tham gia" />
+                                <img src={`https://i.pravatar.cc/150?u=${i}${j}2`} className="w-5 h-5 rounded-full border border-white dark:border-slate-950 object-cover" alt="Người tham gia" />
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                        <Button 
+                          variant="ghost" 
+                          onClick={() => setIsCreateOpen(true)}
+                          className="w-full text-xs text-blue-600 gap-1 mt-2 bg-transparent hover:bg-slate-200/50 dark:hover:bg-slate-800"
+                        >
+                          <Plus className="h-3 w-3" /> Thêm công việc
+                        </Button>
                       </div>
                     </div>
                   ))}
-                  <Button 
-                    variant="ghost" 
-                    onClick={() => setIsCreateOpen(true)}
-                    className="w-full text-xs text-blue-600 gap-1 mt-2 bg-transparent hover:bg-slate-200/50 dark:hover:bg-slate-800"
-                  >
-                    <Plus className="h-3 w-3" /> Thêm công việc
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+                </CardContent>
+              </DndContext>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="list" activeValue={activeView} className="mt-0">
+            <Card className="overflow-hidden border-slate-200 shadow-sm dark:border-slate-800">
+              <CardHeader className="border-b border-slate-100 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-900/40">
+                <CardTitle className="text-base font-bold">Danh sách công việc</CardTitle>
+              </CardHeader>
+              <CardContent className="p-0 overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Công việc</TableHead>
+                      <TableHead>Người phụ trách</TableHead>
+                      <TableHead>Hạn chót</TableHead>
+                      <TableHead>Ưu tiên</TableHead>
+                      <TableHead>Trạng thái</TableHead>
+                      <TableHead className="text-right">Thao tác</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {tasksList.map((task) => {
+                      const statusLabel = STATUS_COLUMNS.find((col) => col.statuses.includes(String(task.status || '')))?.title || 'Khác';
+                      return (
+                        <TableRow key={task.id} className="cursor-pointer" onClick={() => { setSelectedTask({ ...task, user: task.assignedName || task.assignedId || 'Chưa phân công', date: formatTaskDate(task.deadline), status: statusLabel }); setIsTaskOpen(true); }}>
+                          <TableCell>
+                            <div className="font-bold text-slate-900 dark:text-white">{task.title || 'Công việc chưa đặt tên'}</div>
+                            <div className="line-clamp-1 text-xs text-slate-500">{task.description || task.tag || 'Không có mô tả'}</div>
+                          </TableCell>
+                          <TableCell className="text-sm">{task.assignedName || 'Chưa phân công'}</TableCell>
+                          <TableCell className={cn("text-sm font-medium", isOverdueTask(task) && "text-orange-600")}>{formatTaskDate(task.deadline)}</TableCell>
+                          <TableCell>
+                            <Badge className={cn("border-0", task.priority === 'high' ? 'bg-red-100 text-red-700' : task.priority === 'low' ? 'bg-slate-100 text-slate-700' : 'bg-amber-100 text-amber-700')}>
+                              {task.priority === 'high' ? 'Cao' : task.priority === 'low' ? 'Thấp' : 'Trung bình'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge className={cn("border-0", statusLabel === 'Hoàn thành' ? 'bg-emerald-100 text-emerald-700' : statusLabel === 'Chờ duyệt' ? 'bg-purple-100 text-purple-700' : statusLabel === 'Đang xử lý' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-700')}>
+                              {statusLabel}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button size="sm" variant="outline" className="h-8 text-xs" onClick={(e) => { e.stopPropagation(); setSelectedTask({ ...task, user: task.assignedName || task.assignedId || 'Chưa phân công', date: formatTaskDate(task.deadline), status: statusLabel }); setIsTaskOpen(true); }}>
+                              Xem
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
 
       {/* Row 2: Grid containing Process Detail and Pending Approvals side-by-side */}
