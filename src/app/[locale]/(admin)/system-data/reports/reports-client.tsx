@@ -38,8 +38,53 @@ export default function ReportsClient({ isAdmin, initialStats }: { isAdmin: bool
   const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
   const handleExport = () => {
-    // Mock export
-    alert('Tính năng xuất báo cáo đang được xây dựng.');
+    const headers = ['Tham số thống kê', 'Giá trị'];
+    const csvRows = [headers.join(',')];
+
+    // Main stats
+    csvRows.push([`"Tổng công việc"`, `"${initialStats.totalTasks || 0}"`].join(','));
+    csvRows.push([`"Tổng học sinh chính thức"`, `"${initialStats.totalStudents || 0}"`].join(','));
+    csvRows.push([`"Tổng cơ hội tuyển sinh"`, `"${initialStats.totalLeads || 0}"`].join(','));
+
+    // Tasks breakdown
+    csvRows.push('');
+    csvRows.push([`"Trạng thái công việc"`, `"Số lượng"`].join(','));
+    (initialStats?.tasksByStatus || []).forEach((t: any) => {
+      const name = t.status === 'todo' ? 'Cần làm' : t.status === 'in_progress' ? 'Đang làm' : t.status === 'done' ? 'Hoàn thành' : t.status;
+      csvRows.push([`"${name}"`, `"${t.count}"`].join(','));
+    });
+
+    // Students breakdown
+    csvRows.push('');
+    csvRows.push([`"Lớp học"`, `"Số học sinh"`].join(','));
+    (initialStats?.studentsByClass || []).forEach((s: any) => {
+      csvRows.push([`"${s.className || 'Chưa xếp lớp'}"`, `"${s.count}"`].join(','));
+    });
+
+    // Audit logs if admin
+    if (isAdmin && initialStats.recentLogs && initialStats.recentLogs.length > 0) {
+      csvRows.push('');
+      csvRows.push([`"Thời gian nhật ký"`, `"Hành động"`, `"Loại thực thể"`, `"ID thực thể"`, `"Tác nhân"`].join(','));
+      initialStats.recentLogs.forEach((log: any) => {
+        csvRows.push([
+          `"${new Date(log.createdAt).toLocaleString('vi-VN')}"`,
+          `"${log.action}"`,
+          `"${log.entityType}"`,
+          `"${log.entityId}"`,
+          `"${log.actorId || 'Hệ thống'}"`
+        ].join(','));
+      });
+    }
+
+    const csvContent = '\uFEFF' + csvRows.join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `Bao_cao_he_thong_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (
