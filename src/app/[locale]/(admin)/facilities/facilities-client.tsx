@@ -189,6 +189,9 @@ export default function FacilitiesClient({ initialLocations = [], initialAssets 
   const [purchaseRequestsList, setPurchaseRequestsList] = useState<any[]>(purchaseRequests);
   const supplies = initialSupplies.length ? initialSupplies : lowStockSupplies;
 
+  const [selectedRow, setSelectedRow] = useState<any | null>(null);
+  const [selectedRowTitle, setSelectedRowTitle] = useState<string>('');
+
   const stats = useMemo(() => {
     const activeAssets = assets.filter(a => ['ACTIVE', 'READY'].includes(a.status)).length;
     const needMaintenance = assets.filter(a => a.status === 'MAINTENANCE' || a.maintenancePriority === 'HIGH').length;
@@ -261,8 +264,12 @@ export default function FacilitiesClient({ initialLocations = [], initialAssets 
         <div className="grid gap-4 xl:grid-cols-3">
           <Card className="xl:col-span-1 shadow-sm"><CardHeader><CardTitle>Cảnh báo cần xử lý</CardTitle><CardDescription>Ưu tiên vận hành trong tuần</CardDescription></CardHeader><CardContent className="space-y-3">
             {[
-              ['3 yêu cầu sửa chữa quá hạn', 'Khẩn cấp', 'OVERDUE'], ['2 thiết bị sắp hết bảo hành trong 30 ngày', 'Trung bình', 'DUE_SOON'], ['5 vật tư dưới mức tồn tối thiểu', 'Cao', 'NEED_MORE'], ['1 lịch bảo trì quá hạn', 'Cao', 'OVERDUE'], ['2 thiết bị/phòng đang mượn quá hạn trả', 'Trung bình', 'DUE_SOON'],
-            ].map(([text, level, tone]) => {
+              ['3 yêu cầu sửa chữa quá hạn', 'Khẩn cấp', 'OVERDUE', 'repairs'],
+              ['2 thiết bị sắp hết bảo hành trong 30 ngày', 'Trung bình', 'DUE_SOON', 'assets'],
+              ['5 vật tư dưới mức tồn tối thiểu', 'Cao', 'NEED_MORE', 'supplies'],
+              ['1 lịch bảo trì quá hạn', 'Cao', 'OVERDUE', 'maintenance'],
+              ['2 thiết bị/phòng đang mượn quá hạn trả', 'Trung bình', 'DUE_SOON', 'handover'],
+            ].map(([text, level, tone, targetTab]) => {
               const style = alertToneStyles[tone] || alertToneStyles.DUE_SOON;
               return (
                 <div key={text} className={`flex items-center justify-between gap-3 rounded-xl border ${style.border} ${style.bg} p-3`}>
@@ -273,13 +280,13 @@ export default function FacilitiesClient({ initialLocations = [], initialAssets 
                       <p className="text-xs text-muted-foreground">Mức độ: {level}</p>
                     </div>
                   </div>
-                  <Button variant="ghost" size="sm" className="hover:bg-background/80">Chi tiết</Button>
+                  <Button variant="ghost" size="sm" className="hover:bg-background/80" onClick={() => setActiveTab(targetTab)}>Chi tiết</Button>
                 </div>
               );
             })}
           </CardContent></Card>
 
-          <Card className="xl:col-span-2 shadow-sm"><CardHeader className="flex flex-row items-center justify-between"><div><CardTitle>Yêu cầu sửa chữa gần đây</CardTitle><CardDescription>SLA, phân công, hạn xử lý</CardDescription></div><Button variant="outline" size="sm" onClick={() => setActiveTab('repairs')}>Xem tất cả</Button></CardHeader><CardContent><div className="overflow-x-auto rounded-xl border"><table className="w-full min-w-[760px] text-sm"><thead className="bg-muted/50 text-muted-foreground"><tr><th className="p-3 text-left">Sự cố</th><th className="p-3 text-left">Vị trí</th><th className="p-3 text-left">Ưu tiên</th><th className="p-3 text-left">Trạng thái</th><th className="p-3 text-left">Người xử lý</th><th className="p-3 text-left">Hạn xử lý</th><th className="p-3 text-left">SLA</th></tr></thead><tbody>{repairRequests.slice(0, 6).map(r => { const sla = getSlaStatus(r); return <tr key={r.id} className="border-t hover:bg-muted/30"><td className="p-3 font-semibold text-foreground">{r.title}</td><td className="p-3">{r.locationName || r.assetName}</td><td className="p-3"><FacilityBadge value={r.priority} label={REPAIR_PRIORITY[r.priority as keyof typeof REPAIR_PRIORITY]} /></td><td className="p-3"><FacilityBadge value={r.status} label={REPAIR_STATUS[r.status as keyof typeof REPAIR_STATUS]} /></td><td className="p-3">{r.assignedToName || 'Chưa gán'}</td><td className="p-3">{r.dueDate ? fmtDate(r.dueDate) : 'Hôm nay'}</td><td className="p-3"><FacilityBadge value={slaTone(sla)} label={sla} /></td></tr>; })}</tbody></table></div></CardContent></Card>
+          <Card className="xl:col-span-2 shadow-sm"><CardHeader className="flex flex-row items-center justify-between"><div><CardTitle>Yêu cầu sửa chữa gần đây</CardTitle><CardDescription>SLA, phân công, hạn xử lý (Click hàng để xem chi tiết)</CardDescription></div><Button variant="outline" size="sm" onClick={() => setActiveTab('repairs')}>Xem tất cả</Button></CardHeader><CardContent><div className="overflow-x-auto rounded-xl border"><table className="w-full min-w-[760px] text-sm"><thead className="bg-muted/50 text-muted-foreground"><tr><th className="p-3 text-left">Sự cố</th><th className="p-3 text-left">Vị trí</th><th className="p-3 text-left">Ưu tiên</th><th className="p-3 text-left">Trạng thái</th><th className="p-3 text-left">Người xử lý</th><th className="p-3 text-left">Hạn xử lý</th><th className="p-3 text-left">SLA</th></tr></thead><tbody>{repairRequests.slice(0, 6).map(r => { const sla = getSlaStatus(r); return <tr key={r.id} className="border-t hover:bg-muted/30 cursor-pointer" onClick={() => { setSelectedRow(r); setSelectedRowTitle('Yêu cầu sửa chữa'); }}><td className="p-3 font-semibold text-foreground">{r.title}</td><td className="p-3">{r.locationName || r.assetName}</td><td className="p-3"><FacilityBadge value={r.priority} label={REPAIR_PRIORITY[r.priority as keyof typeof REPAIR_PRIORITY]} /></td><td className="p-3"><FacilityBadge value={r.status} label={REPAIR_STATUS[r.status as keyof typeof REPAIR_STATUS]} /></td><td className="p-3">{r.assignedToName || 'Chưa gán'}</td><td className="p-3">{r.dueDate ? fmtDate(r.dueDate) : 'Hôm nay'}</td><td className="p-3"><FacilityBadge value={slaTone(sla)} label={sla} /></td></tr>; })}</tbody></table></div></CardContent></Card>
         </div>
 
         <div className="grid gap-4 xl:grid-cols-2">
@@ -315,7 +322,7 @@ export default function FacilitiesClient({ initialLocations = [], initialAssets 
                     </div>
                   </div>
                   <div className="mt-3 flex gap-2">
-                    <Button size="sm" variant="outline">Xem chi tiết</Button>
+                    <Button size="sm" variant="outline" onClick={() => { setSelectedRow(p); setSelectedRowTitle('Đề xuất mua sắm'); }}>Xem chi tiết</Button>
                     <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => {
                       setPurchaseRequestsList(prev => prev.map(item => item.id === p.id ? { ...item, status: 'APPROVED' } : item));
                       alert('Đã duyệt đề xuất mua sắm thành công!');
@@ -354,20 +361,89 @@ export default function FacilitiesClient({ initialLocations = [], initialAssets 
         </div>
       </TabsContent>
 
-      <TabsContent value="locations" activeValue={activeTab} className="m-0"><DataTable title="Phòng & Khu vực" desc="Quản lý phòng học, phòng chức năng và khu vực chung" rows={locations} columns={['code','name','type','building','floor','status']} labels={['Mã','Tên phòng','Loại','Tòa','Tầng','Trạng thái']} statusMap={FACILITY_LOCATION_STATUS} onAdd={(item: any) => setLocations([item, ...locations])} /></TabsContent>
-      <TabsContent value="assets" activeValue={activeTab} className="m-0"><DataTable title="Thiết bị & Tài sản" desc="Danh mục tài sản, trạng thái và vị trí sử dụng" rows={assets} columns={['code','name','category','locationName','responsibleUserName','status']} labels={['Mã TB','Tên thiết bị','Danh mục','Vị trí','Phụ trách','Trạng thái']} statusMap={FACILITY_ASSET_STATUS} onAdd={(item: any) => setAssets([item, ...assets])} /></TabsContent>
-      <TabsContent value="repairs" activeValue={activeTab} className="m-0"><DataTable title="Yêu cầu sửa chữa" desc="Theo dõi SLA và xử lý báo hỏng" rows={repairRequests.map(r => ({...r, sla: getSlaStatus(r)}))} columns={['title','locationName','priority','status','assignedToName','dueDate','sla']} labels={['Sự cố','Vị trí','Ưu tiên','Trạng thái','Người xử lý','Hạn xử lý','SLA']} statusMap={{...REPAIR_STATUS, ...REPAIR_PRIORITY}} onAdd={(item: any) => setRepairRequests([item, ...repairRequests])} /></TabsContent>
-      <TabsContent value="maintenance" activeValue={activeTab} className="m-0"><DataTable title="Bảo trì" desc="Lịch bảo trì định kỳ và kiểm tra thiết bị" rows={maintenanceLogs} columns={['assetName','note','scheduledDate','responsibleUserName','status']} labels={['Thiết bị','Loại bảo trì','Ngày dự kiến','Phụ trách','Trạng thái']} statusMap={MAINTENANCE_STATUS} onAdd={(item: any) => setMaintenanceLogs([item, ...maintenanceLogs])} /></TabsContent>
-      <TabsContent value="purchases" activeValue={activeTab} className="m-0"><DataTable title="Đề xuất mua sắm" desc="Quản lý đề xuất mua mới, thay thế, bổ sung vật tư" rows={purchaseRequestsList} columns={['title','requestedByName','department','itemCount','priority','status','neededByDate']} labels={['Đề xuất','Người đề xuất','Khu vực','SL mặt hàng','Ưu tiên','Trạng thái','Hạn cần có']} statusMap={REPAIR_PRIORITY} onAdd={(item: any) => setPurchaseRequestsList([item, ...purchaseRequestsList])} /></TabsContent>
+      <TabsContent value="locations" activeValue={activeTab} className="m-0"><DataTable title="Phòng & Khu vực" desc="Quản lý phòng học, phòng chức năng và khu vực chung" rows={locations} columns={['code','name','type','building','floor','status']} labels={['Mã','Tên phòng','Loại','Tòa','Tầng','Trạng thái']} statusMap={FACILITY_LOCATION_STATUS} onAdd={(item: any) => setLocations([item, ...locations])} onViewDetails={(row: any, t: string) => { setSelectedRow(row); setSelectedRowTitle(t); }} /></TabsContent>
+      <TabsContent value="assets" activeValue={activeTab} className="m-0"><DataTable title="Thiết bị & Tài sản" desc="Danh mục tài sản, trạng thái và vị trí sử dụng" rows={assets} columns={['code','name','category','locationName','responsibleUserName','status']} labels={['Mã TB','Tên thiết bị','Danh mục','Vị trí','Phụ trách','Trạng thái']} statusMap={FACILITY_ASSET_STATUS} onAdd={(item: any) => setAssets([item, ...assets])} onViewDetails={(row: any, t: string) => { setSelectedRow(row); setSelectedRowTitle(t); }} /></TabsContent>
+      <TabsContent value="repairs" activeValue={activeTab} className="m-0"><DataTable title="Yêu cầu sửa chữa" desc="Theo dõi SLA và xử lý báo hỏng" rows={repairRequests.map(r => ({...r, sla: getSlaStatus(r)}))} columns={['title','locationName','priority','status','assignedToName','dueDate','sla']} labels={['Sự cố','Vị trí','Ưu tiên','Trạng thái','Người xử lý','Hạn xử lý','SLA']} statusMap={{...REPAIR_STATUS, ...REPAIR_PRIORITY}} onAdd={(item: any) => setRepairRequests([item, ...repairRequests])} onViewDetails={(row: any, t: string) => { setSelectedRow(row); setSelectedRowTitle(t); }} /></TabsContent>
+      <TabsContent value="maintenance" activeValue={activeTab} className="m-0"><DataTable title="Bảo trì" desc="Lịch bảo trì định kỳ và kiểm tra thiết bị" rows={maintenanceLogs} columns={['assetName','note','scheduledDate','responsibleUserName','status']} labels={['Thiết bị','Loại bảo trì','Ngày dự kiến','Phụ trách','Trạng thái']} statusMap={MAINTENANCE_STATUS} onAdd={(item: any) => setMaintenanceLogs([item, ...maintenanceLogs])} onViewDetails={(row: any, t: string) => { setSelectedRow(row); setSelectedRowTitle(t); }} /></TabsContent>
+      <TabsContent value="purchases" activeValue={activeTab} className="m-0"><DataTable title="Đề xuất mua sắm" desc="Quản lý đề xuất mua mới, thay thế, bổ sung vật tư" rows={purchaseRequestsList} columns={['title','requestedByName','department','itemCount','priority','status','neededByDate']} labels={['Đề xuất','Người đề xuất','Khu vực','SL mặt hàng','Ưu tiên','Trạng thái','Hạn cần có']} statusMap={REPAIR_PRIORITY} onAdd={(item: any) => setPurchaseRequestsList([item, ...purchaseRequestsList])} onViewDetails={(row: any, t: string) => { setSelectedRow(row); setSelectedRowTitle(t); }} /></TabsContent>
       <TabsContent value="supplies" activeValue={activeTab} className="m-0"><SuppliesTab /></TabsContent>
       <TabsContent value="handover" activeValue={activeTab} className="m-0"><BookingsTab /></TabsContent>
       <TabsContent value="inventory" activeValue={activeTab} className="m-0"><Placeholder title="Kiểm kê" desc="Tạo đợt kiểm kê, đối chiếu vị trí/tình trạng, ghi nhận thiếu-hỏng-thừa." /></TabsContent>
       <TabsContent value="reports" activeValue={activeTab} className="m-0"><Placeholder title="Báo cáo" desc="Tổng hợp tài sản, sửa chữa, bảo trì, vật tư và đề xuất mua sắm." /></TabsContent>
     </Tabs>
+
+    {/* Real details pop-up modal dialog overlay */}
+    {selectedRow && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
+        <Card className="w-full max-w-lg shadow-2xl border border-border bg-card animate-in zoom-in-95 duration-200">
+          <CardHeader className="border-b pb-3 flex flex-row items-center justify-between space-y-0">
+            <div>
+              <CardTitle className="text-lg font-bold">Chi tiết {selectedRowTitle}</CardTitle>
+              <CardDescription>Mã bản ghi: {selectedRow.id || '—'}</CardDescription>
+            </div>
+            <Button variant="ghost" size="sm" onClick={() => setSelectedRow(null)} className="h-8 w-8 rounded-full p-0">✕</Button>
+          </CardHeader>
+          <CardContent className="pt-4 space-y-3 text-sm max-h-[70vh] overflow-y-auto">
+            {Object.entries(selectedRow)
+              .filter(([key]) => !['id', 'createdAt', 'updatedAt', 'imageUrl', 'qrCode', 'checklist'].includes(key))
+              .map(([key, value]) => {
+                const labelsMap: Record<string, string> = {
+                  code: 'Mã số',
+                  name: 'Tên gọi',
+                  type: 'Phân loại',
+                  building: 'Tòa nhà',
+                  floor: 'Tầng',
+                  capacity: 'Sức chứa',
+                  managerName: 'Người quản lý',
+                  status: 'Trạng thái',
+                  category: 'Danh mục',
+                  brand: 'Thương hiệu',
+                  model: 'Model',
+                  serialNumber: 'Số serial',
+                  purchaseDate: 'Ngày mua',
+                  startUsingDate: 'Ngày sử dụng',
+                  locationName: 'Vị trí',
+                  responsibleUserName: 'Người phụ trách',
+                  maintenancePriority: 'Độ ưu tiên bảo trì',
+                  lastMaintenanceDate: 'Bảo trì gần nhất',
+                  nextMaintenanceDate: 'Bảo trì tiếp theo',
+                  title: 'Tiêu đề/Sự cố',
+                  description: 'Mô tả chi tiết',
+                  priority: 'Mức độ ưu tiên',
+                  requestedByName: 'Người đề xuất/báo',
+                  assignedToName: 'Người xử lý',
+                  dueDate: 'Hạn xử lý',
+                  completedAt: 'Ngày hoàn thành',
+                  resolutionNote: 'Ghi chú khắc phục',
+                  department: 'Phòng ban',
+                  itemCount: 'Số lượng mặt hàng',
+                  neededByDate: 'Hạn cần có',
+                  note: 'Ghi chú thêm',
+                  sla: 'Chỉ số SLA'
+                };
+                const displayLabel = labelsMap[key] || key;
+                let displayVal = String(value || '—');
+                if (key.toLowerCase().includes('date') && value) {
+                  displayVal = fmtDate(String(value));
+                }
+                return (
+                  <div key={key} className="grid grid-cols-3 gap-2 border-b border-border/50 pb-2">
+                    <span className="font-semibold text-muted-foreground">{displayLabel}</span>
+                    <span className="col-span-2 text-foreground font-semibold break-words">{displayVal}</span>
+                  </div>
+                );
+              })}
+            <div className="pt-3 flex justify-end">
+              <Button onClick={() => setSelectedRow(null)}>Đóng</Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )}
   </div>;
 }
 
-function DataTable({ title, desc, rows, columns, labels, statusMap, onAdd }: any) {
+function DataTable({ title, desc, rows, columns, labels, statusMap, onAdd, onViewDetails }: any) {
   const [isAdding, setIsAdding] = useState(false);
   const [formData, setFormData] = useState<Record<string, string>>({});
 
@@ -461,7 +537,7 @@ function DataTable({ title, desc, rows, columns, labels, statusMap, onAdd }: any
                     );
                   })}
                   <td className="p-3 text-right">
-                    <Button variant="ghost" size="sm" onClick={() => alert(`Đang tải chi tiết cho: ${row.name || row.title || row.assetName || row.code}`)}>
+                    <Button variant="ghost" size="sm" onClick={() => onViewDetails && onViewDetails(row, title)}>
                       <ArrowRight className="h-4 w-4" />
                     </Button>
                   </td>
