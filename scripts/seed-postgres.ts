@@ -790,6 +790,71 @@ async function seed() {
   ];
   await db.insert(schema.announcements).values(mockAnnouncements).onConflictDoNothing();
 
+  // Seed Facilities Module
+  console.log("Seeding facilities data...");
+  const mockLocations = [
+    { id: 'LOC-10A1', code: 'LOC-A101', name: 'Phòng học 10A1', type: 'CLASSROOM', building: 'Nhà A', floor: 'Tầng 1', capacity: 40, managerId: 'user_tuan', managerName: 'Nguyễn Văn Tuấn', status: 'ACTIVE', note: 'Phòng học tiêu chuẩn hệ Song ngữ', createdAt: now, updatedAt: now },
+    { id: 'LOC-LAB202', code: 'LOC-B202', name: 'Phòng Thí nghiệm Hóa học', type: 'LAB', building: 'Nhà B', floor: 'Tầng 2', capacity: 30, managerId: 'user_tuan', managerName: 'Nguyễn Văn Tuấn', status: 'ACTIVE', note: 'Trang bị tủ hút độc và vòi tắm khẩn cấp', createdAt: now, updatedAt: now },
+    { id: 'LOC-LIB', code: 'LOC-C101', name: 'Thư viện Trung tâm', type: 'LIBRARY', building: 'Nhà C', floor: 'Tầng 1', capacity: 100, managerId: 'user_tuan', managerName: 'Nguyễn Văn Tuấn', status: 'ACTIVE', note: 'Không gian tự học và đọc sách', createdAt: now, updatedAt: now },
+    { id: 'LOC-WAREHOUSE', code: 'LOC-W01', name: 'Kho Thiết bị Tổng hợp', type: 'WAREHOUSE', building: 'Nhà A', floor: 'Tầng 1', capacity: 20, managerId: 'user_tuan', managerName: 'Nguyễn Văn Tuấn', status: 'ACTIVE', note: 'Kho chứa vật tư tiêu hao và thiết bị dự phòng', createdAt: now, updatedAt: now }
+  ];
+  await db.insert(schema.facilitiesLocations).values(mockLocations).onConflictDoNothing();
+
+  const mockAssets = [
+    { id: 'AST-PROJ01', code: 'AST-IT-001', name: 'Máy chiếu thông minh Epson 4K', category: 'IT', type: 'MÁY CHIẾU', brand: 'Epson', model: 'EB-L520U', serialNumber: 'EPSON8839210', purchaseDate: new Date('2025-01-15'), startUsingDate: new Date('2025-02-01'), locationId: 'LOC-10A1', locationName: 'Phòng học 10A1', responsibleUserId: 'user_tuan', responsibleUserName: 'Nguyễn Văn Tuấn', status: 'ACTIVE', maintenancePriority: 'HIGH', lastMaintenanceDate: new Date('2025-05-10'), nextMaintenanceDate: new Date('2025-11-10'), note: 'Đang hoạt động tốt', sourceType: 'MANUAL', createdAt: now, updatedAt: now },
+    { id: 'AST-COMP01', code: 'AST-IT-002', name: 'Hệ thống Máy tính Phòng Lab HP', category: 'IT', type: 'MÁY TÍNH BÀN', brand: 'HP', model: 'ProDesk 400 G9', serialNumber: 'HPCOMP883921', purchaseDate: new Date('2025-02-10'), startUsingDate: new Date('2025-02-15'), locationId: 'LOC-LAB202', locationName: 'Phòng Thí nghiệm Hóa học', responsibleUserId: 'user_tuan', responsibleUserName: 'Nguyễn Văn Tuấn', status: 'ACTIVE', maintenancePriority: 'MEDIUM', lastMaintenanceDate: new Date('2025-05-15'), nextMaintenanceDate: new Date('2025-11-15'), note: 'Dàn 30 máy trạm', sourceType: 'MANUAL', createdAt: now, updatedAt: now },
+    { id: 'AST-AC01', code: 'AST-EL-001', name: 'Điều hòa âm trần Daikin 24000BTU', category: 'ELECTRONIC', type: 'ĐIỀU HÒA', brand: 'Daikin', model: 'FCNQ24MV1', serialNumber: 'DAIKIN99827', purchaseDate: new Date('2024-06-20'), startUsingDate: new Date('2024-07-01'), locationId: 'LOC-LIB', locationName: 'Thư viện Trung tâm', responsibleUserId: 'user_tuan', responsibleUserName: 'Nguyễn Văn Tuấn', status: 'ACTIVE', maintenancePriority: 'MEDIUM', lastMaintenanceDate: new Date('2025-04-10'), nextMaintenanceDate: new Date('2025-10-10',), note: 'Vừa bảo trì định kỳ nạp gas', sourceType: 'MANUAL', createdAt: now, updatedAt: now }
+  ];
+  await db.insert(schema.facilitiesAssets).values(mockAssets).onConflictDoNothing();
+
+  const mockRepairRequests = [
+    { id: 'REP-001', title: 'Máy chiếu phòng 10A1 chập chờn tín hiệu', assetId: 'AST-PROJ01', assetName: 'Máy chiếu thông minh Epson 4K', locationId: 'LOC-10A1', locationName: 'Phòng học 10A1', description: 'Máy chiếu khởi động lên rồi tự tắt sau 5 phút, đèn cảnh báo nhấp nháy đỏ.', priority: 'HIGH', status: 'NEW', requestedById: 'user_tuan', requestedByName: 'Nguyễn Văn Tuấn', assignedToId: 'user_tuan', assignedToName: 'Nguyễn Văn Tuấn', receivedAt: now, firstResponseDueAt: new Date(now.getTime() + 2 * 60 * 60 * 1000), resolutionDueAt: new Date(now.getTime() + 8 * 60 * 60 * 1000), slaStatus: 'IN_TIME', createdAt: now, updatedAt: now },
+    { id: 'REP-002', title: 'Điều hòa Thư viện phát tiếng ồn lớn', assetId: 'AST-AC01', assetName: 'Điều hòa âm trần Daikin 24000BTU', locationId: 'LOC-LIB', locationName: 'Thư viện Trung tâm', description: 'Cục lạnh điều hòa góc phải phát tiếng rè rè to khi chạy tốc độ cao.', priority: 'MEDIUM', status: 'PROCESSING', requestedById: 'user_tuan', requestedByName: 'Nguyễn Văn Tuấn', assignedToId: 'user_tuan', assignedToName: 'Nguyễn Văn Tuấn', receivedAt: now, firstResponseDueAt: new Date(now.getTime() + 4 * 60 * 60 * 1000), resolutionDueAt: new Date(now.getTime() + 24 * 60 * 60 * 1000), slaStatus: 'IN_TIME', createdAt: now, updatedAt: now }
+  ];
+  await db.insert(schema.facilitiesRepairRequests).values(mockRepairRequests).onConflictDoNothing();
+
+  const mockSupplies = [
+    { id: 'SUP-A4', code: 'SUP-OFF-001', name: 'Giấy in A4 Double A 80gsm', category: 'Văn phòng phẩm', unit: 'Ram', currentQuantity: 50, minimumQuantity: 10, storageLocation: 'Kho Thiết bị Tổng hợp', managerId: 'user_tuan', managerName: 'Nguyễn Văn Tuấn', status: 'IN_STOCK', lastImportedAt: now, note: 'Sử dụng cho toàn trường', createdAt: now, updatedAt: now },
+    { id: 'SUP-PEN', code: 'SUP-OFF-002', name: 'Bút bi Thiên Long xanh', category: 'Thiết bị giảng dạy', unit: 'Hộp', currentQuantity: 120, minimumQuantity: 20, storageLocation: 'Kho Thiết bị Tổng hợp', managerId: 'user_tuan', managerName: 'Nguyễn Văn Tuấn', status: 'IN_STOCK', lastImportedAt: now, note: 'Cấp phát cho giáo viên', createdAt: now, updatedAt: now },
+    { id: 'SUP-MASK', code: 'SUP-MED-001', name: 'Khẩu trang y tế 4 lớp', category: 'Y tế học đường', unit: 'Hộp', currentQuantity: 5, minimumQuantity: 15, storageLocation: 'Kho Thiết bị Tổng hợp', managerId: 'user_tuan', managerName: 'Nguyễn Văn Tuấn', status: 'LOW_STOCK', lastImportedAt: now, note: 'Khẩu trang dự phòng phòng y tế', createdAt: now, updatedAt: now }
+  ];
+  await db.insert(schema.facilitiesSupplies).values(mockSupplies).onConflictDoNothing();
+
+  const mockSuppliers = [
+    { id: 'SPL-001', code: 'SPL-VPP-01', name: 'Công ty Cổ phần Thiết bị Giáo dục Hồng Hà', contactPerson: 'Nguyễn Văn Hà', phone: '0988776655', email: 'sales@hongha.vn', address: 'Số 25 Lý Thường Kiệt, Hoàn Kiếm, Hà Nội', serviceTypes: ['SUPPLY'], rating: 5, status: 'ACTIVE', note: 'Nhà cung cấp văn phòng phẩm chính', createdAt: now, updatedAt: now },
+    { id: 'SPL-002', code: 'SPL-IT-02', name: 'Hệ thống Máy tính Phong Vũ', contactPerson: 'Trần Minh Vũ', phone: '0911223344', email: 'sales@phongvu.vn', address: 'Số 1 Trần Đại Nghĩa, Hai Bà Trưng, Hà Nội', serviceTypes: ['SUPPLY', 'REPAIR'], rating: 4, status: 'ACTIVE', note: 'Cung cấp thiết bị IT và bảo trì hệ thống máy tính', createdAt: now, updatedAt: now }
+  ];
+  await db.insert(schema.facilitiesSuppliers).values(mockSuppliers).onConflictDoNothing();
+
+  const mockWarranties = [
+    { id: 'WAR-001', assetId: 'AST-PROJ01', supplierId: 'SPL-002', warrantyStartDate: new Date('2025-01-15'), warrantyEndDate: new Date('2027-01-15'), warrantyTerms: 'Bảo hành chính hãng 24 tháng lỗi nhà sản xuất, 1000 giờ bóng đèn.', warrantyCode: 'PV-WAR-99381', documentUrl: '/docs/warranty/projector_epson.pdf', status: 'ACTIVE', createdAt: now, updatedAt: now }
+  ];
+  await db.insert(schema.facilitiesWarranties).values(mockWarranties).onConflictDoNothing();
+
+  const mockSafetyChecks = [
+    { id: 'SF-001', code: 'SFC-PCCC-01', title: 'Kiểm tra định kỳ Bình chữa cháy nhà A', checkType: 'FIRE_SAFETY', locationId: 'LOC-10A1', assignedToId: 'user_tuan', assignedToName: 'Nguyễn Văn Tuấn', cycle: 'MONTHLY', lastCheckedAt: now, nextCheckAt: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000), status: 'PASSED', result: 'Đạt yêu cầu', issueDescription: null, note: 'Áp suất bình ổn định, hạn sử dụng còn dài', createdAt: now, updatedAt: now },
+    { id: 'SF-002', code: 'SFC-ELE-02', title: 'Kiểm tra hệ thống điện phòng LAB 202', checkType: 'ELECTRICAL', locationId: 'LOC-LAB202', assignedToId: 'user_tuan', assignedToName: 'Nguyễn Văn Tuấn', cycle: 'QUARTERLY', lastCheckedAt: now, nextCheckAt: new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000), status: 'PENDING', result: null, issueDescription: null, note: 'Kế hoạch kiểm tra định kỳ hệ thống điện ổ cắm và tủ hút độc', createdAt: now, updatedAt: now }
+  ];
+  await db.insert(schema.facilitiesSafetyChecks).values(mockSafetyChecks).onConflictDoNothing();
+
+  const mockBookings = [
+    { id: 'BKG-001', code: 'BKG-2026-0001', targetType: 'LOCATION', assetId: null, locationId: 'LOC-LAB202', requesterId: 'user_tuan', requesterName: 'Nguyễn Văn Tuấn', department: 'Tổ Toán - Tin', purpose: 'Dạy thực hành Hóa học lớp 11A1 chuyên đề phản ứng Este', startTime: new Date(now.getTime() + 24 * 60 * 60 * 1000), endTime: new Date(now.getTime() + 26 * 60 * 60 * 1000), approvedById: 'user_tuan', approvedByName: 'Nguyễn Văn Tuấn', status: 'APPROVED', conditionBefore: 'Đầy đủ dụng cụ thủy tinh sạch, thiết bị điện an toàn', conditionAfter: null, note: 'Cần hỗ trợ kỹ thuật viên phòng thí nghiệm chuẩn bị hóa chất', createdAt: now, updatedAt: now }
+  ];
+  await db.insert(schema.facilitiesBookingRequests).values(mockBookings).onConflictDoNothing();
+
+  const mockRenovations = [
+    { id: 'REN-001', code: 'REN-2026-001', title: 'Sơn lại toàn bộ hành lang và phòng học nhà A', scope: 'Nhà A (Toàn bộ hành lang từ tầng 1 đến tầng 4, 12 phòng học)', reason: 'Lớp sơn cũ bong tróc và bẩn do mực/bụi phấn sau 3 năm sử dụng.', locationId: 'LOC-10A1', managerId: 'user_tuan', managerName: 'Nguyễn Văn Tuấn', plannedStartDate: now, plannedEndDate: new Date(now.getTime() + 15 * 24 * 60 * 60 * 1000), actualStartDate: now, actualEndDate: null, status: 'IN_PROGRESS', tasks: [{ taskName: 'Cạo bỏ lớp sơn cũ bong tróc', completed: true }, { taskName: 'Sơn lót chống kiềm', completed: false }, { taskName: 'Sơn phủ màu 2 lớp', completed: false }], beforeImageUrls: ['/images/renovation/before_1.jpg'], afterImageUrls: null, acceptanceNote: null, relatedPurchaseRequestId: null, createdAt: now, updatedAt: now }
+  ];
+  await db.insert(schema.facilitiesRenovationProjects).values(mockRenovations).onConflictDoNothing();
+
+  const mockSlaSettings = [
+    { id: 'SLA-1', priority: 'URGENT', firstResponseHours: 1, resolutionHours: 4, createdAt: now, updatedAt: now },
+    { id: 'SLA-2', priority: 'HIGH', firstResponseHours: 2, resolutionHours: 8, createdAt: now, updatedAt: now },
+    { id: 'SLA-3', priority: 'MEDIUM', firstResponseHours: 4, resolutionHours: 24, createdAt: now, updatedAt: now },
+    { id: 'SLA-4', priority: 'LOW', firstResponseHours: 8, resolutionHours: 48, createdAt: now, updatedAt: now }
+  ];
+  await db.insert(schema.facilitiesSlaSettings).values(mockSlaSettings).onConflictDoNothing();
+
   console.log(`Seeded ${WORKSPACES.length} workspaces, ${MOCK_USERS.length} users, ${INITIAL_TASKS.length} tasks, ${mockLeads.length} leads, ${mockAnnouncements.length} announcements.`);
 }
 
