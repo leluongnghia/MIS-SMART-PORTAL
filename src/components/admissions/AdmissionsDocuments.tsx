@@ -2,6 +2,7 @@
 
 import React, { useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { Dialog } from '@/src/components/ui/dialog';
 import {
   CheckCircle2, Circle, Upload, Eye, Download, Trash2,
   Plus, AlertTriangle, Clock, FileText, Filter, Search,
@@ -153,8 +154,28 @@ export default function AdmissionsDocuments() {
   const [timKiem, setTimKiem] = useState('');
   const [locTrangThai, setLocTrangThai] = useState('Tất cả');
   const [toast, setToast] = useState('');
+  const [hienConfirmNhac, setHienConfirmNhac] = useState(false);
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 2500); };
+
+  const handleExportCSV = () => {
+    const headers = 'ID,Học sinh,Mã Lead,Khối,Trạng thái,Tiến độ,Đã nộp,Tổng tài liệu\n';
+    const rows = HO_SO_DANH_SACH.map(hs => 
+      `"${hs.id}","${hs.hoTen}","${hs.maLead}","${hs.khoi}","${hs.trangThai}",${hs.tienDo}%,${hs.daNop},${hs.tongTaiLieu}`
+    ).join('\n');
+    const blob = new Blob(['\uFEFF' + headers + rows], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'Danh_Sach_Ho_So_Tuyen_Sinh.csv');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast('Tải xuống danh sách hồ sơ (CSV) thành công!');
+  };
+
+  const targetsNhac = HO_SO_DANH_SACH.filter(h => h.trangThai === 'Thiếu giấy tờ');
 
   const NHOM: NhomHoSo[] = ['Bắt buộc', 'Bổ sung', 'Ưu tiên'];
   const daNop = DANH_SACH_TAI_LIEU.filter(d => d.trangThai === 'Đã nộp').length;
@@ -176,10 +197,10 @@ export default function AdmissionsDocuments() {
             <p className="mt-0.5 text-xs font-medium text-slate-500">Quản lý và xác minh hồ sơ tuyển sinh của học sinh</p>
           </div>
           <div className="flex items-center gap-2">
-            <button type="button" onClick={() => showToast('Xuất danh sách hồ sơ thành công!')} className="flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 shadow-xs hover:bg-slate-50">
+            <button type="button" onClick={handleExportCSV} className="flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 shadow-xs hover:bg-slate-50">
               <Download className="h-3.5 w-3.5" /> Xuất danh sách
             </button>
-            <button type="button" onClick={() => showToast(`Gửi nhắc nộp hồ sơ đến ${HO_SO_DANH_SACH.filter(h=>h.trangThai==='Thiếu giấy tờ').length} học sinh`)} className="flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 shadow-xs hover:bg-slate-50">
+            <button type="button" onClick={() => setHienConfirmNhac(true)} className="flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 shadow-xs hover:bg-slate-50">
               <Send className="h-3.5 w-3.5" /> Gửi nhắc nộp HS
             </button>
           </div>
@@ -376,6 +397,52 @@ export default function AdmissionsDocuments() {
 
       {/* Modal upload */}
       {uploadTaiLieu && <UploaderTaiLieu taiLieu={uploadTaiLieu} onClose={() => setUploadTaiLieu(null)} />}
+
+      {/* Modal nhắc nộp hồ sơ */}
+      <Dialog
+        open={hienConfirmNhac}
+        onOpenChange={setHienConfirmNhac}
+        title="Gửi nhắc nộp hồ sơ"
+        description="Hệ thống sẽ gửi thông báo nhắc nhở hoàn thiện các giấy tờ còn thiếu qua Zalo/Email cho các phụ huynh học sinh sau:"
+      >
+        <div className="space-y-4">
+          <div className="space-y-2 max-h-60 overflow-y-auto divide-y divide-slate-100 pr-1">
+            {targetsNhac.map(hs => (
+              <div key={hs.id} className="py-2.5 flex items-center justify-between gap-3 text-xs">
+                <div className="min-w-0">
+                  <p className="font-bold text-slate-950">{hs.hoTen}</p>
+                  <p className="text-[10px] text-slate-400">{hs.maLead} · {hs.khoi}</p>
+                  <p className="text-[10px] text-red-500 font-semibold mt-0.5">⚠️ Thiếu: {hs.tongTaiLieu - hs.daNop} tài liệu</p>
+                </div>
+                <div className="text-right shrink-0">
+                  <p className="font-bold text-slate-700">Tư vấn viên</p>
+                  <p className="text-[10px] text-slate-500">{hs.tiepNhan}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+            <button 
+              type="button" 
+              onClick={() => setHienConfirmNhac(false)}
+              className="px-4 py-2 text-xs font-bold rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 transition"
+            >
+              Hủy
+            </button>
+            <button 
+              type="button" 
+              onClick={() => {
+                setHienConfirmNhac(false);
+                showToast(`✓ Đã gửi thông báo nhắc nộp hồ sơ tới ${targetsNhac.length} học sinh!`);
+              }}
+              className="px-5 py-2 text-xs font-bold rounded-xl bg-blue-600 text-white hover:bg-blue-700 shadow-sm transition"
+            >
+              Gửi nhắc nhở
+            </button>
+          </div>
+        </div>
+      </Dialog>
     </>
   );
 }

@@ -32,7 +32,7 @@ async function seed() {
   ).onConflictDoNothing();
 
   await db.insert(schema.users).values(
-    MOCK_USERS.map((user: any) => ({
+    MOCK_USERS.map((user: any, index: number) => ({
       id: user.id,
       clerkUserId: null,
       name: user.name,
@@ -41,10 +41,18 @@ async function seed() {
       title: user.title || '',
       email: user.email || user.personalEmail || null,
       workspaceId: user.workspaceId || '',
-      phone: user.phone || user.phoneNumber || null,
+      phone: user.phone || user.phoneNumber || `09${String(index + 10000000).slice(0, 8)}`,
       avatarUrl: user.avatar || null,
       departmentId: user.workspaceId && user.workspaceId !== 'ALL' ? user.workspaceId : null,
       status: 'ACTIVE',
+      employeeCode: user.employeeCode || `${user.role === 'ADMIN' ? 'BGH' : user.role === 'MANAGER' ? 'QL' : 'NV'}-${String(index + 1).padStart(4, '0')}`,
+      staffType: user.role === 'ADMIN' ? 'MANAGER' : user.role === 'MANAGER' ? 'MANAGER' : (user.title || '').toLowerCase().includes('giáo viên') ? 'TEACHER' : 'STAFF',
+      joinedAt: new Date(now.getFullYear() - (index % 6), index % 12, (index % 25) + 1),
+      managerId: MOCK_USERS.find((candidate: any) => candidate.workspaceId === user.workspaceId && candidate.role === 'MANAGER')?.id || MOCK_USERS.find((candidate: any) => candidate.workspaceId === 'BGH' && candidate.role === 'ADMIN')?.id || null,
+      teachingLevel: (user.title || '').toLowerCase().includes('giáo viên') ? (index % 2 === 0 ? 'THCS' : 'THPT') : null,
+      subject: (user.title || '').includes('Toán') ? 'Toán' : (user.title || '').includes('Văn') ? 'Ngữ văn' : (user.title || '').includes('Tin') ? 'Tin học' : null,
+      homeroomClassId: (user.title || '').toLowerCase().includes('giáo viên') ? `${10 + (index % 3)}A${(index % 5) + 1}` : null,
+      internalNote: `Seed hồ sơ thành viên: ${user.roleName || user.role} - ${user.workspaceId || 'N/A'}`,
       payload: user,
       createdAt: now,
       updatedAt: now,
@@ -460,7 +468,329 @@ async function seed() {
   ];
   await db.insert(schema.systemSettings).values(defaultSettings.map(s => ({ ...s, createdAt: now, updatedAt: now }))).onConflictDoNothing();
 
-  console.log(`Seeded ${WORKSPACES.length} workspaces, ${MOCK_USERS.length} users, ${INITIAL_TASKS.length} tasks, ${mockLeads.length} leads.`);
+  // Seed employee profiles and contracts
+  console.log("Seeding employee profiles and contracts...");
+  const profiles = [];
+  const contracts = [];
+  const attendances = [];
+  const payrolls = [];
+  const leaveReqs = [];
+
+  for (let i = 0; i < MOCK_USERS.length; i++) {
+    const user = MOCK_USERS[i];
+    const index = i;
+    const employeeCode = user.employeeCode || `${user.role === 'ADMIN' ? 'BGH' : user.role === 'MANAGER' ? 'QL' : 'NV'}-${String(index + 1).padStart(4, '0')}`;
+    const joinedAtDate = new Date(now.getFullYear() - (index % 6), index % 12, (index % 25) + 1);
+    const managerId = MOCK_USERS.find((candidate: any) => candidate.workspaceId === user.workspaceId && candidate.role === 'MANAGER')?.id || MOCK_USERS.find((candidate: any) => candidate.workspaceId === 'BGH' && candidate.role === 'ADMIN')?.id || null;
+
+    profiles.push({
+      id: `ep_${user.id}`,
+      userId: user.id,
+      employeeCode: employeeCode,
+      identityCard: `03009000${String(1000 + index).slice(1)}`,
+      socialInsurance: `0123456${String(1000 + index).slice(1)}`,
+      phoneNumber: user.phone || `09${String(10000000 + index).slice(0, 8)}`,
+      gender: index % 2 === 0 ? 'Nữ' : 'Nam',
+      dateOfBirth: new Date(1980 + (index % 15), index % 12, (index % 25) + 1),
+      address: `Số ${index + 1} Đường Lê Lợi, Cầu Giấy, Hà Nội`,
+      bankAccount: `1903456789${index}`,
+      bankName: 'Techcombank',
+      reportsTo: managerId,
+      status: index % 12 === 0 ? 'probation' : 'active',
+      joinDate: joinedAtDate,
+      createdAt: now,
+      updatedAt: now,
+      payload: {},
+    });
+
+    const baseSalary = 15000000 + (index % 10) * 1000000;
+    contracts.push({
+      id: `contract_${user.id}`,
+      employeeProfileId: `ep_${user.id}`,
+      contractNumber: `HDLD-${employeeCode}`,
+      type: user.role === 'ADMIN' ? 'không xác định thời hạn' : 'xác định thời hạn 3 năm',
+      status: 'active',
+      startDate: joinedAtDate,
+      endDate: new Date(joinedAtDate.getFullYear() + 3, joinedAtDate.getMonth(), joinedAtDate.getDate()),
+      baseSalary: baseSalary,
+      createdAt: now,
+      updatedAt: now,
+      payload: {},
+    });
+
+    attendances.push({
+      id: `att_${user.id}`,
+      employeeProfileId: `ep_${user.id}`,
+      date: now,
+      checkIn: '08:00',
+      checkOut: '17:00',
+      status: index % 15 === 0 ? 'late' : index % 20 === 0 ? 'absent' : 'present',
+      createdAt: now,
+      updatedAt: now,
+      payload: {},
+    });
+
+    payrolls.push({
+      id: `payroll_${user.id}`,
+      employeeProfileId: `ep_${user.id}`,
+      month: '2025-05',
+      baseSalary: baseSalary,
+      allowances: 1500000,
+      deductions: 500000,
+      netSalary: baseSalary + 1500000 - 500000,
+      status: 'paid',
+      paidAt: now,
+      createdAt: now,
+      updatedAt: now,
+      payload: {},
+    });
+
+    if (index % 10 === 0) {
+      leaveReqs.push({
+        id: `leave_${user.id}`,
+        employeeProfileId: `ep_${user.id}`,
+        type: 'phép năm',
+        startDate: new Date(now.getTime() - 2 * 24 * 3600 * 1000),
+        endDate: new Date(now.getTime() - 1 * 24 * 3600 * 1000),
+        reason: 'Nghỉ giải quyết việc gia đình',
+        status: index % 3 === 0 ? 'pending' : 'approved',
+        approvedById: 'user_triet',
+        substituteTeacherId: null,
+        createdAt: now,
+        updatedAt: now,
+        payload: {},
+      });
+    }
+  }
+
+  await db.insert(schema.employeeProfiles).values(profiles).onConflictDoNothing();
+  await db.insert(schema.employmentContracts).values(contracts).onConflictDoNothing();
+  await db.insert(schema.attendanceRecords).values(attendances).onConflictDoNothing();
+  await db.insert(schema.payrollRecords).values(payrolls).onConflictDoNothing();
+  if (leaveReqs.length > 0) {
+    await db.insert(schema.leaveRequests).values(leaveReqs).onConflictDoNothing();
+  }
+
+  // Seed risks
+  console.log("Seeding risks...");
+  const mockRisks = [
+    {
+      id: 'R01',
+      title: 'Thâm hụt ngân sách vượt kế hoạch',
+      severity: 'high',
+      status: 'open',
+      payload: { category: 'Tài chính', probability: 'Cao', owner: 'Phạm Thị Lan', ownerRole: 'Phó hiệu trưởng', plan: 'Rà soát chi phí, kiểm soát ngân sách theo tháng', date: '31/05/2026', impact: 5, likelihood: 4 },
+      createdAt: now,
+      updatedAt: now
+    },
+    {
+      id: 'R02',
+      title: 'Gián đoạn hoạt động do sự cố hệ thống',
+      severity: 'high',
+      status: 'open',
+      payload: { category: 'Hoạt động', probability: 'Trung bình', owner: 'Trần Văn Hùng', ownerRole: 'Trưởng phòng CNTT', plan: 'Sao lưu dữ liệu, kiểm thử DR định kỳ', date: '15/06/2026', impact: 4, likelihood: 3 },
+      createdAt: now,
+      updatedAt: now
+    },
+    {
+      id: 'R03',
+      title: 'Thiếu giáo viên cốt lõi',
+      severity: 'high',
+      status: 'open',
+      payload: { category: 'Nhân sự', probability: 'Cao', owner: 'Lê Thị Mai', ownerRole: 'Trưởng phòng TC-HC', plan: 'Kế hoạch tuyển dụng, phát triển nguồn thay thế', date: '30/06/2026', impact: 4, likelihood: 4 },
+      createdAt: now,
+      updatedAt: now
+    },
+    {
+      id: 'R04',
+      title: 'Không tuân thủ quy định tài chính',
+      severity: 'high',
+      status: 'open',
+      payload: { category: 'Tuân thủ', probability: 'Trung bình', owner: 'Nguyễn Văn Nam', ownerRole: 'Hiệu trưởng', plan: 'Đào tạo, kiểm tra tuân thủ định kỳ', date: '20/06/2026', impact: 4, likelihood: 3 },
+      createdAt: now,
+      updatedAt: now
+    },
+    {
+      id: 'R05',
+      title: 'Suy giảm uy tín do phản hồi tiêu cực',
+      severity: 'medium',
+      status: 'open',
+      payload: { category: 'Danh tiếng', probability: 'Trung bình', owner: 'Vũ Thị Hạnh', ownerRole: 'Trưởng phòng Truyền thông', plan: 'Theo dõi truyền thông, phản hồi kịp thời', date: '30/06/2026', impact: 3, likelihood: 3 },
+      createdAt: now,
+      updatedAt: now
+    },
+    {
+      id: 'R06',
+      title: 'Rò rỉ dữ liệu học sinh',
+      severity: 'high',
+      status: 'open',
+      payload: { category: 'An toàn dữ liệu', probability: 'Trung bình', owner: 'Trần Văn Hùng', ownerRole: 'Trưởng phòng CNTT', plan: 'Mã hóa dữ liệu, phân quyền truy cập', date: '25/05/2026', impact: 5, likelihood: 3 },
+      createdAt: now,
+      updatedAt: now
+    },
+    {
+      id: 'R07',
+      title: 'Tai nạn/Chấn thương trong giờ thể chất',
+      severity: 'medium',
+      status: 'open',
+      payload: { category: 'An toàn học đường', probability: 'Thấp', owner: 'Nguyễn Văn Nam', ownerRole: 'Hiệu trưởng', plan: 'Bảo trì thiết bị thể chất, tập huấn sơ cứu', date: '12/07/2026', impact: 3, likelihood: 2 },
+      createdAt: now,
+      updatedAt: now
+    },
+    {
+      id: 'R08',
+      title: 'Sự cố cháy nổ phòng thí nghiệm',
+      severity: 'high',
+      status: 'open',
+      payload: { category: 'Cơ sở vật chất', probability: 'Thấp', owner: 'Ngô Anh Tuấn', ownerRole: 'Phó Hiệu trưởng CSVC', plan: 'Trang bị bình cứu hỏa, nội quy nghiêm ngặt', date: '18/06/2026', impact: 5, likelihood: 2 },
+      createdAt: now,
+      updatedAt: now
+    }
+  ];
+  await db.insert(schema.risks).values(mockRisks).onConflictDoNothing();
+
+  // Seed Student Directory
+  console.log("Seeding student directory...");
+  const FIRST_NAMES = ['Nguyễn', 'Trần', 'Phạm', 'Võ', 'Lê', 'Hoàng', 'Đỗ', 'Phan', 'Trịnh', 'Bùi', 'Đặng', 'Lương', 'Ngô'];
+  const MIDDLE_NAMES = ['Hoàng', 'Minh', 'Gia', 'Bảo', 'Đức', 'Quang', 'Hồng', 'Thị', 'Văn', 'Tuấn', 'Thanh', 'Khánh'];
+  const LAST_NAMES = ['Anh', 'Tuấn', 'Hà', 'Nam', 'Châu', 'Khang', 'Ngọc', 'Linh', 'Huy', 'Sơn', 'Dương', 'Hải'];
+
+  const mockStudents = [];
+  const mockGrades = [];
+  const mockTuitions = [];
+
+  for (let i = 1; i <= 15; i++) {
+    const fn = FIRST_NAMES[i % FIRST_NAMES.length];
+    const mn = MIDDLE_NAMES[(i * 3) % MIDDLE_NAMES.length];
+    const ln = LAST_NAMES[(i * 7) % LAST_NAMES.length];
+    const name = `${fn} ${mn} ${ln}`;
+    const code = `HS2023${String(77 + i).padStart(4, '0')}`;
+    const studentId = `stud_${String(i).padStart(2, '0')}`;
+    const className = i <= 8 ? '11A1' : '11A2';
+    const gpa = Number((7.5 + (i % 6) * 0.3).toFixed(1));
+    const attendanceRate = `${95 + (i % 5)}.${i % 9}%`;
+    const present = 170 + (i % 12);
+    const excused = 3 + (i % 5);
+    const unexcused = i % 3;
+    const late = i % 4;
+
+    mockStudents.push({
+      id: studentId,
+      code: code,
+      name: name,
+      className: className,
+      enrollmentStatus: 'active',
+      parentName: `${fn} ${mn} Hùng`,
+      parentPhone: `090${i}123456`,
+      parentEmail: `parent_${i}@gmail.com`,
+      payload: {
+        gender: i % 2 === 0 ? 'Nữ' : 'Nam',
+        dob: `${String(1 + (i % 28)).padStart(2, '0')}/${String(1 + (i % 12)).padStart(2, '0')}/2008`,
+        location: 'Cơ sở 1 - Trường THPT Minh Khai',
+        ethnicity: 'Kinh',
+        admissionDate: '01/08/2023',
+        sparkline: `M0,15 L20,${10 + (i % 8)} L40,${5 + (i % 10)} L60,${12 + (i % 6)} L80,${8 + (i % 5)} L100,${2 + (i % 3)}`,
+        rank: `${i}/${i <= 8 ? 42 : 40}`,
+        gpa: gpa,
+        attendanceRate: attendanceRate,
+        attendanceStat: { present, excused, unexcused, late },
+        conduct: { 
+          status: gpa >= 8.5 ? 'Tốt' : 'Khá', 
+          advantages: ['Học tập tiến bộ', 'Tự giác học tập', 'Hòa đồng, có trách nhiệm'], 
+          notes: gpa < 8.0 ? ['Cần chú ý môn tự nhiên'] : ['Không có'] 
+        },
+        health: { status: 'Tốt', height: `${160 + (i % 15)} cm`, weight: `${50 + (i % 20)} kg`, bloodType: i % 4 === 0 ? 'O+' : i % 4 === 1 ? 'A+' : i % 4 === 2 ? 'B+' : 'AB+', warning: 'Không có' },
+        parents: [
+          { name: `${fn} ${mn} Hùng`, relation: 'Bố', phone: `090${i} 123 456`, email: `parent_${i}@gmail.com`, avatar: `https://i.pravatar.cc/150?u=dad${i}` }
+        ],
+        achievements: [
+          { date: '01/2025', title: 'Giấy khen Học sinh Giỏi HK1', organization: 'Trường THPT Minh Khai' }
+        ],
+        timeline: [
+          { time: '15/05/2025 14:30', title: 'Trao đổi học tập', desc: 'Giáo viên bộ môn thông báo về tinh thần học tập tiến bộ.', user: 'Cô Phạm Thu Hương', icon: 'MessageSquare', color: 'bg-blue-600' }
+        ]
+      },
+      createdAt: now,
+      updatedAt: now
+    });
+
+    const subjects = ['Toán', 'Ngữ văn', 'Tiếng Anh', 'Vật lý', 'Hóa học'];
+    subjects.forEach((subj, sIdx) => {
+      const score = Number((gpa - 0.5 + (sIdx % 3) * 0.4).toFixed(1));
+      mockGrades.push({
+        id: `gr_${String(i).padStart(2, '0')}_${sIdx + 1}`,
+        studentId: studentId,
+        subject: subj,
+        payload: { score, scores: { midTerm: score - 0.5, finalTerm: score + 0.5, quizzes: [score, score - 0.2, score + 0.3] } },
+        createdAt: now,
+        updatedAt: now
+      });
+    });
+
+    mockTuitions.push(
+      { id: `tf_${String(i).padStart(2, '0')}_01`, studentId: studentId, invoiceNo: `INV-2025-${String(i).padStart(3, '0')}`, amount: '4500000', status: i % 3 === 0 ? 'pending' : 'paid', payload: { title: 'Học phí Tháng 05/2025', dueDate: '10/05/2025', method: i % 3 === 0 ? 'Chờ thanh toán' : 'Chuyển khoản VietQR' }, createdAt: now, updatedAt: now }
+    );
+  }
+
+  await db.insert(schema.studentDirectory).values(mockStudents).onConflictDoNothing();
+
+  // Seed SIS Grades
+  console.log("Seeding student grades...");
+  await db.insert(schema.sisGrades).values(mockGrades).onConflictDoNothing();
+
+  // Seed Tuition Fees
+  console.log("Seeding tuition fees...");
+  await db.insert(schema.tuitionFees).values(mockTuitions).onConflictDoNothing();
+
+  // Seed Announcements
+  console.log("Seeding announcements...");
+  const mockAnnouncements = [
+    {
+      id: 'ann_1',
+      title: 'Triển khai chuyên đề nâng cao ứng dụng AI trong giảng dạy năm học 2025-2026',
+      senderName: 'PGS.TS. Nguyễn Văn Minh',
+      isMeeting: false,
+      payload: {
+        id: 'ann_1',
+        title: 'Triển khai chuyên đề nâng cao ứng dụng AI trong giảng dạy năm học 2025-2026',
+        content: 'Yêu cầu toàn thể giáo viên các tổ bộ môn (Toán - Tin, Ngữ văn, Ngoại ngữ, KHTN) tham dự khóa tập huấn ứng dụng các mô hình ngôn ngữ lớn (LLMs) hỗ trợ xây dựng giáo án và bài tập tự học cho học sinh.',
+        senderName: 'PGS.TS. Nguyễn Văn Minh',
+        senderTitle: 'Hiệu trưởng',
+        senderAvatar: 'https://i.pravatar.cc/150?u=user_chutich',
+        createdAt: now.toISOString(),
+        targetRoles: ['ADMIN', 'MANAGER', 'STAFF'],
+        isMeeting: false,
+        acknowledgedBy: []
+      },
+      createdAt: now,
+      updatedAt: now
+    },
+    {
+      id: 'ann_2',
+      title: 'Họp hội đồng sư phạm tổng kết thi đua và kế hoạch Ngày hội STEM',
+      senderName: 'Lê Quang Triết',
+      isMeeting: true,
+      payload: {
+        id: 'ann_2',
+        title: 'Họp hội đồng sư phạm tổng kết thi đua và kế hoạch Ngày hội STEM',
+        content: 'Ban Giám hiệu triệu tập cuộc họp khẩn với các Trưởng bộ phận và Tổ trưởng chuyên môn nhằm rà soát và thông qua chương trình Ngày hội Trải nghiệm Khoa học công nghệ STEM 2026.',
+        senderName: 'Lê Quang Triết',
+        senderTitle: 'Phó Hiệu trưởng',
+        senderAvatar: 'https://i.pravatar.cc/150?u=user_triet',
+        createdAt: now.toISOString(),
+        targetRoles: ['ADMIN', 'MANAGER'],
+        meetingTime: '14:00 ngày 22/06/2026',
+        meetingLocation: 'Phòng Hội đồng sư phạm tầng 2',
+        isMeeting: true,
+        acknowledgedBy: []
+      },
+      createdAt: now,
+      updatedAt: now
+    }
+  ];
+  await db.insert(schema.announcements).values(mockAnnouncements).onConflictDoNothing();
+
+  console.log(`Seeded ${WORKSPACES.length} workspaces, ${MOCK_USERS.length} users, ${INITIAL_TASKS.length} tasks, ${mockLeads.length} leads, ${mockAnnouncements.length} announcements.`);
 }
 
 seed().catch((error) => {

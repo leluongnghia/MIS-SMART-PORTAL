@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useState } from 'react';
+import { Dialog } from '@/src/components/ui/dialog';
 import {
   Calendar, Filter, Download, Upload, CheckCircle2, AlertTriangle,
   Clock, Eye, MoreHorizontal, Edit2, ChevronLeft, ChevronRight,
-  Phone, MessageSquare, Send, Plus
+  ChevronsLeft, ChevronsRight, Phone, MessageSquare, Send, Plus
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -37,13 +38,53 @@ interface TestResult {
 }
 
 // ─── Mock Data ────────────────────────────────────────────────────────────────
-const APPOINTMENTS: Appointment[] = [
+const INITIAL_APPOINTMENTS: Appointment[] = [
   { id: 'a1', student: 'Trần Minh Anh', studentCode: 'STU-2025-00128', avatarInitials: 'TMA', targetGrade: '6A (2025-2026)', time: '14/05/2025 09:00 - 10:30', location: 'Cơ sở Nguyễn Văn Linh', format: 'Test tại trường', advisor: 'Lê Khánh Trang', status: 'Đã xác nhận' },
   { id: 'a2', student: 'Nguyễn Gia Bảo', studentCode: 'STU-2025-00129', avatarInitials: 'NGB', targetGrade: '6A (2025-2026)', time: '14/05/2025 13:30 - 15:00', location: 'Online', format: 'Test trực tuyến', advisor: 'Phạm Gia Huy', status: 'Chờ xác nhận' },
   { id: 'a3', student: 'Lê Bảo Châu', studentCode: 'STU-2025-00130', avatarInitials: 'LBC', targetGrade: '7A (2025-2026)', time: '15/05/2025 09:00 - 10:30', location: 'Cơ sở Nguyễn Văn Linh', format: 'Test tại trường', advisor: 'Trần Bảo Ngọc', status: 'Đã hoàn thành' },
   { id: 'a4', student: 'Phạm Minh Khang', studentCode: 'STU-2025-00131', avatarInitials: 'PMK', targetGrade: '6A (2025-2026)', time: '15/05/2025 15:30 - 17:00', location: 'Online', format: 'Test trực tuyến', advisor: 'Nguyễn Hữu Mỹ', status: 'Đã gửi nhắc' },
   { id: 'a5', student: 'Võ Đức Nam', studentCode: 'STU-2025-00132', avatarInitials: 'VDN', targetGrade: '8A (2025-2026)', time: '16/05/2025 09:00 - 10:30', location: 'Cơ sở Nguyễn Văn Linh', format: 'Test tại trường', advisor: 'Đỗ Hoàng Nam', status: 'Chưa gửi nhắc' },
 ];
+
+const FIRST_NAMES = ['Nguyễn', 'Trần', 'Phạm', 'Võ', 'Lê', 'Hoàng', 'Đỗ', 'Phan', 'Trịnh', 'Bùi', 'Đặng', 'Lương', 'Ngô'];
+const MIDDLE_NAMES = ['Gia', 'Bảo', 'Minh', 'Đức', 'Quang', 'Hồng', 'Thị', 'Văn', 'Tuấn', 'Mai', 'Thanh', 'Quốc', 'Anh'];
+const LAST_NAMES = ['Anh', 'Ngọc', 'Hân', 'Châu', 'Minh', 'Khang', 'Nam', 'Chi', 'Huy', 'Bảo', 'Sơn', 'Linh', 'Dương'];
+const GRADE_LIST = ['6A (2025-2026)', '7A (2025-2026)', '8A (2025-2026)', '9A (2025-2026)', '10A (2025-2026)'];
+const LOC_LIST = ['Cơ sở Nguyễn Văn Linh', 'Online', 'Cơ sở Nguyễn Tri Phương'];
+const FORMAT_LIST = ['Test tại trường', 'Test trực tuyến'];
+const ADVISOR_LIST = ['Lê Khánh Trang', 'Phạm Gia Huy', 'Trần Bảo Ngọc', 'Nguyễn Hữu Mỹ', 'Đỗ Hoàng Nam'];
+const STATUS_LIST: ApptStatus[] = ['Đã xác nhận', 'Chờ xác nhận', 'Đã hoàn thành', 'Đã gửi nhắc', 'Chưa gửi nhắc'];
+
+function generateMockAppointments(count: number): Appointment[] {
+  const result = [...INITIAL_APPOINTMENTS];
+  for (let i = 6; i <= count; i++) {
+    const fn = FIRST_NAMES[i % FIRST_NAMES.length];
+    const mn = MIDDLE_NAMES[(i * 3) % MIDDLE_NAMES.length];
+    const ln = LAST_NAMES[(i * 7) % LAST_NAMES.length];
+    const student = `${fn} ${mn} ${ln}`;
+    const initials = (mn[0] + ln[0]).toUpperCase();
+    const studentCode = `STU-2025-${String(128 + i).padStart(5, '0')}`;
+    const targetGrade = GRADE_LIST[i % GRADE_LIST.length];
+    const location = LOC_LIST[i % LOC_LIST.length];
+    const format = FORMAT_LIST[i % FORMAT_LIST.length];
+    const advisor = ADVISOR_LIST[i % ADVISOR_LIST.length];
+    const status = STATUS_LIST[i % STATUS_LIST.length];
+    const time = `${14 + (i % 5)}/05/2025 ${String(9 + (i % 4)).padStart(2, '0')}:00 - ${String(10 + (i % 4)).padStart(2, '0')}:30`;
+    result.push({
+      id: `a${i}`,
+      student,
+      studentCode,
+      avatarInitials: initials,
+      targetGrade,
+      time,
+      location,
+      format,
+      advisor,
+      status
+    });
+  }
+  return result;
+}
 
 const TEST_RESULTS: TestResult[] = [
   { student: 'Lê Bảo Châu', studentCode: 'STU-2025-00130', math: 8.5, vietnamese: 8.0, english: 7.5, interview: 8.0, total: '80/100', recommendation: '✅ Đạt' },
@@ -74,11 +115,48 @@ const quickActions = [
 ];
 
 export default function AdmissionsAppointments() {
+  const [appointmentsList, setAppointmentsList] = useState<Appointment[]>(() => generateMockAppointments(30));
   const [activeTab, setActiveTab] = useState<ApptTab>('appointments');
   const [page, setPage] = useState(1);
   const [toast, setToast] = useState('');
 
+  // Filtering states
+  const [hienBoLoc, setHienBoLoc] = useState(false);
+  const [locGrade, setLocGrade] = useState('ALL');
+  const [locFormat, setLocFormat] = useState('ALL');
+  const [locStatus, setLocStatus] = useState('ALL');
+
+  // Detail & Edit Dialog states
+  const [selectedAppt, setSelectedAppt] = useState<Appointment | null>(null);
+  const [editAppt, setEditAppt] = useState<Appointment | null>(null);
+  const [tempAdvisor, setTempAdvisor] = useState('');
+  const [tempStatus, setTempStatus] = useState<ApptStatus>('Đã xác nhận');
+
+  // Rows limit config
+  const limitPerPage = 5;
+
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 2500); };
+
+  // Filtered appointments list
+  const apptsDaLoc = React.useMemo(() => {
+    return appointmentsList.filter(appt => {
+      const matchesGrade = locGrade === 'ALL' || appt.targetGrade.includes(locGrade);
+      const matchesFormat = locFormat === 'ALL' || appt.format === locFormat;
+      const matchesStatus = locStatus === 'ALL' || appt.status === locStatus;
+      return matchesGrade && matchesFormat && matchesStatus;
+    });
+  }, [appointmentsList, locGrade, locFormat, locStatus]);
+
+  const tongTrang = Math.ceil(apptsDaLoc.length / limitPerPage) || 1;
+
+  const apptsHienThi = React.useMemo(() => {
+    const start = (page - 1) * limitPerPage;
+    return apptsDaLoc.slice(start, start + limitPerPage);
+  }, [apptsDaLoc, page, limitPerPage]);
+
+  React.useEffect(() => {
+    setPage(1);
+  }, [locGrade, locFormat, locStatus]);
 
   const TABS: { id: ApptTab; label: string }[] = [
     { id: 'appointments', label: 'Lịch hẹn' },
@@ -104,10 +182,13 @@ export default function AdmissionsAppointments() {
           <div className="flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 shadow-xs">
             <Calendar className="h-3.5 w-3.5 text-slate-400" /> 12/05/2025 - 18/05/2025
           </div>
-          <button type="button" className="flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 shadow-xs hover:bg-slate-50">
+          <button type="button" onClick={() => setHienBoLoc(true)} className="flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 shadow-xs hover:bg-slate-50">
             <Filter className="h-3.5 w-3.5" /> Bộ lọc
           </button>
-          <button type="button" className="flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 shadow-xs hover:bg-slate-50">
+          <button type="button" onClick={() => {
+            showToast("Đang kết xuất dữ liệu lịch hẹn...");
+            setTimeout(() => showToast("Đã xuất file Excel thành công!"), 1200);
+          }} className="flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 shadow-xs hover:bg-slate-50">
             <Download className="h-3.5 w-3.5" /> Xuất Excel
           </button>
         </div>
@@ -162,7 +243,7 @@ export default function AdmissionsAppointments() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {APPOINTMENTS.map(appt => {
+                {apptsHienThi.map(appt => {
                   const sc = STATUS_CONFIG[appt.status];
                   return (
                     <tr key={appt.id} className="hover:bg-slate-50/50 cursor-pointer transition-colors">
@@ -198,9 +279,9 @@ export default function AdmissionsAppointments() {
                       </td>
                       <td className="py-3 px-3">
                         <div className="flex items-center justify-center gap-1">
-                          <button type="button" onClick={() => showToast(`Xem chi tiết: ${appt.student}`)} className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:bg-blue-50 hover:text-blue-600"><Eye className="h-3.5 w-3.5" /></button>
-                          <button type="button" onClick={() => showToast(`Chỉnh sửa: ${appt.student}`)} className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:bg-amber-50 hover:text-amber-600"><Edit2 className="h-3.5 w-3.5" /></button>
-                          <button type="button" onClick={() => showToast(`Thao tác với: ${appt.student}`)} className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100"><MoreHorizontal className="h-3.5 w-3.5" /></button>
+                          <button type="button" onClick={() => setSelectedAppt(appt)} className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:bg-blue-50 hover:text-blue-600"><Eye className="h-3.5 w-3.5" /></button>
+                          <button type="button" onClick={() => { setEditAppt(appt); setTempAdvisor(appt.advisor); setTempStatus(appt.status); }} className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:bg-amber-50 hover:text-amber-600"><Edit2 className="h-3.5 w-3.5" /></button>
+                          <button type="button" onClick={() => showToast(`Thao tác nâng cao: ${appt.student}`)} className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100"><MoreHorizontal className="h-3.5 w-3.5" /></button>
                         </div>
                       </td>
                     </tr>
@@ -208,12 +289,30 @@ export default function AdmissionsAppointments() {
                 })}
               </tbody>
             </table>
-            <div className="flex items-center justify-between border-t border-slate-100 px-4 py-3">
-              <p className="text-xs font-semibold text-slate-500">Hiển thị 1 - 5 / 5 kết quả</p>
-              <div className="flex items-center gap-1">
-                <button type="button" onClick={() => setPage(p => Math.max(1, p-1))} className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-400 hover:bg-slate-50"><ChevronLeft className="h-4 w-4" /></button>
-                <button type="button" className={`flex h-8 w-8 items-center justify-center rounded-lg text-xs font-bold ${page===1?'bg-blue-600 text-white':'border border-slate-200 text-slate-600 hover:bg-slate-50'}`} onClick={() => setPage(1)}>1</button>
-                <button type="button" onClick={() => setPage(p => p + 1)} className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-400 hover:bg-slate-50"><ChevronRight className="h-4 w-4" /></button>
+            <div className="flex items-center justify-between border-t border-slate-100 px-4 py-3 flex-wrap gap-2">
+              <p className="text-xs font-semibold text-slate-500">
+                Hiển thị {apptsDaLoc.length > 0 ? (page - 1) * limitPerPage + 1 : 0} - {Math.min(page * limitPerPage, apptsDaLoc.length)} / {apptsDaLoc.length} kết quả
+              </p>
+              <div className="flex items-center gap-1.5">
+                <button type="button" onClick={() => setPage(1)} disabled={page === 1} className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-40"><ChevronsLeft className="h-3.5 w-3.5" /></button>
+                <button type="button" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-40"><ChevronLeft className="h-3.5 w-3.5" /></button>
+                
+                {Array.from({ length: tongTrang }).map((_, idx) => {
+                  const p = idx + 1;
+                  return (
+                    <button 
+                      key={p} 
+                      type="button" 
+                      onClick={() => setPage(p)}
+                      className={`flex h-8 w-8 items-center justify-center rounded-lg text-xs font-bold transition ${page === p ? 'bg-blue-600 text-white' : 'border border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+                    >
+                      {p}
+                    </button>
+                  );
+                })}
+
+                <button type="button" onClick={() => setPage(p => Math.min(tongTrang, p + 1))} disabled={page === tongTrang} className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-40"><ChevronRight className="h-3.5 w-3.5" /></button>
+                <button type="button" onClick={() => setPage(tongTrang)} disabled={page === tongTrang} className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-40"><ChevronsRight className="h-3.5 w-3.5" /></button>
               </div>
             </div>
           </div>
@@ -287,14 +386,253 @@ export default function AdmissionsAppointments() {
         </>
       )}
 
-      {activeTab !== 'appointments' && (
-        <div className="flex h-40 items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white">
-          <div className="text-center">
-            <p className="text-sm font-bold text-slate-400">Tab {activeTab === 'interviews' ? 'Phỏng vấn' : 'Kết quả test'}</p>
-            <p className="text-xs text-slate-300 mt-1">Đang phát triển...</p>
+      {activeTab === 'interviews' && (
+        <div className="rounded-2xl border border-slate-100 bg-white shadow-sm overflow-hidden p-4 space-y-4">
+          <div className="flex justify-between items-center">
+            <h3 className="text-sm font-black text-slate-900">Danh sách phỏng vấn</h3>
+            <span className="text-xs text-slate-500">{apptsDaLoc.length} phỏng vấn</span>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {apptsDaLoc.map(appt => (
+              <div key={appt.id} className="border border-slate-100 rounded-xl p-4 space-y-3 shadow-xs bg-slate-50/50 hover:shadow-md transition">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h4 className="font-bold text-slate-900">{appt.student}</h4>
+                    <p className="text-[10px] text-slate-400">{appt.studentCode} · {appt.targetGrade}</p>
+                  </div>
+                  <span className={`text-[10px] px-2 py-0.5 rounded font-bold ${STATUS_CONFIG[appt.status].bg} ${STATUS_CONFIG[appt.status].text}`}>
+                    {appt.status}
+                  </span>
+                </div>
+                <div className="text-xs text-slate-600 space-y-1">
+                  <p>🗓️ <strong>Thời gian:</strong> {appt.time}</p>
+                  <p>🏫 <strong>Địa điểm:</strong> {appt.location}</p>
+                  <p>👤 <strong>Giám khảo:</strong> {appt.advisor}</p>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}
+
+      {activeTab === 'results' && (
+        <div className="rounded-2xl border border-slate-100 bg-white shadow-sm overflow-hidden p-4 space-y-4">
+          <div className="flex justify-between items-center">
+            <h3 className="text-sm font-black text-slate-900">Kết quả đánh giá đầu vào</h3>
+            <span className="text-xs text-slate-500">3 học sinh đã thi</span>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-100 bg-slate-50/50 text-[11px] font-black uppercase tracking-wide text-slate-400">
+                  <th className="py-3 pl-4 pr-3 text-left">Học sinh</th>
+                  <th className="py-3 px-3 text-center">Toán</th>
+                  <th className="py-3 px-3 text-center">Tiếng Việt</th>
+                  <th className="py-3 px-3 text-center">Tiếng Anh</th>
+                  <th className="py-3 px-3 text-center">Phỏng vấn</th>
+                  <th className="py-3 px-3 text-center">Tổng điểm</th>
+                  <th className="py-3 px-3 text-center">Đề xuất BGH</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {TEST_RESULTS.map(r => (
+                  <tr key={r.student} className="hover:bg-slate-50/50 transition-colors">
+                    <td className="py-3 pl-4 pr-3">
+                      <p className="font-bold text-slate-900">{r.student}</p>
+                      <p className="text-[10px] text-slate-400">{r.studentCode}</p>
+                    </td>
+                    <td className="py-3 px-3 text-center font-bold text-slate-700">{r.math ?? '—'}</td>
+                    <td className="py-3 px-3 text-center font-bold text-slate-700">{r.vietnamese ?? '—'}</td>
+                    <td className="py-3 px-3 text-center font-bold text-slate-700">{r.english ?? '—'}</td>
+                    <td className="py-3 px-3 text-center font-bold text-slate-700">{r.interview ?? '—'}</td>
+                    <td className="py-3 px-3 text-center font-black text-blue-600">{r.total ?? '—'}</td>
+                    <td className="py-3 px-3 text-center">
+                      <span className={`rounded-xl px-2.5 py-1 text-xs font-bold ${
+                        r.recommendation.startsWith('✅') ? 'bg-green-50 text-green-700 border border-green-200' :
+                        r.recommendation.startsWith('⚠️') ? 'bg-amber-50 text-amber-700 border border-amber-200' :
+                        'bg-slate-50 text-slate-600 border border-slate-200'
+                      }`}>{r.recommendation}</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Bộ lọc */}
+      <Dialog
+        open={hienBoLoc}
+        onOpenChange={setHienBoLoc}
+        title="Bộ lọc lịch hẹn & test"
+        description="Lọc danh sách các cuộc hẹn kiểm tra đầu vào của thí sinh."
+      >
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-slate-700">Hình thức kiểm tra</label>
+            <select 
+              value={locFormat} 
+              onChange={(e) => setLocFormat(e.target.value)}
+              className="w-full h-9 rounded-xl border border-slate-200 px-3 text-xs bg-white focus:outline-none"
+            >
+              <option value="ALL">Tất cả hình thức</option>
+              <option value="Test tại trường">Test tại trường</option>
+              <option value="Test trực tuyến">Test trực tuyến</option>
+            </select>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-slate-700">Trạng thái cuộc hẹn</label>
+            <select 
+              value={locStatus} 
+              onChange={(e) => setLocStatus(e.target.value)}
+              className="w-full h-9 rounded-xl border border-slate-200 px-3 text-xs bg-white focus:outline-none"
+            >
+              <option value="ALL">Tất cả trạng thái</option>
+              {Object.keys(STATUS_CONFIG).map(st => (
+                <option key={st} value={st}>{st}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+            <button 
+              type="button" 
+              onClick={() => {
+                setLocFormat('ALL');
+                setLocStatus('ALL');
+                setHienBoLoc(false);
+              }}
+              className="px-4 py-2 text-xs font-bold rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 transition"
+            >
+              Xoá bộ lọc
+            </button>
+            <button 
+              type="button" 
+              onClick={() => setHienBoLoc(false)}
+              className="px-5 py-2 text-xs font-bold rounded-xl bg-blue-600 text-white hover:bg-blue-700 shadow-sm transition"
+            >
+              Áp dụng
+            </button>
+          </div>
+        </div>
+      </Dialog>
+
+      {/* Appointment Detail Dialog */}
+      <Dialog
+        open={!!selectedAppt}
+        onOpenChange={(open) => !open && setSelectedAppt(null)}
+        title="Chi tiết lịch hẹn kiểm tra"
+      >
+        {selectedAppt && (
+          <div className="space-y-4">
+            <div className="flex items-center gap-3 bg-slate-50 p-4 rounded-xl border border-slate-100">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 text-xs font-black text-white">
+                {selectedAppt.avatarInitials}
+              </div>
+              <div>
+                <p className="font-bold text-slate-900">{selectedAppt.student}</p>
+                <p className="text-xs text-slate-400">{selectedAppt.studentCode}</p>
+              </div>
+            </div>
+
+            <div className="space-y-2 text-xs border border-slate-100 rounded-xl p-4 bg-white">
+              <div className="flex justify-between py-1 border-b border-slate-50">
+                <span className="text-slate-400">Lớp mục tiêu</span>
+                <span className="font-bold text-slate-900">{selectedAppt.targetGrade}</span>
+              </div>
+              <div className="flex justify-between py-1 border-b border-slate-50">
+                <span className="text-slate-400">Thời gian kiểm tra</span>
+                <span className="font-bold text-slate-900">{selectedAppt.time}</span>
+              </div>
+              <div className="flex justify-between py-1 border-b border-slate-50">
+                <span className="text-slate-400">Địa điểm</span>
+                <span className="font-bold text-slate-900">{selectedAppt.location}</span>
+              </div>
+              <div className="flex justify-between py-1 border-b border-slate-50">
+                <span className="text-slate-400">Hình thức</span>
+                <span className="font-bold text-slate-900">{selectedAppt.format}</span>
+              </div>
+              <div className="flex justify-between py-1 border-b border-slate-50">
+                <span className="text-slate-400">Tư vấn viên phụ trách</span>
+                <span className="font-bold text-slate-900">{selectedAppt.advisor}</span>
+              </div>
+              <div className="flex justify-between py-1">
+                <span className="text-slate-400">Trạng thái hiện tại</span>
+                <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${STATUS_CONFIG[selectedAppt.status].bg} ${STATUS_CONFIG[selectedAppt.status].text}`}>
+                  {selectedAppt.status}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+              <button 
+                type="button" 
+                onClick={() => setSelectedAppt(null)}
+                className="px-5 py-2 text-xs font-bold rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        )}
+      </Dialog>
+
+      {/* Appointment Edit Dialog */}
+      <Dialog
+        open={!!editAppt}
+        onOpenChange={(open) => !open && setEditAppt(null)}
+        title="Chỉnh sửa lịch kiểm tra"
+      >
+        {editAppt && (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-700">Tư vấn viên phụ trách</label>
+              <input 
+                type="text" 
+                value={tempAdvisor}
+                onChange={(e) => setTempAdvisor(e.target.value)}
+                className="w-full h-9 rounded-xl border border-slate-200 px-3 text-xs focus:outline-none focus:ring-2 focus:ring-blue-100"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-700">Trạng thái lịch hẹn</label>
+              <select 
+                value={tempStatus}
+                onChange={(e) => setTempStatus(e.target.value as ApptStatus)}
+                className="w-full h-9 rounded-xl border border-slate-200 px-3 text-xs bg-white focus:outline-none"
+              >
+                {Object.keys(STATUS_CONFIG).map(st => (
+                  <option key={st} value={st}>{st}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+              <button 
+                type="button" 
+                onClick={() => setEditAppt(null)}
+                className="px-4 py-2 text-xs font-bold rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 transition"
+              >
+                Hủy
+              </button>
+              <button 
+                type="button" 
+                onClick={() => {
+                  setAppointmentsList(prev => prev.map(a => a.id === editAppt.id ? { ...a, advisor: tempAdvisor, status: tempStatus } : a));
+                  setEditAppt(null);
+                  showToast(`✓ Cập nhật lịch hẹn học sinh ${editAppt.student} thành công!`);
+                }}
+                className="px-5 py-2 text-xs font-bold rounded-xl bg-blue-600 text-white hover:bg-blue-700 shadow-sm transition"
+              >
+                Lưu thay đổi
+              </button>
+            </div>
+          </div>
+        )}
+      </Dialog>
     </div>
   );
 }

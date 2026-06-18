@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
+import { Dialog } from '@/src/components/ui/dialog';
 import {
   Search, Plus, Download, Upload, Filter, Eye, Edit2, MoreHorizontal,
   Users, MessageSquare, ClipboardList, CalendarCheck, GraduationCap,
@@ -43,7 +44,47 @@ export interface FormThem {
   ghiChu: string;
 }
 
-// ─── Dữ liệu mẫu ─────────────────────────────────────────────────────────────
+const FIRST_NAMES = ['Nguyễn', 'Trần', 'Phạm', 'Võ', 'Lê', 'Hoàng', 'Đỗ', 'Phan', 'Trịnh', 'Bùi', 'Đặng', 'Lương', 'Ngô'];
+const MIDDLE_NAMES = ['Gia', 'Bảo', 'Minh', 'Đức', 'Quang', 'Hồng', 'Thị', 'Văn', 'Tuấn', 'Mai', 'Thanh', 'Quốc', 'Anh'];
+const LAST_NAMES = ['Anh', 'Ngọc', 'Hân', 'Châu', 'Minh', 'Khang', 'Nam', 'Chi', 'Huy', 'Bảo', 'Sơn', 'Linh', 'Dương'];
+const TVV_LIST = ['Lê Minh Khang', 'Phạm Gia Huy', 'Nguyễn Thu Hà', 'Đỗ Hoàng Nam', 'Trần Bảo Ngọc'];
+const NGUON_LIST = ['Website', 'Facebook Ads', 'Zalo OA', 'Google Ads', 'Giới thiệu', 'Sự kiện', 'TikTok Ads'];
+const KHOI_LIST = ['Lớp 1', 'Lớp 2', 'Lớp 3', 'Lớp 4', 'Lớp 5', 'Lớp 6', 'Lớp 7', 'Lớp 8', 'Lớp 9', 'Lớp 10', 'Lớp 11', 'Lớp 12'];
+const TRANG_THAI_LIST: TrangThai[] = ['Mới', 'Đang tư vấn', 'Đăng ký test', 'Nộp hồ sơ', 'Giữ chỗ', 'Nhập học', 'Không tiếp tục'];
+
+function generateMockRemainingLeads(count: number): Lead[] {
+  const result: Lead[] = [];
+  for (let i = 11; i <= count; i++) {
+    const fn = FIRST_NAMES[i % FIRST_NAMES.length];
+    const mn = MIDDLE_NAMES[(i * 3) % MIDDLE_NAMES.length];
+    const ln = LAST_NAMES[(i * 7) % LAST_NAMES.length];
+    const hoTen = `${fn} ${mn} ${ln}`;
+    const sdt = `09${(i * 13) % 10}${(i * 17) % 10}${i % 10} ${(i * 19) % 10}${(i * 23) % 10}${(i * 29) % 10} ${(i * 31) % 10}${(i * 37) % 10}${(i * 41) % 10}`;
+    const email = `${ln.toLowerCase()}.${mn.toLowerCase()}@gmail.com`;
+    const nguonLead = NGUON_LIST[i % NGUON_LIST.length];
+    const khoi = KHOI_LIST[i % KHOI_LIST.length];
+    const tvv = TVV_LIST[i % TVV_LIST.length];
+    const tvvAvatar = tvv.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+    const trangThai = TRANG_THAI_LIST[i % TRANG_THAI_LIST.length];
+    const diemLead = 30 + ((i * 11) % 70);
+    const ngayTao = `1${i % 8}/05/2025 ${String(8 + i % 10).padStart(2, '0')}:${String((i * 11) % 60).padStart(2, '0')}`;
+    result.push({
+      id: `l${i}`,
+      hoTen,
+      sdt,
+      email,
+      nguonLead,
+      khoi,
+      tvv,
+      tvvAvatar,
+      trangThai,
+      diemLead,
+      ngayTao
+    });
+  }
+  return result;
+}
+
 export const LEADS_MAU: Lead[] = [
   { id: 'l1', hoTen: 'Nguyễn Gia Bảo', sdt: '0912 345 678', email: 'giaobao@gmail.com', nguonLead: 'Website', khoi: 'Lớp 1', tvv: 'Lê Minh Khang', tvvAvatar: 'LK', trangThai: 'Đang tư vấn', diemLead: 85, ngayTao: '18/05/2025 09:15' },
   { id: 'l2', hoTen: 'Trần Bảo Ngọc', sdt: '0934 567 890', email: 'baongoc.tran@gmail.com', nguonLead: 'Facebook Ads', khoi: 'Lớp 6', tvv: 'Phạm Gia Huy', tvvAvatar: 'PH', trangThai: 'Đăng ký test', diemLead: 78, ngayTao: '18/05/2025 08:42' },
@@ -55,6 +96,7 @@ export const LEADS_MAU: Lead[] = [
   { id: 'l8', hoTen: 'Phan Gia Hân', sdt: '0933 221 133', email: 'giahan.phan@gmail.com', nguonLead: 'Facebook Ads', khoi: 'Lớp 4', tvv: 'Phạm Gia Huy', tvvAvatar: 'PH', trangThai: 'Không tiếp tục', diemLead: 20, ngayTao: '16/05/2025 10:30' },
   { id: 'l9', hoTen: 'Nguyễn Mai Anh', sdt: '0922 334 455', email: 'maianh@gmail.com', nguonLead: 'Zalo OA', khoi: 'Lớp 7', tvv: 'Nguyễn Thu Hà', tvvAvatar: 'NH', trangThai: 'Đang tư vấn', diemLead: 68, ngayTao: '15/05/2025 17:20' },
   { id: 'l10', hoTen: 'Trịnh Quốc Bảo', sdt: '0909 876 543', email: 'quocbao.trinh@gmail.com', nguonLead: 'Giới thiệu', khoi: 'Lớp 8', tvv: 'Đỗ Hoàng Nam', tvvAvatar: 'DN', trangThai: 'Giữ chỗ', diemLead: 88, ngayTao: '15/05/2025 09:18' },
+  ...generateMockRemainingLeads(60)
 ];
 
 const MAU_TRANG_THAI: Record<TrangThai, { bg: string; text: string; dot: string }> = {
@@ -417,7 +459,43 @@ export default function AdmissionsLeadsTable({ leads, setLeads, chuongTrinhList,
   const [trang, setTrang] = useState(1);
   const [hienModal, setHienModal] = useState(false);
   const [toast, setToast] = useState('');
-  const tongTrang = 129;
+
+  // New states for Grid/List layout, Advanced filters, and Rows limit
+  const [viewType, setViewType] = useState<'list' | 'grid'>('list');
+  const [hienBoLocNangCao, setHienBoLocNangCao] = useState(false);
+  const [diemLeadNhoNhat, setDiemLeadNhoNhat] = useState(0);
+  const [limitPerPage, setLimitPerPage] = useState(10);
+
+  // ─── Lọc dữ liệu ─────────────────────────────────────────────────────────────
+  const leadsDaLoc = React.useMemo(() => {
+    return leads.filter(lead => {
+      const matchesSearch = 
+        lead.hoTen.toLowerCase().includes(timKiem.toLowerCase()) ||
+        lead.sdt.replace(/\s/g, '').includes(timKiem.replace(/\s/g, '')) ||
+        lead.email.toLowerCase().includes(timKiem.toLowerCase()) ||
+        lead.id.toLowerCase().includes(timKiem.toLowerCase());
+
+      const matchesNguon = nguon === 'Tất cả nguồn' || lead.nguonLead === nguon;
+      const matchesTvv = tvv === 'Tất cả tư vấn viên' || lead.tvv === tvv;
+      const matchesKhoi = khoi === 'Tất cả khối' || lead.khoi === khoi;
+      const matchesTrangThai = trangThai === 'Tất cả trạng thái' || lead.trangThai === trangThai;
+
+      const matchesDiem = lead.diemLead >= diemLeadNhoNhat;
+
+      return matchesSearch && matchesNguon && matchesTvv && matchesKhoi && matchesTrangThai && matchesDiem;
+    });
+  }, [leads, timKiem, nguon, tvv, khoi, trangThai, diemLeadNhoNhat]);
+
+  const tongTrang = Math.ceil(leadsDaLoc.length / limitPerPage) || 1;
+
+  const leadsHienThi = React.useMemo(() => {
+    const start = (trang - 1) * limitPerPage;
+    return leadsDaLoc.slice(start, start + limitPerPage);
+  }, [leadsDaLoc, trang, limitPerPage]);
+
+  React.useEffect(() => {
+    setTrang(1);
+  }, [timKiem, nguon, tvv, khoi, trangThai, diemLeadNhoNhat, limitPerPage]);
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -425,8 +503,8 @@ export default function AdmissionsLeadsTable({ leads, setLeads, chuongTrinhList,
   };
 
   const chonTatCa = () => {
-    if (daChon.size === leads.length) setDaChon(new Set());
-    else setDaChon(new Set(leads.map(l => l.id)));
+    if (daChon.size === leadsDaLoc.length) setDaChon(new Set());
+    else setDaChon(new Set(leadsDaLoc.map(l => l.id)));
   };
 
   const chonMot = (id: string) => {
@@ -536,7 +614,7 @@ export default function AdmissionsLeadsTable({ leads, setLeads, chuongTrinhList,
           <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-2">
-                <input type="checkbox" checked={daChon.size === leads.length && leads.length > 0} onChange={chonTatCa}
+                <input type="checkbox" checked={daChon.size === leadsDaLoc.length && leadsDaLoc.length > 0} onChange={chonTatCa}
                   className="h-4 w-4 rounded border-slate-300 text-blue-600" />
                 <span className="text-xs font-semibold text-slate-500">Chọn tất cả</span>
               </div>
@@ -552,13 +630,13 @@ export default function AdmissionsLeadsTable({ leads, setLeads, chuongTrinhList,
               )}
             </div>
             <div className="flex items-center gap-2">
-              <button type="button" className="flex h-8 items-center gap-1 rounded-lg border border-slate-200 px-2 text-xs font-semibold text-slate-600 hover:bg-slate-50">
+              <button type="button" onClick={() => setHienBoLocNangCao(true)} className="flex h-8 items-center gap-1 rounded-lg border border-slate-200 px-2 text-xs font-semibold text-slate-600 hover:bg-slate-50">
                 <Filter className="h-3.5 w-3.5" /> Bộ lọc nâng cao
               </button>
-              <button type="button" className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50" title="Xem lưới">
+              <button type="button" onClick={() => setViewType('grid')} className={`flex h-8 w-8 items-center justify-center rounded-lg border text-slate-500 hover:bg-slate-50 ${viewType === 'grid' ? 'border-blue-200 bg-blue-50 text-blue-600' : 'border-slate-200'}`} title="Xem lưới">
                 <LayoutGrid className="h-3.5 w-3.5" />
               </button>
-              <button type="button" className="flex h-8 w-8 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 text-blue-600" title="Xem danh sách">
+              <button type="button" onClick={() => setViewType('list')} className={`flex h-8 w-8 items-center justify-center rounded-lg border text-slate-500 hover:bg-slate-50 ${viewType === 'list' ? 'border-blue-200 bg-blue-50 text-blue-600' : 'border-slate-200'}`} title="Xem danh sách">
                 <List className="h-3.5 w-3.5" />
               </button>
               <button type="button" className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50" title="Tuỳ chỉnh cột">
@@ -567,130 +645,253 @@ export default function AdmissionsLeadsTable({ leads, setLeads, chuongTrinhList,
             </div>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-slate-100 bg-slate-50/50 text-[11px] font-black uppercase tracking-wide text-slate-400">
-                  <th className="py-3 pl-4 pr-2 text-left w-10" />
-                  <th className="py-3 px-3 text-left">Họ tên</th>
-                  <th className="py-3 px-3 text-left">Số điện thoại</th>
-                  <th className="py-3 px-3 text-left">Email</th>
-                  <th className="py-3 px-3 text-left">Nguồn lead</th>
-                  <th className="py-3 px-3 text-left">Khối</th>
-                  <th className="py-3 px-3 text-left">Tư vấn viên</th>
-                  <th className="py-3 px-3 text-left">Trạng thái</th>
-                  <th className="py-3 px-3 text-center">Điểm lead</th>
-                  <th className="py-3 px-3 text-left">Ngày tạo</th>
-                  <th className="py-3 px-3 text-center">Thao tác</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-50">
-                {leads.map((lead) => {
-                  const sc = MAU_TRANG_THAI[lead.trangThai];
-                  return (
-                    <tr key={lead.id} className="hover:bg-slate-50/60 cursor-pointer transition-colors">
-                      <td className="py-3 pl-4 pr-2">
-                        <input type="checkbox" checked={daChon.has(lead.id)} onChange={() => chonMot(lead.id)}
-                          className="h-4 w-4 rounded border-slate-300 text-blue-600" />
-                      </td>
-                      <td className="py-3 px-3">
-                        <p className="font-bold text-blue-600 hover:text-blue-700 hover:underline">{lead.hoTen}</p>
-                      </td>
-                      <td className="py-3 px-3">
-                        <span className="flex items-center gap-1.5 text-slate-600 font-medium">
-                          <Phone className="h-3 w-3 text-slate-300" /> {lead.sdt}
-                        </span>
-                      </td>
-                      <td className="py-3 px-3">
-                        <span className="flex items-center gap-1.5 text-slate-500">
-                          <Mail className="h-3 w-3 text-slate-300" /> {lead.email}
-                        </span>
-                      </td>
-                      <td className="py-3 px-3">
-                        <span className="inline-flex items-center rounded-lg bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">
-                          {lead.nguonLead}
-                        </span>
-                      </td>
-                      <td className="py-3 px-3">
-                        <span className="inline-flex items-center rounded-lg border border-slate-200 px-2 py-0.5 text-xs font-bold text-slate-700">
-                          {lead.khoi}
-                        </span>
-                      </td>
-                      <td className="py-3 px-3">
+          {viewType === 'grid' ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 bg-slate-50/50">
+              {leadsHienThi.map((lead) => {
+                const sc = MAU_TRANG_THAI[lead.trangThai];
+                return (
+                  <div key={lead.id} className="relative bg-white rounded-xl border border-slate-100 p-4 shadow-sm hover:shadow-md hover:border-slate-200 transition duration-150 flex flex-col justify-between h-[210px]">
+                    <div>
+                      {/* Card Header */}
+                      <div className="flex justify-between items-start gap-2 mb-2">
                         <div className="flex items-center gap-2">
-                          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-[9px] font-black text-white">
-                            {lead.tvvAvatar}
-                          </div>
-                          <span className="text-xs font-semibold text-slate-700">{lead.tvv}</span>
+                          <input type="checkbox" checked={daChon.has(lead.id)} onChange={() => chonMot(lead.id)}
+                            className="h-4 w-4 rounded border-slate-300 text-blue-600" />
+                          <span className="text-[10px] text-slate-400 font-bold uppercase">{lead.id}</span>
                         </div>
-                      </td>
-                      <td className="py-3 px-3">
-                        <span className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-bold w-fit ${sc.bg} ${sc.text}`}>
+                        <span className={`flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[10px] font-bold ${sc.bg} ${sc.text}`}>
                           <span className={`h-1.5 w-1.5 rounded-full ${sc.dot}`} />
                           {lead.trangThai}
                         </span>
-                      </td>
-                      <td className="py-3 px-3 text-center">
-                        <div className="flex flex-col items-center">
-                          <span className={`text-sm ${DIEM_MAU(lead.diemLead)}`}>{lead.diemLead}</span>
-                          <div className="mt-0.5 h-1 w-8 rounded-full bg-slate-100">
-                            <div className={`h-1 rounded-full ${lead.diemLead >= 80 ? 'bg-green-500' : lead.diemLead >= 60 ? 'bg-amber-400' : 'bg-red-400'}`}
-                              style={{ width: `${lead.diemLead}%` }} />
+                      </div>
+
+                      {/* Lead Name */}
+                      <h3 className="font-bold text-slate-900 truncate hover:text-blue-600 hover:underline cursor-pointer" onClick={() => onViewDetail ? onViewDetail(lead.id) : showToast(`Xem chi tiết: ${lead.hoTen}`)}>
+                        {lead.hoTen}
+                      </h3>
+
+                      {/* Contact Info */}
+                      <div className="space-y-0.5 my-1.5 text-xs text-slate-500">
+                        <p className="flex items-center gap-1.5"><Phone className="h-3 w-3 text-slate-300" /> {lead.sdt}</p>
+                        <p className="flex items-center gap-1.5"><Mail className="h-3 w-3 text-slate-300" /> {lead.email}</p>
+                      </div>
+
+                      {/* Badges */}
+                      <div className="flex flex-wrap gap-1 mb-2">
+                        <span className="inline-flex items-center rounded-lg bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700">{lead.nguonLead}</span>
+                        <span className="inline-flex items-center rounded-lg border border-slate-200 px-2 py-0.5 text-[10px] font-bold text-slate-700">{lead.khoi}</span>
+                      </div>
+                    </div>
+
+                    {/* Card Footer */}
+                    <div className="border-t border-slate-100 pt-2 flex items-center justify-between mt-auto">
+                      <div className="flex items-center gap-1.5">
+                        <div className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-[8px] font-black text-white">
+                          {lead.tvvAvatar}
+                        </div>
+                        <span className="text-[10px] font-semibold text-slate-600 truncate max-w-[80px]" title={lead.tvv}>{lead.tvv}</span>
+                      </div>
+
+                      {/* Lead Score */}
+                      <div className="flex flex-col items-end shrink-0">
+                        <span className={`text-xs ${DIEM_MAU(lead.diemLead)}`}>{lead.diemLead} pts</span>
+                        <div className="h-1 w-12 rounded-full bg-slate-100 mt-1">
+                          <div className={`h-1 rounded-full ${lead.diemLead >= 80 ? 'bg-green-500' : lead.diemLead >= 60 ? 'bg-amber-400' : 'bg-red-400'}`} style={{ width: `${lead.diemLead}%` }} />
+                        </div>
+                      </div>
+
+                      {/* Action buttons */}
+                      <div className="flex gap-0.5">
+                        <button type="button" onClick={() => onViewDetail ? onViewDetail(lead.id) : showToast(`Xem chi tiết: ${lead.hoTen}`)} className="p-1 rounded text-slate-400 hover:bg-slate-100 hover:text-slate-600">
+                          <Eye className="h-3.5 w-3.5" />
+                        </button>
+                        <button type="button" onClick={() => showToast(`Chỉnh sửa lead: ${lead.hoTen}`)} className="p-1 rounded text-slate-400 hover:bg-slate-100 hover:text-slate-600">
+                          <Edit2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+              {leadsHienThi.length === 0 && (
+                <div className="col-span-full py-8 text-center text-slate-400">Không tìm thấy lead nào</div>
+              )}
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-slate-100 bg-slate-50/50 text-[11px] font-black uppercase tracking-wide text-slate-400">
+                    <th className="py-3 pl-4 pr-2 text-left w-10" />
+                    <th className="py-3 px-3 text-left">Họ tên</th>
+                    <th className="py-3 px-3 text-left">Số điện thoại</th>
+                    <th className="py-3 px-3 text-left">Email</th>
+                    <th className="py-3 px-3 text-left">Nguồn lead</th>
+                    <th className="py-3 px-3 text-left">Khối</th>
+                    <th className="py-3 px-3 text-left">Tư vấn viên</th>
+                    <th className="py-3 px-3 text-left">Trạng thái</th>
+                    <th className="py-3 px-3 text-center">Điểm lead</th>
+                    <th className="py-3 px-3 text-left">Ngày tạo</th>
+                    <th className="py-3 px-3 text-center">Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                  {leadsHienThi.map((lead) => {
+                    const sc = MAU_TRANG_THAI[lead.trangThai];
+                    return (
+                      <tr key={lead.id} className="hover:bg-slate-50/60 cursor-pointer transition-colors">
+                        <td className="py-3 pl-4 pr-2">
+                          <input type="checkbox" checked={daChon.has(lead.id)} onChange={() => chonMot(lead.id)}
+                            className="h-4 w-4 rounded border-slate-300 text-blue-600" />
+                        </td>
+                        <td className="py-3 px-3">
+                          <p className="font-bold text-blue-600 hover:text-blue-700 hover:underline">{lead.hoTen}</p>
+                        </td>
+                        <td className="py-3 px-3">
+                          <span className="flex items-center gap-1.5 text-slate-600 font-medium">
+                            <Phone className="h-3 w-3 text-slate-300" /> {lead.sdt}
+                          </span>
+                        </td>
+                        <td className="py-3 px-3">
+                          <span className="flex items-center gap-1.5 text-slate-500">
+                            <Mail className="h-3 w-3 text-slate-300" /> {lead.email}
+                          </span>
+                        </td>
+                        <td className="py-3 px-3">
+                          <span className="inline-flex items-center rounded-lg bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">
+                            {lead.nguonLead}
+                          </span>
+                        </td>
+                        <td className="py-3 px-3">
+                          <span className="inline-flex items-center rounded-lg border border-slate-200 px-2 py-0.5 text-xs font-bold text-slate-700">
+                            {lead.khoi}
+                          </span>
+                        </td>
+                        <td className="py-3 px-3">
+                          <div className="flex items-center gap-2">
+                            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-[9px] font-black text-white">
+                              {lead.tvvAvatar}
+                            </div>
+                            <span className="text-xs font-semibold text-slate-700">{lead.tvv}</span>
                           </div>
-                        </div>
-                      </td>
-                      <td className="py-3 px-3 text-xs text-slate-500 whitespace-nowrap">{lead.ngayTao}</td>
-                      <td className="py-3 px-3">
-                        <div className="flex items-center justify-center gap-1">
-                          <button type="button" title="Xem chi tiết" onClick={() => onViewDetail ? onViewDetail(lead.id) : showToast(`Xem chi tiết: ${lead.hoTen}`)} className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:bg-blue-50 hover:text-blue-600">
-                            <Eye className="h-3.5 w-3.5" />
-                          </button>
-                          <button type="button" title="Chỉnh sửa" onClick={() => showToast(`Chỉnh sửa lead: ${lead.hoTen}`)} className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:bg-amber-50 hover:text-amber-600">
-                            <Edit2 className="h-3.5 w-3.5" />
-                          </button>
-                          <button type="button" title="Thêm thao tác" onClick={() => showToast(`Thao tác: ${lead.hoTen}`)} className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700">
-                            <MoreHorizontal className="h-3.5 w-3.5" />
-                          </button>
-                        </div>
+                        </td>
+                        <td className="py-3 px-3">
+                          <span className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-bold w-fit ${sc.bg} ${sc.text}`}>
+                            <span className={`h-1.5 w-1.5 rounded-full ${sc.dot}`} />
+                            {lead.trangThai}
+                          </span>
+                        </td>
+                        <td className="py-3 px-3 text-center">
+                          <div className="flex flex-col items-center">
+                            <span className={`text-sm ${DIEM_MAU(lead.diemLead)}`}>{lead.diemLead}</span>
+                            <div className="mt-0.5 h-1 w-8 rounded-full bg-slate-100">
+                              <div className={`h-1 rounded-full ${lead.diemLead >= 80 ? 'bg-green-500' : lead.diemLead >= 60 ? 'bg-amber-400' : 'bg-red-400'}`}
+                                style={{ width: `${lead.diemLead}%` }} />
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-3 px-3 text-xs text-slate-500 whitespace-nowrap">{lead.ngayTao}</td>
+                        <td className="py-3 px-3">
+                          <div className="flex items-center justify-center gap-1">
+                            <button type="button" title="Xem chi tiết" onClick={() => onViewDetail ? onViewDetail(lead.id) : showToast(`Xem chi tiết: ${lead.hoTen}`)} className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:bg-blue-50 hover:text-blue-600">
+                              <Eye className="h-3.5 w-3.5" />
+                            </button>
+                            <button type="button" title="Chỉnh sửa" onClick={() => showToast(`Chỉnh sửa lead: ${lead.hoTen}`)} className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:bg-amber-50 hover:text-amber-600">
+                              <Edit2 className="h-3.5 w-3.5" />
+                            </button>
+                            <button type="button" title="Thêm thao tác" onClick={() => showToast(`Thao tác: ${lead.hoTen}`)} className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700">
+                              <MoreHorizontal className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {leadsHienThi.length === 0 && (
+                    <tr>
+                      <td colSpan={11} className="text-center py-8 text-slate-400">
+                        Không tìm thấy lead nào khớp với bộ lọc
                       </td>
                     </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
 
           {/* Phân trang */}
-          <div className="flex items-center justify-between border-t border-slate-100 px-4 py-3">
-            <p className="text-xs font-semibold text-slate-500">Hiển thị {leads.length} trong tổng số 1.284 kết quả</p>
-            <div className="flex items-center gap-1.5">
-              <button type="button" className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-40" disabled={trang === 1} onClick={() => setTrang(1)}>
+          <div className="flex items-center justify-between border-t border-slate-100 px-4 py-3 flex-wrap gap-2">
+            <p className="text-xs font-semibold text-slate-500">
+              Hiển thị {leadsDaLoc.length > 0 ? (trang - 1) * limitPerPage + 1 : 0} - {Math.min(trang * limitPerPage, leadsDaLoc.length)} trong tổng số {leadsDaLoc.length} kết quả
+            </p>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <button 
+                type="button" 
+                className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-40" 
+                disabled={trang === 1} 
+                onClick={() => setTrang(1)}
+              >
                 <ChevronsLeft className="h-3.5 w-3.5" />
               </button>
-              <button type="button" className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-40" disabled={trang === 1} onClick={() => setTrang(p => p - 1)}>
+              <button 
+                type="button" 
+                className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-40" 
+                disabled={trang === 1} 
+                onClick={() => setTrang(p => p - 1)}
+              >
                 <ChevronLeft className="h-3.5 w-3.5" />
               </button>
-              {[1, 2, 3, 4, 5].map(p => (
-                <button key={p} type="button" onClick={() => setTrang(p)}
-                  className={`flex h-8 w-8 items-center justify-center rounded-lg text-xs font-bold transition ${trang === p ? 'bg-blue-600 text-white' : 'border border-slate-200 text-slate-600 hover:bg-slate-50'}`}>
-                  {p}
-                </button>
-              ))}
-              <span className="px-1 text-slate-400">...</span>
-              <button type="button" onClick={() => setTrang(tongTrang)}
-                className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50">
-                {tongTrang}
-              </button>
-              <button type="button" className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-40" disabled={trang === tongTrang} onClick={() => setTrang(p => p + 1)}>
+              
+              {/* Dynamic Page Numbers */}
+              {Array.from({ length: tongTrang }).map((_, idx) => {
+                const p = idx + 1;
+                // Render all pages if total is small, or render near the active page
+                if (tongTrang <= 6 || Math.abs(p - trang) <= 1 || p === 1 || p === tongTrang) {
+                  return (
+                    <button 
+                      key={p} 
+                      type="button" 
+                      onClick={() => setTrang(p)}
+                      className={`flex h-8 w-8 items-center justify-center rounded-lg text-xs font-bold transition ${trang === p ? 'bg-blue-600 text-white' : 'border border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+                    >
+                      {p}
+                    </button>
+                  );
+                } else if (p === 2 && trang > 3) {
+                  return <span key="ellipsis-start" className="px-0.5 text-slate-400">...</span>;
+                } else if (p === tongTrang - 1 && trang < tongTrang - 2) {
+                  return <span key="ellipsis-end" className="px-0.5 text-slate-400">...</span>;
+                }
+                return null;
+              })}
+
+              <button 
+                type="button" 
+                className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-40" 
+                disabled={trang === tongTrang} 
+                onClick={() => setTrang(p => p + 1)}
+              >
                 <ChevronRight className="h-3.5 w-3.5" />
               </button>
-              <button type="button" className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-40" disabled={trang === tongTrang} onClick={() => setTrang(tongTrang)}>
+              <button 
+                type="button" 
+                className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-40" 
+                disabled={trang === tongTrang} 
+                onClick={() => setTrang(tongTrang)}
+              >
                 <ChevronsRight className="h-3.5 w-3.5" />
               </button>
-              <select className="h-8 rounded-lg border border-slate-200 px-2 text-xs font-semibold text-slate-600">
-                <option>10 / trang</option>
-                <option>25 / trang</option>
-                <option>50 / trang</option>
+              <select 
+                value={`${limitPerPage} / trang`} 
+                onChange={(e) => {
+                  const val = parseInt(e.target.value.split(' ')[0], 10);
+                  setLimitPerPage(val);
+                }}
+                className="h-8 rounded-lg border border-slate-200 px-2 text-xs font-semibold text-slate-600 bg-white"
+              >
+                <option value="10 / trang">10 / trang</option>
+                <option value="25 / trang">25 / trang</option>
+                <option value="50 / trang">50 / trang</option>
               </select>
             </div>
           </div>
@@ -716,6 +917,63 @@ export default function AdmissionsLeadsTable({ leads, setLeads, chuongTrinhList,
         </div>,
         document.body
       )}
+      {/* Modal Bộ lọc nâng cao */}
+      <Dialog
+        open={hienBoLocNangCao}
+        onOpenChange={setHienBoLocNangCao}
+        title="Bộ lọc nâng cao"
+        description="Tinh chỉnh các tiêu chí tìm kiếm và phân tích danh sách lead của bạn."
+      >
+        <div className="space-y-5">
+          <div className="space-y-2">
+            <div className="flex justify-between text-xs font-bold text-slate-700">
+              <span>Điểm lead tối thiểu</span>
+              <span className="text-blue-600">{diemLeadNhoNhat} điểm</span>
+            </div>
+            <input 
+              type="range" 
+              min="0" 
+              max="100" 
+              value={diemLeadNhoNhat} 
+              onChange={(e) => setDiemLeadNhoNhat(Number(e.target.value))}
+              className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-blue-600"
+            />
+            <div className="flex justify-between text-[10px] text-slate-400">
+              <span>0 (Tất cả)</span>
+              <span>50 (Trung bình)</span>
+              <span>80 (Tiềm năng cao)</span>
+            </div>
+          </div>
+
+          <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 space-y-2">
+            <p className="text-xs font-bold text-slate-700">Kết quả lọc hiện tại:</p>
+            <div className="flex justify-between text-xs text-slate-600">
+              <span>Số lượng lead khớp:</span>
+              <span className="font-bold text-slate-900">{leadsDaLoc.length} / {leads.length}</span>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+            <button 
+              type="button" 
+              onClick={() => {
+                setDiemLeadNhoNhat(0);
+                setHienBoLocNangCao(false);
+              }}
+              className="px-4 py-2 text-xs font-bold rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 transition"
+            >
+              Xoá bộ lọc
+            </button>
+            <button 
+              type="button" 
+              onClick={() => setHienBoLocNangCao(false)}
+              className="px-5 py-2 text-xs font-bold rounded-xl bg-blue-600 text-white hover:bg-blue-700 shadow-sm transition"
+            >
+              Áp dụng
+            </button>
+          </div>
+        </div>
+      </Dialog>
     </>
   );
 }

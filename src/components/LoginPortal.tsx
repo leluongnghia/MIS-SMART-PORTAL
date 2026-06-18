@@ -98,6 +98,15 @@ export default function LoginPortal({ onLoginSuccess, initialUser }: LoginPortal
   const [selectedUser, setSelectedUser] = useState<UserProfile>(initialUser);
   const [portalMode, setPortalMode] = useState<'STAFF' | 'STUDENT_PARENT'>('STAFF');
   const [searchStudentQuery, setSearchStudentQuery] = useState('');
+  const [logoUrl, setLogoUrl] = useState<string>('https://misvn.edu.vn/wp-content/uploads/2021/11/logo.png');
+
+  // Load logo from localStorage
+  React.useEffect(() => {
+    const cachedLogo = localStorage.getItem('school_logo_url');
+    if (cachedLogo) {
+      setLogoUrl(cachedLogo);
+    }
+  }, []);
   
   // Derive simple email for mock users
   const getSimulatedEmail = (user: UserProfile) => {
@@ -204,7 +213,7 @@ export default function LoginPortal({ onLoginSuccess, initialUser }: LoginPortal
             <div className="flex items-center gap-3 mb-6">
               <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center overflow-hidden p-1 shadow-md border border-slate-800 shrink-0">
                 <img 
-                  src="https://misvn.edu.vn/wp-content/uploads/2021/11/logo.png" 
+                  src={logoUrl} 
                   alt="MIS Logo" 
                   referrerPolicy="no-referrer"
                   className="w-full h-full object-contain"

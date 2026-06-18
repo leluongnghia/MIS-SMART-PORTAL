@@ -6,10 +6,12 @@ import { Button } from '@/src/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/src/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/src/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/src/components/ui/tabs';
-import { getFiles, getImportJobs, uploadMockFile, deleteFile, createSystemBackup } from './actions';
+import { Input } from '@/src/components/ui/input';
+import { getFiles, getImportJobs, deleteFile, createSystemBackup } from './actions';
 import { useToast } from '@/src/components/ui/Toast';
-import { HardDrive, FileText, Upload, Trash2, ShieldAlert, History } from 'lucide-react';
-
+import { HardDrive, FileText, Upload, Trash2, ShieldAlert, History, Search } from 'lucide-react';
+import { StorageUploadDialog } from './StorageUploadDialog';
+import { StorageFileActionsMenu } from './StorageFileActions';
 
 export default function StorageClient({ actor }: { actor: any }) {
   const [activeTab, setActiveTab] = React.useState('files');
@@ -17,6 +19,9 @@ export default function StorageClient({ actor }: { actor: any }) {
   const [files, setFiles] = useState<any[]>([]);
   const [jobs, setJobs] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [search, setSearch] = useState('');
+
+  const [uploadOpen, setUploadOpen] = useState(false);
 
   const loadData = async () => {
     try {
@@ -38,32 +43,6 @@ export default function StorageClient({ actor }: { actor: any }) {
     loadData();
   }, []);
 
-  const handleUploadMock = async () => {
-    try {
-      await uploadMockFile({
-        fileName: 'tailieu_huongdan.pdf',
-        fileSize: 2048000,
-        visibility: actor.role === 'ADMIN' ? 'SCHOOL' : 'DEPARTMENT',
-        departmentId: actor.departmentId
-      });
-      toast({ variant: 'success', title: 'Thành công', message: 'Tải lên file thành công' });
-      loadData();
-    } catch (error: any) {
-      toast({ variant: 'error', title: 'Lỗi', message: error.message });
-    }
-  };
-
-  const handleDelete = async (id: string) => {
-    if (!confirm('Bạn có chắc chắn muốn xóa file này?')) return;
-    try {
-      await deleteFile(id);
-      toast({ variant: 'success', title: 'Thành công', message: 'Đã xóa file' });
-      loadData();
-    } catch (error: any) {
-      toast({ variant: 'error', title: 'Lỗi', message: error.message });
-    }
-  };
-
   const handleBackup = async () => {
     try {
       toast({ variant: 'info', title: 'Đang xử lý', message: 'Đang tạo bản sao lưu hệ thống...' });
@@ -77,6 +56,11 @@ export default function StorageClient({ actor }: { actor: any }) {
 
   const isAdmin = actor.role === 'ADMIN';
 
+  const filteredFiles = files.filter(f => 
+    (f.displayName || f.fileName)?.toLowerCase().includes(search.toLowerCase()) ||
+    f.category?.toLowerCase().includes(search.toLowerCase())
+  );
+
   return (
     <div className="container mx-auto p-4 space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -88,16 +72,16 @@ export default function StorageClient({ actor }: { actor: any }) {
 
       <Tabs className="space-y-4">
         <TabsList>
-          <TabsTrigger active={activeTab === "files"} onClick={() => setActiveTab("files")}>
+          <TabsTrigger active={activeTab === 'files'} onClick={() => setActiveTab('files')}>
             <FileText className="h-4 w-4 mr-2" />
             Tài liệu chung
           </TabsTrigger>
-          <TabsTrigger active={activeTab === "history"} onClick={() => setActiveTab("history")}>
+          <TabsTrigger active={activeTab === 'history'} onClick={() => setActiveTab('history')}>
             <History className="h-4 w-4 mr-2" />
             Lịch sử Import/Export
           </TabsTrigger>
           {isAdmin && (
-            <TabsTrigger active={activeTab === "backup"} onClick={() => setActiveTab("backup")}>
+            <TabsTrigger active={activeTab === 'backup'} onClick={() => setActiveTab('backup')}>
               <HardDrive className="h-4 w-4 mr-2" />
               Sao lưu & Phục hồi
             </TabsTrigger>
@@ -111,16 +95,29 @@ export default function StorageClient({ actor }: { actor: any }) {
                 <CardTitle>Quản lý Tệp đính kèm</CardTitle>
                 <CardDescription>Tài liệu, hình ảnh được chia sẻ trong hệ thống</CardDescription>
               </div>
-              <Button onClick={handleUploadMock}>
+              <Button onClick={() => setUploadOpen(true)}>
                 <Upload className="h-4 w-4 mr-2" />
-                Tải lên (Mock)
+                Tải lên
               </Button>
             </CardHeader>
             <CardContent>
+              <div className="flex items-center space-x-2 mb-4">
+                <div className="relative flex-1 max-w-sm">
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    type="search"
+                    placeholder="Tìm kiếm tài liệu..."
+                    className="pl-8"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                  />
+                </div>
+              </div>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Tên file</TableHead>
+                    <TableHead>Tên tài liệu</TableHead>
+                    <TableHead>Danh mục</TableHead>
                     <TableHead>Kích thước</TableHead>
                     <TableHead>Phạm vi</TableHead>
                     <TableHead>Ngày tải lên</TableHead>
@@ -128,32 +125,38 @@ export default function StorageClient({ actor }: { actor: any }) {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {files.length === 0 ? (
+                  {filteredFiles.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">Chưa có tệp nào.</TableCell>
+                      <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                        {search ? 'Không tìm thấy tài liệu phù hợp.' : 'Chưa có tệp nào.'}
+                      </TableCell>
                     </TableRow>
                   ) : (
-                    files.map((file) => (
-                      <TableRow key={file.id}>
-                        <TableCell className="font-medium text-blue-600 dark:text-blue-400 hover:underline cursor-pointer">
-                          {file.fileName}
+                    filteredFiles.map((file) => (
+                      <TableRow key={file.id} className={file.status === 'DELETED' ? 'opacity-50 line-through' : ''}>
+                        <TableCell>
+                          <div className="font-medium text-blue-600 dark:text-blue-400">
+                            {file.displayName || file.fileName}
+                          </div>
+                          {file.status === 'ARCHIVED' && <span className="text-xs text-amber-600 font-semibold">[Lưu trữ]</span>}
                         </TableCell>
+                        <TableCell>{file.category || 'Khác'}</TableCell>
                         <TableCell>{formatBytes(file.fileSize)}</TableCell>
                         <TableCell>
                           <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                            file.visibility === 'SCHOOL' ? 'bg-purple-100 text-purple-800' :
+                            file.visibility === 'SCHOOL_WIDE' || file.visibility === 'SCHOOL' ? 'bg-purple-100 text-purple-800' :
                             file.visibility === 'DEPARTMENT' ? 'bg-blue-100 text-blue-800' :
+                            file.visibility === 'ADMIN_ONLY' ? 'bg-red-100 text-red-800' :
                             'bg-gray-100 text-gray-800'
                           }`}>
-                            {file.visibility === 'SCHOOL' ? 'Toàn trường' :
-                             file.visibility === 'DEPARTMENT' ? 'Phòng ban' : 'Cá nhân'}
+                            {file.visibility === 'SCHOOL_WIDE' || file.visibility === 'SCHOOL' ? 'Toàn trường' :
+                             file.visibility === 'DEPARTMENT' ? 'Phòng ban' : 
+                             file.visibility === 'ADMIN_ONLY' ? 'Quản trị' : 'Cá nhân'}
                           </span>
                         </TableCell>
                         <TableCell>{new Date(file.createdAt).toLocaleString('vi-VN')}</TableCell>
                         <TableCell className="text-right">
-                          <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => handleDelete(file.id)}>
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          <StorageFileActionsMenu file={file} actor={actor} onRefresh={loadData} />
                         </TableCell>
                       </TableRow>
                     ))
@@ -223,6 +226,8 @@ export default function StorageClient({ actor }: { actor: any }) {
           </TabsContent>
         )}
       </Tabs>
+
+      <StorageUploadDialog open={uploadOpen} onOpenChange={setUploadOpen} onSuccess={loadData} />
     </div>
   );
 }
@@ -235,3 +240,4 @@ function formatBytes(bytes: number, decimals = 2) {
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
 }
+

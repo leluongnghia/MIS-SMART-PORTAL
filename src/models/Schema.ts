@@ -646,10 +646,15 @@ export const dataFiles = pgTable('data_files', {
   id: text('id').primaryKey(),
   fileName: text('file_name').notNull(),
   originalName: text('original_name').notNull(),
+  displayName: text('display_name'),
+  description: text('description'),
   fileUrl: text('file_url').notNull(),
   fileType: text('file_type').notNull(),
+  extension: text('extension'),
   fileSize: integer('file_size').notNull(),
   documentType: text('document_type'),
+  category: text('category'),
+  relatedModule: text('related_module'),
   tags: jsonb('tags'),
   visibility: text('visibility').default('SCHOOL').notNull(),
   departmentId: text('department_id'),
@@ -657,6 +662,8 @@ export const dataFiles = pgTable('data_files', {
   parentFileId: text('parent_file_id'),
   uploadedBy: text('uploaded_by'),
   status: text('status').default('ACTIVE').notNull(),
+  downloadCount: integer('download_count').default(0).notNull(),
+  archivedAt: timestamp('archived_at', { withTimezone: true }),
   deletedAt: timestamp('deleted_at', { withTimezone: true }),
   ...timestamps,
 }, table => [
@@ -760,5 +767,345 @@ export const chatAttachments = pgTable('chat_attachments', {
   fileSize: integer('file_size').notNull(),
   uploadedBy: text('uploaded_by'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+// ==========================================
+// MODULE CSVC & THIẾT BỊ (FACILITIES)
+// ==========================================
+
+export const facilitiesLocations = pgTable('facilities_locations', {
+  id: text('id').primaryKey(),
+  code: text('code').notNull().unique(),
+  name: text('name').notNull(),
+  type: text('type').notNull(), // 'CLASSROOM', 'LAB', 'LIBRARY', 'MEETING_ROOM', 'WAREHOUSE', 'OTHER'
+  building: text('building'),
+  floor: text('floor'),
+  capacity: integer('capacity'),
+  managerId: text('manager_id'),
+  managerName: text('manager_name'),
+  status: text('status').notNull().default('ACTIVE'), // 'ACTIVE', 'MAINTENANCE', 'INACTIVE'
+  note: text('note'),
+  ...timestamps,
+});
+
+export const facilitiesAssets = pgTable('facilities_assets', {
+  id: text('id').primaryKey(),
+  code: text('code').notNull().unique(),
+  name: text('name').notNull(),
+  category: text('category').notNull(), // 'IT', 'FURNITURE', 'ELECTRONIC', 'SPORT', 'OTHER'
+  type: text('type'),
+  brand: text('brand'),
+  model: text('model'),
+  serialNumber: text('serial_number'),
+  purchaseDate: timestamp('purchase_date', { withTimezone: true }),
+  startUsingDate: timestamp('start_using_date', { withTimezone: true }),
+  locationId: text('location_id'),
+  locationName: text('location_name'),
+  responsibleUserId: text('responsible_user_id'),
+  responsibleUserName: text('responsible_user_name'),
+  status: text('status').notNull().default('ACTIVE'), // 'ACTIVE', 'BROKEN', 'MAINTENANCE', 'LIQUIDATED', 'LOST'
+  maintenancePriority: text('maintenance_priority'), // 'LOW', 'MEDIUM', 'HIGH'
+  lastMaintenanceDate: timestamp('last_maintenance_date', { withTimezone: true }),
+  nextMaintenanceDate: timestamp('next_maintenance_date', { withTimezone: true }),
+  imageUrl: text('image_url'),
+  qrCode: text('qr_code'),
+  note: text('note'),
+  sourceType: text('source_type').default('MANUAL'), // 'MANUAL', 'PURCHASE_REQUEST', 'INVENTORY'
+  sourceId: text('source_id'),
+  archivedAt: timestamp('archived_at', { withTimezone: true }),
+  deletedAt: timestamp('deleted_at', { withTimezone: true }),
+  ...timestamps,
+});
+
+export const facilitiesRepairRequests = pgTable('facilities_repair_requests', {
+  id: text('id').primaryKey(),
+  title: text('title').notNull(),
+  assetId: text('asset_id'),
+  assetName: text('asset_name'),
+  locationId: text('location_id'),
+  locationName: text('location_name'),
+  description: text('description').notNull(),
+  priority: text('priority').notNull().default('MEDIUM'), // 'LOW', 'MEDIUM', 'HIGH', 'URGENT'
+  status: text('status').notNull().default('NEW'), // 'NEW', 'PROCESSING', 'WAITING_PART', 'WAITING_PURCHASE', 'DONE', 'REJECTED'
+  requestedById: text('requested_by_id').notNull(),
+  requestedByName: text('requested_by_name'),
+  assignedToId: text('assigned_to_id'),
+  assignedToName: text('assigned_to_name'),
+  dueDate: timestamp('due_date', { withTimezone: true }),
+  completedAt: timestamp('completed_at', { withTimezone: true }),
+  resolutionNote: text('resolution_note'),
+  relatedPurchaseRequestId: text('related_purchase_request_id'),
+  
+  // SLA tracking
+  receivedAt: timestamp('received_at', { withTimezone: true }),
+  firstResponseDueAt: timestamp('first_response_due_at', { withTimezone: true }),
+  resolutionDueAt: timestamp('resolution_due_at', { withTimezone: true }),
+  resolvedAt: timestamp('resolved_at', { withTimezone: true }),
+  isFirstResponseOverdue: boolean('is_first_response_overdue').default(false),
+  isResolutionOverdue: boolean('is_resolution_overdue').default(false),
+  slaStatus: text('sla_status'), // 'IN_TIME', 'OVERDUE_RESPONSE', 'OVERDUE_RESOLUTION', 'DONE_ON_TIME', 'DONE_LATE'
+
+  ...timestamps,
+});
+
+export const facilitiesMaintenanceLogs = pgTable('facilities_maintenance_logs', {
+  id: text('id').primaryKey(),
+  assetId: text('asset_id').notNull(),
+  assetName: text('asset_name'),
+  maintenanceType: text('maintenance_type').notNull(), // 'ROUTINE', 'SAFETY', 'REPAIR', 'INSPECTION'
+  scheduledDate: timestamp('scheduled_date', { withTimezone: true }).notNull(),
+  completedDate: timestamp('completed_date', { withTimezone: true }),
+  responsibleUserId: text('responsible_user_id'),
+  responsibleUserName: text('responsible_user_name'),
+  status: text('status').notNull().default('SCHEDULED'), // 'SCHEDULED', 'OVERDUE', 'DONE', 'CANCELLED'
+  checklist: jsonb('checklist'),
+  result: text('result'),
+  note: text('note'),
+  relatedRepairRequestId: text('related_repair_request_id'),
+  relatedPurchaseRequestId: text('related_purchase_request_id'),
+  ...timestamps,
+});
+
+export const facilitiesPurchaseRequests = pgTable('facilities_purchase_requests', {
+  id: text('id').primaryKey(),
+  code: text('code').notNull().unique(),
+  title: text('title').notNull(),
+  requestType: text('request_type').notNull(), // 'NEW', 'ADDITIONAL', 'REPLACEMENT', 'PART', 'SUPPLY', 'URGENT'
+  reason: text('reason'),
+  departmentId: text('department_id'),
+  locationId: text('location_id'),
+  locationName: text('location_name'),
+  relatedRepairRequestId: text('related_repair_request_id'),
+  relatedAssetId: text('related_asset_id'),
+  priority: text('priority').default('MEDIUM'),
+  neededByDate: timestamp('needed_by_date', { withTimezone: true }),
+  status: text('status').notNull().default('DRAFT'), // 'DRAFT', 'SUBMITTED', 'INFO_REQUIRED', 'APPROVED', 'REJECTED', 'PURCHASING', 'PARTIAL_RECEIVED', 'COMPLETED', 'CANCELLED'
+  requestedById: text('requested_by_id').notNull(),
+  requestedByName: text('requested_by_name'),
+  reviewedById: text('reviewed_by_id'),
+  reviewedByName: text('reviewed_by_name'),
+  reviewedAt: timestamp('reviewed_at', { withTimezone: true }),
+  approvedById: text('approved_by_id'),
+  approvedByName: text('approved_by_name'),
+  approvedAt: timestamp('approved_at', { withTimezone: true }),
+  rejectedReason: text('rejected_reason'),
+  note: text('note'),
+  ...timestamps,
+});
+
+export const facilitiesPurchaseItems = pgTable('facilities_purchase_items', {
+  id: text('id').primaryKey(),
+  purchaseRequestId: text('purchase_request_id').notNull(),
+  itemName: text('item_name').notNull(),
+  category: text('category').notNull(),
+  quantity: integer('quantity').notNull().default(1),
+  unit: text('unit').notNull(),
+  specification: text('specification'),
+  purpose: text('purpose'),
+  necessityLevel: text('necessity_level'),
+  estimatedUnitPrice: integer('estimated_unit_price'),
+  suggestedSupplier: text('suggested_supplier'),
+  status: text('status').notNull().default('PENDING'), // 'PENDING', 'PURCHASED', 'RECEIVED'
+  receivedQuantity: integer('received_quantity').default(0),
+  createdAssetId: text('created_asset_id'),
+  note: text('note'),
+  ...timestamps,
+});
+
+export const facilitiesHandoverLogs = pgTable('facilities_handover_logs', {
+  id: text('id').primaryKey(),
+  code: text('code').unique(),
+  assetId: text('asset_id').notNull(),
+  assetName: text('asset_name'),
+  receiverId: text('receiver_id').notNull(),
+  receiverName: text('receiver_name'),
+  department: text('department'),
+  handoverDate: timestamp('handover_date', { withTimezone: true }).notNull(),
+  expectedReturnDate: timestamp('expected_return_date', { withTimezone: true }),
+  actualReturnDate: timestamp('actual_return_date', { withTimezone: true }),
+  conditionOnHandover: text('condition_on_handover'),
+  conditionOnReturn: text('condition_on_return'),
+  handedOverById: text('handed_over_by_id'),
+  handedOverByName: text('handed_over_by_name'),
+  status: text('status').notNull().default('ACTIVE'), // 'ACTIVE', 'RETURNED', 'OVERDUE', 'CANCELLED'
+  note: text('note'),
+  attachmentUrl: text('attachment_url'),
+  ...timestamps,
+});
+
+export const facilitiesInventoryChecks = pgTable('facilities_inventory_checks', {
+  id: text('id').primaryKey(),
+  code: text('code').notNull().unique(),
+  title: text('title').notNull(),
+  scope: text('scope'), // 'ALL', 'LOCATION', 'CATEGORY'
+  locationId: text('location_id'),
+  category: text('category'),
+  status: text('status').notNull().default('DRAFT'), // 'DRAFT', 'IN_PROGRESS', 'WAITING_APPROVAL', 'COMPLETED', 'CANCELLED'
+  assignedToId: text('assigned_to_id'),
+  assignedToName: text('assigned_to_name'),
+  startedAt: timestamp('started_at', { withTimezone: true }),
+  completedAt: timestamp('completed_at', { withTimezone: true }),
+  summary: text('summary'),
+  createdById: text('created_by_id').notNull(),
+  createdByName: text('created_by_name'),
+  ...timestamps,
+});
+
+export const facilitiesInventoryCheckItems = pgTable('facilities_inventory_check_items', {
+  id: text('id').primaryKey(),
+  inventoryCheckId: text('inventory_check_id').notNull(),
+  assetId: text('asset_id').notNull(),
+  assetCode: text('asset_code'),
+  assetName: text('asset_name'),
+  expectedLocationId: text('expected_location_id'),
+  actualLocationId: text('actual_location_id'),
+  expectedStatus: text('expected_status'),
+  actualStatus: text('actual_status'),
+  result: text('result'), // 'CORRECT', 'WRONG_LOCATION', 'MISSING', 'SURPLUS', 'DAMAGED', 'NEEDS_UPDATE'
+  note: text('note'),
+  checkedAt: timestamp('checked_at', { withTimezone: true }),
+});
+
+export const facilitiesAttachments = pgTable('facilities_attachments', {
+  id: text('id').primaryKey(),
+  entityType: text('entity_type').notNull(), // 'LOCATION', 'ASSET', 'REPAIR', 'MAINTENANCE', 'PURCHASE', 'HANDOVER', 'INVENTORY'
+  entityId: text('entity_id').notNull(),
+  fileName: text('file_name').notNull(),
+  fileUrl: text('file_url').notNull(),
+  fileType: text('file_type').notNull(),
+  fileSize: integer('file_size').notNull(),
+  uploadedBy: text('uploaded_by'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const facilitiesSupplies = pgTable('facilities_supplies', {
+  id: text('id').primaryKey(),
+  code: text('code').notNull().unique(),
+  name: text('name').notNull(),
+  category: text('category').notNull(),
+  unit: text('unit').notNull(),
+  currentQuantity: integer('current_quantity').notNull().default(0),
+  minimumQuantity: integer('minimum_quantity').notNull().default(0),
+  storageLocation: text('storage_location'),
+  managerId: text('manager_id'),
+  managerName: text('manager_name'),
+  status: text('status').notNull().default('IN_STOCK'), // 'IN_STOCK', 'LOW_STOCK', 'OUT_OF_STOCK', 'DISCONTINUED'
+  lastImportedAt: timestamp('last_imported_at', { withTimezone: true }),
+  note: text('note'),
+  ...timestamps,
+});
+
+export const facilitiesSupplyTransactions = pgTable('facilities_supply_transactions', {
+  id: text('id').primaryKey(),
+  supplyId: text('supply_id').notNull(),
+  type: text('type').notNull(), // 'IMPORT', 'EXPORT', 'ADJUST'
+  quantity: integer('quantity').notNull(),
+  reason: text('reason'),
+  relatedRepairRequestId: text('related_repair_request_id'),
+  relatedMaintenanceId: text('related_maintenance_id'),
+  performedById: text('performed_by_id').notNull(),
+  performedByName: text('performed_by_name'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const facilitiesSuppliers = pgTable('facilities_suppliers', {
+  id: text('id').primaryKey(),
+  code: text('code').notNull().unique(),
+  name: text('name').notNull(),
+  contactPerson: text('contact_person'),
+  phone: text('phone'),
+  email: text('email'),
+  address: text('address'),
+  serviceTypes: jsonb('service_types'), // array of service types e.g., ['REPAIR', 'SUPPLY']
+  rating: integer('rating'),
+  status: text('status').notNull().default('ACTIVE'), // 'ACTIVE', 'PAUSED', 'INACTIVE'
+  note: text('note'),
+  ...timestamps,
+});
+
+export const facilitiesWarranties = pgTable('facilities_warranties', {
+  id: text('id').primaryKey(),
+  assetId: text('asset_id').notNull(),
+  supplierId: text('supplier_id'),
+  warrantyStartDate: timestamp('warranty_start_date', { withTimezone: true }),
+  warrantyEndDate: timestamp('warranty_end_date', { withTimezone: true }),
+  warrantyTerms: text('warranty_terms'),
+  warrantyCode: text('warranty_code'),
+  documentUrl: text('document_url'),
+  status: text('status').notNull().default('ACTIVE'), // 'ACTIVE', 'EXPIRING_SOON', 'EXPIRED', 'VOID'
+  ...timestamps,
+});
+
+export const facilitiesSafetyChecks = pgTable('facilities_safety_checks', {
+  id: text('id').primaryKey(),
+  code: text('code').notNull().unique(),
+  title: text('title').notNull(),
+  checkType: text('check_type').notNull(), // 'FIRE_SAFETY', 'ELECTRICAL', 'WATER', 'HYGIENE', 'SECURITY', 'OTHER'
+  locationId: text('location_id'),
+  assignedToId: text('assigned_to_id'),
+  assignedToName: text('assigned_to_name'),
+  cycle: text('cycle'), // e.g., 'WEEKLY', 'MONTHLY', 'QUARTERLY'
+  lastCheckedAt: timestamp('last_checked_at', { withTimezone: true }),
+  nextCheckAt: timestamp('next_check_at', { withTimezone: true }),
+  status: text('status').notNull().default('PENDING'), // 'PENDING', 'PASSED', 'FAILED', 'NEEDS_ACTION', 'OVERDUE'
+  result: text('result'),
+  issueDescription: text('issue_description'),
+  beforeImageUrl: text('before_image_url'),
+  afterImageUrl: text('after_image_url'),
+  relatedRepairRequestId: text('related_repair_request_id'),
+  note: text('note'),
+  ...timestamps,
+});
+
+export const facilitiesBookingRequests = pgTable('facilities_booking_requests', {
+  id: text('id').primaryKey(),
+  code: text('code').notNull().unique(),
+  targetType: text('target_type').notNull(), // 'ASSET', 'LOCATION'
+  assetId: text('asset_id'),
+  locationId: text('location_id'),
+  requesterId: text('requester_id').notNull(),
+  requesterName: text('requester_name'),
+  department: text('department'),
+  purpose: text('purpose'),
+  startTime: timestamp('start_time', { withTimezone: true }).notNull(),
+  endTime: timestamp('end_time', { withTimezone: true }).notNull(),
+  approvedById: text('approved_by_id'),
+  approvedByName: text('approved_by_name'),
+  status: text('status').notNull().default('PENDING'), // 'PENDING', 'APPROVED', 'REJECTED', 'IN_USE', 'RETURNED', 'OVERDUE', 'CANCELLED'
+  conditionBefore: text('condition_before'),
+  conditionAfter: text('condition_after'),
+  note: text('note'),
+  attachmentUrl: text('attachment_url'), // File/Ảnh đính kèm
+  ...timestamps,
+});
+
+export const facilitiesRenovationProjects = pgTable('facilities_renovation_projects', {
+  id: text('id').primaryKey(),
+  code: text('code').notNull().unique(),
+  title: text('title').notNull(),
+  scope: text('scope'),
+  reason: text('reason'),
+  locationId: text('location_id'),
+  managerId: text('manager_id'),
+  managerName: text('manager_name'),
+  plannedStartDate: timestamp('planned_start_date', { withTimezone: true }),
+  plannedEndDate: timestamp('planned_end_date', { withTimezone: true }),
+  actualStartDate: timestamp('actual_start_date', { withTimezone: true }),
+  actualEndDate: timestamp('actual_end_date', { withTimezone: true }),
+  status: text('status').notNull().default('PROPOSED'), // 'PROPOSED', 'APPROVED', 'IN_PROGRESS', 'PAUSED', 'COMPLETED', 'ACCEPTED', 'CANCELLED'
+  tasks: jsonb('tasks'), // Array of subtasks
+  beforeImageUrls: jsonb('before_image_urls'),
+  afterImageUrls: jsonb('after_image_urls'),
+  acceptanceNote: text('acceptance_note'),
+  relatedPurchaseRequestId: text('related_purchase_request_id'),
+  ...timestamps,
+});
+
+export const facilitiesSlaSettings = pgTable('facilities_sla_settings', {
+  id: text('id').primaryKey(),
+  priority: text('priority').notNull().unique(), // 'URGENT', 'HIGH', 'MEDIUM', 'LOW'
+  firstResponseHours: integer('first_response_hours').notNull(),
+  resolutionHours: integer('resolution_hours').notNull(),
+  ...timestamps,
 });
 

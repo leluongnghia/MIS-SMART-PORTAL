@@ -42,22 +42,41 @@ export async function getDashboardStats() {
   // Recent Audit logs (Admin only)
   let recentLogs: any[] = [];
   if (isAdmin) {
-    recentLogs = await db.query.auditLogs.findMany({
-      orderBy: [desc(schema.auditLogs.createdAt)],
-      limit: 10,
-      with: {
-        actor: true // actually this requires relation in schema if exists, we might need a join
-      }
-    }).catch(async () => {
-      // Fallback if relation not fully defined
-      return await db.select().from(schema.auditLogs).orderBy(desc(schema.auditLogs.createdAt)).limit(10);
-    });
+    try {
+      recentLogs = await db.select().from(schema.auditLogs).orderBy(desc(schema.auditLogs.createdAt)).limit(10);
+    } catch (err) {
+      console.error("Failed to query audit logs:", err);
+    }
   }
+
+  // Tasks status distribution
+  const tasksByStatus = await db.select({
+    status: schema.tasks.status,
+    count: count()
+  }).from(schema.tasks)
+    .groupBy(schema.tasks.status);
+
+  // Leads status distribution
+  const leadsByStatus = await db.select({
+    status: schema.leads.status,
+    count: count()
+  }).from(schema.leads)
+    .groupBy(schema.leads.status);
+
+  // Students by Class Name
+  const studentsByClass = await db.select({
+    className: schema.studentDirectory.className,
+    count: count()
+  }).from(schema.studentDirectory)
+    .groupBy(schema.studentDirectory.className);
 
   return {
     totalTasks: tasksCount[0]?.count || 0,
     totalStudents: studentsCount[0]?.count || 0,
     totalLeads: leadsCount[0]?.count || 0,
+    tasksByStatus,
+    leadsByStatus,
+    studentsByClass,
     recentLogs
   };
 }

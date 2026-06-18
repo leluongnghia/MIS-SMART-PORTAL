@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useMemo } from 'react';
 import { createTask, updateTaskStatus } from './actions';
 import {
   FileText,
@@ -91,6 +91,7 @@ type TaskRow = {
   status?: string;
   priority?: string;
   tag?: string | null;
+  createdAt?: string | Date | null;
 };
 
 const STATUS_COLUMNS = [
@@ -100,7 +101,7 @@ const STATUS_COLUMNS = [
   { title: 'Hoàn thành', statuses: ['HOAN_THANH', 'completed', 'done', 'closed'] },
 ];
 
-const formatTaskDate = (deadline?: string | null) => {
+const formatTaskDate = (deadline?: string | Date | null) => {
   if (!deadline) return 'Không có hạn';
   const date = new Date(deadline);
   if (Number.isNaN(date.getTime())) return String(deadline);
@@ -135,6 +136,7 @@ export default function TasksDashboard({ initialData }: { initialData?: { data?:
   const [approvalNote, setApprovalNote] = useState('');
   const [selectedTask, setSelectedTask] = useState<any>(null);
   const [isTaskOpen, setIsTaskOpen] = useState(false);
+  const [selectedApprovalTaskId, setSelectedApprovalTaskId] = useState<string>('');
   const [activeFilter, setActiveFilter] = useState<'in_progress' | 'overdue' | 'pending' | 'completed' | null>(null);
 
   const scrollToSection = (id: string) => {
@@ -239,6 +241,37 @@ export default function TasksDashboard({ initialData }: { initialData?: { data?:
   const pendingApprovalTasks = tasksList.filter(task => 
     ['CHO_DUYET', 'pending_approval', 'pending', 'review'].includes(String(task.status || ''))
   );
+
+  const selectedApprovalTask = useMemo(() => {
+    return pendingApprovalTasks.find(t => t.id === selectedApprovalTaskId) || pendingApprovalTasks[0] || tasksList.find(t => t.status === 'CHO_DUYET');
+  }, [pendingApprovalTasks, selectedApprovalTaskId, tasksList]);
+
+  const approvalDetails = useMemo(() => {
+    if (!selectedApprovalTask) return null;
+    const title = selectedApprovalTask.title || '';
+    const matchedKey = Object.keys(APPROVAL_DETAILS).find(key => title.toLowerCase().includes(key.toLowerCase()) || key.toLowerCase().includes(title.toLowerCase()));
+    
+    if (matchedKey) {
+      return (APPROVAL_DETAILS as any)[matchedKey];
+    }
+    
+    return {
+      code: selectedApprovalTask.id || 'DX-DYNAMIC',
+      dept: selectedApprovalTask.workspaceId || 'Chuyên môn',
+      user: selectedApprovalTask.assignedName || 'Thành viên',
+      deadline: selectedApprovalTask.deadline ? formatTaskDate(selectedApprovalTask.deadline) : 'Chưa đặt hạn',
+      purpose: selectedApprovalTask.description || 'Đề xuất phê duyệt công việc chuyên môn học kỳ.',
+      budget: 'N/A',
+      items: [
+        { name: selectedApprovalTask.title, qty: 1, price: 'N/A', total: 'N/A' }
+      ],
+      attachments: [],
+      timeline: [
+        { step: 1, role: 'Lập đề xuất', user: selectedApprovalTask.assignedName || 'Thành viên', date: formatTaskDate(selectedApprovalTask.createdAt), done: true },
+        { step: 2, role: 'Ban Giám hiệu', user: 'Chờ duyệt', date: '', active: true }
+      ]
+    };
+  }, [selectedApprovalTask]);
   const inProgressCount = tasksList.filter(task => ['DANG_TIEN_HANH', 'in_progress', 'doing', 'processing'].includes(String(task.status))).length;
   const overdueCount = tasksList.filter(isOverdueTask).length;
   const pendingCount = tasksList.filter(task => ['CHO_DUYET', 'pending_approval', 'pending', 'review'].includes(String(task.status))).length;
@@ -472,72 +505,73 @@ export default function TasksDashboard({ initialData }: { initialData?: { data?:
             <a href="#" className="text-xs font-medium text-blue-600">Xem tất cả</a>
           </CardHeader>
           <CardContent className="p-6 flex-1 overflow-y-auto">
-            <div className="flex items-center gap-2 mb-6">
-              <h3 className="font-bold text-sm">Quy trình: Đề xuất mua sắm thiết bị CNTT</h3>
-              <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-0 text-[10px] px-1.5 py-0">Đang thực hiện</Badge>
-            </div>
-            
-            {/* Timeline Graphic */}
-            <div className="relative flex justify-between mb-8 px-4">
-              <div className="absolute top-4 left-6 right-6 h-1 bg-slate-200 dark:bg-slate-800" />
-              <div className="absolute top-4 left-6 h-1 bg-blue-600" style={{ width: '50%' }} />
-              
-              {[
-                { step: 1, name: 'Lập đề xuất', user: 'Trần Thị Mai', date: '15/05/2025 09:12', active: false, done: true, sla: 'SLA 1 ngày' },
-                { step: 2, name: 'Trưởng bộ phận', user: 'Phạm Quang Minh', date: '15/05/2025 14:20', active: false, done: true, sla: 'SLA 2 ngày' },
-                { step: 3, name: 'Phó Hiệu trưởng', user: 'Nguyễn Văn Nam', date: 'Hạn: 16/05/2025 17:00', active: true, done: false, sla: 'SLA 1 ngày' },
-                { step: 4, name: 'Hiệu trưởng', user: 'Chờ xử lý', date: '', active: false, done: false },
-                { step: 5, name: 'Hoàn tất', user: 'Chờ xử lý', date: '', active: false, done: false },
-              ].map((s, i) => (
-                <div key={i} className="relative flex flex-col items-center z-10 w-16">
-                  {s.sla && <div className="absolute -top-6 text-[9px] text-slate-400 whitespace-nowrap">{s.sla}</div>}
-                  <div className={cn("w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm border-2 ring-4 ring-white dark:ring-slate-950", 
-                    s.done ? "bg-blue-600 border-blue-600 text-white" : 
-                    s.active ? "bg-orange-500 border-orange-500 text-white" : 
-                    "bg-white dark:bg-slate-900 border-slate-300 text-slate-400"
-                  )}>
-                    {s.done ? <FileText className="h-4 w-4" /> : s.step}
-                  </div>
-                  <div className="text-center mt-2">
-                    <p className={cn("text-[10px] font-bold leading-tight", s.active ? "text-orange-600" : "text-slate-700 dark:text-slate-300")}>{s.name}</p>
-                    <p className="text-[9px] text-slate-500 truncate w-20">{s.user}</p>
-                    {s.date && <p className={cn("text-[9px]", s.active ? "text-orange-600 font-medium" : "text-slate-400")}>{s.date}</p>}
-                    {s.done && <CheckCircle2 className="h-3 w-3 text-emerald-500 mx-auto mt-1" />}
-                  </div>
+            {approvalDetails ? (
+              <>
+                <div className="flex items-center gap-2 mb-6">
+                  <h3 className="font-bold text-sm">Quy trình: {selectedApprovalTask?.title}</h3>
+                  <Badge className="bg-orange-100 text-orange-700 hover:bg-orange-100 border-0 text-[10px] px-1.5 py-0">Đang thực hiện</Badge>
                 </div>
-              ))}
-            </div>
+                
+                {/* Timeline Graphic */}
+                <div className="relative flex justify-between mb-8 px-4">
+                  <div className="absolute top-4 left-6 right-6 h-1 bg-slate-200 dark:bg-slate-800" />
+                  <div className="absolute top-4 left-6 h-1 bg-blue-600" style={{ width: approvalDetails.timeline.some((s: any) => s.step === 2 && s.done) ? '50%' : '25%' }} />
+                  
+                  {approvalDetails.timeline.map((s: any, idx: number) => (
+                    <div key={idx} className="relative flex flex-col items-center z-10 w-16">
+                      {s.sla && <div className="absolute -top-6 text-[9px] text-slate-400 whitespace-nowrap">{s.sla}</div>}
+                      <div className={cn("w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm border-2 ring-4 ring-white dark:ring-slate-950", 
+                        s.done ? "bg-blue-600 border-blue-600 text-white" : 
+                        s.active ? "bg-orange-500 border-orange-500 text-white" : 
+                        "bg-white dark:bg-slate-900 border-slate-300 text-slate-400"
+                      )}>
+                        {s.done ? <FileText className="h-4 w-4" /> : s.step}
+                      </div>
+                      <div className="text-center mt-2">
+                        <p className={cn("text-[10px] font-bold leading-tight", s.active ? "text-orange-600" : "text-slate-700 dark:text-slate-300")}>{s.role}</p>
+                        <p className="text-[9px] text-slate-500 truncate w-20">{s.user}</p>
+                        {s.date && <p className={cn("text-[9px]", s.active ? "text-orange-600 font-medium" : "text-slate-400")}>{s.date}</p>}
+                        {s.done && <CheckCircle2 className="h-3 w-3 text-emerald-500 mx-auto mt-1" />}
+                      </div>
+                    </div>
+                  ))}
+                </div>
 
-            <div className="grid grid-cols-2 gap-6 pt-4 border-t border-slate-100 dark:border-slate-800">
-              <div className="space-y-4">
-                <h4 className="text-xs font-bold">Thông tin đề xuất</h4>
-                <div className="space-y-2 text-xs">
-                  <div className="grid grid-cols-2 gap-2"><span className="text-slate-500">Mã đề xuất</span><span className="font-medium">DXMS-2025-0007</span></div>
-                  <div className="grid grid-cols-2 gap-2"><span className="text-slate-500">Người đề xuất</span><span className="font-medium">Trần Thị Mai</span></div>
-                  <div className="grid grid-cols-2 gap-2"><span className="text-slate-500">Phòng/Bộ phận</span><span className="font-medium">Tin học</span></div>
-                  <div className="grid grid-cols-2 gap-2"><span className="text-slate-500">Ngày tạo</span><span className="font-medium">15/05/2025 09:12</span></div>
-                  <div className="grid grid-cols-1 gap-1"><span className="text-slate-500">Mục đích</span><p className="text-slate-700 dark:text-slate-300">Trang bị bổ sung máy tính phục vụ giảng dạy và học tập.</p></div>
+                <div className="grid grid-cols-2 gap-6 pt-4 border-t border-slate-100 dark:border-slate-800">
+                  <div className="space-y-4">
+                    <h4 className="text-xs font-bold">Thông tin đề xuất</h4>
+                    <div className="space-y-2 text-xs">
+                      <div className="grid grid-cols-2 gap-2"><span className="text-slate-500">Mã đề xuất</span><span className="font-medium">{approvalDetails.code}</span></div>
+                      <div className="grid grid-cols-2 gap-2"><span className="text-slate-500">Người đề xuất</span><span className="font-medium">{approvalDetails.user}</span></div>
+                      <div className="grid grid-cols-2 gap-2"><span className="text-slate-500">Phòng/Bộ phận</span><span className="font-medium">{approvalDetails.dept}</span></div>
+                      <div className="grid grid-cols-2 gap-2"><span className="text-slate-500">Ngày tạo</span><span className="font-medium">{approvalDetails.deadline}</span></div>
+                      <div className="grid grid-cols-1 gap-1"><span className="text-slate-500">Mục đích</span><p className="text-slate-700 dark:text-slate-300">{approvalDetails.purpose}</p></div>
+                    </div>
+                  </div>
+                  <div className="space-y-4">
+                    <h4 className="text-xs font-bold">Chi tiết chi phí</h4>
+                    <div className="space-y-2 text-xs">
+                      <div className="grid grid-cols-2 gap-2"><span className="text-slate-500">Ngân sách dự chi</span><span className="font-bold text-blue-600">{approvalDetails.budget || 'N/A'}</span></div>
+                      {approvalDetails.items?.length > 0 && (
+                        <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-1">
+                          <span className="text-slate-500 block font-bold text-[10px]">Hạng mục:</span>
+                          {approvalDetails.items.map((item: any, idx: number) => (
+                            <div key={idx} className="flex justify-between text-[10px] text-slate-600 dark:text-slate-400">
+                              <span>{item.name} (x{item.qty})</span>
+                              <span className="font-bold">{item.total}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
+              </>
+            ) : (
+              <div className="h-full flex items-center justify-center text-xs text-slate-400">
+                Chọn một yêu cầu để xem quy trình chi tiết
               </div>
-              <div className="space-y-4">
-                <h4 className="text-xs font-bold">Tệp đính kèm</h4>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 p-2 border border-slate-100 dark:border-slate-800 rounded bg-slate-50 dark:bg-slate-900/50">
-                    <FileText className="h-4 w-4 text-red-500 shrink-0" />
-                    <div className="min-w-0 flex-1"><p className="text-[10px] font-medium truncate">De_xuat_mua_sam_CNTT.pdf</p><p className="text-[9px] text-slate-400">(1.2 MB)</p></div>
-                  </div>
-                  <div className="flex items-center gap-2 p-2 border border-slate-100 dark:border-slate-800 rounded bg-slate-50 dark:bg-slate-900/50">
-                    <FileText className="h-4 w-4 text-blue-500 shrink-0" />
-                    <div className="min-w-0 flex-1"><p className="text-[10px] font-medium truncate">Bao_gia_thiet_bi.pdf</p><p className="text-[9px] text-slate-400">(812 KB)</p></div>
-                  </div>
-                  <div className="flex items-center gap-2 p-2 border border-slate-100 dark:border-slate-800 rounded bg-slate-50 dark:bg-slate-900/50">
-                    <Paperclip className="h-4 w-4 text-emerald-500 shrink-0" />
-                    <div className="min-w-0 flex-1"><p className="text-[10px] font-medium truncate">Cau_hinh_ky_thuat.xlsx</p><p className="text-[9px] text-slate-400">(256 KB)</p></div>
-                  </div>
-                  <a href="#" className="text-[10px] font-bold text-blue-600 block pt-1">Xem tất cả (3)</a>
-                </div>
-              </div>
-            </div>
+            )}
           </CardContent>
         </Card>
 
@@ -559,10 +593,14 @@ export default function TasksDashboard({ initialData }: { initialData?: { data?:
                   <div 
                     key={task.id || i} 
                     onClick={() => {
-                      setSelectedTask({ ...task, status: 'Chờ duyệt' });
-                      setIsTaskOpen(true);
+                      setSelectedApprovalTaskId(task.id || '');
                     }}
-                    className="p-4 space-y-3 hover:bg-slate-50 dark:hover:bg-slate-900/50 cursor-pointer transition-colors"
+                    className={cn(
+                      "p-4 space-y-3 hover:bg-slate-50 dark:hover:bg-slate-900/50 cursor-pointer transition-colors border-l-4",
+                      selectedApprovalTask?.id === task.id
+                        ? "border-l-blue-600 bg-blue-50/30 dark:bg-blue-950/10"
+                        : "border-l-transparent"
+                    )}
                   >
                     <div>
                       <h4 className="text-sm font-bold text-slate-900 dark:text-white leading-tight mb-1">{task.title}</h4>
@@ -573,7 +611,17 @@ export default function TasksDashboard({ initialData }: { initialData?: { data?:
                       <span className="text-red-500 font-medium">{formatTaskDate(task.deadline)}</span>
                     </div>
                     <div className="flex gap-2">
-                      <Button variant="outline" className="flex-1 h-7 text-emerald-600 border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 text-xs">Xem & Duyệt</Button>
+                      <Button 
+                        variant="outline" 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedTask({ ...task, status: 'Chờ duyệt' });
+                          setIsTaskOpen(true);
+                        }}
+                        className="flex-1 h-7 text-emerald-600 border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 text-xs"
+                      >
+                        Xem & Duyệt
+                      </Button>
                     </div>
                   </div>
                 ))

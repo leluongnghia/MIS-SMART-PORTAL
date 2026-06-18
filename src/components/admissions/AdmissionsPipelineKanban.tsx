@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { Dialog } from '@/src/components/ui/dialog';
 import {
   X, Phone, Mail, Clock, ArrowRight, ChevronDown, Filter, Settings,
   Plus, RefreshCw, Calendar, MessageSquare, Send, Zap, Check
@@ -78,7 +79,7 @@ const THU_TU_GIAI_DOAN: GiaiDoan[] = [
 ];
 
 // ─── Thẻ Kanban ───────────────────────────────────────────────────────────────
-function TheKanbanItem({ the, onClick }: { the: TheKanban; onClick: () => void }) {
+function TheKanbanItem({ the, onClick, onActionClick, anDiem = false, anTvv = false }: { the: TheKanban; onClick: () => void; onActionClick: (e: React.MouseEvent) => void; anDiem?: boolean; anTvv?: boolean }) {
   const mauUuTien = MAU_UU_TIEN[the.doUuTien];
   const mauDiem = the.diemLead >= 80 ? 'text-green-600' : the.diemLead >= 60 ? 'text-amber-600' : 'text-red-500';
 
@@ -94,11 +95,15 @@ function TheKanbanItem({ the, onClick }: { the: TheKanban; onClick: () => void }
       </p>
 
       <div className="mt-2.5 flex items-center gap-2">
-        <div className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-[8px] font-black text-white">
-          {the.tvvKyHieu}
-        </div>
-        <span className="flex-1 text-[10px] font-semibold text-slate-500 truncate">{the.tvv}</span>
-        <span className={`text-xs font-black ${mauDiem}`}>{the.diemLead}</span>
+        {!anTvv && (
+          <>
+            <div className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-[8px] font-black text-white">
+              {the.tvvKyHieu}
+            </div>
+            <span className="flex-1 text-[10px] font-semibold text-slate-500 truncate">{the.tvv}</span>
+          </>
+        )}
+        {!anDiem && <span className={`text-xs font-black ml-auto ${mauDiem}`}>{the.diemLead}</span>}
       </div>
 
       {the.hanChot && (
@@ -121,7 +126,12 @@ function TheKanbanItem({ the, onClick }: { the: TheKanban; onClick: () => void }
         <span className="text-[10px] text-slate-400 flex items-center gap-0.5">
           <Clock className="h-2.5 w-2.5" /> {the.hoatDongCuoi}
         </span>
-        <span className="text-[10px] font-bold text-blue-600">→ {the.buocTiep}</span>
+        <span 
+          onClick={onActionClick}
+          className="text-[10px] font-bold text-blue-600 hover:text-blue-800 hover:underline cursor-pointer select-none"
+        >
+          → {the.buocTiep}
+        </span>
       </div>
     </div>
   );
@@ -355,11 +365,19 @@ export default function AdmissionsPipelineKanban() {
   const [expandedCols, setExpandedCols] = useState<Set<GiaiDoan>>(new Set());
   const [toast, setToast] = useState('');
 
+  // States for filter and customize popups
+  const [hienBoLoc, setHienBoLoc] = useState(false);
+  const [locUuTien, setLocUuTien] = useState('ALL');
+  const [locDiemMin, setLocDiemMin] = useState(0);
+
+  const [hienTuyChinh, setHienTuyChinh] = useState(false);
+  const [tuyChinhAnDiem, setTuyChinhAnDiem] = useState(false);
+  const [tuyChinhAnTvv, setTuyChinhAnTvv] = useState(false);
+
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 2500); };
 
   const chuyenGiaiDoan = (id: string, giaiDoanMoi: GiaiDoan) => {
     setDanhSachThe(prev => prev.map(t => t.id === id ? { ...t, giaiDoan: giaiDoanMoi } : t));
-    // cập nhật theChon nếu đang mở
     setTheChon(prev => prev?.id === id ? { ...prev, giaiDoan: giaiDoanMoi } : prev);
   };
 
@@ -381,6 +399,8 @@ export default function AdmissionsPipelineKanban() {
     let ds = danhSachThe.filter(c => c.giaiDoan === gd);
     if (locTvv !== 'Tất cả tư vấn viên') ds = ds.filter(c => c.tvv === locTvv);
     if (locNguon !== 'Tất cả nguồn') ds = ds.filter(c => c.nguon === locNguon);
+    if (locUuTien !== 'ALL') ds = ds.filter(c => c.doUuTien === locUuTien);
+    ds = ds.filter(c => c.diemLead >= locDiemMin);
     return ds;
   };
 
@@ -416,11 +436,11 @@ export default function AdmissionsPipelineKanban() {
           <div className="flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-600">
             <Calendar className="h-3.5 w-3.5 text-slate-400" /> 12/05/2025 - 18/05/2025
           </div>
-          <button type="button" onClick={() => showToast('Mở bộ lọc nâng cao')}
+          <button type="button" onClick={() => setHienBoLoc(true)}
             className="flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 hover:bg-slate-50">
             <Filter className="h-3.5 w-3.5" /> Bộ lọc
           </button>
-          <button type="button" onClick={() => showToast('Mở tuỳ chỉnh pipeline')}
+          <button type="button" onClick={() => setHienTuyChinh(true)}
             className="flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 hover:bg-slate-50">
             <Settings className="h-3.5 w-3.5" /> Tuỳ chỉnh
           </button>
@@ -493,7 +513,17 @@ export default function AdmissionsPipelineKanban() {
                   <QuickAddForm giaiDoan={giaiDoan} onAdd={themThe} onCancel={() => setQuickAddCol(null)} />
                 )}
                 {visible.map(the => (
-                  <TheKanbanItem key={the.id} the={the} onClick={() => setTheChon(the)} />
+                  <TheKanbanItem 
+                    key={the.id} 
+                    the={the} 
+                    onClick={() => setTheChon(the)} 
+                    anDiem={tuyChinhAnDiem}
+                    anTvv={tuyChinhAnTvv}
+                    onActionClick={(e) => {
+                      e.stopPropagation();
+                      showToast(`✓ Đang thực hiện: "${the.buocTiep}" cho học sinh ${the.hoTen}`);
+                    }}
+                  />
                 ))}
                 {!isExpanded && hidden > 0 && (
                   <button type="button" onClick={() => toggleExpand(giaiDoan)}
@@ -527,6 +557,106 @@ export default function AdmissionsPipelineKanban() {
           </div>
         </div>
       )}
+      {/* Modal Bộ lọc */}
+      <Dialog
+        open={hienBoLoc}
+        onOpenChange={setHienBoLoc}
+        title="Bộ lọc Pipeline"
+        description="Lọc danh sách các lead đang trong quy trình tuyển sinh."
+      >
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-slate-700">Mức độ ưu tiên</label>
+            <select 
+              value={locUuTien} 
+              onChange={(e) => setLocUuTien(e.target.value)}
+              className="w-full h-9 rounded-xl border border-slate-200 px-3 text-xs bg-white focus:outline-none"
+            >
+              <option value="ALL">Tất cả độ ưu tiên</option>
+              <option value="Cao">Cao</option>
+              <option value="Trung bình">Trung bình</option>
+              <option value="Thấp">Thấp</option>
+            </select>
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex justify-between text-xs font-bold text-slate-700">
+              <span>Điểm lead tối thiểu</span>
+              <span className="text-blue-600 font-bold">{locDiemMin} điểm</span>
+            </div>
+            <input 
+              type="range" 
+              min="0" 
+              max="100" 
+              value={locDiemMin} 
+              onChange={(e) => setLocDiemMin(Number(e.target.value))}
+              className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-blue-600"
+            />
+          </div>
+
+          <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+            <button 
+              type="button" 
+              onClick={() => {
+                setLocUuTien('ALL');
+                setLocDiemMin(0);
+                setHienBoLoc(false);
+              }}
+              className="px-4 py-2 text-xs font-bold rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 transition"
+            >
+              Xoá bộ lọc
+            </button>
+            <button 
+              type="button" 
+              onClick={() => setHienBoLoc(false)}
+              className="px-5 py-2 text-xs font-bold rounded-xl bg-blue-600 text-white hover:bg-blue-700 shadow-sm transition"
+            >
+              Áp dụng
+            </button>
+          </div>
+        </div>
+      </Dialog>
+
+      {/* Modal Tùy chỉnh */}
+      <Dialog
+        open={hienTuyChinh}
+        onOpenChange={setHienTuyChinh}
+        title="Tùy chỉnh hiển thị Kanban"
+        description="Ẩn hoặc hiện các thông tin bổ trợ trên thẻ Kanban học sinh."
+      >
+        <div className="space-y-4">
+          <div className="space-y-3">
+            <label className="flex items-center gap-2.5 text-sm font-medium text-slate-700 select-none cursor-pointer">
+              <input 
+                type="checkbox" 
+                checked={tuyChinhAnDiem} 
+                onChange={(e) => setTuyChinhAnDiem(e.target.checked)}
+                className="h-4 w-4 rounded border-slate-300 text-blue-600"
+              />
+              Ẩn điểm số Lead (Lead Score)
+            </label>
+            <label className="flex items-center gap-2.5 text-sm font-medium text-slate-700 select-none cursor-pointer">
+              <input 
+                type="checkbox" 
+                checked={tuyChinhAnTvv} 
+                onChange={(e) => setTuyChinhAnTvv(e.target.checked)}
+                className="h-4 w-4 rounded border-slate-300 text-blue-600"
+              />
+              Ẩn Tư vấn viên phụ trách
+            </label>
+          </div>
+
+          <div className="flex justify-end pt-3 border-t border-slate-100">
+            <button 
+              type="button" 
+              onClick={() => setHienTuyChinh(false)}
+              className="px-5 py-2 text-xs font-bold rounded-xl bg-blue-600 text-white hover:bg-blue-700 shadow-sm transition"
+            >
+              Hoàn tất
+            </button>
+          </div>
+        </div>
+      </Dialog>
     </div>
   );
 }

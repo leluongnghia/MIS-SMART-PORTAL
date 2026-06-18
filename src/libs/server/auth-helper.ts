@@ -51,6 +51,19 @@ export async function getCurrentActor(): Promise<Actor | null> {
   return (user as Actor) || null;
 }
 
+const SECRET_KEY_PATTERN = /(password|secret|token|api[_-]?key|smtp_password|credential)/i;
+
+function sanitizeAuditValue(value: any): any {
+  if (Array.isArray(value)) return value.map(sanitizeAuditValue);
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(Object.entries(value).map(([key, val]) => [
+      key,
+      SECRET_KEY_PATTERN.test(key) ? '••••••••' : sanitizeAuditValue(val),
+    ]));
+  }
+  return value;
+}
+
 // Write Audit Log helper
 export async function writeAuditLog(
   actorId: string | null,
@@ -62,18 +75,40 @@ export async function writeAuditLog(
     after?: any;
     ipAddress?: string;
     userAgent?: string;
+    success?: boolean;
+    errorMessage?: string;
+    module?: string;
     [key: string]: any;
   } = {}
 ) {
   try {
     const id = `audit_${Math.random().toString(36).substring(2, 9)}`;
+    let actorSnapshot: any = null;
+    if (actorId) {
+      const [actor] = await db.select().from(schema.users).where(eq(schema.users.id, actorId)).limit(1);
+      if (actor) {
+        actorSnapshot = {
+          id: actor.id,
+          name: actor.name,
+          role: actor.role,
+          roleName: actor.roleName,
+          title: actor.title,
+        };
+      }
+    }
+
     await db.insert(schema.auditLogs).values({
       id,
       entityType,
       entityId,
       action,
       actorId,
-      metadata: metadata || {},
+      metadata: sanitizeAuditValue({
+        success: metadata.success ?? true,
+        module: metadata.module || entityType,
+        actor: actorSnapshot,
+        ...metadata,
+      }) || {},
       createdAt: new Date(),
     });
   } catch (error) {
@@ -260,8 +295,8 @@ export function canViewReport(actor: Actor, reportType: string, scopeDeptId?: st
 // System Data - Storage permission check
 export function canViewFile(actor: Actor, file: { visibility: string; departmentId?: string | null; uploadedBy: string }) {
   if (isAdminTruong(actor)) return true;
-  if (file.visibility === 'SCHOOL') return true;
-  if (file.visibility === 'DEPARTMENT') {
+  if (file.visibility === 'SCHOOL' || file.visibility === 'SCHOOL_WIDE') return true;
+  if (file.visibility === 'DEPARTMENT' && file.departmentId) {
     return actor.departmentId === file.departmentId;
   }
   // Private
@@ -270,7 +305,7 @@ export function canViewFile(actor: Actor, file: { visibility: string; department
 
 export function canUploadFile(actor: Actor, visibility: string, departmentId?: string | null) {
   if (isAdminTruong(actor)) return true;
-  if (visibility === 'SCHOOL') return false; // Chỉ admin được upload file school-wide
+  if (visibility === 'SCHOOL' || visibility === 'SCHOOL_WIDE' || visibility === 'ADMIN_ONLY') return false; // Chỉ admin được upload file school-wide hoặc admin-only
   if (visibility === 'DEPARTMENT') {
     return actor.departmentId === departmentId;
   }
@@ -278,9 +313,28 @@ export function canUploadFile(actor: Actor, visibility: string, departmentId?: s
   return true;
 }
 
+export function canEditFile(actor: Actor, file: { uploadedBy: string; departmentId?: string | null; visibility: string }) {
+  if (isAdminTruong(actor)) return true;
+  if (isTruongPhong(actor) && file.visibility === 'DEPARTMENT' && file.departmentId === actor.departmentId) return true;
+  return actor.id === file.uploadedBy;
+}
+
+export function canArchiveFile(actor: Actor, file: { uploadedBy: string; departmentId?: string | null; visibility: string }) {
+  return canEditFile(actor, file);
+}
+
 export function canDeleteFile(actor: Actor, file: { uploadedBy: string }) {
   if (isAdminTruong(actor)) return true;
   return actor.id === file.uploadedBy;
+}
+
+export function canRestoreFile(actor: Actor, file: { uploadedBy: string }) {
+  if (isAdminTruong(actor)) return true;
+  return actor.id === file.uploadedBy;
+}
+
+export function canPermanentlyDeleteFile(actor: Actor) {
+  return isAdminTruong(actor);
 }
 
 // System Data - Settings permission check
@@ -293,5 +347,112 @@ export function canUpdateSystemSettings(actor: Actor) {
 }
 
 export function canViewSecretSetting(actor: Actor) {
+  return isAdminTruong(actor);
+}
+
+// Integration Settings (SMTP, QR payment) — chỉ Admin hệ thống
+export function canManageIntegrationSettings(actor: Actor) {
+  return isAdminTruong(actor);
+}
+
+export function canManageSystemSettings(actor: Actor) {
+  return canUpdateSystemSettings(actor);
+}
+
+export function canManageSecuritySettings(actor: Actor) {
+  return isAdminTruong(actor);
+}
+
+export function canViewAuditLogs(actor: Actor) {
+  return isAdminTruong(actor) || isTruongPhong(actor);
+}
+
+export function canUseUserSwitcher(actor: Actor) {
+  return isAdminTruong(actor);
+}
+
+export function getRoleRank(role: string) {
+  const ranks: Record<string, number> = { STAFF: 1, MANAGER: 2, ADMIN: 3 };
+  return ranks[role] || 0;
+}
+
+export function canSwitchToUser(actor: Actor, targetUser: { role: string }) {
+  if (isAdminTruong(actor)) return true;
+  return getRoleRank(actor.role) >= getRoleRank(targetUser.role);
+}
+
+// ==========================================
+// MODULE CSVC & THIẾT BỊ (FACILITIES) PERMISSIONS
+// ==========================================
+
+export function canManageFacilities(actor: Actor) {
+  return isAdminTruong(actor) || isTruongPhong(actor); // Giả định Trưởng phòng CSVC hoặc BGH có quyền. Trong thực tế có thể check departmentId === 'CSVC'
+}
+
+export function canCreatePurchaseRequest(actor: Actor) {
+  // Ai cũng có thể tạo đề xuất mua sắm cho phòng ban của mình
+  return true;
+}
+
+export function canApprovePurchaseRequest(actor: Actor) {
+  // Chỉ BGH/Admin được duyệt
+  return isAdminTruong(actor);
+}
+
+export function canReceivePurchasedItems(actor: Actor) {
+  // Người quản lý CSVC nhận hàng
+  return canManageFacilities(actor);
+}
+
+export function canCreateAssetFromPurchase(actor: Actor) {
+  return canManageFacilities(actor);
+}
+
+export function canManageInventoryCheck(actor: Actor) {
+  return canManageFacilities(actor);
+}
+
+export function canViewFacilityReports(actor: Actor) {
+  return isAdminTruong(actor) || isTruongPhong(actor);
+}
+
+// New Extensions
+export function canManageSupplies(actor: Actor) {
+  return canManageFacilities(actor);
+}
+
+export function canManageSuppliers(actor: Actor) {
+  return canManageFacilities(actor);
+}
+
+export function canManageWarranties(actor: Actor) {
+  return canManageFacilities(actor);
+}
+
+export function canManageSafetyChecks(actor: Actor) {
+  return canManageFacilities(actor);
+}
+
+export function canCreateBooking(actor: Actor) {
+  return true; // Any user can create a booking
+}
+
+export function canApproveBooking(actor: Actor) {
+  return canManageFacilities(actor);
+}
+
+export function canManageRenovationProjects(actor: Actor) {
+  return canManageFacilities(actor);
+}
+
+export function canGenerateAssetQr(actor: Actor) {
+  return canManageFacilities(actor);
+}
+
+export function canViewFacilityAlerts(actor: Actor) {
+  return isAdminTruong(actor) || isTruongPhong(actor);
+}
+
+export function canManageFacilitySla(actor: Actor) {
   return isAdminTruong(actor);
 }

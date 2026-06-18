@@ -5,9 +5,38 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/src
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/src/components/ui/tabs';
 import { Users, ClipboardList, TrendingUp, Activity, Download } from 'lucide-react';
 import { Button } from '@/src/components/ui/button';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  Legend
+} from 'recharts';
 
 export default function ReportsClient({ isAdmin, initialStats }: { isAdmin: boolean, initialStats: any }) {
   const [activeTab, setActiveTab] = React.useState('overview');
+  const taskChartData = React.useMemo(() => {
+    return (initialStats?.tasksByStatus || []).map((t: any) => ({
+      name: t.status === 'todo' ? 'Cần làm' : t.status === 'in_progress' ? 'Đang làm' : t.status === 'done' ? 'Hoàn thành' : t.status,
+      value: t.count
+    }));
+  }, [initialStats]);
+
+  const studentsChartData = React.useMemo(() => {
+    return (initialStats?.studentsByClass || []).map((s: any) => ({
+      name: s.className || 'Chưa xếp lớp',
+      students: s.count
+    }));
+  }, [initialStats]);
+
+  const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+
   const handleExport = () => {
     // Mock export
     alert('Tính năng xuất báo cáo đang được xây dựng.');
@@ -78,17 +107,66 @@ export default function ReportsClient({ isAdmin, initialStats }: { isAdmin: bool
           {isAdmin && <TabsTrigger active={activeTab === "audit"} onClick={() => setActiveTab("audit")}>Nhật ký Hệ thống (Audit Log)</TabsTrigger>}
         </TabsList>
         <TabsContent value="overview" activeValue={activeTab} className="space-y-4">
-          <Card className="col-span-4">
-            <CardHeader>
-              <CardTitle>Biểu đồ hoạt động</CardTitle>
-              <CardDescription>
-                Dữ liệu đang được kết nối với module Analytics...
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="pl-2 h-[300px] flex items-center justify-center border-t border-dashed border-border mt-4">
-              <span className="text-muted-foreground">Placeholder Biểu đồ (Sẽ sử dụng Recharts)</span>
-            </CardContent>
-          </Card>
+          <div className="grid gap-4 md:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle>Phân bố học sinh theo lớp</CardTitle>
+                <CardDescription>
+                  Số lượng học sinh chính thức đang học tại các lớp.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={studentsChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                    <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                    <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
+                    <Tooltip />
+                    <Bar dataKey="students" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Trạng thái công việc</CardTitle>
+                <CardDescription>
+                  Tỷ lệ công việc phân bổ theo trạng thái hiện tại.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="h-[300px] flex flex-col justify-between">
+                <div className="h-[220px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={taskChartData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={80}
+                        paddingAngle={5}
+                        dataKey="value"
+                      >
+                        {taskChartData.map((entry: any, index: number) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="flex justify-center gap-4 text-xs font-medium">
+                  {taskChartData.map((entry: any, index: number) => (
+                    <span key={entry.name} className="flex items-center gap-1.5">
+                      <span className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
+                      {entry.name}: {entry.value}
+                    </span>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
         {isAdmin && (

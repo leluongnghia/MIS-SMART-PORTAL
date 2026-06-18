@@ -56,6 +56,34 @@ export default function AppHeader({
   const sandboxRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
+  const [logoUrl, setLogoUrl] = useState<string>('https://misvn.edu.vn/wp-content/uploads/2021/11/logo.png');
+
+  // Load logo from localStorage and register listeners
+  useEffect(() => {
+    const cachedLogo = localStorage.getItem('school_logo_url');
+    if (cachedLogo) {
+      setLogoUrl(cachedLogo);
+    }
+
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'school_logo_url') {
+        setLogoUrl(e.newValue || 'https://misvn.edu.vn/wp-content/uploads/2021/11/logo.png');
+      }
+    };
+
+    const handleCustomLogoChange = (e: any) => {
+      setLogoUrl(e.detail || 'https://misvn.edu.vn/wp-content/uploads/2021/11/logo.png');
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('school_logo_changed', handleCustomLogoChange as any);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('school_logo_changed', handleCustomLogoChange as any);
+    };
+  }, []);
+
   // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -91,7 +119,7 @@ export default function AppHeader({
           <div className="absolute -inset-0.5 bg-gradient-to-r from-indigo-500 to-emerald-500 rounded-xl blur opacity-20 group-hover:opacity-40 transition duration-300"></div>
           <div className="relative w-12 h-10 bg-white rounded-xl flex items-center justify-center overflow-hidden p-1 border border-slate-200 shrink-0 shadow-3xs">
             <img 
-              src="https://misvn.edu.vn/wp-content/uploads/2021/11/logo.png" 
+              src={logoUrl} 
               alt="MIS Logo" 
               referrerPolicy="no-referrer"
               className="w-full h-full object-contain transform group-hover:scale-105 transition-transform"
@@ -100,7 +128,7 @@ export default function AppHeader({
                 const parent = e.currentTarget.parentElement;
                 if (parent) {
                   const fallback = document.createElement('div');
-                  fallback.className = 'text-indigo-600 font-bold text-sm';
+                  fallback.className = 'text-indigo-650 font-bold text-sm';
                   fallback.innerText = 'MIS';
                   parent.appendChild(fallback);
                 }

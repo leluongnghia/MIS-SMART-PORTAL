@@ -2,7 +2,10 @@ import { PGlite } from '@electric-sql/pglite';
 import { drizzle } from 'drizzle-orm/pglite';
 import * as schema from '../../models/Schema';
 
-let clientInstance: PGlite | null = null;
+let clientInstance: PGlite | null = globalThis.pgliteClient || null;
+let dbState: 'closed' | 'opening' | 'open' | 'closing' = clientInstance ? 'open' : 'closed';
+let openPromise: Promise<PGlite> | null = null;
+let closePromise: Promise<void> | null = null;
 let closeTimeout: NodeJS.Timeout | null = null;
 let activeQueries = 0;
 
@@ -11,27 +14,51 @@ async function getClient(): Promise<PGlite> {
     clearTimeout(closeTimeout);
     closeTimeout = null;
   }
-  
-  if (!clientInstance) {
+
+  // If currently closing, wait for it to finish closing first
+  if (dbState === 'closing' && closePromise) {
+    await closePromise;
+  }
+
+  // If open and has instance, return it
+  if (dbState === 'open' && clientInstance) {
+    return clientInstance;
+  }
+
+  // If opening, wait for it to open
+  if (dbState === 'opening' && openPromise) {
+    return openPromise;
+  }
+
+  // Otherwise start opening
+  dbState = 'opening';
+  openPromise = (async () => {
     const dbPath = process.env.DATABASE_URL || './local.db';
     let retries = 15;
     while (retries > 0) {
       try {
-        clientInstance = new PGlite(dbPath);
-        await clientInstance.waitReady;
-        break;
+        const client = new PGlite(dbPath);
+        await client.waitReady;
+        clientInstance = client;
+        globalThis.pgliteClient = client;
+        dbState = 'open';
+        openPromise = null;
+        return client;
       } catch (err: any) {
         retries--;
         if (retries === 0) {
+          dbState = 'closed';
+          openPromise = null;
           console.error("PGlite lock acquire failed permanently:", err);
           throw err;
         }
         await new Promise((resolve) => setTimeout(resolve, 100 + Math.random() * 100));
       }
     }
-  }
-  
-  return clientInstance!;
+    throw new Error("PGlite lock acquire failed");
+  })();
+
+  return openPromise;
 }
 
 function releaseClient() {
@@ -39,14 +66,23 @@ function releaseClient() {
   if (activeQueries <= 0) {
     activeQueries = 0;
     if (closeTimeout) clearTimeout(closeTimeout);
-    closeTimeout = setTimeout(async () => {
-      if (clientInstance) {
-        try {
-          await clientInstance.close();
-        } catch (e) {
-          // Ignore close errors
-        }
-        clientInstance = null;
+    closeTimeout = setTimeout(() => {
+      closeTimeout = null;
+      if (dbState === 'open' && clientInstance) {
+        dbState = 'closing';
+        closePromise = (async () => {
+          try {
+            const client = clientInstance;
+            clientInstance = null;
+            globalThis.pgliteClient = undefined;
+            await client!.close();
+          } catch (e) {
+            // Ignore close errors
+          } finally {
+            dbState = 'closed';
+            closePromise = null;
+          }
+        })();
       }
     }, 100);
   }
@@ -56,6 +92,22 @@ const pgliteProxy = new Proxy({} as any, {
   get(target, prop) {
     if (prop === 'waitReady') {
       return getClient().then((c) => c.waitReady);
+    }
+    
+    if (prop === 'close') {
+      return async () => {
+        if (closeTimeout) {
+          clearTimeout(closeTimeout);
+          closeTimeout = null;
+        }
+        if (clientInstance) {
+          const client = clientInstance;
+          clientInstance = null;
+          globalThis.pgliteClient = undefined;
+          dbState = 'closed';
+          await client.close();
+        }
+      };
     }
     
     return async (...args: any[]) => {
