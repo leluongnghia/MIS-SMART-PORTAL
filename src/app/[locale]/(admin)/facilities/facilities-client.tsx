@@ -375,7 +375,7 @@ export default function FacilitiesClient({ initialLocations = [], initialAssets 
     {/* Real details pop-up modal dialog overlay */}
     {selectedRow && (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
-        <Card className="w-full max-w-lg shadow-2xl border border-border bg-card animate-in zoom-in-95 duration-200">
+        <Card className="w-full max-w-lg glass-modal animate-in zoom-in-95 duration-200">
           <CardHeader className="border-b pb-3 flex flex-row items-center justify-between space-y-0">
             <div>
               <CardTitle className="text-lg font-bold">Chi tiết {selectedRowTitle}</CardTitle>
