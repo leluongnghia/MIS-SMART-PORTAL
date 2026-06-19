@@ -65,6 +65,14 @@ export default function Student360Dashboard({ initialData }: { initialData?: any
     return Object.entries(grouped).sort(([a], [b]) => a.localeCompare(b, 'vi', { numeric: true }));
   }, [initialData]);
 
+  const officialClassOptions = useMemo(() => {
+    const classDistribution = initialData?.officialStats?.classDistribution || [];
+    if (classDistribution.length) {
+      return classDistribution.map((item: any) => [item.className, item.students] as [string, number]);
+    }
+    return studentsByClass.map(([className, students]) => [className, students.length] as [string, number]);
+  }, [initialData, studentsByClass]);
+
   const filteredStudents = useMemo(() => {
     const students = initialData?.students || [];
     if (selectedClass === 'all') return students;
@@ -136,9 +144,9 @@ export default function Student360Dashboard({ initialData }: { initialData?: any
             }}
             className="block w-44 rounded-md border-0 py-1.5 pl-3 pr-10 text-slate-900 ring-1 ring-inset ring-slate-200 focus:ring-2 focus:ring-blue-600 sm:text-sm sm:leading-6 dark:bg-slate-900 dark:text-slate-100 dark:ring-slate-700 font-bold bg-white"
           >
-            <option value="all">Tất cả lớp ({initialData?.students?.length || 0})</option>
-            {studentsByClass.map(([className, students]) => (
-              <option key={className} value={className}>{className} ({students.length})</option>
+            <option value="all">Tất cả lớp ({initialData?.officialStats?.totalStudents?.toLocaleString('vi-VN') || initialData?.students?.length || 0})</option>
+            {officialClassOptions.map(([className, total]) => (
+              <option key={className} value={className}>{className} ({total})</option>
             ))}
           </select>
           <select
