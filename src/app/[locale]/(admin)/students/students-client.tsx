@@ -192,26 +192,29 @@ export default function Student360Dashboard({ initialData }: { initialData?: any
               <p className="mt-1 text-xs font-semibold text-slate-500">Tổng sĩ số toàn trường</p>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="border-indigo-100 bg-indigo-50/50 dark:border-indigo-900/30 dark:bg-indigo-950/20">
             <CardContent className="p-4">
-              <p className="text-xs font-black uppercase tracking-wide text-slate-500">Tổng số lớp</p>
+              <p className="text-xs font-black uppercase tracking-wide text-indigo-600 dark:text-indigo-300">Tổng số lớp</p>
               <div className="mt-2 flex items-end gap-2">
                 <span className="text-3xl font-black text-slate-900 dark:text-white">{initialData.officialStats.totalClasses}</span>
-                <span className="pb-1 text-sm font-bold text-slate-500">lớp</span>
+                <span className="pb-1 text-sm font-bold text-indigo-600 dark:text-indigo-300">lớp</span>
               </div>
               <p className="mt-1 text-xs font-semibold text-slate-500">TB {initialData.officialStats.averageClassSize} HS/lớp</p>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="border-amber-100 bg-amber-50/50 dark:border-amber-900/30 dark:bg-amber-950/20">
             <CardContent className="p-4">
-              <p className="text-xs font-black uppercase tracking-wide text-slate-500">Chia theo cấp học</p>
+              <p className="text-xs font-black uppercase tracking-wide text-amber-700 dark:text-amber-300">Chia theo cấp học</p>
               <div className="mt-2 space-y-1">
-                {initialData.officialStats.classGroups.map((group: any) => (
-                  <div key={group.level} className="flex justify-between text-xs font-bold text-slate-600 dark:text-slate-300">
-                    <span>{group.level} ({group.grades})</span>
-                    <span>{group.classes} lớp • {group.students} HS</span>
-                  </div>
-                ))}
+                {initialData.officialStats.classGroups.map((group: any) => {
+                  const color = group.level === 'Tiểu học' ? 'text-sky-700 dark:text-sky-300' : group.level === 'THCS' ? 'text-violet-700 dark:text-violet-300' : 'text-amber-700 dark:text-amber-300';
+                  return (
+                    <div key={group.level} className="flex justify-between text-xs font-bold text-slate-600 dark:text-slate-300">
+                      <span className={color}>{group.level} ({group.grades})</span>
+                      <span>{group.classes} lớp • {group.students} HS</span>
+                    </div>
+                  );
+                })}
               </div>
             </CardContent>
           </Card>
