@@ -143,33 +143,39 @@ export default function SettingsClient({ isAdmin }: { isAdmin: boolean }) {
       }
     }
 
-    // Academics year dates validation
+    // Academic year dates validation
     if (keys.includes('academics:academic_year_start') && keys.includes('academics:academic_year_end')) {
-      const start = new Date(formData['academics:academic_year_start']);
-      const end = new Date(formData['academics:academic_year_end']);
-      if (start >= end) {
-        toast({ variant: 'error', title: 'Lỗi ngày học vụ', message: 'Ngày kết thúc năm học phải sau ngày bắt đầu.' });
-        return false;
+      if (formData['academics:academic_year_start'] && formData['academics:academic_year_end']) {
+        const start = new Date(formData['academics:academic_year_start']);
+        const end = new Date(formData['academics:academic_year_end']);
+        if (!isNaN(start.getTime()) && !isNaN(end.getTime()) && start >= end) {
+          toast({ variant: 'error', title: 'Lỗi ngày học vụ', message: 'Ngày kết thúc năm học phải sau ngày bắt đầu.' });
+          return false;
+        }
       }
     }
 
     // Academics semester dates validation
     if (keys.includes('academics:semester_start') && keys.includes('academics:semester_end')) {
-      const start = new Date(formData['academics:semester_start']);
-      const end = new Date(formData['academics:semester_end']);
-      if (start >= end) {
-        toast({ variant: 'error', title: 'Lỗi ngày học vụ', message: 'Ngày kết thúc học kỳ phải sau ngày bắt đầu.' });
-        return false;
+      if (formData['academics:semester_start'] && formData['academics:semester_end']) {
+        const start = new Date(formData['academics:semester_start']);
+        const end = new Date(formData['academics:semester_end']);
+        if (!isNaN(start.getTime()) && !isNaN(end.getTime()) && start >= end) {
+          toast({ variant: 'error', title: 'Lỗi ngày học vụ', message: 'Ngày kết thúc học kỳ phải sau ngày bắt đầu.' });
+          return false;
+        }
       }
     }
 
     // Summer break dates validation
     if (keys.includes('academics:summer_break_start') && keys.includes('academics:summer_break_end')) {
-      const start = new Date(formData['academics:summer_break_start']);
-      const end = new Date(formData['academics:summer_break_end']);
-      if (start >= end) {
-        toast({ variant: 'error', title: 'Lỗi ngày học vụ', message: 'Ngày kết thúc nghỉ hè phải sau ngày bắt đầu.' });
-        return false;
+      if (formData['academics:summer_break_start'] && formData['academics:summer_break_end']) {
+        const start = new Date(formData['academics:summer_break_start']);
+        const end = new Date(formData['academics:summer_break_end']);
+        if (!isNaN(start.getTime()) && !isNaN(end.getTime()) && start >= end) {
+          toast({ variant: 'error', title: 'Lỗi ngày học vụ', message: 'Ngày kết thúc nghỉ hè phải sau ngày bắt đầu.' });
+          return false;
+        }
       }
     }
 
