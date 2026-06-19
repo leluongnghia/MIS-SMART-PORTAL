@@ -62,15 +62,10 @@ type NotificationSummary = {
 
 const menuGroups: MenuItemGroup[] = [
   {
-    title: 'TỔNG QUAN',
+    title: 'ĐIỀU HÀNH CHIẾN LƯỢC',
     items: [
       { label: 'Tổng quan điều hành', href: 'dashboard', icon: LayoutDashboard },
       { label: 'Báo cáo nhanh', href: 'reports', icon: FileBarChart },
-    ],
-  },
-  {
-    title: 'CHIẾN LƯỢC & KẾ HOẠCH',
-    items: [
       { label: 'Chiến lược & OKRs', href: 'okr', icon: Target },
       { label: 'Kế hoạch hoạt động', href: 'plans', icon: ClipboardCheck },
       { label: 'Báo cáo & Phân tích KPI', href: 'kpi', icon: LineChart },
@@ -78,16 +73,26 @@ const menuGroups: MenuItemGroup[] = [
     ],
   },
   {
-    title: 'VẬN HÀNH',
+    title: 'VẬN HÀNH NỘI BỘ',
     items: [
       { label: 'Công việc & Quy trình', href: 'tasks', icon: CheckSquare, badgeKey: 'tasks' },
       { label: 'Phê duyệt', href: 'approvals', icon: UserCheck },
       { label: 'Lịch & Sự kiện', href: 'events', icon: Calendar },
       { label: 'Chỉ đạo BGH', href: 'directives', icon: ClipboardCheck, badgeKey: 'directives' },
       { label: 'Thông báo nội bộ', href: 'announcements', icon: Bell, badgeKey: 'announcements' },
+    ],
+  },
+  {
+    title: 'QUẢN TRỊ NGUỒN LỰC',
+    items: [
       { label: 'Quản trị Nhân sự HRM', href: 'hrm', icon: Users },
+      { label: 'CSVC, Thiết bị & Mua sắm', href: 'facilities', icon: Building },
       { label: 'Quản trị Rủi ro', href: 'risk', icon: ShieldAlert },
-      { label: 'CSVC & Thiết bị', href: 'facilities', icon: Building },
+    ],
+  },
+  {
+    title: 'TUYỂN SINH & HỌC SINH',
+    items: [
       { label: 'Tuyển sinh & CRM', href: 'admissions', icon: Workflow },
       { label: 'Hồ sơ Học sinh 360', href: 'students', icon: GraduationCap },
       { label: 'Thời khóa biểu & Giáo án', href: 'schedule', icon: CalendarDays },
@@ -96,9 +101,15 @@ const menuGroups: MenuItemGroup[] = [
   {
     title: 'DỮ LIỆU HỆ THỐNG',
     items: [
-      { label: 'Danh mục', href: 'system-data/categories', icon: List },
-      { label: 'Báo cáo', href: 'system-data/reports', icon: FileBarChart },
-      { label: 'Kho dữ liệu', href: 'system-data/storage', icon: Database },
+      { label: 'Danh mục hệ thống', href: 'system-data/categories', icon: List },
+      { label: 'Trung tâm báo cáo', href: 'system-data/reports', icon: FileBarChart },
+      { label: 'Lưu trữ & Dữ liệu', href: 'system-data/storage', icon: Database },
+    ],
+  },
+  {
+    title: 'QUẢN TRỊ NỀN TẢNG',
+    items: [
+      { label: 'Quản lý người dùng & phân quyền', href: 'users', icon: Users },
       { label: 'Cấu hình hệ thống', href: 'system-data/settings', icon: Settings },
     ],
   },
@@ -435,12 +446,12 @@ export default function AdminShell({ locale, children }: { locale: string; child
 
   const activeMenuGroups = useMemo(() => {
     const mapped = rawMenuGroups.map(group => {
-      const targetTitles = ['VẬN HÀNH', 'NGHIỆP VỤ BỘ PHẬN', 'VẬN HÀNH BỘ PHẬN', 'CÀI ĐẶT'];
+      const targetTitles = ['VẬN HÀNH', 'VẬN HÀNH NỘI BỘ', 'NGHIỆP VỤ BỘ PHẬN', 'VẬN HÀNH BỘ PHẬN', 'CÀI ĐẶT'];
       if (targetTitles.includes(group.title)) {
         const extraItems: { label: string; href: string; icon: any; badgeKey?: 'tasks' | 'directives' | 'announcements' }[] = [
           { label: 'Chat nội bộ', href: 'chat', icon: MessageSquare }
         ];
-        if (currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER') {
+        if (group.title !== 'VẬN HÀNH NỘI BỘ' && (currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER')) {
           extraItems.push({ label: 'Quản lý người dùng & phân quyền', href: 'users', icon: Users });
         }
         
@@ -456,26 +467,36 @@ export default function AdminShell({ locale, children }: { locale: string; child
       return group;
     });
 
-    const finalGroups = mapped.filter(g => g.title !== 'DỮ LIỆU HỆ THỐNG' && g.title !== 'DỮ LIỆU & HỆ THỐNG');
+    const finalGroups = mapped.filter(g => g.title !== 'DỮ LIỆU HỆ THỐNG' && g.title !== 'DỮ LIỆU & HỆ THỐNG' && g.title !== 'QUẢN TRỊ NỀN TẢNG');
 
     const systemDataItems: any[] = [];
-    if (currentUser?.role === 'ADMIN') {
-      systemDataItems.push({ label: 'Danh mục', href: 'system-data/categories', icon: List });
-      systemDataItems.push({ label: 'Báo cáo', href: 'system-data/reports', icon: FileBarChart });
-      systemDataItems.push({ label: 'Kho dữ liệu', href: 'system-data/storage', icon: Database });
-      systemDataItems.push({ label: 'Cấu hình hệ thống', href: 'system-data/settings', icon: Settings });
-    } else if (currentUser?.role === 'MANAGER') {
-      systemDataItems.push({ label: 'Danh mục', href: 'system-data/categories', icon: List });
-      systemDataItems.push({ label: 'Báo cáo', href: 'system-data/reports', icon: FileBarChart });
-      systemDataItems.push({ label: 'Kho dữ liệu', href: 'system-data/storage', icon: Database });
+    if (currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER') {
+      systemDataItems.push({ label: 'Danh mục hệ thống', href: 'system-data/categories', icon: List });
+      systemDataItems.push({ label: 'Trung tâm báo cáo', href: 'system-data/reports', icon: FileBarChart });
+      systemDataItems.push({ label: 'Lưu trữ & Dữ liệu', href: 'system-data/storage', icon: Database });
     } else if (currentUser?.role === 'STAFF') {
-      systemDataItems.push({ label: 'Kho dữ liệu', href: 'system-data/storage', icon: Database });
+      systemDataItems.push({ label: 'Lưu trữ & Dữ liệu', href: 'system-data/storage', icon: Database });
     }
 
     if (systemDataItems.length > 0) {
       finalGroups.push({
         title: 'DỮ LIỆU HỆ THỐNG',
         items: systemDataItems,
+      });
+    }
+
+    const platformItems: any[] = [];
+    if (currentUser?.role === 'ADMIN') {
+      platformItems.push({ label: 'Quản lý người dùng & phân quyền', href: 'users', icon: Users });
+      platformItems.push({ label: 'Cấu hình hệ thống', href: 'system-data/settings', icon: Settings });
+    } else if (currentUser?.role === 'MANAGER') {
+      platformItems.push({ label: 'Quản lý người dùng & phân quyền', href: 'users', icon: Users });
+    }
+
+    if (platformItems.length > 0) {
+      finalGroups.push({
+        title: 'QUẢN TRỊ NỀN TẢNG',
+        items: platformItems,
       });
     }
 

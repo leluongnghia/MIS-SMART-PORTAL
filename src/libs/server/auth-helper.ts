@@ -354,6 +354,11 @@ export function canPermanentlyDeleteFile(actor: Actor) {
   return isAdminTruong(actor);
 }
 
+export function canManageBackups(actor: Actor) {
+  return isAdminTruong(actor);
+}
+
+
 // System Data - Settings permission check
 export function canViewSystemSettings(actor: Actor) {
   return isAdminTruong(actor) || isTruongPhong(actor);
@@ -473,3 +478,62 @@ export function canViewFacilityAlerts(actor: Actor) {
 export function canManageFacilitySla(actor: Actor) {
   return isAdminTruong(actor);
 }
+
+// ==========================================
+// CENTRALIZED GENERIC PERMISSION HELPERS
+// ==========================================
+
+export function canViewModule(actor: Actor, module: string): boolean {
+  if (isAdminTruong(actor)) return true;
+  if (module === 'settings' || module === 'audit' || module === 'rbac') {
+    return false;
+  }
+  return true;
+}
+
+export function canCreate(actor: Actor, module: string): boolean {
+  if (isAdminTruong(actor)) return true;
+  if (isTruongPhong(actor)) return true;
+  if (module === 'tasks' || module === 'announcements' || module === 'directives') return false;
+  return true;
+}
+
+export function canEdit(actor: Actor, module: string, entity: any): boolean {
+  if (isAdminTruong(actor)) return true;
+  if (isTruongPhong(actor)) {
+    if (entity && (entity.workspaceId === actor.workspaceId || entity.departmentId === actor.departmentId)) return true;
+  }
+  if (entity && (entity.assignedId === actor.id || entity.uploadedBy === actor.id || entity.id === actor.id)) return true;
+  return false;
+}
+
+export function canDelete(actor: Actor, module: string, entity: any): boolean {
+  if (isAdminTruong(actor)) return true;
+  if (isTruongPhong(actor) && entity && (entity.workspaceId === actor.workspaceId || entity.departmentId === actor.departmentId)) return true;
+  if (entity && (entity.assignedId === actor.id || entity.uploadedBy === actor.id)) return true;
+  return false;
+}
+
+export function canApprove(actor: Actor, module: string, entity: any): boolean {
+  if (isAdminTruong(actor)) return true;
+  if (isTruongPhong(actor) && module === 'approvals' && entity && (entity.workspaceId === actor.workspaceId || entity.departmentId === actor.departmentId)) return true;
+  return false;
+}
+
+export function canExport(actor: Actor, module: string): boolean {
+  return isAdminTruong(actor) || isTruongPhong(actor);
+}
+
+export function canConfigure(actor: Actor, module: string): boolean {
+  return isAdminTruong(actor);
+}
+
+export function canAccessData(actor: Actor, entity: any): boolean {
+  if (isAdminTruong(actor)) return true;
+  if (!entity) return false;
+  if (isTruongPhong(actor)) {
+    return entity.workspaceId === actor.workspaceId || entity.departmentId === actor.departmentId || entity.assignedId === actor.id;
+  }
+  return entity.assignedId === actor.id || entity.uploadedBy === actor.id || entity.id === actor.id;
+}
+

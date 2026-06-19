@@ -7,8 +7,8 @@ export default function dataPage({ initialData }: { initialData?: any }) {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Kho dữ liệu</h2>
-        <p className="text-sm text-slate-500">Lưu trữ và đồng bộ dữ liệu</p>
+        <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Lưu trữ & Dữ liệu</h2>
+        <p className="text-sm text-slate-500">Quản lý, đồng bộ và lưu trữ tệp tin hệ thống</p>
       </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {[1,2,3].map(i => (

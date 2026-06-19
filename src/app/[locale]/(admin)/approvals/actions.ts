@@ -1,10 +1,12 @@
-"use server";
-
 import { db, schema } from "@/src/libs/server/db";
+import { getCurrentActor, writeAuditLog } from "@/src/libs/server/auth-helper";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 export async function getInitialData() {
+  const actor = await getCurrentActor();
+  if (!actor) return { data: [], actor: null };
+
   try {
     // 1. Ensure employeeProfiles exists for our seed users
     const profiles = await db.select().from(schema.employeeProfiles);
@@ -37,8 +39,8 @@ export async function getInitialData() {
     }
 
     // 2. Ensure leaveRequests exists
-    let data = await db.select().from(schema.leaveRequests);
-    if (data.length === 0) {
+    let leaveRows = await db.select().from(schema.leaveRequests);
+    if (leaveRows.length === 0) {
       const defaultLeaveRequests = [
         {
           id: 'leave_1',
@@ -66,22 +68,60 @@ export async function getInitialData() {
       for (const leave of defaultLeaveRequests) {
         await db.insert(schema.leaveRequests).values(leave);
       }
-      data = await db.select().from(schema.leaveRequests);
+      leaveRows = await db.select().from(schema.leaveRequests);
     }
-    return { data };
+
+    // Filter leave requests based on data scope permissions
+    const userRows = await db.select().from(schema.users);
+    const profileRows = await db.select().from(schema.employeeProfiles);
+
+    const profileMap = new Map(profileRows.map(p => [p.id, p]));
+    const userMap = new Map(userRows.map(u => [u.id, u]));
+
+    const leaveWithUser = leaveRows.map(l => {
+      const profile = profileMap.get(l.employeeProfileId);
+      const user = profile ? userMap.get(profile.userId) : null;
+      return {
+        ...l,
+        user,
+      };
+    });
+
+    const filtered = leaveWithUser.filter(item => {
+      if (actor.role === 'ADMIN' || actor.workspaceId === 'BGH') return true;
+      if (actor.role === 'MANAGER') {
+        return item.user?.workspaceId === actor.workspaceId || item.user?.departmentId === actor.departmentId;
+      }
+      return item.user?.id === actor.id;
+    });
+
+    return { data: filtered, actor };
   } catch (e) {
     console.error("Approvals getInitialData failed:", e);
-    return { data: [] };
+    return { data: [], actor };
   }
 }
 
-export async function approveLeaveRequest(id: string, userId: string) {
+export async function approveLeaveRequest(id: string) {
+  const actor = await getCurrentActor();
+  if (!actor) return { success: false, error: "Unauthorized" };
+
   try {
+    const [request] = await db.select().from(schema.leaveRequests).where(eq(schema.leaveRequests.id, id)).limit(1);
+    if (!request) return { success: false, error: "Yêu cầu không tồn tại" };
+
+    if (actor.role !== 'ADMIN' && actor.role !== 'MANAGER') {
+      await writeAuditLog(actor.id, "APPROVE_LEAVE_DENIED", "LEAVE_REQUEST", id, { success: false, reason: "Insufficient permissions" });
+      return { success: false, error: "Bạn không có quyền phê duyệt yêu cầu này." };
+    }
+
     await db.update(schema.leaveRequests).set({
       status: 'approved',
-      approvedById: userId,
+      approvedById: actor.id,
       updatedAt: new Date(),
     }).where(eq(schema.leaveRequests.id, id));
+
+    await writeAuditLog(actor.id, "APPROVE_LEAVE", "LEAVE_REQUEST", id, { before: { status: request.status }, after: { status: 'approved' } });
     revalidatePath('/[locale]/approvals', 'layout');
     return { success: true };
   } catch (e: any) {
@@ -89,13 +129,26 @@ export async function approveLeaveRequest(id: string, userId: string) {
   }
 }
 
-export async function rejectLeaveRequest(id: string, userId: string) {
+export async function rejectLeaveRequest(id: string) {
+  const actor = await getCurrentActor();
+  if (!actor) return { success: false, error: "Unauthorized" };
+
   try {
+    const [request] = await db.select().from(schema.leaveRequests).where(eq(schema.leaveRequests.id, id)).limit(1);
+    if (!request) return { success: false, error: "Yêu cầu không tồn tại" };
+
+    if (actor.role !== 'ADMIN' && actor.role !== 'MANAGER') {
+      await writeAuditLog(actor.id, "REJECT_LEAVE_DENIED", "LEAVE_REQUEST", id, { success: false, reason: "Insufficient permissions" });
+      return { success: false, error: "Bạn không có quyền từ chối yêu cầu này." };
+    }
+
     await db.update(schema.leaveRequests).set({
       status: 'rejected',
-      approvedById: userId,
+      approvedById: actor.id,
       updatedAt: new Date(),
     }).where(eq(schema.leaveRequests.id, id));
+
+    await writeAuditLog(actor.id, "REJECT_LEAVE", "LEAVE_REQUEST", id, { before: { status: request.status }, after: { status: 'rejected' } });
     revalidatePath('/[locale]/approvals', 'layout');
     return { success: true };
   } catch (e: any) {

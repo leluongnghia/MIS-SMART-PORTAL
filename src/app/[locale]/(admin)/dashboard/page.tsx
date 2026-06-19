@@ -8,11 +8,11 @@ export default async function DashboardPage({
   params: Promise<{ locale: string }>;
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-  const { locale } = await params;
+  await params;
   const resolvedSearchParams = await searchParams;
   const tab = typeof resolvedSearchParams.tab === "string" ? resolvedSearchParams.tab : undefined;
   
-  const initialData = await getDashboardStats();
+  const stats = await getDashboardStats();
 
-  return <DashboardClient tab={tab} initialData={initialData} />;
+  return <DashboardClient tab={tab} initialData={stats} />;
 }

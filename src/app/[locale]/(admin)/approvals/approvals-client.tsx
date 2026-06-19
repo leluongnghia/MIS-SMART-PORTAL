@@ -7,6 +7,7 @@ import { Button } from '@/src/components/ui/button';
 import { Dialog } from '@/src/components/ui/dialog';
 import { UserCheck, Calendar, Clock, CheckCircle2, XCircle, AlertCircle, FileText, User } from 'lucide-react';
 import { approveLeaveRequest, rejectLeaveRequest } from './actions';
+import type { Actor } from '@/src/libs/server/auth-helper';
 
 type LeaveRequest = {
   id: string;
@@ -23,8 +24,9 @@ type LeaveRequest = {
   updatedAt: Date;
 };
 
-export default function ApprovalsPage({ initialData }: { initialData?: { data?: LeaveRequest[] } }) {
+export default function ApprovalsPage({ initialData }: { initialData?: { data?: LeaveRequest[], actor?: Actor | null } }) {
   const requests = initialData?.data || [];
+  const actor = initialData?.actor || null;
   const [activeTab, setActiveTab] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
   const [selectedRequest, setSelectedRequest] = useState<LeaveRequest | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
@@ -38,7 +40,7 @@ export default function ApprovalsPage({ initialData }: { initialData?: { data?: 
 
   const handleApprove = (id: string) => {
     startTransition(async () => {
-      const res = await approveLeaveRequest(id, 'user_triet'); // Approving as principal
+      const res = await approveLeaveRequest(id);
       if (res.success) {
         setIsDetailsOpen(false);
       } else {
@@ -49,7 +51,7 @@ export default function ApprovalsPage({ initialData }: { initialData?: { data?: 
 
   const handleReject = (id: string) => {
     startTransition(async () => {
-      const res = await rejectLeaveRequest(id, 'user_triet');
+      const res = await rejectLeaveRequest(id);
       if (res.success) {
         setIsDetailsOpen(false);
       } else {
@@ -238,7 +240,7 @@ export default function ApprovalsPage({ initialData }: { initialData?: { data?: 
               </p>
             </div>
 
-            {selectedRequest.status === 'pending' ? (
+            {selectedRequest.status === 'pending' && actor && (actor.role === 'ADMIN' || actor.role === 'MANAGER') ? (
               <div className="flex gap-2 pt-4 border-t border-slate-100 dark:border-slate-800">
                 <Button 
                   onClick={() => handleApprove(selectedRequest.id)}
