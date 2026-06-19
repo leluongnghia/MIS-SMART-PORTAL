@@ -37,13 +37,14 @@ export async function GET() {
     return NextResponse.json({
       status: 'success',
       policy: {
-        enabled: false,
-        allowInProduction: false,
-        adminOnly: true,
+        enabled: true,
+        allowInProduction: true,
+        adminOnly: false,
         logSwitching: false,
         isProduction: process.env.NODE_ENV === 'production',
+        fallback: true,
       },
-      allowed: false,
+      allowed: true,
     });
   }
 }
