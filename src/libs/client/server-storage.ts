@@ -20,12 +20,7 @@ export const serverStorage = {
 
   setItem(key: string, value: string) {
     memoryCache.set(key, value);
-    const pending = pendingWrites.get(key);
-    if (pending) clearTimeout(pending);
-    pendingWrites.set(key, setTimeout(() => {
-      requestStorage('POST', key, value).catch(() => undefined);
-      pendingWrites.delete(key);
-    }, 50));
+    return requestStorage('POST', key, value).catch(() => undefined);
   },
 
   removeItem(key: string) {

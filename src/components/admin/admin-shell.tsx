@@ -176,21 +176,25 @@ export default function AdminShell({ locale, children }: { locale: string; child
   }, [pathname]);
 
   useEffect(() => {
-    const loggedIn = serverStorage.getItem('mis_edutask_logged_in') === 'true';
-    const savedUserId = serverStorage.getItem('mis_edutask_logged_in_user_id');
-    if (loggedIn && savedUserId) {
-      const matched = MOCK_USERS.find(u => u.id === savedUserId);
-      if (matched) {
-        setCurrentUser(matched);
-        setIsLoggedIn(true);
+    const initAuth = async () => {
+      await serverStorage.hydrate(['mis_edutask_logged_in', 'mis_edutask_logged_in_user_id']);
+      const loggedIn = serverStorage.getItem('mis_edutask_logged_in') === 'true';
+      const savedUserId = serverStorage.getItem('mis_edutask_logged_in_user_id');
+      if (loggedIn && savedUserId) {
+        const matched = MOCK_USERS.find(u => u.id === savedUserId);
+        if (matched) {
+          setCurrentUser(matched);
+          setIsLoggedIn(true);
+        } else {
+          setCurrentUser(MOCK_USERS[0]);
+          setIsLoggedIn(true);
+        }
       } else {
-        setCurrentUser(MOCK_USERS[0]);
-        setIsLoggedIn(true);
+        setIsLoggedIn(false);
       }
-    } else {
-      setIsLoggedIn(false);
-    }
-    setIsAuthReady(true);
+      setIsAuthReady(true);
+    };
+    initAuth();
   }, []);
 
   useEffect(() => {
@@ -212,8 +216,10 @@ export default function AdminShell({ locale, children }: { locale: string; child
       });
       const data = await response.json();
       if (!response.ok || data?.status !== 'success') throw new Error(data?.error || 'Không đổi được user');
-      serverStorage.setItem('mis_edutask_logged_in', 'true');
-      serverStorage.setItem('mis_edutask_logged_in_user_id', user.id);
+      await Promise.all([
+        serverStorage.setItem('mis_edutask_logged_in', 'true'),
+        serverStorage.setItem('mis_edutask_logged_in_user_id', user.id),
+      ]);
       setCurrentUser(user);
       setIsLoggedIn(true);
       setSwitcherOpen(false);
