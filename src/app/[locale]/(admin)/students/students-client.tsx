@@ -214,7 +214,7 @@ export default function Student360Dashboard({ initialData }: { initialData?: any
                 <span className="text-3xl font-black text-slate-900 dark:text-white">{initialData.officialStats.admissionsPipeline}</span>
                 <span className="pb-1 text-sm font-bold text-slate-500">HS</span>
               </div>
-              <p className="mt-1 text-xs font-semibold text-slate-500">Chỉ tiêu tuyển sinh</p>
+              <p className="mt-1 text-xs font-semibold text-slate-500">Học sinh đang tuyển cho năm sau</p>
             </CardContent>
           </Card>
         </div>
