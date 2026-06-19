@@ -4,6 +4,17 @@ import { db, schema } from '@/src/libs/server/db';
 import { getCurrentActor, canManageReports, canViewReport } from '@/src/libs/server/auth-helper';
 import { count, eq, and, desc, sql } from 'drizzle-orm';
 
+async function getOfficialStudentCount() {
+  const [setting] = await db
+    .select({ value: schema.systemSettings.value })
+    .from(schema.systemSettings)
+    .where(eq(schema.systemSettings.key, 'academics:official_student_count'))
+    .limit(1);
+
+  const value = Number(setting?.value || 1045);
+  return Number.isFinite(value) && value > 0 ? value : 1045;
+}
+
 export async function getDashboardStats() {
   const actor = await getCurrentActor();
   if (!actor) throw new Error('Unauthorized');
@@ -17,7 +28,7 @@ export async function getDashboardStats() {
   if (!isAdmin && !isManager) {
     return {
       totalTasks: 0,
-      totalStudents: 0,
+      totalStudents: await getOfficialStudentCount(),
       totalLeads: 0,
       recentLogs: []
     };
@@ -29,10 +40,6 @@ export async function getDashboardStats() {
   const tasksCount = await db.select({ count: count() })
     .from(schema.tasks)
     .where(deptFilter);
-
-  // Total Students
-  const studentsCount = await db.select({ count: count() })
-    .from(schema.students);
 
   // Pending Leads (received or consulting)
   const leadsCount = await db.select({ count: count() })
@@ -72,7 +79,7 @@ export async function getDashboardStats() {
 
   return {
     totalTasks: tasksCount[0]?.count || 0,
-    totalStudents: studentsCount[0]?.count || 0,
+    totalStudents: await getOfficialStudentCount(),
     totalLeads: leadsCount[0]?.count || 0,
     tasksByStatus,
     leadsByStatus,

@@ -188,7 +188,7 @@ export default function DashboardClient({ tab, initialData }: { tab?: string, in
       {/* OKRs */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {[
-          { title: 'Tuyển sinh', val: 72, target: '1.200 HS', actual: '864 HS', color: 'text-blue-600', status: 'Đang tốt', statusColor: 'text-emerald-500', href: 'leads' },
+          { title: 'Tuyển sinh năm học tới', val: 72, target: '150 HS mới', actual: 'Đang tuyển mùa hè', color: 'text-blue-600', status: 'Đang tốt', statusColor: 'text-emerald-500', href: 'leads' },
           { title: 'Đào tạo', val: 68, target: '95%', actual: '64.6%', color: 'text-blue-500', status: 'Đang tốt', statusColor: 'text-emerald-500', href: 'reports' },
           { title: 'Nhân sự', val: 85, target: '100%', actual: '85%', color: 'text-blue-600', status: 'Đang tốt', statusColor: 'text-emerald-500', href: 'hrm' },
           { title: 'Vận hành', val: 61, target: '100%', actual: '61%', color: 'text-blue-500', status: 'Cần cải thiện', statusColor: 'text-orange-500', href: 'tasks' },
@@ -248,10 +248,10 @@ export default function DashboardClient({ tab, initialData }: { tab?: string, in
       {/* KPI mini stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {[
-          { title: 'KPI toàn trường', val: '83.4', up: '6.2', icon: LineChart, color: 'bg-blue-600' },
-          { title: 'Tuyển sinh', val: '71.8', up: '5.1', icon: Users, color: 'bg-indigo-500' },
-          { title: 'Giáo viên', val: '88.6', up: '7.3', icon: Target, color: 'bg-blue-500' },
-          { title: 'Học sinh', val: '82.1', up: '4.8', icon: GraduationCap, color: 'bg-slate-700' },
+          { title: 'KPI toàn trường', val: '83.4', suffix: '/100', up: '6.2 điểm so với tháng trước', icon: LineChart, color: 'bg-blue-600' },
+          { title: 'Tuyển sinh năm học tới', val: '150', suffix: 'HS', up: 'pipeline mùa hè, chưa cộng vào sĩ số', icon: Users, color: 'bg-indigo-500' },
+          { title: 'Giáo viên', val: '88.6', suffix: '/100', up: '7.3 điểm so với tháng trước', icon: Target, color: 'bg-blue-500' },
+          { title: 'Học sinh hiện hữu', val: '1.045', suffix: 'HS', up: 'sĩ số chính thức tại thời điểm hiện tại', icon: GraduationCap, color: 'bg-slate-700' },
         ].map((kpi, i) => (
           <Link key={i} href={`/${locale}/kpi`} className="block">
             <Card className="hover:shadow-md transition-shadow cursor-pointer">
@@ -263,9 +263,9 @@ export default function DashboardClient({ tab, initialData }: { tab?: string, in
                   <p className="text-xs font-medium text-slate-500 truncate">{kpi.title}</p>
                   <div className="flex items-baseline gap-1 mt-0.5">
                     <h4 className="text-lg font-bold text-slate-900 dark:text-white">{kpi.val}</h4>
-                    <span className="text-xs text-slate-500">/100</span>
+                    <span className="text-xs text-slate-500">{kpi.suffix}</span>
                   </div>
-                  <p className="text-xs text-emerald-600 font-medium mt-0.5">↑ {kpi.up} điểm so với tháng trước</p>
+                  <p className="text-xs text-emerald-600 font-medium mt-0.5">{kpi.up}</p>
                 </div>
                 <ChevronRight className="h-4 w-4 text-blue-400 dark:text-blue-500" />
               </CardContent>
