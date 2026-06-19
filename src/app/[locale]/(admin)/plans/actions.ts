@@ -1,12 +1,12 @@
 "use server";
 
 import { db, schema } from "@/src/libs/server/db";
-import { eq } from "drizzle-orm";
+import { eq, and, isNull } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 export async function getInitialData() {
   try {
-    let data = await db.select().from(schema.tasks).where(eq(schema.tasks.tag, 'Kế hoạch'));
+    let data = await db.select().from(schema.tasks).where(and(eq(schema.tasks.tag, 'Kế hoạch'), isNull(schema.tasks.deletedAt)));
     if (data.length === 0) {
       const defaultPlans = [
         {
@@ -65,7 +65,7 @@ export async function getInitialData() {
       for (const plan of defaultPlans) {
         await db.insert(schema.tasks).values(plan);
       }
-      data = await db.select().from(schema.tasks).where(eq(schema.tasks.tag, 'Kế hoạch'));
+      data = await db.select().from(schema.tasks).where(and(eq(schema.tasks.tag, 'Kế hoạch'), isNull(schema.tasks.deletedAt)));
     }
     return { data };
   } catch (e) {
@@ -119,7 +119,7 @@ export async function updatePlan(id: string, formData: { title: string; descript
 
 export async function deletePlan(id: string) {
   try {
-    await db.delete(schema.tasks).where(eq(schema.tasks.id, id));
+    await db.update(schema.tasks).set({ deletedAt: new Date(), deletedBy: 'system', updatedAt: new Date() }).where(eq(schema.tasks.id, id));
     revalidatePath('/[locale]/plans', 'layout');
     return { success: true };
   } catch (e: any) {

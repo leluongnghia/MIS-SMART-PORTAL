@@ -1,31 +1,37 @@
 import { NextResponse } from 'next/server';
 import { db, schema } from '@/src/libs/server/db';
-import { MOCK_USERS } from '@/src/mockData';
+import { getCurrentActor } from '@/src/libs/server/auth-helper';
 import type { Announcement, BoardDirective, Task } from '@/src/types';
 
-function isVisibleTask(task: Task, userId: string, workspaceId: string) {
-  if (task.status === 'HOAN_THANH') return false;
-  return task.assignedId === userId || task.workspaceId === workspaceId;
+const TERMINAL_TASK_STATUSES = new Set(['HOAN_THANH', 'completed', 'done', 'closed', 'canceled', 'cancelled', 'archived', 'ARCHIVED', 'HUY']);
+
+function isVisibleTask(task: Task, actor: { id: string; role: string; workspaceId: string | null }) {
+  if (TERMINAL_TASK_STATUSES.has(String(task.status))) return false;
+  if (actor.role === 'ADMIN' || actor.workspaceId === 'BGH') return true;
+  if (actor.role === 'MANAGER') return task.workspaceId === actor.workspaceId || task.assignedId === actor.id;
+  return task.assignedId === actor.id;
 }
 
-function isVisibleDirective(directive: BoardDirective, userId: string, workspaceId: string) {
+function isVisibleDirective(directive: BoardDirective, actor: { id: string; role: string; workspaceId: string | null }) {
+  if (actor.role === 'ADMIN' || actor.workspaceId === 'BGH') return true;
   const impl = directive.implementations || [];
-  if (impl.some(item => item.userId === userId && item.status !== 'DA_HOAN_THANH')) return true;
-  if (impl.length === 0) return workspaceId !== 'BGH';
-  return impl.some(item => item.userTitle?.includes(workspaceId) && item.status !== 'DA_HOAN_THANH');
+  if (impl.some(item => item.userId === actor.id && item.status !== 'DA_HOAN_THANH')) return true;
+  if (impl.length === 0) return true;
+  return impl.some(item => item.userTitle?.includes(String(actor.workspaceId || '')) && item.status !== 'DA_HOAN_THANH');
 }
 
-function isVisibleAnnouncement(announcement: Announcement, userRole: string, userId: string) {
+function isVisibleAnnouncement(announcement: Announcement, actor: { role: string; id: string }) {
   const acknowledged = announcement.acknowledgedBy || [];
-  if (acknowledged.some(item => item.userId === userId)) return false;
-  return !announcement.targetRoles?.length || announcement.targetRoles.includes(userRole as any);
+  if (acknowledged.some(item => item.userId === actor.id)) return false;
+  return !announcement.targetRoles?.length || announcement.targetRoles.includes(actor.role as any);
 }
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
-    const url = new URL(request.url);
-    const userId = url.searchParams.get('userId') || '';
-    const user = MOCK_USERS.find(item => item.id === userId) || MOCK_USERS[0];
+    const actor = await getCurrentActor();
+    if (!actor) {
+      return NextResponse.json({ status: 'error', error: 'Unauthorized' }, { status: 401 });
+    }
 
     const [taskRows, directiveRows, announcementRows] = await Promise.all([
       db.select().from(schema.tasks),
@@ -33,10 +39,10 @@ export async function GET(request: Request) {
       db.select().from(schema.announcements),
     ]);
 
-    const tasks = taskRows.map(row => row.payload as Task).filter(task => isVisibleTask(task, user.id, user.workspaceId));
-    const directives = directiveRows.map(row => row.payload as BoardDirective).filter(item => isVisibleDirective(item, user.id, user.workspaceId));
-    const announcements = announcementRows.map(row => row.payload as Announcement).filter(item => isVisibleAnnouncement(item, user.role, user.id));
-    const urgent = tasks.filter(item => item.priority === 'CAO').length + directives.filter(item => item.urgency === 'KHAN' || item.urgency === 'DAC_BIET').length;
+    const tasks = taskRows.map(row => row.payload as Task).filter(task => isVisibleTask(task, actor));
+    const directives = directiveRows.map(row => row.payload as BoardDirective).filter(item => isVisibleDirective(item, actor));
+    const announcements = announcementRows.map(row => row.payload as Announcement).filter(item => isVisibleAnnouncement(item, actor));
+    const urgent = tasks.filter(item => ['CAO', 'high'].includes(String(item.priority))).length + directives.filter(item => ['KHAN', 'DAC_BIET', 'Khẩn cấp'].includes(String(item.urgency))).length;
 
     const latest = [
       ...tasks.slice(0, 3).map(item => ({ id: item.id, type: 'task', title: item.title, href: '/tasks' })),
@@ -56,15 +62,6 @@ export async function GET(request: Request) {
     });
   } catch (error) {
     console.error('[notifications/summary] DB error:', error);
-    return NextResponse.json({
-      status: 'ok',
-      total: 0,
-      tasks: 0,
-      directives: 0,
-      announcements: 0,
-      urgent: 0,
-      latest: [],
-      checkedAt: new Date().toISOString(),
-    });
+    return NextResponse.json({ status: 'error', error: 'Không tải được badge thông báo' }, { status: 500 });
   }
 }

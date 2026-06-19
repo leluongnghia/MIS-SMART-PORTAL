@@ -224,7 +224,7 @@ export default function AdminShell({ locale, children }: { locale: string; child
 
     const loadSummary = async () => {
       try {
-        const response = await fetch(`/api/notifications/summary?userId=${encodeURIComponent(currentUser.id)}`, { cache: 'no-store' });
+        const response = await fetch('/api/notifications/summary', { cache: 'no-store' });
         if (!response.ok) return;
         const data = await response.json();
         if (cancelled || data?.status !== 'success') return;
@@ -441,7 +441,7 @@ export default function AdminShell({ locale, children }: { locale: string; child
           { label: 'Chat nội bộ', href: 'chat', icon: MessageSquare }
         ];
         if (currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER') {
-          extraItems.push({ label: 'Quản lý thành viên', href: 'users', icon: Users });
+          extraItems.push({ label: 'Quản lý người dùng & phân quyền', href: 'users', icon: Users });
         }
         
         // Remove duplicate hrefs if any

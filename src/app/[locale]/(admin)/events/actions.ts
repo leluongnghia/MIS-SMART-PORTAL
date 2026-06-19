@@ -1,12 +1,12 @@
 "use server";
 
 import { db, schema } from "@/src/libs/server/db";
-import { eq } from "drizzle-orm";
+import { eq, isNull } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 export async function getInitialData() {
   try {
-    let data = await db.select().from(schema.events);
+    let data = await db.select().from(schema.events).where(isNull(schema.events.deletedAt));
     if (data.length === 0) {
       const defaultEvents = [
         {
@@ -34,7 +34,7 @@ export async function getInitialData() {
       for (const ev of defaultEvents) {
         await db.insert(schema.events).values(ev);
       }
-      data = await db.select().from(schema.events);
+      data = await db.select().from(schema.events).where(isNull(schema.events.deletedAt));
     }
     return { data };
   } catch (e) {
@@ -63,7 +63,7 @@ export async function createEvent(formData: { title: string; date: string; depar
 
 export async function deleteEvent(id: string) {
   try {
-    await db.delete(schema.events).where(eq(schema.events.id, id));
+    await db.update(schema.events).set({ deletedAt: new Date(), deletedBy: 'system', updatedAt: new Date() }).where(eq(schema.events.id, id));
     revalidatePath('/[locale]/events', 'layout');
     return { success: true };
   } catch (e: any) {

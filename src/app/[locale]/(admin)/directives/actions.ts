@@ -1,7 +1,7 @@
 "use server";
 
 import { db, schema } from "@/src/libs/server/db";
-import { eq } from "drizzle-orm";
+import { eq, isNull } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 type DirectivePayload = {
@@ -31,7 +31,7 @@ async function writeAudit(entityId: string, action: string, actorId: string, met
 
 export async function getInitialData() {
   try {
-    let data = await db.select().from(schema.directives);
+    let data = await db.select().from(schema.directives).where(isNull(schema.directives.deletedAt));
     if (data.length === 0) {
       const defaultDirectives = [
         {
@@ -76,7 +76,7 @@ export async function getInitialData() {
         await db.insert(schema.directives).values(dir);
         await writeAudit(dir.id, 'seed', dir.senderId, { title: dir.title });
       }
-      data = await db.select().from(schema.directives);
+      data = await db.select().from(schema.directives).where(isNull(schema.directives.deletedAt));
     }
     const audits = await db.select().from(schema.auditLogs);
     return { data, audits: audits.filter(log => log.entityType === 'directive') };
@@ -147,8 +147,8 @@ export async function createDirective(formData: { title: string; category: strin
 
 export async function deleteDirective(id: string) {
   try {
-    await db.delete(schema.directives).where(eq(schema.directives.id, id));
-    await writeAudit(id, 'delete', 'user_triet', {});
+    await db.update(schema.directives).set({ deletedAt: new Date(), deletedBy: 'user_triet', updatedAt: new Date() }).where(eq(schema.directives.id, id));
+    await writeAudit(id, 'soft_delete', 'user_triet', {});
     revalidatePath('/[locale]/directives', 'layout');
     return { success: true };
   } catch (e: any) {

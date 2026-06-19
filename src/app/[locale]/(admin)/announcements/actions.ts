@@ -1,12 +1,12 @@
 "use server";
 
 import { db, schema } from "@/src/libs/server/db";
-import { eq } from "drizzle-orm";
+import { eq, isNull } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 export async function getInitialData() {
   try {
-    const data = await db.select().from(schema.announcements);
+    const data = await db.select().from(schema.announcements).where(isNull(schema.announcements.deletedAt));
     return { data };
   } catch (e) {
     console.error("getInitialData announcements failed:", e);
@@ -62,7 +62,7 @@ export async function createAnnouncement(formData: {
 
 export async function deleteAnnouncement(id: string) {
   try {
-    await db.delete(schema.announcements).where(eq(schema.announcements.id, id));
+    await db.update(schema.announcements).set({ deletedAt: new Date(), deletedBy: 'system', updatedAt: new Date() }).where(eq(schema.announcements.id, id));
     revalidatePath("/[locale]/announcements", "page");
     return { success: true };
   } catch (e: any) {

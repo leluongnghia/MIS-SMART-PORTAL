@@ -33,6 +33,9 @@ export const users = pgTable('users', {
   mustChangePassword: boolean('must_change_password').default(false).notNull(),
   internalNote: text('internal_note'),
 
+  dataScope: text('data_scope').default('OWN').notNull(),
+  twoFactorEnabled: boolean('two_factor_enabled').default(false).notNull(),
+
   lastLoginAt: timestamp('last_login_at', { withTimezone: true }),
   deletedAt: timestamp('deleted_at', { withTimezone: true }),
   createdBy: text('created_by'),
@@ -62,6 +65,8 @@ export const tasks = pgTable('tasks', {
   priority: text('priority').notNull(),
   deadline: text('deadline'),
   tag: text('tag'),
+  deletedAt: timestamp('deleted_at', { withTimezone: true }),
+  deletedBy: text('deleted_by'),
   payload: jsonb('payload').notNull(),
   ...timestamps,
 });
@@ -72,6 +77,8 @@ export const directives = pgTable('directives', {
   category: text('category'),
   urgency: text('urgency'),
   senderId: text('sender_id'),
+  deletedAt: timestamp('deleted_at', { withTimezone: true }),
+  deletedBy: text('deleted_by'),
   payload: jsonb('payload').notNull(),
   ...timestamps,
 });
@@ -81,6 +88,8 @@ export const announcements = pgTable('announcements', {
   title: text('title').notNull(),
   senderName: text('sender_name'),
   isMeeting: boolean('is_meeting').default(false).notNull(),
+  deletedAt: timestamp('deleted_at', { withTimezone: true }),
+  deletedBy: text('deleted_by'),
   payload: jsonb('payload').notNull(),
   ...timestamps,
 });
@@ -234,6 +243,8 @@ export const leads = pgTable('leads', {
   moetStudentId: text('moet_student_id'),
   siblingsInfo: jsonb('siblings_info'),
 
+  deletedAt: timestamp('deleted_at', { withTimezone: true }),
+  deletedBy: text('deleted_by'),
   payload: jsonb('payload').notNull().default({}),
   ...timestamps,
 }, table => [
@@ -339,6 +350,39 @@ export const auditLogs = pgTable('audit_logs', {
 }, table => [
   index('audit_logs_entity_idx').on(table.entityType, table.entityId),
   index('audit_logs_actor_idx').on(table.actorId),
+]);
+
+export const userInvitations = pgTable('user_invitations', {
+  id: text('id').primaryKey(),
+  email: text('email').notNull(),
+  role: text('role').notNull(),
+  departmentId: text('department_id'),
+  dataScope: text('data_scope').default('OWN').notNull(),
+  invitedById: text('invited_by_id'),
+  invitedByName: text('invited_by_name'),
+  status: text('status').default('PENDING').notNull(), // PENDING, ACCEPTED, EXPIRED, CANCELED
+  tokenHash: text('token_hash'),
+  expiresAt: timestamp('expires_at', { withTimezone: true }),
+  acceptedAt: timestamp('accepted_at', { withTimezone: true }),
+  canceledAt: timestamp('canceled_at', { withTimezone: true }),
+  ...timestamps,
+}, table => [
+  index('user_invitations_email_idx').on(table.email),
+  index('user_invitations_status_idx').on(table.status),
+]);
+
+export const userLoginHistory = pgTable('user_login_history', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  loginAt: timestamp('login_at', { withTimezone: true }).defaultNow().notNull(),
+  ipAddress: text('ip_address'),
+  userAgent: text('user_agent'),
+  deviceName: text('device_name'),
+  success: boolean('success').default(true).notNull(),
+  failureReason: text('failure_reason'),
+}, table => [
+  index('user_login_history_user_idx').on(table.userId),
+  index('user_login_history_login_at_idx').on(table.loginAt),
 ]);
 
 export const leadsRelations = relations(leads, ({ many, one }) => ({
@@ -606,6 +650,8 @@ export const events = pgTable('events', {
   title: text('title').notNull(),
   date: timestamp('date', { withTimezone: true }).notNull(),
   department: text('department'),
+  deletedAt: timestamp('deleted_at', { withTimezone: true }),
+  deletedBy: text('deleted_by'),
   payload: jsonb('payload').notNull().default({}),
   ...timestamps,
 });

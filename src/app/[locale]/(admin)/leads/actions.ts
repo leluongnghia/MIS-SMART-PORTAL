@@ -1,7 +1,7 @@
 'use server';
 
 import { db, schema } from '@/src/libs/server/db';
-import { eq, like, or, and, desc, asc, count } from 'drizzle-orm';
+import { eq, like, or, and, desc, asc, count, isNull } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 
 export type LeadStatus = 'received' | 'consulting' | 'test_scheduled' | 'test_participated' | 'seat_reserved' | 'docs_submitted' | 'enrolled' | 'cancelled';
@@ -22,7 +22,7 @@ export async function getLeads(params: GetLeadsParams) {
   const limit = params.limit || 10;
   const offset = (page - 1) * limit;
 
-  const conditions = [];
+  const conditions = [isNull(schema.leads.deletedAt)];
 
   if (params.search) {
     const searchPattern = `%${params.search}%`;
@@ -80,7 +80,7 @@ export async function getUsers() {
 }
 
 export async function getAllLeadsForExport(params?: { search?: string; status?: string; source?: string; grade?: string }) {
-  const conditions = [];
+  const conditions = [isNull(schema.leads.deletedAt)];
   if (params?.search) {
     const searchPattern = `%${params.search}%`;
     conditions.push(or(
@@ -341,7 +341,7 @@ export async function updateLead(
 }
 
 export async function deleteLead(id: string) {
-  await db.delete(schema.leads).where(eq(schema.leads.id, id));
+  await db.update(schema.leads).set({ deletedAt: new Date(), deletedBy: 'system', updatedAt: new Date() }).where(eq(schema.leads.id, id));
   revalidatePath('/[locale]/leads', 'page');
   return { success: true };
 }

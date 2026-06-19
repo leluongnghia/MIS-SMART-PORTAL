@@ -77,10 +77,33 @@ const formatTaskDate = (deadline?: string | Date | null) => {
   return date.toLocaleDateString('vi-VN');
 };
 
+const TERMINAL_STATUSES = new Set(['HOAN_THANH', 'completed', 'done', 'closed', 'canceled', 'cancelled', 'archived', 'ARCHIVED', 'HUY']);
+
+const getTaskDate = (task: TaskRow) => {
+  const raw = task.deadline || task.createdAt;
+  if (!raw) return null;
+  const date = new Date(raw);
+  return Number.isNaN(date.getTime()) ? null : date;
+};
+
+const isWithinDateRange = (task: TaskRow, from: string, to: string) => {
+  const date = getTaskDate(task);
+  if (!date) return false;
+  if (from) {
+    const start = new Date(`${from}T00:00:00`);
+    if (date < start) return false;
+  }
+  if (to) {
+    const end = new Date(`${to}T23:59:59.999`);
+    if (date > end) return false;
+  }
+  return true;
+};
+
 const isOverdueTask = (task: TaskRow) => {
-  if (!task.deadline || task.status === 'completed' || task.status === 'done' || task.status === 'HOAN_THANH') return false;
+  if (!task.deadline || TERMINAL_STATUSES.has(String(task.status || ''))) return false;
   const date = new Date(task.deadline);
-  return !Number.isNaN(date.getTime()) && date < new Date();
+  return !Number.isNaN(date.getTime()) && date.getTime() < Date.now();
 };
 
 
@@ -108,6 +131,16 @@ export default function TasksDashboard({ initialData }: { initialData?: { data?:
   const [selectedApprovalTaskId, setSelectedApprovalTaskId] = useState<string>('');
   const [activeFilter, setActiveFilter] = useState<'in_progress' | 'overdue' | 'pending' | 'completed' | null>(null);
   const [activeView, setActiveView] = useState<'kanban' | 'list'>('kanban');
+  const today = new Date();
+  const defaultDateTo = today.toISOString().slice(0, 10);
+  const defaultDateFrom = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  const [dateFrom, setDateFrom] = useState(defaultDateFrom);
+  const [dateTo, setDateTo] = useState(defaultDateTo);
+
+  const filteredTasks = useMemo(
+    () => tasksList.filter((task) => isWithinDateRange(task, dateFrom, dateTo)),
+    [tasksList, dateFrom, dateTo]
+  );
 
   const scrollToSection = (id: string) => {
     const el = document.getElementById(id);
@@ -222,7 +255,7 @@ export default function TasksDashboard({ initialData }: { initialData?: { data?:
     });
   };
 
-  const getCardsByStatus = (statuses: string[]) => tasksList
+  const getCardsByStatus = (statuses: string[]) => filteredTasks
     .filter(task => {
       if (!statuses.includes(String(task.status || ''))) return false;
       if (activeFilter === 'in_progress') {
@@ -252,14 +285,14 @@ export default function TasksDashboard({ initialData }: { initialData?: { data?:
     const cards = getCardsByStatus(column.statuses);
     return { ...column, count: cards.length, cards };
   });
-  const totalTasks = tasksList.length;
-  const pendingApprovalTasks = tasksList.filter(task => 
+  const totalTasks = filteredTasks.length;
+  const pendingApprovalTasks = filteredTasks.filter(task => 
     ['CHO_DUYET', 'pending_approval', 'pending', 'review'].includes(String(task.status || ''))
   );
 
   const selectedApprovalTask = useMemo(() => {
-    return pendingApprovalTasks.find(t => t.id === selectedApprovalTaskId) || pendingApprovalTasks[0] || tasksList.find(t => t.status === 'CHO_DUYET');
-  }, [pendingApprovalTasks, selectedApprovalTaskId, tasksList]);
+    return pendingApprovalTasks.find(t => t.id === selectedApprovalTaskId) || pendingApprovalTasks[0] || filteredTasks.find(t => t.status === 'CHO_DUYET');
+  }, [pendingApprovalTasks, selectedApprovalTaskId, filteredTasks]);
 
   const approvalDetails = useMemo(() => {
     if (!selectedApprovalTask) return null;
@@ -287,10 +320,10 @@ export default function TasksDashboard({ initialData }: { initialData?: { data?:
       ]
     };
   }, [selectedApprovalTask]);
-  const inProgressCount = tasksList.filter(task => ['DANG_TIEN_HANH', 'in_progress', 'doing', 'processing'].includes(String(task.status))).length;
-  const overdueCount = tasksList.filter(isOverdueTask).length;
-  const pendingCount = tasksList.filter(task => ['CHO_DUYET', 'pending_approval', 'pending', 'review'].includes(String(task.status))).length;
-  const completedCount = tasksList.filter(task => ['HOAN_THANH', 'completed', 'done', 'closed'].includes(String(task.status))).length;
+  const inProgressCount = filteredTasks.filter(task => ['DANG_TIEN_HANH', 'in_progress', 'doing', 'processing'].includes(String(task.status))).length;
+  const overdueCount = filteredTasks.filter(isOverdueTask).length;
+  const pendingCount = filteredTasks.filter(task => ['CHO_DUYET', 'pending_approval', 'pending', 'review'].includes(String(task.status))).length;
+  const completedCount = filteredTasks.filter(task => ['HOAN_THANH', 'completed', 'done', 'closed'].includes(String(task.status))).length;
   const completionRate = totalTasks ? Math.round((completedCount / totalTasks) * 100) : 0;
   const taskStatsData = [
     { name: 'Cần làm', value: kanbanColumns[0]?.count || 0, color: '#3b82f6' },
@@ -311,15 +344,29 @@ export default function TasksDashboard({ initialData }: { initialData?: { data?:
             Quản lý công việc, theo dõi tiến độ và các quy trình phê duyệt
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <select className="block w-40 rounded-md border-0 py-1.5 pl-3 pr-8 text-slate-900 ring-1 ring-inset ring-slate-200 focus:ring-2 focus:ring-blue-600 sm:text-sm sm:leading-6 dark:bg-slate-900 dark:text-slate-100 dark:ring-slate-700">
-            <option>Tất cả quy trình</option>
-          </select>
-          <div className="flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-sm dark:bg-slate-900 dark:border-slate-700">
-            <CalendarDays className="h-4 w-4 text-slate-400" />
-            <span>12/05/2025 - 16/05/2025</span>
-          </div>
-          <Button onClick={() => setIsCreateOpen(true)} className="bg-blue-600 hover:bg-blue-700 text-white gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <select className="block w-40 rounded-md border-0 py-1.5 pl-3 pr-8 text-slate-900 ring-1 ring-inset ring-slate-200 focus:ring-2 focus:ring-blue-600 sm:text-sm sm:leading-6 dark:bg-slate-900 dark:text-slate-100 dark:ring-slate-700">
+              <option>Tất cả quy trình</option>
+            </select>
+            <div className="flex flex-wrap items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-sm dark:bg-slate-900 dark:border-slate-700">
+              <CalendarDays className="h-4 w-4 text-slate-400" />
+              <input
+                type="date"
+                value={dateFrom}
+                onChange={(event) => setDateFrom(event.target.value)}
+                className="bg-transparent text-xs outline-none dark:text-slate-100"
+                aria-label="Từ ngày"
+              />
+              <span className="text-slate-400">-</span>
+              <input
+                type="date"
+                value={dateTo}
+                onChange={(event) => setDateTo(event.target.value)}
+                className="bg-transparent text-xs outline-none dark:text-slate-100"
+                aria-label="Đến ngày"
+              />
+            </div>
+            <Button onClick={() => setIsCreateOpen(true)} className="bg-blue-600 hover:bg-blue-700 text-white gap-2">
             <Plus className="h-4 w-4" /> Tạo công việc
           </Button>
         </div>
@@ -456,6 +503,12 @@ export default function TasksDashboard({ initialData }: { initialData?: { data?:
             </Button>
           </div>
 
+          {filteredTasks.length === 0 && (
+            <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-6 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900/50 dark:text-slate-400">
+              Không có công việc trong khoảng ngày đã chọn.
+            </div>
+          )}
+
           {activeFilter && (
             <div className="px-3 py-2 bg-blue-50/80 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 text-xs font-semibold rounded-lg border border-blue-100 dark:border-blue-900/30 flex items-center justify-between animate-in fade-in slide-in-from-top-1 duration-205">
               <span>
@@ -549,7 +602,7 @@ export default function TasksDashboard({ initialData }: { initialData?: { data?:
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {tasksList.map((task) => {
+                    {filteredTasks.map((task) => {
                       const statusLabel = STATUS_COLUMNS.find((col) => col.statuses.includes(String(task.status || '')))?.title || 'Khác';
                       return (
                         <TableRow key={task.id} className="cursor-pointer" onClick={() => { setSelectedTask({ ...task, user: task.assignedName || task.assignedId || 'Chưa phân công', date: formatTaskDate(task.deadline), status: statusLabel }); setIsTaskOpen(true); }}>

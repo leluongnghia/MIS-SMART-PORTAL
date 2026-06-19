@@ -3,8 +3,34 @@ import { NextResponse } from 'next/server';
 import { db, schema } from '../../../../../libs/server/db';
 import { buildVietQrUrl, crmPaymentTypeToDb, dbLeadToCrmLead, normalizeCrmLead } from '../../../../../libs/server/crm';
 import { getBankConfig } from '../../../../../libs/server/crm';
+import { getCurrentActor, writeAuditLog } from '../../../../../libs/server/auth-helper';
+
+function normalizeTransferPart(value: unknown) {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'D')
+    .replace(/[^a-zA-Z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .toUpperCase()
+    .slice(0, 40);
+}
+
+function buildTransferContent(leadCode: string, studentName: string, paymentType: string) {
+  return `MIS-${normalizeTransferPart(leadCode)}-${normalizeTransferPart(studentName)}-${normalizeTransferPart(paymentType)}`;
+}
 
 export async function POST(request: Request) {
+  const actor = await getCurrentActor();
+  if (!actor) {
+    return NextResponse.json({ status: 'error', error: 'Unauthorized' }, { status: 401 });
+  }
+  if (actor.role !== 'ADMIN' && actor.workspaceId !== 'BGH' && actor.workspaceId !== 'TUYEN_SINH_PR') {
+    await writeAuditLog(actor.id, 'CREATE_VIETQR_DENIED', 'PAYMENT', 'unknown', { success: false, module: 'crm' });
+    return NextResponse.json({ status: 'error', error: 'Không có quyền tạo QR thanh toán.' }, { status: 403 });
+  }
+
   const body = await request.json();
   const leadId = String(body?.leadId || body?.id || '');
   const [dbLead] = leadId
@@ -36,10 +62,12 @@ export async function POST(request: Request) {
 
   const bank = getBankConfig();
   const crmType = String(body?.type || 'RESERVATION').toUpperCase() === 'ENROLLMENT' ? 'ENROLLMENT' : 'RESERVATION';
-  const code = crmType === 'RESERVATION'
-    ? `${bank.reservationPrefix}_${persistedLead.leadCode}`
-    : `${bank.enrollmentPrefix}_${existing.enrollmentCode || persistedLead.leadCode}`;
   const amount = Number(body?.amount || (crmType === 'RESERVATION' ? existing.reservationFee : existing.baseTuitionFee));
+  if (!Number.isFinite(amount) || amount <= 0) {
+    return NextResponse.json({ status: 'error', error: 'Số tiền thanh toán không hợp lệ.' }, { status: 400 });
+  }
+
+  const code = buildTransferContent(persistedLead.leadCode, existing.studentName || persistedLead.fullName, crmType);
   const now = new Date();
 
   const [payment] = await db.insert(schema.payments).values({
@@ -49,7 +77,7 @@ export async function POST(request: Request) {
     status: 'pending',
     amount,
     transferContent: code,
-    payload: { code, bank, crmType },
+    payload: { code, bank, crmType, createdBy: actor.id },
     updatedAt: now,
   }).returning();
 
@@ -58,10 +86,11 @@ export async function POST(request: Request) {
     leadId: persistedLead.id,
     type: 'payment_created',
     title: `Created VietQR ${code}`,
-    payload: { paymentId: payment.id, code, amount },
+    payload: { paymentId: payment.id, code, amount, actorId: actor.id },
     activityAt: now,
     updatedAt: now,
   });
+  await writeAuditLog(actor.id, 'CREATE_VIETQR', 'PAYMENT', payment.id, { leadId: persistedLead.id, code, amount, crmType, module: 'crm' });
 
   const responsePayment = {
     id: payment.id,
