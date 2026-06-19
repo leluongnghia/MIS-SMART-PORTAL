@@ -62,7 +62,10 @@ export const serverStorage = {
   async hydrate(keys: string[]) {
     await Promise.all(keys.map(async key => {
       const localValue = readLocal(key);
-      if (localValue !== null) memoryCache.set(key, localValue);
+      if (localValue !== null) {
+        memoryCache.set(key, localValue);
+        return;
+      }
 
       try {
         const data = await requestStorage('GET', key);

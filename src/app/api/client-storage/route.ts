@@ -28,6 +28,11 @@ export async function POST(request: Request) {
     await db.insert(schema.systemSettings).values({
       key: rowKey(key),
       value,
+      group: 'client',
+      label: `Client storage: ${key}`,
+      isEditable: true,
+      isSecret: false,
+      createdAt: new Date(),
       updatedAt: new Date(),
     }).onConflictDoUpdate({
       target: schema.systemSettings.key,
