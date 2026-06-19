@@ -115,6 +115,27 @@ const menuGroups: MenuItemGroup[] = [
   },
 ];
 
+const titleColors: Record<string, { text: string; dot: string; activeBg: string }> = {
+  'ĐIỀU HÀNH CHIẾN LƯỢC': { text: 'text-indigo-600 dark:text-indigo-400', dot: 'bg-indigo-600 dark:bg-indigo-400', activeBg: 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20' },
+  'VẬN HÀNH NỘI BỘ': { text: 'text-amber-600 dark:text-amber-400', dot: 'bg-amber-600 dark:bg-amber-400', activeBg: 'bg-amber-600 text-white shadow-md shadow-amber-500/20' },
+  'QUẢN TRỊ NGUỒN LỰC': { text: 'text-rose-600 dark:text-rose-400', dot: 'bg-rose-600 dark:bg-rose-400', activeBg: 'bg-rose-600 text-white shadow-md shadow-rose-500/20' },
+  'TUYỂN SINH & HỌC SINH': { text: 'text-emerald-600 dark:text-emerald-400', dot: 'bg-emerald-600 dark:bg-emerald-400', activeBg: 'bg-emerald-600 text-white shadow-md shadow-emerald-500/20' },
+  'DỮ LIỆU HỆ THỐNG': { text: 'text-sky-600 dark:text-sky-400', dot: 'bg-sky-600 dark:bg-sky-400', activeBg: 'bg-sky-600 text-white shadow-md shadow-sky-500/20' },
+  'QUẢN TRỊ NỀN TẢNG': { text: 'text-purple-600 dark:text-purple-400', dot: 'bg-purple-600 dark:bg-purple-400', activeBg: 'bg-purple-600 text-white shadow-md shadow-purple-500/20' },
+  'TỔNG QUAN': { text: 'text-slate-500 dark:text-slate-400', dot: 'bg-slate-400', activeBg: 'bg-blue-600 text-white shadow-md shadow-blue-500/20' },
+  'NGHIỆP VỤ BỘ PHẬN': { text: 'text-blue-600 dark:text-blue-400', dot: 'bg-blue-600 dark:bg-blue-400', activeBg: 'bg-blue-600 text-white shadow-md shadow-blue-500/20' },
+  'HỌC VỤ & LỊCH': { text: 'text-emerald-600 dark:text-emerald-400', dot: 'bg-emerald-600 dark:bg-emerald-400', activeBg: 'bg-emerald-600 text-white shadow-md shadow-emerald-500/20' },
+  'HỆ THỐNG': { text: 'text-slate-500 dark:text-slate-400', dot: 'bg-slate-400', activeBg: 'bg-blue-600 text-white shadow-md shadow-blue-500/20' },
+  'KHẢO THÍ': { text: 'text-teal-600 dark:text-teal-400', dot: 'bg-teal-600 dark:bg-teal-400', activeBg: 'bg-teal-600 text-white shadow-md shadow-teal-500/20' },
+  'DỮ LIỆU HỌC VỤ': { text: 'text-sky-600 dark:text-sky-400', dot: 'bg-sky-600 dark:bg-sky-400', activeBg: 'bg-sky-600 text-white shadow-md shadow-sky-500/20' },
+  'ĐẢM BẢO CHẤT LƯỢNG': { text: 'text-purple-600 dark:text-purple-400', dot: 'bg-purple-600 dark:bg-purple-400', activeBg: 'bg-purple-600 text-white shadow-md shadow-purple-500/20' },
+  'BÁO CÁO': { text: 'text-pink-600 dark:text-pink-400', dot: 'bg-pink-600 dark:bg-pink-400', activeBg: 'bg-pink-600 text-white shadow-md shadow-pink-500/20' },
+  'CÀI ĐẶT': { text: 'text-slate-500 dark:text-slate-400', dot: 'bg-slate-400', activeBg: 'bg-blue-600 text-white shadow-md shadow-blue-500/20' },
+  'TUYỂN SINH & CRM': { text: 'text-indigo-600 dark:text-indigo-400', dot: 'bg-indigo-600 dark:bg-indigo-400', activeBg: 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20' },
+  'VẬN HÀNH BỘ PHẬN': { text: 'text-amber-600 dark:text-amber-400', dot: 'bg-amber-600 dark:bg-amber-400', activeBg: 'bg-amber-600 text-white shadow-md shadow-amber-500/20' },
+};
+
+
 function segmentLabel(segment: string) {
   return segment
     .replace(/-/g, ' ')
@@ -546,43 +567,48 @@ export default function AdminShell({ locale, children }: { locale: string; child
         </Button>
       </div>
       <nav className="flex-1 space-y-4 overflow-y-auto p-3 custom-scrollbar">
-        {activeMenuGroups.map((group, idx) => (
-          <div key={idx}>
-            {!collapsed && (
-              <div className="mb-2 px-3 text-xs font-bold tracking-wider text-slate-400 uppercase">
-                {group.title}
-              </div>
-            )}
-            <div className="space-y-1">
-              {group.items.map(item => {
-                const Icon = item.icon;
-                const [pathPart, queryPart] = item.href.split('?');
-                const href = `/${locale}/${pathPart}${queryPart ? `?${queryPart}` : ''}`;
-                
-                let active = false;
-                if (queryPart) {
-                  const itemTab = new URLSearchParams(queryPart).get('tab');
-                  active = pathname === `/${locale}/${pathPart}` && currentTab === itemTab;
-                } else {
-                  if (item.href === 'dashboard') {
-                    active = pathname === `/${locale}/dashboard` && (!currentTab || currentTab === 'overview');
+        {activeMenuGroups.map((group, idx) => {
+          const theme = titleColors[group.title] || { text: 'text-slate-400', dot: 'bg-slate-400', activeBg: 'bg-[#2563eb] text-white' };
+          return (
+            <div key={idx}>
+              {!collapsed && (
+                <div className="mb-2 px-3 flex items-center gap-2">
+                  <span className={cn("h-1.5 w-1.5 rounded-full shrink-0", theme.dot)} />
+                  <span className={cn("text-[10px] font-black tracking-wider uppercase", theme.text)}>
+                    {group.title}
+                  </span>
+                </div>
+              )}
+              <div className="space-y-1">
+                {group.items.map(item => {
+                  const Icon = item.icon;
+                  const [pathPart, queryPart] = item.href.split('?');
+                  const href = `/${locale}/${pathPart}${queryPart ? `?${queryPart}` : ''}`;
+                  
+                  let active = false;
+                  if (queryPart) {
+                    const itemTab = new URLSearchParams(queryPart).get('tab');
+                    active = pathname === `/${locale}/${pathPart}` && currentTab === itemTab;
                   } else {
-                    active = pathname === href || pathname.startsWith(`${href}/`);
+                    if (item.href === 'dashboard') {
+                      active = pathname === `/${locale}/dashboard` && (!currentTab || currentTab === 'overview');
+                    } else {
+                      active = pathname === href || pathname.startsWith(`${href}/`);
+                    }
                   }
-                }
-                return (
-                  <Link
-                    key={item.href}
-                    href={href}
-                    onClick={() => setMobileOpen(false)}
-                    title={collapsed ? item.label : undefined}
-                    className={cn(
-                      'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
-                      active
-                        ? 'bg-[#2563eb] text-white'
-                        : 'text-slate-600 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white',
-                    )}
-                  >
+                  return (
+                    <Link
+                      key={item.href}
+                      href={href}
+                      onClick={() => setMobileOpen(false)}
+                      title={collapsed ? item.label : undefined}
+                      className={cn(
+                        'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+                        active
+                          ? theme.activeBg
+                          : 'text-slate-600 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white',
+                      )}
+                    >
                     <Icon className={cn("h-[18px] w-[18px] shrink-0", active ? "text-white" : "")} />
                     {!collapsed && <span className="truncate">{item.label}</span>}
                     {item.badgeKey && notificationSummary[item.badgeKey] > 0 && (
@@ -598,7 +624,8 @@ export default function AdminShell({ locale, children }: { locale: string; child
               })}
             </div>
           </div>
-        ))}
+        );
+      })}
       </nav>
     </aside>
   );
