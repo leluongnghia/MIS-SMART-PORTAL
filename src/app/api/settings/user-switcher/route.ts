@@ -27,10 +27,25 @@ async function getPolicy() {
 }
 
 export async function GET() {
-  const actor = await getCurrentActor();
-  const policy = await getPolicy();
-  const allowed = Boolean(actor && canUseUserSwitcher(actor) && policy.enabled && (!policy.isProduction || policy.allowInProduction));
-  return NextResponse.json({ status: 'success', policy, allowed });
+  try {
+    const actor = await getCurrentActor();
+    const policy = await getPolicy();
+    const allowed = Boolean(actor && canUseUserSwitcher(actor) && policy.enabled && (!policy.isProduction || policy.allowInProduction));
+    return NextResponse.json({ status: 'success', policy, allowed });
+  } catch (error) {
+    console.error('User switcher policy failed:', error);
+    return NextResponse.json({
+      status: 'success',
+      policy: {
+        enabled: false,
+        allowInProduction: false,
+        adminOnly: true,
+        logSwitching: false,
+        isProduction: process.env.NODE_ENV === 'production',
+      },
+      allowed: false,
+    });
+  }
 }
 
 export async function POST(request: Request) {
