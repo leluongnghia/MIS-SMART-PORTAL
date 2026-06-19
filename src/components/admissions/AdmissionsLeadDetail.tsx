@@ -333,9 +333,232 @@ export default function AdmissionsLeadDetail({ onBack }: { onBack?: () => void }
               </div>
             )}
 
-            {activeTab !== 'overview' && activeTab !== 'activity' && (
-              <div className="flex h-40 items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white">
-                <p className="text-sm font-semibold text-slate-400">Nội dung tab này đang phát triển...</p>
+            {activeTab === 'contact' && (
+              <div className="space-y-4">
+                <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+                  <h3 className="mb-4 text-sm font-black uppercase text-slate-800">Danh sách người liên hệ</h3>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="rounded-xl border border-indigo-100 bg-indigo-50/30 p-4">
+                      <div className="mb-3 flex items-center justify-between">
+                        <span className="rounded-lg bg-indigo-100 px-2 py-1 text-xs font-black text-indigo-700">Liên hệ chính (Mẹ)</span>
+                        <button className="text-slate-400 hover:text-blue-600"><Edit3 className="h-4 w-4" /></button>
+                      </div>
+                      <p className="mb-1 text-lg font-black text-slate-900">Nguyễn Thị Hạnh</p>
+                      <div className="space-y-2 mt-3 text-sm text-slate-600">
+                        <div className="flex items-center gap-2"><Phone className="h-4 w-4 text-slate-400" /> 0908 123 456</div>
+                        <div className="flex items-center gap-2"><Mail className="h-4 w-4 text-slate-400" /> hanh.nguyen@example.com</div>
+                        <div className="flex items-center gap-2"><Activity className="h-4 w-4 text-slate-400" /> Nghề nghiệp: Trưởng phòng Marketing</div>
+                      </div>
+                    </div>
+                    <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                      <div className="mb-3 flex items-center justify-between">
+                        <span className="rounded-lg bg-slate-200 px-2 py-1 text-xs font-bold text-slate-700">Liên hệ phụ (Ba)</span>
+                        <button className="text-slate-400 hover:text-blue-600"><Edit3 className="h-4 w-4" /></button>
+                      </div>
+                      <p className="mb-1 text-lg font-bold text-slate-700">Hoàng Văn Đức</p>
+                      <div className="space-y-2 mt-3 text-sm text-slate-600">
+                        <div className="flex items-center gap-2"><Phone className="h-4 w-4 text-slate-400" /> 0912 987 654</div>
+                        <div className="flex items-center gap-2"><Mail className="h-4 w-4 text-slate-400" /> duc.hoang@example.com</div>
+                        <div className="flex items-center gap-2"><Activity className="h-4 w-4 text-slate-400" /> Nghề nghiệp: Kỹ sư IT</div>
+                      </div>
+                    </div>
+                  </div>
+                  <button className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-300 py-3 text-sm font-bold text-slate-500 hover:bg-slate-50">
+                    <CheckCircle2 className="h-4 w-4" /> Thêm người liên hệ
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'study' && (
+              <div className="space-y-4">
+                <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+                  <h3 className="mb-4 text-sm font-black uppercase text-slate-800">Lịch sử học tập</h3>
+                  <div className="space-y-4">
+                    <div className="rounded-xl border border-slate-100 p-4">
+                      <p className="font-bold text-slate-900">Trường Tiểu học Nguyễn Bỉnh Khiêm</p>
+                      <p className="text-sm text-slate-500">2020 - 2025 (Từ lớp 1 đến lớp 5)</p>
+                      <div className="mt-3 grid gap-3 text-sm md:grid-cols-2">
+                        <div className="rounded-lg bg-slate-50 p-2">
+                          <span className="block text-xs text-slate-400">Học lực 5 năm</span>
+                          <span className="font-bold text-emerald-600">Hoàn thành xuất sắc</span>
+                        </div>
+                        <div className="rounded-lg bg-slate-50 p-2">
+                          <span className="block text-xs text-slate-400">Ngoại ngữ hiện tại</span>
+                          <span className="font-bold text-blue-600">IELTS Starter / Movers</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+                  <h3 className="mb-4 text-sm font-black uppercase text-slate-800">Đặc điểm tâm lý & Thể chất</h3>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div>
+                      <p className="mb-1 text-xs font-bold text-slate-400">Sở thích / Điểm mạnh</p>
+                      <div className="flex flex-wrap gap-2">
+                        <span className="rounded-lg bg-blue-50 px-2 py-1 text-xs font-bold text-blue-700">Toán học</span>
+                        <span className="rounded-lg bg-blue-50 px-2 py-1 text-xs font-bold text-blue-700">Bơi lội</span>
+                        <span className="rounded-lg bg-blue-50 px-2 py-1 text-xs font-bold text-blue-700">Lắp ráp Robot</span>
+                      </div>
+                    </div>
+                    <div>
+                      <p className="mb-1 text-xs font-bold text-slate-400">Tình trạng sức khỏe</p>
+                      <p className="text-sm font-semibold text-slate-700">Thể trạng tốt, không có dị ứng thức ăn.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'test' && (
+              <div className="space-y-4">
+                <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+                  <div className="mb-4 flex items-center justify-between">
+                    <h3 className="text-sm font-black uppercase text-slate-800">Lịch sử đánh giá năng lực</h3>
+                    <button className="rounded-xl bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-600 hover:bg-blue-100">
+                      + Đặt lịch Test mới
+                    </button>
+                  </div>
+                  
+                  <div className="rounded-xl border border-amber-100 bg-amber-50/30 p-4 relative overflow-hidden">
+                    <div className="absolute right-0 top-0 rounded-bl-xl bg-amber-100 px-3 py-1 text-[10px] font-black text-amber-700">
+                      SẮP DIỄN RA
+                    </div>
+                    <div className="flex items-start gap-4">
+                      <div className="rounded-xl bg-amber-100 p-3 text-amber-600">
+                        <Calendar className="h-6 w-6" />
+                      </div>
+                      <div>
+                        <h4 className="font-black text-slate-900">Bài thi Đánh giá năng lực vào lớp 6 (Đợt 1)</h4>
+                        <div className="mt-1 flex gap-4 text-xs font-semibold text-slate-500">
+                          <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> 16/05/2025 - 09:00</span>
+                          <span className="flex items-center gap-1"><Activity className="h-3 w-3" /> Cơ sở Nguyễn Văn Linh</span>
+                        </div>
+                        <div className="mt-3 flex gap-2">
+                          <span className="rounded-lg bg-white border px-2 py-1 text-xs font-bold text-slate-600">Toán tư duy (45p)</span>
+                          <span className="rounded-lg bg-white border px-2 py-1 text-xs font-bold text-slate-600">Tiếng Anh (45p)</span>
+                          <span className="rounded-lg bg-white border px-2 py-1 text-xs font-bold text-slate-600">Phỏng vấn (15p)</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-4 flex h-32 items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50">
+                    <p className="text-sm text-slate-400">Chưa có kết quả bài thi nào được ghi nhận.</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'tuition' && (
+              <div className="space-y-4">
+                <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+                  <h3 className="mb-4 text-sm font-black uppercase text-slate-800">Chính sách & Biểu phí dự kiến</h3>
+                  <div className="overflow-hidden rounded-xl border border-slate-200">
+                    <table className="w-full text-left text-sm">
+                      <thead className="bg-slate-50 text-xs font-bold text-slate-500">
+                        <tr>
+                          <th className="p-3">Khoản phí</th>
+                          <th className="p-3 text-right">Đơn giá</th>
+                          <th className="p-3 text-right">Ưu đãi (N/A)</th>
+                          <th className="p-3 text-right">Thành tiền</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        <tr>
+                          <td className="p-3 font-semibold text-slate-700">Phí xét tuyển (Test đầu vào)</td>
+                          <td className="p-3 text-right">1,500,000 đ</td>
+                          <td className="p-3 text-right text-green-600">-100% (Voucher)</td>
+                          <td className="p-3 text-right font-bold">0 đ</td>
+                        </tr>
+                        <tr>
+                          <td className="p-3 font-semibold text-slate-700">Phí ghi danh (Giữ chỗ)</td>
+                          <td className="p-3 text-right">5,000,000 đ</td>
+                          <td className="p-3 text-right text-slate-400">-</td>
+                          <td className="p-3 text-right font-bold">5,000,000 đ</td>
+                        </tr>
+                        <tr>
+                          <td className="p-3 font-semibold text-slate-700">Học phí (Kỳ 1)</td>
+                          <td className="p-3 text-right">45,000,000 đ</td>
+                          <td className="p-3 text-right text-green-600">-10% (Early Bird)</td>
+                          <td className="p-3 text-right font-bold">40,500,000 đ</td>
+                        </tr>
+                      </tbody>
+                      <tfoot className="bg-slate-50">
+                        <tr>
+                          <td colSpan={3} className="p-3 text-right font-bold text-slate-600">Tổng cộng cần đóng đợt 1:</td>
+                          <td className="p-3 text-right text-lg font-black text-blue-600">45,500,000 đ</td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                  <div className="mt-4 flex justify-end">
+                    <button className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-bold text-white hover:bg-slate-800">
+                      Tạo phiếu thu
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'documents' && (
+              <div className="space-y-4">
+                <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+                  <div className="mb-4 flex items-center justify-between">
+                    <h3 className="text-sm font-black uppercase text-slate-800">Kho tài liệu</h3>
+                    <button className="flex items-center gap-1.5 rounded-xl bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-600 hover:bg-blue-100">
+                      <Upload className="h-3.5 w-3.5" /> Upload File
+                    </button>
+                  </div>
+                  <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+                    {[
+                      { name: 'Phieu_Dang_Ky_TS.pdf', size: '1.2 MB', date: '11/05/2025' },
+                      { name: 'CCCD_Phu_Huynh.jpg', size: '850 KB', date: '11/05/2025' },
+                      { name: 'Giay_Khai_Sinh_HSA.png', size: '1.5 MB', date: '11/05/2025' },
+                    ].map((f, i) => (
+                      <div key={i} className="flex items-center gap-3 rounded-xl border border-slate-100 p-3 hover:border-blue-200 hover:bg-blue-50/30 transition cursor-pointer">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-red-50 text-red-500">
+                          <FileText className="h-5 w-5" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="truncate text-xs font-bold text-slate-800">{f.name}</p>
+                          <p className="text-[10px] text-slate-500">{f.size} · {f.date}</p>
+                        </div>
+                        <Eye className="h-4 w-4 text-slate-300" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'history' && (
+              <div className="space-y-4">
+                <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+                  <h3 className="mb-4 text-sm font-black uppercase text-slate-800">Lịch sử hệ thống</h3>
+                  <div className="space-y-0 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-200 before:to-transparent">
+                    {[
+                      { time: '12/05/2025 10:30', title: 'Cập nhật trạng thái Pipeline', desc: 'Trần Bảo Ngọc đã chuyển trạng thái từ TƯ VẤN sang TEST_SCHEDULED' },
+                      { time: '11/05/2025 14:20', title: 'Tạo tài liệu', desc: 'Hệ thống nhận 3 file upload mới' },
+                      { time: '11/05/2025 09:30', title: 'Phân bổ Lead', desc: 'Admin phân bổ Lead cho Trần Bảo Ngọc chăm sóc' },
+                      { time: '10/05/2025 09:15', title: 'Tạo Lead mới', desc: 'Hệ thống tự động tạo Lead từ Webhook (Landing Page)' },
+                    ].map((item, idx) => (
+                      <div key={idx} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+                        <div className="flex items-center justify-center w-10 h-10 rounded-full border border-white bg-slate-100 text-slate-500 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10">
+                          <History className="h-4 w-4" />
+                        </div>
+                        <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-4 rounded-xl border border-slate-100 bg-white shadow-sm">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="font-bold text-slate-800 text-sm">{item.title}</span>
+                            <span className="text-[10px] text-slate-400">{item.time}</span>
+                          </div>
+                          <div className="text-xs text-slate-600">{item.desc}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             )}
           </div>

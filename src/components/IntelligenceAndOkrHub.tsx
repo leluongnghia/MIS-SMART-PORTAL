@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { UserProfile, Task, DepartmentOKR, LessonPlanAsset, MIProfile, getSafeAvatar } from '../types';
 import { useLanguage } from '../context/LanguageContext';
+import { useToast } from './ui/Toast';
 import { translateOKR } from '../utils/translations';
 import { getScoreColorClass, getScoreBgClass, getScoreColorDarkClass } from '../utils/colorUtils';
 import { MOCK_USERS } from '../mockData';
@@ -91,6 +92,7 @@ export default function IntelligenceAndOkrHub({
   onAddStaff
 }: IntelligenceAndOkrHubProps) {
   const { lang, t } = useLanguage();
+  const toastCtx = useToast();
   const [activeSubTab, setActiveSubTab] = useState<'REPORTS' | 'MI_PROFILES' | 'OKRS' | 'AI_CO_PILOT'>('REPORTS');
   const [miDetailsModalDept, setMiDetailsModalDept] = useState<{ id: string, name: string } | null>(null);
 
@@ -1001,7 +1003,7 @@ export default function IntelligenceAndOkrHub({
                   </div>
                 </div>
                 <button
-                  onClick={() => alert("Chức năng nộp sáng kiến đang được đồng bộ và sẽ kích hoạt khi có phê duyệt chỉ thị.")}
+                  onClick={() => toastCtx.info('Chưa khả dụng', 'Chức năng nộp sáng kiến đang được đồng bộ và sẽ kích hoạt khi có phê duyệt chỉ thị.')}
                   className="px-3.5 py-1.5 border border-indigo-200 bg-indigo-50/50 hover:bg-indigo-50 text-indigo-700 text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5" />

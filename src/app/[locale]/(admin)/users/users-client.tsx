@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition, useRef } from "react";
+import Papa from "papaparse";
 import { useRouter } from "next/navigation";
 import {
   bulkUpdateUsersAction,
@@ -145,6 +146,8 @@ export default function UsersClient({ locale, initialActor }: { locale: string; 
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isMatrixOpen, setIsMatrixOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
+  const [importData, setImportData] = useState<any[]>([]);
+  const [importing, setImporting] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [matrixRole, setMatrixRole] = useState("ADMIN");
   const [matrix, setMatrix] = useState<any>({});
@@ -228,10 +231,51 @@ export default function UsersClient({ locale, initialActor }: { locale: string; 
 
   const downloadTemplate = () => downloadCsv("mis-users-import-template.csv", [{ "Họ tên": "Nguyễn Văn A", Email: "a@mis.edu.vn", "Số điện thoại": "0900000000", "Phòng ban": "dept_bgh", "Tổ chuyên môn": "", "Chức danh": "Giáo viên", "Vai trò": "TEACHER", "Phạm vi dữ liệu": "CLASS", "Trạng thái": "ACTIVE", "Ghi chú": "" }]);
 
-  const mockImport = async () => {
-    const res = await importUsersAction([{ name: "Import Demo User", email: `import.${Date.now()}@mis.edu.vn`, phone: "0900000000", role: "STAFF", departmentId: departments[0]?.id || "dept_bgh", title: "Nhân viên", dataScope: "OWN" }]);
-    notify(res.success ? "Đã import demo 1 dòng. TODO: nối parser Excel/CSV thật." : res.error || "Import lỗi");
-    setIsImportOpen(false); loadUsers();
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: (results) => {
+        setImportData(results.data);
+      },
+      error: (err) => {
+        notify(`Lỗi đọc file: ${err.message}`);
+      }
+    });
+  };
+
+  const processImport = async () => {
+    if (!importData.length) return notify("Không có dữ liệu để import");
+    setImporting(true);
+    
+    // Ánh xạ dữ liệu từ CSV vào định dạng User
+    const usersToImport = importData.map(row => ({
+      name: row["Họ tên"] || row["name"] || "Không tên",
+      email: row["Email"] || row["email"] || `import.${Date.now()}.${Math.random().toString(36).substring(7)}@mis.edu.vn`,
+      phone: row["Số điện thoại"] || row["phone"] || "0900000000",
+      departmentId: departments.find(d => d.name === row["Phòng ban"])?.id || departments[0]?.id || "dept_bgh",
+      title: row["Chức danh"] || row["title"] || "Nhân viên",
+      role: ["ADMIN", "MANAGER", "TEACHER", "STAFF"].includes(row["Vai trò"]) ? row["Vai trò"] : "STAFF",
+      dataScope: ["ALL", "DEPARTMENT", "CLASS", "OWN"].includes(row["Phạm vi dữ liệu"]) ? row["Phạm vi dữ liệu"] : "OWN",
+    }));
+
+    try {
+      const res = await importUsersAction(usersToImport);
+      if (res.success) {
+        notify(`Đã import thành công ${usersToImport.length} dòng.`);
+        setIsImportOpen(false);
+        setImportData([]);
+        loadUsers();
+      } else {
+        notify(res.error || "Import lỗi");
+      }
+    } catch (err: any) {
+      notify(`Lỗi hệ thống: ${err.message}`);
+    } finally {
+      setImporting(false);
+    }
   };
 
   const openMatrix = async () => { setMatrix(await getRolePermissionsMatrix()); setIsMatrixOpen(true); };
@@ -316,7 +360,7 @@ export default function UsersClient({ locale, initialActor }: { locale: string; 
 
       {isMatrixOpen && <Modal title="Ma trận phân quyền" onClose={() => setIsMatrixOpen(false)} wide><div className="space-y-4"><div className="flex items-center justify-between"><Select value={matrixRole} onChange={setMatrixRole} options={ROLES.map((r) => [r, ROLE_LABELS[r]])} /><div className="flex gap-2"><button onClick={() => setMatrix({})} className="rounded-xl border px-3 py-2 text-sm font-bold">Reset mặc định</button><button disabled={!canAdmin} onClick={async () => { const res = await saveRolePermissionsMatrix(matrix); notify(res.success ? "Đã lưu ma trận." : res.error || "Không lưu được"); }} className="rounded-xl bg-indigo-600 px-3 py-2 text-sm font-black text-white disabled:opacity-40">Lưu cấu hình</button></div></div><div className="max-h-[65vh] overflow-auto rounded-2xl border"><table className="w-full min-w-[900px] text-sm"><thead className="sticky top-0 bg-slate-50 dark:bg-slate-950"><tr><th className="p-3 text-left">Module</th>{PERMISSION_ACTIONS.map((a) => <th key={a.key} className="p-3 text-center">{a.label}</th>)}</tr></thead><tbody>{PERMISSION_MODULES.map((m) => <tr key={m.key} className="border-t dark:border-slate-800"><td className="p-3 font-bold">{m.label}</td>{PERMISSION_ACTIONS.map((a) => <td key={a.key} className="p-3 text-center"><input type="checkbox" disabled={!canAdmin || (matrixRole !== "ADMIN" && m.key === "users" && a.key === "configure")} checked={!!matrix?.[matrixRole]?.[m.key]?.[a.key]} onChange={() => togglePermission(matrixRole, m.key, a.key)} /></td>)}</tr>)}</tbody></table></div></div></Modal>}
 
-      {isImportOpen && <Modal title="Import Excel/CSV" onClose={() => setIsImportOpen(false)}><div className="space-y-4"><p className="text-sm text-slate-500">Upload Excel/CSV, preview, validate từng dòng, tải file lỗi. Hiện đã tách service; demo import 1 dòng để kiểm thử flow.</p><button onClick={downloadTemplate} className="w-full rounded-2xl border p-3 font-bold"><FileDown className="mr-2 inline h-4 w-4" />Tải file mẫu</button><button onClick={mockImport} className="w-full rounded-2xl bg-indigo-600 p-3 font-black text-white"><FileSpreadsheet className="mr-2 inline h-4 w-4" />Import demo</button></div></Modal>}
+      {isImportOpen && <Modal title="Import Excel/CSV" onClose={() => { setIsImportOpen(false); setImportData([]); }}><div className="space-y-4"><p className="text-sm text-slate-500">Upload Excel/CSV để tạo hàng loạt thành viên.</p><button onClick={downloadTemplate} className="w-full rounded-2xl border p-3 font-bold"><FileDown className="mr-2 inline h-4 w-4" />Tải file mẫu</button><label className="flex w-full cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 p-6 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900/50"><Upload className="mb-2 h-6 w-6 text-slate-400" /><span className="text-sm font-bold text-slate-600 dark:text-slate-300">Chọn file CSV</span><input type="file" accept=".csv" className="hidden" onChange={handleFileUpload} /></label>{importData.length > 0 && <div className="rounded-xl border bg-white p-3 dark:bg-slate-950"><div className="mb-2 text-sm font-bold text-slate-700">Preview ({importData.length} dòng)</div><div className="max-h-40 overflow-y-auto text-xs"><table className="w-full text-left"><thead><tr><th className="pb-2">Họ tên</th><th className="pb-2">Email</th><th className="pb-2">Phòng ban</th></tr></thead><tbody>{importData.slice(0, 5).map((r, i) => <tr key={i}><td className="py-1">{r["Họ tên"] || r.name}</td><td className="py-1">{r["Email"] || r.email}</td><td className="py-1">{r["Phòng ban"] || r.departmentId}</td></tr>)}{importData.length > 5 && <tr><td colSpan={3} className="pt-2 text-center text-slate-400">...và {importData.length - 5} dòng khác</td></tr>}</tbody></table></div><button onClick={processImport} disabled={importing} className="mt-3 w-full rounded-xl bg-indigo-600 p-2.5 font-black text-white disabled:opacity-50">{importing ? "Đang xử lý..." : "Xác nhận Import"}</button></div>}</div></Modal>}
 
       {isExportOpen && <Modal title="Export danh sách" onClose={() => setIsExportOpen(false)}><div className="space-y-3"><button onClick={() => exportRows(false)} className="w-full rounded-2xl border p-3 text-left font-bold">Export theo bộ lọc hiện tại</button><button onClick={() => exportRows(true)} disabled={!selectedIds.length} className="w-full rounded-2xl border p-3 text-left font-bold disabled:opacity-40">Export danh sách đã chọn</button><button onClick={downloadTemplate} className="w-full rounded-2xl border p-3 text-left font-bold">Tải file mẫu import</button></div></Modal>}
     </div>

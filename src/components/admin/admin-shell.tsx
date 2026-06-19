@@ -44,7 +44,8 @@ import { Button } from '@/src/components/ui/button';
 import { cn } from '@/src/lib/utils';
 import LoginPortal from '@/src/components/LoginPortal';
 import { MOCK_USERS, WORKSPACES } from '@/src/mockData';
-import type { UserProfile } from '@/src/types';
+import type { UserProfile, Announcement, BoardDirective, Task } from '@/src/types';
+import NotificationDrawer from '../NotificationDrawer';
 
 type MenuItemGroup = {
   title: string;
@@ -161,6 +162,7 @@ export default function AdminShell({ locale, children }: { locale: string; child
     urgent: 0,
     latest: [],
   });
+  const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [toastNotice, setToastNotice] = useState<string>('');
   const [switcherAllowed, setSwitcherAllowed] = useState(false);
   const [switcherPolicy, setSwitcherPolicy] = useState<any>(null);
@@ -688,7 +690,7 @@ export default function AdminShell({ locale, children }: { locale: string; child
               </div>
             )}
 
-            <Button variant="ghost" size="icon" className="relative text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300" title={`${notificationSummary.total} mục cần kiểm tra`}>
+            <Button variant="ghost" size="icon" onClick={() => setIsNotifOpen(true)} className="relative text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300" title={`${notificationSummary.total} mục cần kiểm tra`}>
               <Bell className="h-5 w-5" />
               {notificationSummary.total > 0 && (
                 <span className="absolute top-1.5 right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-blue-600 px-1 text-[10px] font-bold text-white">
@@ -792,6 +794,15 @@ export default function AdminShell({ locale, children }: { locale: string; child
         </header>
         <main className="p-4 md:p-6">{children}</main>
       </div>
+
+      <NotificationDrawer 
+        isOpen={isNotifOpen}
+        onClose={() => setIsNotifOpen(false)}
+        announcements={[]}
+        directives={[]}
+        tasks={[]}
+        currentUser={currentUser}
+      />
     </div>
   );
 }

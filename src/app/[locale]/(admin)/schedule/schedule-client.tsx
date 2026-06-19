@@ -118,6 +118,7 @@ export default function ScheduleDashboard({ initialData }: { initialData?: any }
   const [isOnlineClassOpen, setIsOnlineClassOpen] = useState(false);
   const [isAddPlanOpen, setIsAddPlanOpen] = useState(false);
   const [isAllPlansOpen, setIsAllPlansOpen] = useState(false);
+  const [isCustomizeOpen, setIsCustomizeOpen] = useState(false);
 
   // Form input states for adding lesson plan
   const [newPlanTitle, setNewPlanTitle] = useState('');
@@ -294,7 +295,7 @@ export default function ScheduleDashboard({ initialData }: { initialData?: any }
             </select>
             <Button variant="ghost" size="icon" className="h-8 w-8"><ChevronRight className="h-4 w-4" /></Button>
           </div>
-          <Button variant="outline" className="gap-2">
+          <Button variant="outline" className="gap-2" onClick={() => setIsCustomizeOpen(true)}>
             <SettingsIcon className="h-4 w-4" /> Tùy chỉnh
           </Button>
         </div>
@@ -724,6 +725,37 @@ export default function ScheduleDashboard({ initialData }: { initialData?: any }
       </div>
 
       {/* ==================== DIALOG MODALS ==================== */}
+
+      <Dialog 
+        open={isCustomizeOpen} 
+        onOpenChange={setIsCustomizeOpen} 
+        title="Tùy chỉnh Thời khóa biểu"
+        description="Bật/tắt các hiển thị trên giao diện Thời khóa biểu"
+      >
+        <div className="space-y-4 text-sm">
+          <label className="flex items-center justify-between gap-4 rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+            <span>
+              <span className="block font-bold text-slate-900 dark:text-white">Ẩn phòng học</span>
+              <span className="text-xs text-slate-500">Thu gọn giao diện, không hiển thị tên phòng học</span>
+            </span>
+            <input type="checkbox" className="h-4 w-4" />
+          </label>
+          <label className="flex items-center justify-between gap-4 rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+            <span>
+              <span className="block font-bold text-slate-900 dark:text-white">Chế độ xem gọn</span>
+              <span className="text-xs text-slate-500">Chỉ hiển thị môn học, bỏ qua tên giáo viên</span>
+            </span>
+            <input type="checkbox" className="h-4 w-4" />
+          </label>
+          <div className="pt-4 flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setIsCustomizeOpen(false)}>Hủy</Button>
+            <Button onClick={() => {
+              setIsCustomizeOpen(false);
+              triggerToast('Đã lưu tùy chỉnh hiển thị thời khóa biểu', 'success');
+            }} className="bg-blue-600">Lưu thay đổi</Button>
+          </div>
+        </div>
+      </Dialog>
 
       {/* 1. Tiết học hôm nay Dialog */}
       <Dialog 

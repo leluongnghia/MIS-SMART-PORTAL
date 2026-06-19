@@ -47,6 +47,7 @@ const performanceData = [
 export default function DashboardClient({ tab, initialData }: { tab?: string, initialData?: any }) {
   const [currentUser, setCurrentUser] = React.useState<any>(null);
   const [isReady, setIsReady] = React.useState(false);
+  const [showSettingsModal, setShowSettingsModal] = React.useState(false);
   const params = useParams();
   const locale = (params?.locale as string) || 'vi';
   const router = useRouter();
@@ -86,12 +87,46 @@ export default function DashboardClient({ tab, initialData }: { tab?: string, in
               <option>Thứ Sáu, 16/05/2025</option>
             </select>
           </div>
-          <Button variant="outline" className="gap-2" disabled title="Tính năng tùy chỉnh dashboard sẽ ra mắt trong phiên bản tới">
+          <Button variant="outline" className="gap-2" onClick={() => setShowSettingsModal(true)}>
             <SettingsIcon className="h-4 w-4" />
             Tùy chỉnh
           </Button>
         </div>
       </div>
+
+      {showSettingsModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm">
+          <Card className="w-[450px] shadow-xl">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle>Tùy chỉnh Dashboard</CardTitle>
+              <Button variant="ghost" size="icon" onClick={() => setShowSettingsModal(false)}><span className="text-slate-400">✕</span></Button>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <p className="text-sm text-slate-500">Bật/tắt các widget hiển thị trên bảng điều khiển của bạn.</p>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between p-2 rounded-lg border border-slate-100 bg-slate-50">
+                    <span className="text-sm font-medium">Top Alerts (Cảnh báo)</span>
+                    <input type="checkbox" defaultChecked className="h-4 w-4" />
+                  </div>
+                  <div className="flex items-center justify-between p-2 rounded-lg border border-slate-100 bg-slate-50">
+                    <span className="text-sm font-medium">OKRs & KPI</span>
+                    <input type="checkbox" defaultChecked className="h-4 w-4" />
+                  </div>
+                  <div className="flex items-center justify-between p-2 rounded-lg border border-slate-100 bg-slate-50">
+                    <span className="text-sm font-medium">Action Center</span>
+                    <input type="checkbox" defaultChecked className="h-4 w-4" />
+                  </div>
+                </div>
+                <div className="pt-4 flex justify-end gap-2">
+                  <Button variant="outline" onClick={() => setShowSettingsModal(false)}>Hủy</Button>
+                  <Button onClick={() => setShowSettingsModal(false)} className="bg-blue-600">Lưu thay đổi</Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Top Alerts */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

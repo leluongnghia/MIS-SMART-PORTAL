@@ -4,9 +4,10 @@ import React, { useState, useMemo } from 'react';
 import { 
   Video, Plus, RefreshCw, BookOpenCheck, FileSpreadsheet, BookOpen, Calculator, Bookmark, ChevronRight, Calendar
 } from 'lucide-react';
-import { UserProfile } from '../../types';
+import { useToast } from '../ui/Toast';
 import { ALL_VIETNAM_SUBJECT_NAMES, VIETNAM_GRADE_LEVELS, getSubjectsForClassName } from '../../utils/vietnameseCurriculum';
 import { exportToCsv } from '../../utils/exportUtils';
+import { UserProfile } from '../../types';
 
 interface LmsStudent {
   id: string;
@@ -106,6 +107,7 @@ export default function LmsOperations({
   setShowSyncModal,
   handleStartSync,
 }: LmsOperationsProps) {
+  const toast = useToast();
   // Local states for Review assignments
   const [showCreateReviewForm, setShowCreateReviewForm] = useState(false);
   const [activeReviewId, setActiveReviewId] = useState<string>(reviewAssignments[0]?.id || '');
@@ -606,22 +608,31 @@ export default function LmsOperations({
             {/* Add Class Form */}
             {showAddClassForm && (
               <form 
-                onSubmit={(e) => {
+                onSubmit={async (e) => {
                   e.preventDefault();
                   if (!newClassData.title || !newClassData.teacher) return;
-                  const newCls = {
-                    id: `ZM10${zoomClasses.length + 3}`,
-                    title: newClassData.title,
-                    subject: newClassData.subject,
-                    teacher: newClassData.teacher,
-                    time: newClassData.time,
-                    classStatus: newClassData.classStatus,
-                    studentsPresent: 0,
-                    totalStudents: 30
-                  };
-                  setZoomClasses([...zoomClasses, newCls]);
-                  setNewClassData({ title: '', subject: 'Toán', teacher: '', time: '08:00 - 09:30', classStatus: 'SCHEDULED' });
-                  setShowAddClassForm(false);
+                  
+                  try {
+                    toast.info('Đang tạo phòng', 'Đang kết nối hệ thống Zoom...');
+                    const res = await fetch('/api/zoom/meetings', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify(newClassData),
+                    });
+                    
+                    const result = await res.json();
+                    
+                    if (result.success) {
+                      setZoomClasses([...zoomClasses, result.data]);
+                      setNewClassData({ title: '', subject: 'Toán', teacher: '', time: '08:00 - 09:30', classStatus: 'SCHEDULED' });
+                      setShowAddClassForm(false);
+                      toast.success('Thành công', 'Đã tạo phòng Zoom thành công!');
+                    } else {
+                      toast.error('Lỗi', result.error || 'Lỗi khi tạo phòng');
+                    }
+                  } catch (err: any) {
+                    toast.error('Lỗi kết nối', err.message);
+                  }
                 }}
                 className="bg-slate-50 dark:bg-slate-950 p-4 rounded-xl border border-slate-205 dark:border-slate-800 space-y-3 font-sans"
               >
@@ -748,7 +759,13 @@ export default function LmsOperations({
                           </button>
                         ) : (
                           <button
-                            onClick={() => alert("Phòng học chưa mở. Bạn chỉ có thể kích hoạt khi tới thời gian chỉ định.")}
+                            onClick={() => {
+                              if (cls.joinUrl) {
+                                window.open(cls.joinUrl, '_blank');
+                              } else {
+                                toast.warning('Chưa đến giờ', 'Phòng học chưa mở. Bạn chỉ có thể kích hoạt khi tới thời gian chỉ định.');
+                              }
+                            }}
                             className="px-3 py-1.5 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 text-slate-600 dark:text-slate-350 text-[11px] font-bold rounded-xl transition-colors cursor-pointer"
                           >
                             Mở Link lịch học
@@ -816,13 +833,16 @@ export default function LmsOperations({
                 <p className="text-[10.5px] text-slate-505 dark:text-slate-450">Người dạy thế đề xuất: <strong>Thầy Đức Nam</strong></p>
                 <div className="flex gap-1.5 pt-1">
                   <button 
-                    onClick={() => alert("Đã duyệt bàn giao lịch phân tổ thành công.")}
+                    onClick={() => toast.success('Phê duyệt thành công', 'Đã duyệt bàn giao lịch phân tổ thành công.')}
                     className="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold rounded cursor-pointer"
                   >
                     Phê duyệt
                   </button>
                   <button 
-                    onClick={() => alert("Vui lòng nhập lý do từ chối.")}
+                    onClick={() => {
+                      const reason = window.prompt("Nhập lý do từ chối nghỉ phép:");
+                      if (reason) toast.success('Đã từ chối', `Đã từ chối bàn giao lịch phân tổ. Lý do: ${reason}`);
+                    }}
                     className="px-2 py-1 bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-350 text-[10px] font-bold rounded hover:bg-slate-300 dark:hover:bg-slate-700 cursor-pointer"
                   >
                     Khước từ
