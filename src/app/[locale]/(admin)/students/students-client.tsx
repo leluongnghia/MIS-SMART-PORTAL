@@ -172,6 +172,48 @@ export default function Student360Dashboard({ initialData }: { initialData?: any
         </div>
       </div>
 
+      {initialData?.officialStats && (
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+          <Card className="border-blue-100 bg-blue-50/50 dark:border-blue-900/30 dark:bg-blue-950/20">
+            <CardContent className="p-4">
+              <p className="text-xs font-black uppercase tracking-wide text-blue-600 dark:text-blue-300">Học sinh chính thức</p>
+              <div className="mt-2 flex items-end gap-2">
+                <span className="text-3xl font-black text-slate-900 dark:text-white">{initialData.officialStats.totalStudents.toLocaleString('vi-VN')}</span>
+                <span className="pb-1 text-sm font-bold text-slate-500">HS</span>
+              </div>
+              <p className="mt-1 text-xs font-semibold text-slate-500">Sĩ số hiện tại đã khóa trong DB, chưa gồm tuyển sinh năm học tới.</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <p className="text-xs font-black uppercase tracking-wide text-slate-500">Quy mô lớp</p>
+              <div className="mt-2 text-3xl font-black text-slate-900 dark:text-white">{initialData.officialStats.totalClasses}</div>
+              <p className="mt-1 text-xs font-semibold text-slate-500">lớp • TB {initialData.officialStats.averageClassSize} HS/lớp</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <p className="text-xs font-black uppercase tracking-wide text-slate-500">Cơ cấu 3 cấp</p>
+              <div className="mt-2 space-y-1">
+                {initialData.officialStats.classGroups.map((group: any) => (
+                  <div key={group.level} className="flex justify-between text-xs font-bold text-slate-600 dark:text-slate-300">
+                    <span>{group.level}</span>
+                    <span>{group.classes} lớp • {group.students} HS</span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="border-emerald-100 bg-emerald-50/50 dark:border-emerald-900/30 dark:bg-emerald-950/20">
+            <CardContent className="p-4">
+              <p className="text-xs font-black uppercase tracking-wide text-emerald-600 dark:text-emerald-300">Tuyển sinh năm học tới</p>
+              <div className="mt-2 text-3xl font-black text-slate-900 dark:text-white">{initialData.officialStats.admissionsPipeline}</div>
+              <p className="mt-1 text-xs font-semibold text-slate-500">hồ sơ mùa hè, chưa cộng vào sĩ số chính thức.</p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       {/* Top Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="border-blue-100 shadow-sm dark:border-blue-900/30">

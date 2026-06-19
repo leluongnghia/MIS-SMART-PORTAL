@@ -1,6 +1,7 @@
 "use server";
 
 import { db, schema } from "@/src/libs/server/db";
+import { eq } from "drizzle-orm";
 
 const STUDENT_SEED = [
   { id: "student_seed_001", code: "HS2025001", name: "Nguyễn Minh Anh", className: "6A1", gpa: 8.7, rank: "3/42", gender: "Nữ" },
@@ -120,13 +121,29 @@ export async function getInitialData() {
   try {
     await seedStudentsIfEmpty();
 
-    const studentsList = await db.select().from(schema.studentDirectory);
-    const gradesList = await db.select().from(schema.sisGrades);
-    const tuitionFeesList = await db.select().from(schema.tuitionFees);
+    const [studentsList, gradesList, tuitionFeesList, officialCountSetting, admissionsTargetSetting] = await Promise.all([
+      db.select().from(schema.studentDirectory),
+      db.select().from(schema.sisGrades),
+      db.select().from(schema.tuitionFees),
+      db.select({ value: schema.systemSettings.value }).from(schema.systemSettings).where(eq(schema.systemSettings.key, 'academics:official_student_count')).limit(1),
+      db.select({ value: schema.systemSettings.value }).from(schema.systemSettings).where(eq(schema.systemSettings.key, 'admissions:next_year_pipeline_target')).limit(1),
+    ]);
+
     return {
       students: studentsList,
       grades: gradesList,
       tuitionFees: tuitionFeesList,
+      officialStats: {
+        totalStudents: Number(officialCountSetting[0]?.value || 1045),
+        totalClasses: 34,
+        averageClassSize: 30.7,
+        admissionsPipeline: Number(admissionsTargetSetting[0]?.value || 150),
+        classGroups: [
+          { level: 'Tiểu học', grades: 'Khối 1-5', classes: 20, students: 610 },
+          { level: 'THCS', grades: 'Khối 6-9', classes: 8, students: 244 },
+          { level: 'THPT', grades: 'Khối 10-12', classes: 6, students: 191 },
+        ],
+      },
     };
   } catch (e) {
     console.error("Failed to fetch students data:", e);
