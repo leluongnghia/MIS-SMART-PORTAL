@@ -1,3 +1,5 @@
+"use server";
+
 import { db, schema } from "@/src/libs/server/db";
 import { getCurrentActor, writeAuditLog } from "@/src/libs/server/auth-helper";
 import { eq } from "drizzle-orm";
