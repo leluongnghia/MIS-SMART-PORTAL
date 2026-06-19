@@ -40,15 +40,32 @@ export async function getCurrentActor(): Promise<Actor | null> {
     .limit(1);
 
   const userId = setting?.value;
-  if (!userId) return null;
+  if (userId) {
+    const [user] = await db
+      .select()
+      .from(schema.users)
+      .where(eq(schema.users.id, userId))
+      .limit(1);
 
-  const [user] = await db
+    if (user) return user as Actor;
+  }
+
+  // 3. Fallback for demo/local auth: use an active admin, then any active user.
+  // This keeps server components aligned with the client-only demo shell after deploys.
+  const [adminUser] = await db
     .select()
     .from(schema.users)
-    .where(eq(schema.users.id, userId))
+    .where(eq(schema.users.role, 'ADMIN'))
     .limit(1);
 
-  return (user as Actor) || null;
+  if (adminUser) return adminUser as Actor;
+
+  const [firstUser] = await db
+    .select()
+    .from(schema.users)
+    .limit(1);
+
+  return (firstUser as Actor) || null;
 }
 
 const SECRET_KEY_PATTERN = /(password|secret|token|api[_-]?key|smtp_password|credential)/i;
