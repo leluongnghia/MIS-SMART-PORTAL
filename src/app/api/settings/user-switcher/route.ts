@@ -6,7 +6,7 @@ import { canSwitchToUser, canUseUserSwitcher, getCurrentActor, writeAuditLog } f
 async function ensureSwitcherDefaults() {
   const defaults = [
     { key: 'user_switcher:enabled', value: 'true', group: 'user_switcher', label: 'Bật chế độ đổi user', description: 'Cho phép đổi user demo' },
-    { key: 'user_switcher:allow_in_production', value: 'false', group: 'user_switcher', label: 'Cho phép trong production', description: 'Không khuyến nghị bật ở môi trường thật' },
+    { key: 'user_switcher:allow_in_production', value: 'true', group: 'user_switcher', label: 'Cho phép trong production', description: 'Không khuyến nghị bật ở môi trường thật' },
     { key: 'user_switcher:admin_only', value: 'true', group: 'user_switcher', label: 'Chỉ Admin được đổi user', description: 'Chỉ Admin hệ thống được dùng switcher' },
     { key: 'user_switcher:log_switching', value: 'true', group: 'user_switcher', label: 'Ghi audit khi đổi user', description: 'Ghi nhật ký mỗi lần đổi user' },
   ];
