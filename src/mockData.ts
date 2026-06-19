@@ -123,7 +123,7 @@ export const MOCK_USERS: UserProfile[] = [
     role: 'ADMIN',
     roleName: 'Ban Giám hiệu & Hội đồng',
     title: 'Chủ tịch Hội đồng Trường',
-    avatar: 'https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=150&h=150&fit=crop&crop=face',
+    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
     workspaceId: 'BGH'
   },
   {
