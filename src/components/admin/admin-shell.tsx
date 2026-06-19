@@ -802,6 +802,7 @@ export default function AdminShell({ locale, children }: { locale: string; child
         directives={[]}
         tasks={[]}
         currentUser={currentUser}
+        summaryItems={notificationSummary.latest}
       />
     </div>
   );

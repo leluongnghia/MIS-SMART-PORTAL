@@ -12,6 +12,7 @@ interface NotificationDrawerProps {
   directives: BoardDirective[];
   tasks: Task[];
   currentUser: any;
+  summaryItems?: { id: string; type: string; title: string; href: string }[];
   onViewTask?: (task: Task) => void;
   onViewDirective?: (directive: BoardDirective) => void;
 }
@@ -25,6 +26,7 @@ export default function NotificationDrawer({
   directives = [],
   tasks = [],
   currentUser,
+  summaryItems = [],
   onViewTask,
   onViewDirective,
 }: NotificationDrawerProps) {
@@ -118,9 +120,26 @@ export default function NotificationDrawer({
       }),
     ];
 
+    // AdminShell only receives compact summary data from the API.
+    // Use it as a fallback so the bell drawer is not empty while the badge shows items.
+    if (items.length === 0 && summaryItems.length > 0) {
+      return summaryItems.map(item => ({
+        id: item.id,
+        type: item.type as 'announcement' | 'directive' | 'task',
+        title: item.type === 'task' ? 'Công việc cần kiểm tra' : item.type === 'directive' ? 'Chỉ đạo cần kiểm tra' : 'Thông báo mới',
+        content: item.title,
+        time: new Date().toISOString(),
+        sender: 'Hệ thống',
+        senderTitle: 'MIS Smart Portal',
+        isMeeting: false,
+        href: item.href,
+        originalData: item,
+      }));
+    }
+
     // Sắp xếp theo thời gian giảm dần
     return items.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
-  }, [filteredAnnouncements, filteredDirectives, filteredTasks]);
+  }, [filteredAnnouncements, filteredDirectives, filteredTasks, summaryItems]);
 
   const itemsToDisplay = useMemo(() => {
     if (activeTab === 'all') return allNotifications;
@@ -165,12 +184,12 @@ export default function NotificationDrawer({
   };
 
   const handleItemClick = (item: any) => {
-    if (item.type === 'task' && onViewTask) {
+    if (item.type === 'task' && onViewTask && item.originalData?.title) {
       onViewTask(item.originalData as Task);
-    } else if (item.type === 'directive' && onViewDirective) {
+    } else if (item.type === 'directive' && onViewDirective && item.originalData?.title) {
       onViewDirective(item.originalData as BoardDirective);
-    } else if (item.type === 'announcement' && item.isMeeting && onViewTask) {
-      // Nếu là cuộc họp, chuyển hướng phù hợp hoặc xử lý
+    } else if (item.href) {
+      window.location.href = item.href.startsWith('/') ? `/${window.location.pathname.split('/')[1]}${item.href}` : item.href;
     }
     onClose();
   };
