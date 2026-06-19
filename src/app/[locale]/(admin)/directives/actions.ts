@@ -18,13 +18,16 @@ const nowText = () => new Intl.DateTimeFormat('vi-VN', {
   dateStyle: 'short', timeStyle: 'short', timeZone: 'Asia/Ho_Chi_Minh'
 }).format(new Date());
 
-async function writeAudit(entityId: string, action: string, actorId: string, metadata: Record<string, unknown>) {
+async function writeAudit(entityId: string, action: string, actorId: string | null, metadata: Record<string, unknown>) {
+  const safeActorId = actorId
+    ? (await db.select({ id: schema.users.id }).from(schema.users).where(eq(schema.users.id, actorId)).limit(1))[0]?.id || null
+    : null;
   await db.insert(schema.auditLogs).values({
     id: `audit_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
     entityType: 'directive',
     entityId,
     action,
-    actorId,
+    actorId: safeActorId,
     metadata,
   });
 }
