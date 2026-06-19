@@ -227,12 +227,24 @@ export default function Student360Dashboard({ initialData }: { initialData?: any
           </CardHeader>
           <CardContent className="p-4 pt-2">
             <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-6 gap-2">
-              {initialData.officialStats.classDistribution.map((item: any) => (
-                <div key={item.className} className="rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-950">
-                  <p className="text-sm font-black text-slate-900 dark:text-white">{item.className}</p>
-                  <p className="mt-1 text-xs font-bold text-slate-500">{item.students} học sinh</p>
-                </div>
-              ))}
+              {initialData.officialStats.classDistribution.map((item: any) => {
+                const grade = Number(String(item.className).match(/\d+/)?.[0] || 0);
+                const palette = grade <= 5
+                  ? 'border-sky-200 bg-sky-50/80 text-sky-700 ring-sky-100 dark:border-sky-900/40 dark:bg-sky-950/20 dark:text-sky-300'
+                  : grade <= 9
+                    ? 'border-violet-200 bg-violet-50/80 text-violet-700 ring-violet-100 dark:border-violet-900/40 dark:bg-violet-950/20 dark:text-violet-300'
+                    : 'border-amber-200 bg-amber-50/80 text-amber-700 ring-amber-100 dark:border-amber-900/40 dark:bg-amber-950/20 dark:text-amber-300';
+                const badge = grade <= 5 ? 'Tiểu học' : grade <= 9 ? 'THCS' : 'THPT';
+                return (
+                  <div key={item.className} className={cn('rounded-xl border p-3 ring-1 transition-all hover:-translate-y-0.5 hover:shadow-md', palette)}>
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="text-sm font-black">{item.className}</p>
+                      <span className="rounded-full bg-white/70 px-2 py-0.5 text-[9px] font-black uppercase tracking-wide text-slate-500 dark:bg-slate-950/50">{badge}</span>
+                    </div>
+                    <p className="mt-2 text-xs font-bold text-slate-600 dark:text-slate-300">{item.students} học sinh</p>
+                  </div>
+                );
+              })}
             </div>
           </CardContent>
         </Card>
