@@ -176,28 +176,31 @@ export default function Student360Dashboard({ initialData }: { initialData?: any
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
           <Card className="border-blue-100 bg-blue-50/50 dark:border-blue-900/30 dark:bg-blue-950/20">
             <CardContent className="p-4">
-              <p className="text-xs font-black uppercase tracking-wide text-blue-600 dark:text-blue-300">Học sinh chính thức</p>
+              <p className="text-xs font-black uppercase tracking-wide text-blue-600 dark:text-blue-300">Tổng sĩ số</p>
               <div className="mt-2 flex items-end gap-2">
                 <span className="text-3xl font-black text-slate-900 dark:text-white">{initialData.officialStats.totalStudents.toLocaleString('vi-VN')}</span>
                 <span className="pb-1 text-sm font-bold text-slate-500">HS</span>
               </div>
-              <p className="mt-1 text-xs font-semibold text-slate-500">Sĩ số hiện tại đã khóa trong DB, chưa gồm tuyển sinh năm học tới.</p>
+              <p className="mt-1 text-xs font-semibold text-slate-500">Tổng sĩ số toàn trường</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4">
-              <p className="text-xs font-black uppercase tracking-wide text-slate-500">Quy mô lớp</p>
-              <div className="mt-2 text-3xl font-black text-slate-900 dark:text-white">{initialData.officialStats.totalClasses}</div>
-              <p className="mt-1 text-xs font-semibold text-slate-500">lớp • TB {initialData.officialStats.averageClassSize} HS/lớp</p>
+              <p className="text-xs font-black uppercase tracking-wide text-slate-500">Tổng số lớp</p>
+              <div className="mt-2 flex items-end gap-2">
+                <span className="text-3xl font-black text-slate-900 dark:text-white">{initialData.officialStats.totalClasses}</span>
+                <span className="pb-1 text-sm font-bold text-slate-500">lớp</span>
+              </div>
+              <p className="mt-1 text-xs font-semibold text-slate-500">TB {initialData.officialStats.averageClassSize} HS/lớp</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4">
-              <p className="text-xs font-black uppercase tracking-wide text-slate-500">Cơ cấu 3 cấp</p>
+              <p className="text-xs font-black uppercase tracking-wide text-slate-500">Chia theo cấp học</p>
               <div className="mt-2 space-y-1">
                 {initialData.officialStats.classGroups.map((group: any) => (
                   <div key={group.level} className="flex justify-between text-xs font-bold text-slate-600 dark:text-slate-300">
-                    <span>{group.level}</span>
+                    <span>{group.level} ({group.grades})</span>
                     <span>{group.classes} lớp • {group.students} HS</span>
                   </div>
                 ))}
@@ -207,11 +210,32 @@ export default function Student360Dashboard({ initialData }: { initialData?: any
           <Card className="border-emerald-100 bg-emerald-50/50 dark:border-emerald-900/30 dark:bg-emerald-950/20">
             <CardContent className="p-4">
               <p className="text-xs font-black uppercase tracking-wide text-emerald-600 dark:text-emerald-300">Tuyển sinh năm học tới</p>
-              <div className="mt-2 text-3xl font-black text-slate-900 dark:text-white">{initialData.officialStats.admissionsPipeline}</div>
-              <p className="mt-1 text-xs font-semibold text-slate-500">hồ sơ mùa hè, chưa cộng vào sĩ số chính thức.</p>
+              <div className="mt-2 flex items-end gap-2">
+                <span className="text-3xl font-black text-slate-900 dark:text-white">{initialData.officialStats.admissionsPipeline}</span>
+                <span className="pb-1 text-sm font-bold text-slate-500">HS</span>
+              </div>
+              <p className="mt-1 text-xs font-semibold text-slate-500">Chỉ tiêu tuyển sinh</p>
             </CardContent>
           </Card>
         </div>
+      )}
+
+      {initialData?.officialStats?.classDistribution && (
+        <Card>
+          <CardHeader className="p-4 pb-2">
+            <CardTitle className="text-base font-black">Phân bổ học sinh theo lớp</CardTitle>
+          </CardHeader>
+          <CardContent className="p-4 pt-2">
+            <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-6 gap-2">
+              {initialData.officialStats.classDistribution.map((item: any) => (
+                <div key={item.className} className="rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-950">
+                  <p className="text-sm font-black text-slate-900 dark:text-white">{item.className}</p>
+                  <p className="mt-1 text-xs font-bold text-slate-500">{item.students} học sinh</p>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {/* Top Stats */}

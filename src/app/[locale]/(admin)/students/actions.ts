@@ -143,6 +143,20 @@ export async function getInitialData() {
           { level: 'THCS', grades: 'Khối 6-9', classes: 8, students: 244 },
           { level: 'THPT', grades: 'Khối 10-12', classes: 6, students: 191 },
         ],
+        classDistribution: [
+          { className: '1A1', students: 31 }, { className: '1A2', students: 31 }, { className: '1A3', students: 31 }, { className: '1A4', students: 29 },
+          { className: '2A1', students: 31 }, { className: '2A2', students: 31 }, { className: '2A3', students: 30 }, { className: '2A4', students: 30 },
+          { className: '3A1', students: 31 }, { className: '3A2', students: 31 }, { className: '3A3', students: 30 }, { className: '3A4', students: 30 },
+          { className: '4A1', students: 31 }, { className: '4A2', students: 31 }, { className: '4A3', students: 30 }, { className: '4A4', students: 30 },
+          { className: '5A1', students: 31 }, { className: '5A2', students: 31 }, { className: '5A3', students: 30 }, { className: '5A4', students: 30 },
+          { className: '6A1', students: 31 }, { className: '6A2', students: 30 },
+          { className: '7A1', students: 31 }, { className: '7A2', students: 30 },
+          { className: '8A1', students: 31 }, { className: '8A2', students: 30 },
+          { className: '9A1', students: 31 }, { className: '9A2', students: 30 },
+          { className: '10A1', students: 32 }, { className: '10A2', students: 32 },
+          { className: '11A1', students: 32 }, { className: '11A2', students: 32 },
+          { className: '12A1', students: 32 }, { className: '12A2', students: 31 },
+        ],
       },
     };
   } catch (e) {
