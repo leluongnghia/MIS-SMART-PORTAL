@@ -645,9 +645,100 @@ export default function Student360Dashboard({ initialData }: { initialData?: any
           </>
           )}
 
-          {currentTab === 'attendance' && <Card><CardContent className="p-6 text-sm font-semibold text-slate-600">Chuyên cần chi tiết: Đi học {attendance.present} buổi, nghỉ phép {attendance.excused}, nghỉ không phép {attendance.unexcused}, đi muộn {attendance.late}.</CardContent></Card>}
-          {currentTab === 'conduct' && <Card><CardContent className="p-6 text-sm font-semibold text-slate-600">Hạnh kiểm: {conduct.status}. Ưu điểm: {(conduct.advantages || []).join(', ') || 'Không có'}. Nhắc nhở: {(conduct.notes || []).join(', ') || 'Không có'}.</CardContent></Card>}
-          {currentTab === 'health' && <Card><CardContent className="p-6 text-sm font-semibold text-slate-600">Y tế: {health.status}; chiều cao/cân nặng {health.height}/{health.weight}; nhóm máu {health.bloodType}; cảnh báo {health.warning}.</CardContent></Card>}
+          {currentTab === 'attendance' && (
+            <Card className="overflow-hidden border-emerald-100 shadow-sm dark:border-emerald-900/30">
+              <CardContent className="p-0">
+                <div className="bg-gradient-to-br from-emerald-50 via-teal-50 to-white p-5 dark:from-emerald-950/30 dark:via-teal-950/20 dark:to-slate-950">
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-600">Chuyên cần học kỳ II</p>
+                      <h3 className="mt-2 text-3xl font-black text-slate-950 dark:text-white">{payload.attendanceRate || '96.2%'}</h3>
+                      <p className="mt-1 text-sm font-bold text-slate-500">Tỷ lệ đi học hiện tại</p>
+                    </div>
+                    <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-white/80 text-emerald-600 shadow-lg shadow-emerald-200/60 ring-1 ring-emerald-100 dark:bg-slate-900/80 dark:shadow-none dark:ring-emerald-900/40">
+                      <CalendarCheck className="h-9 w-9" />
+                    </div>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3 p-5">
+                  {[
+                    ['Đi học', attendance.present, 'buổi', 'text-emerald-600', 'bg-emerald-50'],
+                    ['Nghỉ phép', attendance.excused, 'buổi', 'text-sky-600', 'bg-sky-50'],
+                    ['Nghỉ không phép', attendance.unexcused, 'buổi', 'text-rose-600', 'bg-rose-50'],
+                    ['Đi muộn', attendance.late, 'lần', 'text-amber-600', 'bg-amber-50'],
+                  ].map(([label, value, unit, color, bg]) => (
+                    <div key={label} className={cn('rounded-2xl p-4 ring-1 ring-slate-100 dark:ring-slate-800', bg as string)}>
+                      <p className="text-xs font-black uppercase text-slate-500">{label}</p>
+                      <p className={cn('mt-2 text-2xl font-black', color as string)}>{value} <span className="text-xs font-bold text-slate-500">{unit}</span></p>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+          {currentTab === 'conduct' && (
+            <Card className="overflow-hidden border-violet-100 shadow-sm dark:border-violet-900/30">
+              <CardContent className="p-0">
+                <div className="bg-gradient-to-br from-violet-50 via-fuchsia-50 to-white p-5 dark:from-violet-950/30 dark:via-fuchsia-950/20 dark:to-slate-950">
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <p className="text-xs font-black uppercase tracking-[0.18em] text-violet-600">Đánh giá hạnh kiểm</p>
+                      <h3 className="mt-2 text-3xl font-black text-slate-950 dark:text-white">{conduct.status || 'Tốt'}</h3>
+                      <p className="mt-1 text-sm font-bold text-slate-500">Theo dõi thái độ, nề nếp và tương tác lớp học</p>
+                    </div>
+                    <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-white/80 text-violet-600 shadow-lg shadow-violet-200/60 ring-1 ring-violet-100 dark:bg-slate-900/80 dark:shadow-none dark:ring-violet-900/40">
+                      <ShieldCheck className="h-9 w-9" />
+                    </div>
+                  </div>
+                </div>
+                <div className="grid gap-4 p-5 md:grid-cols-2">
+                  <div className="rounded-2xl border border-emerald-100 bg-emerald-50/70 p-4 dark:border-emerald-900/30 dark:bg-emerald-950/20">
+                    <p className="mb-3 flex items-center gap-2 text-sm font-black text-emerald-700"><CheckCircle2 className="h-4 w-4" /> Ưu điểm</p>
+                    <ul className="space-y-2 text-sm font-semibold text-slate-600 dark:text-slate-300">
+                      {(conduct.advantages?.length ? conduct.advantages : ['Duy trì nề nếp tốt']).map((item: string, idx: number) => <li key={idx}>• {item}</li>)}
+                    </ul>
+                  </div>
+                  <div className="rounded-2xl border border-amber-100 bg-amber-50/70 p-4 dark:border-amber-900/30 dark:bg-amber-950/20">
+                    <p className="mb-3 flex items-center gap-2 text-sm font-black text-amber-700"><AlertTriangle className="h-4 w-4" /> Nhắc nhở</p>
+                    <ul className="space-y-2 text-sm font-semibold text-slate-600 dark:text-slate-300">
+                      {(conduct.notes?.length ? conduct.notes : ['Không có nhắc nhở']).map((item: string, idx: number) => <li key={idx}>• {item}</li>)}
+                    </ul>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+          {currentTab === 'health' && (
+            <Card className="overflow-hidden border-sky-100 shadow-sm dark:border-sky-900/30">
+              <CardContent className="p-0">
+                <div className="bg-gradient-to-br from-sky-50 via-cyan-50 to-white p-5 dark:from-sky-950/30 dark:via-cyan-950/20 dark:to-slate-950">
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <p className="text-xs font-black uppercase tracking-[0.18em] text-sky-600">Y tế & sức khỏe</p>
+                      <h3 className="mt-2 text-3xl font-black text-slate-950 dark:text-white">{health.status || 'Tốt'}</h3>
+                      <p className="mt-1 text-sm font-bold text-slate-500">Hồ sơ sức khỏe học đường</p>
+                    </div>
+                    <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-white/80 text-sky-600 shadow-lg shadow-sky-200/60 ring-1 ring-sky-100 dark:bg-slate-900/80 dark:shadow-none dark:ring-sky-900/40">
+                      <HeartPulse className="h-9 w-9" />
+                    </div>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3 p-5">
+                  {[
+                    ['Chiều cao', health.height || '170 cm'],
+                    ['Cân nặng', health.weight || '60 kg'],
+                    ['Nhóm máu', health.bloodType || 'O+'],
+                    ['Cảnh báo y tế', health.warning || 'Không có'],
+                  ].map(([label, value]) => (
+                    <div key={label} className="rounded-2xl border border-slate-100 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900/60">
+                      <p className="text-xs font-black uppercase text-slate-500">{label}</p>
+                      <p className="mt-2 text-lg font-black text-slate-900 dark:text-white">{value}</p>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         {/* Right Sidebar: Timeline */}
