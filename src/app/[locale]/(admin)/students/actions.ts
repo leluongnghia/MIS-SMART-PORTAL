@@ -2,6 +2,7 @@
 
 import { db, schema } from "@/src/libs/server/db";
 import { eq } from "drizzle-orm";
+import { studentService } from "@/src/libs/server/student-service";
 
 const STUDENT_SEED = [
   { id: "student_seed_001", code: "HS2025001", name: "Nguyễn Minh Anh", className: "6A1", gpa: 8.7, rank: "3/42", gender: "Nữ" },
@@ -122,7 +123,7 @@ export async function getInitialData() {
     await seedStudentsIfEmpty();
 
     const [studentsList, gradesList, tuitionFeesList, officialCountSetting, admissionsTargetSetting] = await Promise.all([
-      db.select().from(schema.studentDirectory),
+      studentService.findMany({}),
       db.select().from(schema.sisGrades),
       db.select().from(schema.tuitionFees),
       db.select({ value: schema.systemSettings.value }).from(schema.systemSettings).where(eq(schema.systemSettings.key, 'academics:official_student_count')).limit(1),

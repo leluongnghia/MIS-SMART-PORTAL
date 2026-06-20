@@ -96,6 +96,7 @@ const menuGroups: MenuItemGroup[] = [
     items: [
       { label: 'Tuyển sinh & CRM', href: 'admissions', icon: Workflow },
       { label: 'Hồ sơ Học sinh 360', href: 'students', icon: GraduationCap },
+      { label: 'Quản lý Lớp học', href: 'classes', icon: Users },
       { label: 'Thời khóa biểu & Giáo án', href: 'schedule', icon: CalendarDays },
     ],
   },
@@ -404,6 +405,7 @@ export default function AdminShell({ locale, children }: { locale: string; child
       items: [
         { label: 'Thời khóa biểu & Lịch dạy', href: 'dashboard?tab=schedule', icon: CalendarDays },
         { label: 'Hồ sơ Học sinh 360', href: 'students', icon: GraduationCap },
+        { label: 'Quản lý Lớp học', href: 'classes', icon: Users },
       ],
     },
     {
@@ -435,6 +437,7 @@ export default function AdminShell({ locale, children }: { locale: string; child
         { label: 'Chiến dịch', href: 'admissions?view=campaigns', icon: Bell },
         { label: 'Cài đặt Pipeline', href: 'admissions?view=settings', icon: Settings },
         { label: 'Hồ sơ Học sinh 360', href: 'students', icon: GraduationCap },
+        { label: 'Quản lý Lớp học', href: 'classes', icon: Users },
         { label: 'Lịch & Sự kiện', href: 'events', icon: Calendar },
       ],
     },

@@ -107,6 +107,7 @@ export async function uploadFileToStorage(formData: FormData, actorOverride?: Ac
   const provider = DEFAULT_STORAGE_PROVIDER;
   const now = new Date();
   
+  const fileId = id('file');
   let diskFileName = '';
   let fileSize = file.size;
 

@@ -1247,3 +1247,48 @@ export const facilitiesSlaSettings = pgTable('facilities_sla_settings', {
   ...timestamps,
 });
 
+// ==========================================
+// CORE ACADEMIC & ORGANIZATION
+// ==========================================
+
+export const schools = pgTable('schools', {
+  id: text('id').primaryKey(),
+  code: text('code').notNull().unique(),
+  name: text('name').notNull(),
+  address: text('address'),
+  phone: text('phone'),
+  email: text('email'),
+  website: text('website'),
+  principalName: text('principal_name'),
+  establishedDate: timestamp('established_date', { withTimezone: true }),
+  logoUrl: text('logo_url'),
+  status: text('status').notNull().default('ACTIVE'), // 'ACTIVE', 'INACTIVE'
+  payload: jsonb('payload').notNull().default({}),
+  ...timestamps,
+});
+
+export const academicYears = pgTable('academic_years', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(), // e.g. "2023-2024"
+  startDate: timestamp('start_date', { withTimezone: true }).notNull(),
+  endDate: timestamp('end_date', { withTimezone: true }).notNull(),
+  isCurrent: boolean('is_current').default(false).notNull(),
+  schoolId: text('school_id').references(() => schools.id, { onDelete: 'set null' }),
+  status: text('status').notNull().default('ACTIVE'), // 'PLANNED', 'ACTIVE', 'COMPLETED'
+  payload: jsonb('payload').notNull().default({}),
+  ...timestamps,
+});
+
+export const classes = pgTable('classes', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  code: text('code').unique(),
+  gradeLevel: text('grade_level').notNull(),
+  academicYearId: text('academic_year_id').references(() => academicYears.id, { onDelete: 'cascade' }),
+  homeroomTeacherId: text('homeroom_teacher_id').references(() => users.id, { onDelete: 'set null' }),
+  roomLocationId: text('room_location_id'),
+  capacity: integer('capacity'),
+  status: text('status').notNull().default('ACTIVE'),
+  payload: jsonb('payload').notNull().default({}),
+  ...timestamps,
+});
