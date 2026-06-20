@@ -28,6 +28,7 @@ import {
 } from './facilities.constants';
 import { SuppliesTab } from './components/supplies-tab';
 import { BookingsTab } from './components/bookings-tab';
+import { InventoryTab } from './components/inventory-tab';
 
 type Props = {
   initialLocations?: any[];
@@ -38,6 +39,7 @@ type Props = {
   initialSafetyChecks?: any[];
   initialBookings?: any[];
   initialRenovationProjects?: any[];
+  initialInventoryChecks?: any[];
 };
 
 type PurchaseRequest = {
@@ -178,7 +180,7 @@ function StatCard({ title, value, desc, tone, icon: Icon, trend }: any) {
   );
 }
 
-export default function FacilitiesClient({ initialLocations = [], initialAssets = [], initialRepairRequests = [], initialSupplies = [] }: Props) {
+export default function FacilitiesClient({ initialLocations = [], initialAssets = [], initialRepairRequests = [], initialSupplies = [], initialBookings = [], initialInventoryChecks = [] }: Props) {
   const [activeTab, setActiveTab] = useState('overview');
 
   // React local states for full CRUD mock interaction
@@ -366,9 +368,9 @@ export default function FacilitiesClient({ initialLocations = [], initialAssets 
       <TabsContent value="repairs" activeValue={activeTab} className="m-0"><DataTable title="Yêu cầu sửa chữa" desc="Theo dõi SLA và xử lý báo hỏng" rows={repairRequests.map(r => ({...r, sla: getSlaStatus(r)}))} columns={['title','locationName','priority','status','assignedToName','dueDate','sla']} labels={['Sự cố','Vị trí','Ưu tiên','Trạng thái','Người xử lý','Hạn xử lý','SLA']} statusMap={{...REPAIR_STATUS, ...REPAIR_PRIORITY}} onAdd={(item: any) => setRepairRequests([item, ...repairRequests])} onViewDetails={(row: any, t: string) => { setSelectedRow(row); setSelectedRowTitle(t); }} /></TabsContent>
       <TabsContent value="maintenance" activeValue={activeTab} className="m-0"><DataTable title="Bảo trì" desc="Lịch bảo trì định kỳ và kiểm tra thiết bị" rows={maintenanceLogs} columns={['assetName','note','scheduledDate','responsibleUserName','status']} labels={['Thiết bị','Loại bảo trì','Ngày dự kiến','Phụ trách','Trạng thái']} statusMap={MAINTENANCE_STATUS} onAdd={(item: any) => setMaintenanceLogs([item, ...maintenanceLogs])} onViewDetails={(row: any, t: string) => { setSelectedRow(row); setSelectedRowTitle(t); }} /></TabsContent>
       <TabsContent value="purchases" activeValue={activeTab} className="m-0"><DataTable title="Đề xuất mua sắm" desc="Quản lý đề xuất mua mới, thay thế, bổ sung vật tư" rows={purchaseRequestsList} columns={['title','requestedByName','department','itemCount','priority','status','neededByDate']} labels={['Đề xuất','Người đề xuất','Khu vực','SL mặt hàng','Ưu tiên','Trạng thái','Hạn cần có']} statusMap={REPAIR_PRIORITY} onAdd={(item: any) => setPurchaseRequestsList([item, ...purchaseRequestsList])} onViewDetails={(row: any, t: string) => { setSelectedRow(row); setSelectedRowTitle(t); }} /></TabsContent>
-      <TabsContent value="supplies" activeValue={activeTab} className="m-0"><SuppliesTab /></TabsContent>
-      <TabsContent value="handover" activeValue={activeTab} className="m-0"><BookingsTab /></TabsContent>
-      <TabsContent value="inventory" activeValue={activeTab} className="m-0"><Placeholder title="Kiểm kê" desc="Tạo đợt kiểm kê, đối chiếu vị trí/tình trạng, ghi nhận thiếu-hỏng-thừa." /></TabsContent>
+      <TabsContent value="supplies" activeValue={activeTab} className="m-0"><SuppliesTab initialSupplies={supplies} /></TabsContent>
+      <TabsContent value="handover" activeValue={activeTab} className="m-0"><BookingsTab initialBookings={initialBookings} /></TabsContent>
+      <TabsContent value="inventory" activeValue={activeTab} className="m-0"><InventoryTab initialChecks={initialInventoryChecks} /></TabsContent>
       <TabsContent value="reports" activeValue={activeTab} className="m-0"><Placeholder title="Báo cáo" desc="Tổng hợp tài sản, sửa chữa, bảo trì, vật tư và đề xuất mua sắm." /></TabsContent>
     </Tabs>
 

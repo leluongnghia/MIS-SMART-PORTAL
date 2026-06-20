@@ -9,7 +9,8 @@ import {
   getSuppliers,
   getSafetyChecks,
   getBookings,
-  getRenovationProjects
+  getRenovationProjects,
+  getInventoryChecks
 } from './actions';
 
 export const metadata = {
@@ -23,7 +24,7 @@ export default async function FacilitiesPage({ params }: { params: Promise<{ loc
 
   const [
     locationsRes, assetsRes, repairsRes,
-    suppliesRes, suppliersRes, safetyChecksRes, bookingsRes, renovationsRes
+    suppliesRes, suppliersRes, safetyChecksRes, bookingsRes, renovationsRes, inventoryRes
   ] = await Promise.all([
     getLocations(),
     getAssets(),
@@ -32,7 +33,8 @@ export default async function FacilitiesPage({ params }: { params: Promise<{ loc
     getSuppliers(),
     getSafetyChecks(),
     getBookings(),
-    getRenovationProjects()
+    getRenovationProjects(),
+    getInventoryChecks()
   ]);
 
   const locations = locationsRes.success ? locationsRes.data : [];
@@ -43,6 +45,7 @@ export default async function FacilitiesPage({ params }: { params: Promise<{ loc
   const safetyChecks = safetyChecksRes.success ? safetyChecksRes.data : [];
   const bookings = bookingsRes.success ? bookingsRes.data : [];
   const renovationProjects = renovationsRes.success ? renovationsRes.data : [];
+  const inventoryChecks = inventoryRes.success ? inventoryRes.data : [];
 
   return (
     <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
@@ -63,6 +66,7 @@ export default async function FacilitiesPage({ params }: { params: Promise<{ loc
         initialSafetyChecks={safetyChecks}
         initialBookings={bookings}
         initialRenovationProjects={renovationProjects}
+        initialInventoryChecks={inventoryChecks}
       />
     </div>
   );

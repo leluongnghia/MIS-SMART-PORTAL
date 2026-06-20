@@ -232,6 +232,38 @@ export async function getInventoryChecks() {
   }
 }
 
+export async function createInventoryCheck(data: any, items: any[]) {
+  const user = await getCurrentActor();
+  if (!user || !canManageFacilities(user)) throw new Error('Unauthorized');
+
+  try {
+    const checkId = `INV-${Date.now()}`;
+    const newCheck = await db.insert(facilitiesInventoryChecks).values({
+      ...data,
+      id: checkId,
+      code: `KIE-${new Date().getFullYear()}-${Math.floor(Math.random()*10000)}`,
+      createdById: user.id,
+      createdByName: user.name,
+      status: 'IN_PROGRESS',
+      startedAt: new Date(),
+    }).returning();
+
+    if (items && items.length > 0) {
+      await db.insert(facilitiesInventoryCheckItems).values(
+        items.map(item => ({
+          ...item,
+          id: `INI-${Math.random().toString(36).substr(2, 9)}`,
+          inventoryCheckId: checkId,
+        }))
+      );
+    }
+
+    return { success: true, data: newCheck[0] };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
 // ==============================
 // VẬT TƯ TIÊU HAO (SUPPLIES)
 // ==============================
@@ -243,6 +275,62 @@ export async function getSupplies() {
     return { success: false, error: error.message };
   }
 }
+
+export async function createSupply(data: any) {
+  const user = await getCurrentActor();
+  if (!user || !canManageFacilities(user)) throw new Error('Unauthorized');
+
+  try {
+    const newSupply = await db.insert(facilitiesSupplies).values({
+      ...data,
+      id: `SUP-${Date.now()}`,
+    }).returning();
+    return { success: true, data: newSupply[0] };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function updateSupplyQuantity(id: string, quantity: number, type: 'IMPORT' | 'EXPORT' | 'ADJUST', reason?: string) {
+  const user = await getCurrentActor();
+  if (!user || !canManageFacilities(user)) throw new Error('Unauthorized');
+
+  try {
+    const supply = await db.select().from(facilitiesSupplies).where(eq(facilitiesSupplies.id, id));
+    if (!supply[0]) throw new Error('Supply not found');
+
+    let newQuantity = supply[0].currentQuantity;
+    if (type === 'IMPORT') newQuantity += quantity;
+    else if (type === 'EXPORT') newQuantity -= quantity;
+    else if (type === 'ADJUST') newQuantity = quantity;
+
+    if (newQuantity < 0) throw new Error('Số lượng tồn không đủ');
+
+    const updated = await db.update(facilitiesSupplies)
+      .set({ 
+        currentQuantity: newQuantity, 
+        status: newQuantity === 0 ? 'OUT_OF_STOCK' : newQuantity <= supply[0].minimumQuantity ? 'LOW_STOCK' : 'IN_STOCK',
+        lastImportedAt: type === 'IMPORT' ? new Date() : supply[0].lastImportedAt
+      })
+      .where(eq(facilitiesSupplies.id, id))
+      .returning();
+
+    await db.insert(facilitiesSupplyTransactions).values({
+      id: `TRX-${Date.now()}`,
+      supplyId: id,
+      type,
+      quantity,
+      reason,
+      performedById: user.id,
+      performedByName: user.name,
+    });
+
+    return { success: true, data: updated[0] };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
 
 // ==============================
 // NHÀ CUNG CẤP & BẢO HÀNH (SUPPLIERS & WARRANTIES)
@@ -273,8 +361,45 @@ export async function getSafetyChecks() {
 // ==============================
 export async function getBookings() {
   try {
-    const data = await db.select().from(facilitiesBookingRequests).orderBy(desc(facilitiesBookingRequests.createdAt));
+    const data = await db.select().from(facilitiesHandoverLogs).orderBy(desc(facilitiesHandoverLogs.createdAt));
     return { success: true, data };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function createHandover(data: any) {
+  const user = await getCurrentActor();
+  if (!user || !canManageFacilities(user)) throw new Error('Unauthorized');
+
+  try {
+    const newHandover = await db.insert(facilitiesHandoverLogs).values({
+      ...data,
+      id: `HND-${Date.now()}`,
+      code: `GIAO-${new Date().getFullYear()}-${Math.floor(Math.random()*10000)}`,
+      handedOverById: user.id,
+      handedOverByName: user.name,
+    }).returning();
+    return { success: true, data: newHandover[0] };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function returnHandover(id: string, conditionOnReturn: string) {
+  const user = await getCurrentActor();
+  if (!user || !canManageFacilities(user)) throw new Error('Unauthorized');
+
+  try {
+    const updated = await db.update(facilitiesHandoverLogs)
+      .set({ 
+        status: 'RETURNED', 
+        actualReturnDate: new Date(),
+        conditionOnReturn 
+      })
+      .where(eq(facilitiesHandoverLogs.id, id))
+      .returning();
+    return { success: true, data: updated[0] };
   } catch (error: any) {
     return { success: false, error: error.message };
   }
