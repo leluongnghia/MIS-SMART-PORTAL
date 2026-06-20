@@ -4,6 +4,17 @@ import { INITIAL_TASKS, MOCK_USERS, WORKSPACES } from '../src/mockData';
 const now = new Date();
 
 async function seed() {
+  // Truncate existing student-related tables
+  console.log("Cleaning old classes, students, grades, and tuition fees...");
+  try {
+    await db.delete(schema.sisGrades);
+    await db.delete(schema.tuitionFees);
+    await db.delete(schema.studentDirectory);
+    await db.delete(schema.classes);
+  } catch (e) {
+    console.log("Cleanup skipped or table not initialized yet:", e);
+  }
+
   await db.insert(schema.workspaces).values(
     WORKSPACES.map((workspace: any) => ({
       id: workspace.id,
@@ -649,6 +660,55 @@ async function seed() {
   ];
   await db.insert(schema.risks).values(mockRisks).onConflictDoNothing();
 
+
+  // Seed Classes
+  console.log("Seeding classes...");
+  const seedClasses = [
+    // Tiểu học
+    { id: "class_1A1", name: "1A1", code: "1A1", gradeLevel: "1" },
+    { id: "class_1A2", name: "1A2", code: "1A2", gradeLevel: "1" },
+    { id: "class_1A3", name: "1A3", code: "1A3", gradeLevel: "1" },
+    { id: "class_1A4", name: "1A4", code: "1A4", gradeLevel: "1" },
+    { id: "class_2A1", name: "2A1", code: "2A1", gradeLevel: "2" },
+    { id: "class_2A2", name: "2A2", code: "2A2", gradeLevel: "2" },
+    { id: "class_2A3", name: "2A3", code: "2A3", gradeLevel: "2" },
+    { id: "class_2A4", name: "2A4", code: "2A4", gradeLevel: "2" },
+    { id: "class_3A1", name: "3A1", code: "3A1", gradeLevel: "3" },
+    { id: "class_3A2", name: "3A2", code: "3A2", gradeLevel: "3" },
+    { id: "class_3A3", name: "3A3", code: "3A3", gradeLevel: "3" },
+    { id: "class_3A4", name: "3A4", code: "3A4", gradeLevel: "3" },
+    { id: "class_4A1", name: "4A1", code: "4A1", gradeLevel: "4" },
+    { id: "class_4A2", name: "4A2", code: "4A2", gradeLevel: "4" },
+    { id: "class_4A3", name: "4A3", code: "4A3", gradeLevel: "4" },
+    { id: "class_4A4", name: "4A4", code: "4A4", gradeLevel: "4" },
+    { id: "class_5A1", name: "5A1", code: "5A1", gradeLevel: "5" },
+    { id: "class_5A2", name: "5A2", code: "5A2", gradeLevel: "5" },
+    { id: "class_5A3", name: "5A3", code: "5A3", gradeLevel: "5" },
+    { id: "class_5A4", name: "5A4", code: "5A4", gradeLevel: "5" },
+    // THCS
+    { id: "class_6A1", name: "6A1", code: "6A1", gradeLevel: "6" },
+    { id: "class_6A2", name: "6A2", code: "6A2", gradeLevel: "6" },
+    { id: "class_7A1", name: "7A1", code: "7A1", gradeLevel: "7" },
+    { id: "class_7A2", name: "7A2", code: "7A2", gradeLevel: "7" },
+    { id: "class_8A1", name: "8A1", code: "8A1", gradeLevel: "8" },
+    { id: "class_8A2", name: "8A2", code: "8A2", gradeLevel: "8" },
+    { id: "class_9A1", name: "9A1", code: "9A1", gradeLevel: "9" },
+    { id: "class_9A2", name: "9A2", code: "9A2", gradeLevel: "9" },
+    // THPT
+    { id: "class_10A1", name: "10A1", code: "10A1", gradeLevel: "10" },
+    { id: "class_10A2", name: "10A2", code: "10A2", gradeLevel: "10" },
+    { id: "class_11A1", name: "11A1", code: "11A1", gradeLevel: "11" },
+    { id: "class_11A2", name: "11A2", code: "11A2", gradeLevel: "11" },
+    { id: "class_12A1", name: "12A1", code: "12A1", gradeLevel: "12" },
+    { id: "class_12A2", name: "12A2", code: "12A2", gradeLevel: "12" },
+  ];
+
+  await db.insert(schema.classes).values(seedClasses.map(c => ({
+    ...c,
+    createdAt: now,
+    updatedAt: now
+  }))).onConflictDoNothing();
+
   // Seed Student Directory
   console.log("Seeding student directory...");
   const FIRST_NAMES = ['Nguyễn', 'Trần', 'Phạm', 'Võ', 'Lê', 'Hoàng', 'Đỗ', 'Phan', 'Trịnh', 'Bùi', 'Đặng', 'Lương', 'Ngô'];
@@ -656,80 +716,91 @@ async function seed() {
   const LAST_NAMES = ['Anh', 'Tuấn', 'Hà', 'Nam', 'Châu', 'Khang', 'Ngọc', 'Linh', 'Huy', 'Sơn', 'Dương', 'Hải'];
 
   const mockStudents = [];
-  const mockGrades = [];
-  const mockTuitions = [];
+  const mockGrades: any[] = [];
+  const mockTuitions: any[] = [];
 
-  for (let i = 1; i <= 15; i++) {
-    const fn = FIRST_NAMES[i % FIRST_NAMES.length];
-    const mn = MIDDLE_NAMES[(i * 3) % MIDDLE_NAMES.length];
-    const ln = LAST_NAMES[(i * 7) % LAST_NAMES.length];
-    const name = `${fn} ${mn} ${ln}`;
-    const code = `HS2023${String(77 + i).padStart(4, '0')}`;
-    const studentId = `stud_${String(i).padStart(2, '0')}`;
-    const className = i <= 8 ? '11A1' : '11A2';
-    const gpa = Number((7.5 + (i % 6) * 0.3).toFixed(1));
-    const attendanceRate = `${95 + (i % 5)}.${i % 9}%`;
-    const present = 170 + (i % 12);
-    const excused = 3 + (i % 5);
-    const unexcused = i % 3;
-    const late = i % 4;
+  let globalIdx = 0;
+  for (const c of seedClasses) {
+    for (let sIdx = 1; sIdx <= 2; sIdx++) {
+      globalIdx++;
+      const fn = FIRST_NAMES[globalIdx % FIRST_NAMES.length];
+      const mn = MIDDLE_NAMES[(globalIdx * 3) % MIDDLE_NAMES.length];
+      const ln = LAST_NAMES[(globalIdx * 7) % LAST_NAMES.length];
+      const name = `${fn} ${mn} ${ln}`;
+      const code = `HS2026${String(100 + globalIdx).padStart(4, '0')}`;
+      const studentId = `stud_${String(globalIdx).padStart(3, '0')}`;
+      const className = c.name;
+      const gpa = Number((7.0 + (globalIdx % 6) * 0.4 + (sIdx % 2) * 0.3).toFixed(1));
+      const attendanceRate = `${95 + (globalIdx % 4)}.${globalIdx % 9}%`;
+      const present = 170 + (globalIdx % 10);
+      const excused = 2 + (globalIdx % 4);
+      const unexcused = globalIdx % 2;
+      const late = globalIdx % 3;
 
-    mockStudents.push({
-      id: studentId,
-      code: code,
-      name: name,
-      className: className,
-      enrollmentStatus: 'active',
-      parentName: `${fn} ${mn} Hùng`,
-      parentPhone: `090${i}123456`,
-      parentEmail: `parent_${i}@gmail.com`,
-      payload: {
-        gender: i % 2 === 0 ? 'Nữ' : 'Nam',
-        dob: `${String(1 + (i % 28)).padStart(2, '0')}/${String(1 + (i % 12)).padStart(2, '0')}/2008`,
-        location: 'Cơ sở 1 - Trường THPT Minh Khai',
-        ethnicity: 'Kinh',
-        admissionDate: '01/08/2023',
-        sparkline: `M0,15 L20,${10 + (i % 8)} L40,${5 + (i % 10)} L60,${12 + (i % 6)} L80,${8 + (i % 5)} L100,${2 + (i % 3)}`,
-        rank: `${i}/${i <= 8 ? 42 : 40}`,
-        gpa: gpa,
-        attendanceRate: attendanceRate,
-        attendanceStat: { present, excused, unexcused, late },
-        conduct: { 
-          status: gpa >= 8.5 ? 'Tốt' : 'Khá', 
-          advantages: ['Học tập tiến bộ', 'Tự giác học tập', 'Hòa đồng, có trách nhiệm'], 
-          notes: gpa < 8.0 ? ['Cần chú ý môn tự nhiên'] : ['Không có'] 
+      mockStudents.push({
+        id: studentId,
+        code: code,
+        name: name,
+        className: className,
+        enrollmentStatus: 'active',
+        parentName: `${fn} ${mn} Hùng`,
+        parentPhone: `090${globalIdx}123456`,
+        parentEmail: `parent_${globalIdx}@gmail.com`,
+        payload: {
+          gender: globalIdx % 2 === 0 ? 'Nữ' : 'Nam',
+          dob: `${String(1 + (globalIdx % 28)).padStart(2, '0')}/${String(1 + (globalIdx % 12)).padStart(2, '0')}/2008`,
+          location: 'Hà Nội',
+          ethnicity: 'Kinh',
+          admissionDate: '01/08/2024',
+          sparkline: `M0,15 L20,${10 + (globalIdx % 8)} L40,${5 + (globalIdx % 10)} L60,${12 + (globalIdx % 6)} L80,${8 + (globalIdx % 5)} L100,${2 + (globalIdx % 3)}`,
+          rank: `${sIdx}/${sIdx === 1 ? 32 : 31}`,
+          gpa: gpa,
+          attendanceRate: attendanceRate,
+          attendanceStat: { present, excused, unexcused, late },
+          conduct: { 
+            status: gpa >= 8.5 ? 'Tốt' : 'Khá', 
+            advantages: ['Tự giác học tập', 'Hòa đồng, trách nhiệm'], 
+            notes: gpa < 8.0 ? ['Cần tập trung môn tự nhiên'] : ['Không có'] 
+          },
+          health: { status: 'Tốt', height: `${160 + (globalIdx % 15)} cm`, weight: `${50 + (globalIdx % 20)} kg`, bloodType: 'O+', warning: 'Không có' },
+          parents: [
+            { name: `${fn} ${mn} Hùng`, relation: 'Bố', phone: `090${globalIdx} 123 456`, email: `parent_${globalIdx}@gmail.com`, avatar: `https://i.pravatar.cc/150?u=dad${globalIdx}` }
+          ],
+          achievements: [
+            { date: '01/2025', title: 'Học sinh Giỏi', organization: 'Trường MIS' }
+          ],
+          timeline: [
+            { time: '15/05/2025 14:30', title: 'Trao đổi học tập', desc: 'Giáo viên bộ môn thông báo về tinh thần học tập tiến bộ.', user: 'Cô Phạm Thu Hương', icon: 'MessageSquare', color: 'bg-blue-600' }
+          ]
         },
-        health: { status: 'Tốt', height: `${160 + (i % 15)} cm`, weight: `${50 + (i % 20)} kg`, bloodType: i % 4 === 0 ? 'O+' : i % 4 === 1 ? 'A+' : i % 4 === 2 ? 'B+' : 'AB+', warning: 'Không có' },
-        parents: [
-          { name: `${fn} ${mn} Hùng`, relation: 'Bố', phone: `090${i} 123 456`, email: `parent_${i}@gmail.com`, avatar: `https://i.pravatar.cc/150?u=dad${i}` }
-        ],
-        achievements: [
-          { date: '01/2025', title: 'Giấy khen Học sinh Giỏi HK1', organization: 'Trường THPT Minh Khai' }
-        ],
-        timeline: [
-          { time: '15/05/2025 14:30', title: 'Trao đổi học tập', desc: 'Giáo viên bộ môn thông báo về tinh thần học tập tiến bộ.', user: 'Cô Phạm Thu Hương', icon: 'MessageSquare', color: 'bg-blue-600' }
-        ]
-      },
-      createdAt: now,
-      updatedAt: now
-    });
-
-    const subjects = ['Toán', 'Ngữ văn', 'Tiếng Anh', 'Vật lý', 'Hóa học'];
-    subjects.forEach((subj, sIdx) => {
-      const score = Number((gpa - 0.5 + (sIdx % 3) * 0.4).toFixed(1));
-      mockGrades.push({
-        id: `gr_${String(i).padStart(2, '0')}_${sIdx + 1}`,
-        studentId: studentId,
-        subject: subj,
-        payload: { score, scores: { midTerm: score - 0.5, finalTerm: score + 0.5, quizzes: [score, score - 0.2, score + 0.3] } },
         createdAt: now,
         updatedAt: now
       });
-    });
 
-    mockTuitions.push(
-      { id: `tf_${String(i).padStart(2, '0')}_01`, studentId: studentId, invoiceNo: `INV-2025-${String(i).padStart(3, '0')}`, amount: '4500000', status: i % 3 === 0 ? 'pending' : 'paid', payload: { title: 'Học phí Tháng 05/2025', dueDate: '10/05/2025', method: i % 3 === 0 ? 'Chờ thanh toán' : 'Chuyển khoản VietQR' }, createdAt: now, updatedAt: now }
-    );
+      const subjects = ['Toán', 'Ngữ văn', 'Tiếng Anh', 'Vật lý', 'Hóa học'];
+      subjects.forEach((subj, sIdx) => {
+        const score = Number((gpa - 0.5 + (sIdx % 3) * 0.4).toFixed(1));
+        mockGrades.push({
+          id: `gr_${String(globalIdx).padStart(3, '0')}_${sIdx + 1}`,
+          studentId: studentId,
+          subject: subj,
+          payload: { score, scores: { midTerm: score - 0.5, finalTerm: score + 0.5, quizzes: [score, score - 0.2, score + 0.3] } },
+          createdAt: now,
+          updatedAt: now
+        });
+      });
+
+      mockTuitions.push({ 
+        id: `tf_${String(globalIdx).padStart(3, '0')}_01`, 
+        studentId: studentId, 
+        invoiceNo: `INV-2025-${String(globalIdx).padStart(3, '0')}`, 
+        amount: '4500000', 
+        status: globalIdx % 3 === 0 ? 'pending' : 'paid', 
+        payload: { title: 'Học phí Tháng 05/2025', dueDate: '10/05/2025', method: globalIdx % 3 === 0 ? 'Chờ thanh toán' : 'Chuyển khoản VietQR' }, 
+        createdAt: now, 
+        updatedAt: now 
+      });
+    }
   }
 
   await db.insert(schema.studentDirectory).values(mockStudents).onConflictDoNothing();
