@@ -3,6 +3,7 @@ import { Task, Workspace, UserProfile, TaskPriority } from '../types';
 import { MOCK_USERS, getTaskIntelligences } from '../mockData';
 import { MOCK_DEPARTMENT_OKRS, enrichUserWithMIDetails } from '../miAndOkrUtils';
 import { X, Plus, Users, Calendar, Milestone, AlertTriangle, FileText, Award, Target } from 'lucide-react';
+import { useToast } from './ui/Toast';
 
 interface TaskModalProps {
   onClose: () => void;
@@ -13,6 +14,7 @@ interface TaskModalProps {
 }
 
 export default function TaskModal({ onClose, onSave, currentUser, workspaces, allTasks = [] }: TaskModalProps) {
+  const { error: toastError } = useToast();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [projectId, setProjectId] = useState('GENERAL');
@@ -118,7 +120,7 @@ export default function TaskModal({ onClose, onSave, currentUser, workspaces, al
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !description.trim()) {
-      alert('Vui lòng nhập đầy đủ Tiêu đề và Mô tả công việc.');
+      toastError('Thiếu thông tin', 'Vui lòng nhập đầy đủ Tiêu đề và Mô tả công việc.');
       return;
     }
 

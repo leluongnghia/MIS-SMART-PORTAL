@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useTransition, useMemo } from 'react';
+import Link from 'next/link';
+import { useParams } from 'next/navigation';
 import { createTask, updateTaskStatus, seedTasks } from './actions';
 import { APPROVAL_MOCK_DATA, SEED_TASKS } from './tasks.constants';
 import {
@@ -43,7 +45,7 @@ import { Badge } from '@/src/components/ui/badge';
 import { Button } from '@/src/components/ui/button';
 import { Dialog } from '@/src/components/ui/dialog';
 import { cn } from '@/src/lib/utils';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/src/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/src/components/ui/table';
 
@@ -106,11 +108,41 @@ const isOverdueTask = (task: TaskRow) => {
   return !Number.isNaN(date.getTime()) && date.getTime() < Date.now();
 };
 
+export type OverdueLevel = "NONE" | "LIGHT" | "MEDIUM" | "HIGH" | "CRITICAL";
 
-export default function TasksDashboard({ initialData }: { initialData?: { data?: TaskRow[] } }) {
+export const getOverdueDays = (task: TaskRow): number => {
+  if (!task.deadline || TERMINAL_STATUSES.has(String(task.status || ''))) return 0;
+  const deadline = new Date(task.deadline).getTime();
+  const now = Date.now();
+  if (now <= deadline) return 0;
+  return Math.floor((now - deadline) / (1000 * 60 * 60 * 24));
+};
+
+export const getOverdueLevel = (task: TaskRow): OverdueLevel => {
+  const days = getOverdueDays(task);
+  if (days === 0) return "NONE";
+  if (days > 14 || task.priority === 'URGENT') return "CRITICAL";
+  if (days >= 8) return "HIGH";
+  if (days >= 3) return "MEDIUM";
+  return "LIGHT";
+};
+
+export const getOverdueLevelColor = (level: OverdueLevel) => {
+  switch (level) {
+    case "LIGHT": return "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400";
+    case "MEDIUM": return "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400";
+    case "HIGH": return "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400";
+    case "CRITICAL": return "bg-rose-600 text-white dark:bg-rose-600 dark:text-white";
+    default: return "";
+  }
+};
+
+export default function TasksDashboard({ initialData, defaultTab, defaultTaskId }: { initialData?: { data?: TaskRow[] }, defaultTab?: string, defaultTaskId?: string }) {
   const tasksList = initialData?.data || [];
   const workspaces = (initialData as any)?.workspaces || [];
   const users = (initialData as any)?.users || [];
+  const params = useParams();
+  const locale = params?.locale || 'vi';
 
   const [isPending, startTransition] = useTransition();
 
@@ -126,11 +158,14 @@ export default function TasksDashboard({ initialData }: { initialData?: { data?:
   const [selectedApproval, setSelectedApproval] = useState<any>(null);
   const [isApprovalOpen, setIsApprovalOpen] = useState(false);
   const [approvalNote, setApprovalNote] = useState('');
-  const [selectedTask, setSelectedTask] = useState<any>(null);
-  const [isTaskOpen, setIsTaskOpen] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<any>(
+    defaultTaskId ? tasksList.find((t) => t.id === defaultTaskId) : null
+  );
+  const [isTaskOpen, setIsTaskOpen] = useState(!!defaultTaskId);
   const [selectedApprovalTaskId, setSelectedApprovalTaskId] = useState<string>('');
   const [activeFilter, setActiveFilter] = useState<'in_progress' | 'overdue' | 'pending' | 'completed' | null>(null);
-  const [activeView, setActiveView] = useState<'kanban' | 'list'>('kanban');
+  const [activeView, setActiveView] = useState<'kanban' | 'list' | 'reports'>(defaultTab === 'list' ? 'list' : defaultTab === 'reports' ? 'reports' : 'kanban');
+  const [taskTab, setTaskTab] = useState<'details' | 'comments' | 'attachments' | 'history' | 'extension'>('details');
   const today = new Date();
   const defaultDateTo = today.toISOString().slice(0, 10);
   const defaultDateFrom = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
@@ -280,6 +315,7 @@ export default function TasksDashboard({ initialData }: { initialData?: { data?:
       date: formatTaskDate(task.deadline),
       tag: task.priority === 'high' || isOverdueTask(task) ? (isOverdueTask(task) ? 'Quá hạn' : 'Ưu tiên') : task.tag || undefined,
       tagCol: isOverdueTask(task) ? 'bg-orange-100 text-orange-700' : task.priority === 'high' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700',
+      payload: (task as any).payload,
     }));
   const kanbanColumns = STATUS_COLUMNS.map(column => {
     const cards = getCardsByStatus(column.statuses);
@@ -489,18 +525,31 @@ export default function TasksDashboard({ initialData }: { initialData?: { data?:
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <TabsList className="w-fit border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-950">
               <TabsTrigger active={activeView === 'kanban'} onClick={() => setActiveView('kanban')}>
-                Kanban
+                Bảng chung
               </TabsTrigger>
               <TabsTrigger active={activeView === 'list'} onClick={() => setActiveView('list')}>
-                List View
+                Công việc của tôi
+              </TabsTrigger>
+              <TabsTrigger active={activeView === 'reports'} onClick={() => setActiveView('reports')}>
+                Thống kê & Báo cáo
               </TabsTrigger>
             </TabsList>
-            <Button
-              onClick={() => setIsCreateOpen(true)}
-              className="h-10 bg-emerald-600 px-5 font-bold text-white shadow-lg shadow-emerald-600/20 hover:bg-emerald-700"
-            >
-              <Plus className="mr-2 h-4 w-4" /> Thêm công việc mới
-            </Button>
+            <div className="flex gap-2">
+              <Link href={`/${locale}/tasks/overdue`}>
+                <Button
+                  variant="outline"
+                  className="h-10 border-orange-200 text-orange-600 bg-orange-50 hover:bg-orange-100 hover:text-orange-700 shadow-sm"
+                >
+                  <Clock className="mr-2 h-4 w-4" /> Trung tâm xử lý quá hạn
+                </Button>
+              </Link>
+              <Button
+                onClick={() => setIsCreateOpen(true)}
+                className="h-10 bg-emerald-600 px-5 font-bold text-white shadow-lg shadow-emerald-600/20 hover:bg-emerald-700"
+              >
+                <Plus className="mr-2 h-4 w-4" /> Thêm công việc mới
+              </Button>
+            </div>
           </div>
 
           {filteredTasks.length === 0 && (
@@ -543,32 +592,58 @@ export default function TasksDashboard({ initialData }: { initialData?: { data?:
                         {col.title} <Badge className={cn("px-1.5 py-0", col.title === 'Cần làm' ? 'bg-blue-100 text-blue-700' : col.title === 'Đang xử lý' ? 'bg-blue-100 text-blue-700' : col.title === 'Chờ duyệt' ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700')}>{col.count}</Badge>
                       </div>
                       <div className="flex-1 overflow-y-auto space-y-3 custom-scrollbar pr-1">
-                        {col.cards.map((card, j) => (
-                          <div 
-                            key={card.id || j} 
-                            onClick={() => {
-                              setSelectedTask({ ...card, status: col.title });
-                              setIsTaskOpen(true);
-                            }}
-                            className="bg-white dark:bg-slate-950 p-3 rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm relative group cursor-pointer hover:border-blue-400 dark:hover:border-blue-800 transition-colors"
-                          >
-                            <Button variant="ghost" size="icon" className="h-6 w-6 absolute top-2 right-2 opacity-0 group-hover:opacity-100"><MoreVertical className="h-3 w-3" /></Button>
-                            <h4 className="text-xs font-bold leading-snug pr-6 mb-2">{card.title}</h4>
-                            <div className="flex items-center gap-1.5 text-[10px] text-slate-500 mb-1">
-                              <UserCircle className="h-3 w-3" /> {card.user}
-                            </div>
-                            <div className="flex items-center gap-1.5 text-[10px] text-slate-500 mb-3">
-                              <CalendarIcon className="h-3 w-3" /> {card.date}
-                            </div>
-                            <div className="flex justify-between items-end">
-                              {card.tag ? <Badge className={cn("text-[9px] py-0 border-0", card.tagCol)}>{card.tag}</Badge> : <div />}
-                              <div className="flex -space-x-1">
-                                <img src={`https://i.pravatar.cc/150?u=${i}${j}1`} className="w-5 h-5 rounded-full border border-white dark:border-slate-950 object-cover" alt="Người tham gia" />
-                                <img src={`https://i.pravatar.cc/150?u=${i}${j}2`} className="w-5 h-5 rounded-full border border-white dark:border-slate-950 object-cover" alt="Người tham gia" />
+                        {col.cards.map((card, j) => {
+                          const isOverdue = isOverdueTask(card);
+                          const overdueDays = getOverdueDays(card);
+                          const overdueLevel = getOverdueLevel(card);
+                          const overdueColor = getOverdueLevelColor(overdueLevel);
+                          
+                          return (
+                            <div 
+                              key={card.id || j} 
+                              onClick={() => {
+                                setSelectedTask({ ...card, status: col.title });
+                                setIsTaskOpen(true);
+                              }}
+                              className={cn(
+                                "bg-white dark:bg-slate-950 p-3 rounded-lg shadow-sm relative group cursor-pointer hover:border-blue-400 dark:hover:border-blue-800 transition-colors border-l-4",
+                                isOverdue ? "border-y border-r border-slate-200 dark:border-slate-800" : "border border-slate-200 dark:border-slate-800",
+                                isOverdue && overdueLevel === 'LIGHT' ? "border-l-amber-400" : 
+                                isOverdue && overdueLevel === 'MEDIUM' ? "border-l-orange-500" : 
+                                isOverdue && overdueLevel === 'HIGH' ? "border-l-red-500" : 
+                                isOverdue && overdueLevel === 'CRITICAL' ? "border-l-rose-700 bg-rose-50/30 dark:bg-rose-950/10" : "border-l-transparent"
+                              )}
+                            >
+                              <Button variant="ghost" size="icon" className="h-6 w-6 absolute top-2 right-2 opacity-0 group-hover:opacity-100"><MoreVertical className="h-3 w-3" /></Button>
+                              <h4 className="text-xs font-bold leading-snug pr-6 mb-2">{card.title}</h4>
+                              <div className="flex items-center gap-1.5 text-[10px] text-slate-500 mb-1">
+                                <UserCircle className="h-3 w-3" /> {card.user}
+                              </div>
+                              <div className={cn("flex items-center gap-1.5 text-[10px] mb-3 font-medium", isOverdue ? "text-red-500" : "text-slate-500")}>
+                                <CalendarIcon className="h-3 w-3" /> {card.date}
+                              </div>
+                              
+                              {isOverdue && (
+                                <div className="mb-3 flex flex-col gap-1 items-start">
+                                  <Badge className={cn("text-[9px] px-1.5 py-0 border-0 uppercase", overdueColor)}>
+                                    Quá hạn {overdueDays} ngày
+                                  </Badge>
+                                  {(!card.payload?.overdueReason) && (
+                                    <span className="text-[9px] text-red-500 animate-pulse italic">Chưa cập nhật lý do!</span>
+                                  )}
+                                </div>
+                              )}
+
+                              <div className="flex justify-between items-end">
+                                {card.tag ? <Badge className={cn("text-[9px] py-0 border-0", card.tagCol)}>{card.tag}</Badge> : <div />}
+                                <div className="flex -space-x-1">
+                                  <img src={`https://i.pravatar.cc/150?u=${i}${j}1`} className="w-5 h-5 rounded-full border border-white dark:border-slate-950 object-cover" alt="Người tham gia" />
+                                  <img src={`https://i.pravatar.cc/150?u=${i}${j}2`} className="w-5 h-5 rounded-full border border-white dark:border-slate-950 object-cover" alt="Người tham gia" />
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                         <Button 
                           variant="ghost" 
                           onClick={() => setIsCreateOpen(true)}
@@ -632,6 +707,68 @@ export default function TasksDashboard({ initialData }: { initialData?: { data?:
                     })}
                   </TableBody>
                 </Table>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="reports" activeValue={activeView} className="mt-0">
+            <Card className="border-slate-200 shadow-sm dark:border-slate-800">
+              <CardHeader className="border-b border-slate-100 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-900/40">
+                <CardTitle className="text-base font-bold">Thống kê & Báo cáo</CardTitle>
+              </CardHeader>
+              <CardContent className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300">Biểu đồ công việc theo trạng thái</h3>
+                    <div className="h-[300px] w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={taskStatsData}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={60}
+                            outerRadius={100}
+                            paddingAngle={2}
+                            dataKey="value"
+                            stroke="none"
+                            label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                          >
+                            {taskStatsData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.color} />
+                            ))}
+                          </Pie>
+                          <Tooltip />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300">Công việc theo phòng ban</h3>
+                    <div className="h-[300px] w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart
+                          data={workspaces.map((w: any) => ({
+                            name: w.name,
+                            total: filteredTasks.filter(t => t.workspaceId === w.id).length,
+                            completed: filteredTasks.filter(t => t.workspaceId === w.id && ['HOAN_THANH', 'completed', 'done', 'closed'].includes(String(t.status))).length,
+                            overdue: filteredTasks.filter(t => t.workspaceId === w.id && isOverdueTask(t)).length
+                          }))}
+                          margin={{ top: 20, right: 30, left: 0, bottom: 5 }}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                          <XAxis dataKey="name" tick={{fontSize: 12}} />
+                          <YAxis tick={{fontSize: 12}} />
+                          <Tooltip />
+                          <Legend />
+                          <Bar dataKey="total" name="Tổng số" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                          <Bar dataKey="completed" name="Hoàn thành" fill="#10b981" radius={[4, 4, 0, 0]} />
+                          <Bar dataKey="overdue" name="Quá hạn" fill="#ef4444" radius={[4, 4, 0, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -909,37 +1046,231 @@ export default function TasksDashboard({ initialData }: { initialData?: { data?:
               </div>
             </div>
 
-            <div className="space-y-1 text-xs">
-              <span className="text-slate-500 block">Mô tả công việc:</span>
-              <p className="p-3 bg-slate-50 dark:bg-slate-900 rounded border border-slate-100 dark:border-slate-800 text-slate-600 dark:text-slate-400 leading-relaxed">
-                {selectedTask.description || 'Nhiệm vụ thuộc kế hoạch chiến lược phát triển chuyên môn học kỳ.'}
-              </p>
-            </div>
+            {/* Enhanced Dialog Tabs */}
+            <Tabs className="w-full">
+              <TabsList className="w-full border-b border-slate-200 dark:border-slate-800 rounded-none bg-transparent h-auto p-0 justify-start">
+                <TabsTrigger active={taskTab === 'details'} onClick={() => setTaskTab('details')} className="rounded-none border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=active]:shadow-none bg-transparent py-2">Chi tiết</TabsTrigger>
+                <TabsTrigger active={taskTab === 'comments'} onClick={() => setTaskTab('comments')} className="rounded-none border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=active]:shadow-none bg-transparent py-2">Bình luận</TabsTrigger>
+                <TabsTrigger active={taskTab === 'attachments'} onClick={() => setTaskTab('attachments')} className="rounded-none border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=active]:shadow-none bg-transparent py-2">Tệp đính kèm</TabsTrigger>
+                <TabsTrigger active={taskTab === 'history'} onClick={() => setTaskTab('history')} className="rounded-none border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=active]:shadow-none bg-transparent py-2">Lịch sử</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="details" activeValue={taskTab} className="pt-4 space-y-4">
+                
+                {isOverdueTask(selectedTask) && !selectedTask.payload?.overdueReason && (
+                  <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900 rounded-lg p-3 text-red-800 dark:text-red-300 animate-in fade-in slide-in-from-top-1">
+                    <p className="text-xs font-bold mb-2 flex items-center gap-1.5">
+                      <Clock className="h-4 w-4" /> BẮT BUỘC: Cập nhật lý do quá hạn
+                    </p>
+                    <p className="text-[10px] mb-3 opacity-80">
+                      Công việc đã quá hạn. Theo quy định vận hành, bạn cần phải cập nhật nguyên nhân / khó khăn hiện tại.
+                    </p>
+                    <div className="flex gap-2">
+                      <input 
+                        type="text" 
+                        placeholder="Nhập lý do quá hạn..." 
+                        id={`reason-${selectedTask.id}`}
+                        className="flex-1 text-xs p-2 rounded border border-red-200 dark:border-red-800 bg-white dark:bg-slate-950 focus:ring-1 focus:ring-red-500" 
+                      />
+                      <Button 
+                        size="sm"
+                        className="bg-red-600 hover:bg-red-700 text-white text-xs h-auto"
+                        onClick={async () => {
+                          const val = (document.getElementById(`reason-${selectedTask.id}`) as HTMLInputElement)?.value;
+                          if (!val?.trim()) { alert("Lý do không được bỏ trống!"); return; }
+                          // optimistic update could go here, or real server action
+                          alert("Đã cập nhật lý do: " + val);
+                        }}
+                      >
+                        Lưu lý do
+                      </Button>
+                    </div>
+                  </div>
+                )}
 
-            {/* If the task is pending approval ('Chờ duyệt'), show approve buttons */}
-            {selectedTask.status === 'Chờ duyệt' ? (
-              <div className="flex gap-2 pt-4 border-t border-slate-100 dark:border-slate-800">
-                <Button 
-                  onClick={() => handleApproveTask(selectedTask.id)}
-                  className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white border-0 text-xs h-9 font-bold"
-                >
-                  Duyệt hoàn thành
+                {selectedTask.payload?.overdueReason && (
+                  <div className="space-y-1 text-xs bg-red-50/50 dark:bg-red-900/10 p-3 rounded border border-red-100 dark:border-red-900/30">
+                    <span className="text-red-700 dark:text-red-400 font-bold flex items-center gap-1">
+                      <Clock className="h-3 w-3" /> Lý do quá hạn:
+                    </span>
+                    <p className="text-red-600 dark:text-red-300 italic">
+                      {selectedTask.payload.overdueReason}
+                    </p>
+                  </div>
+                )}
+
+                <div className="space-y-1 text-xs">
+                  <span className="text-slate-500 block">Mô tả công việc:</span>
+                  <p className="p-3 bg-slate-50 dark:bg-slate-900 rounded border border-slate-100 dark:border-slate-800 text-slate-600 dark:text-slate-400 leading-relaxed whitespace-pre-wrap">
+                    {selectedTask.description || 'Nhiệm vụ thuộc kế hoạch chiến lược phát triển chuyên môn học kỳ.'}
+                  </p>
+                </div>
+
+                {isOverdueTask(selectedTask) && selectedTask.payload?.deadlineExtensionStatus !== 'PENDING' && selectedTask.payload?.deadlineExtensionStatus !== 'APPROVED' && (
+                  <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+                    <Button 
+                      variant="outline"
+                      className="w-full text-xs text-orange-600 border-orange-200 hover:bg-orange-50 dark:hover:bg-orange-900/20"
+                      onClick={() => setTaskTab('extension')} // Add tab logic for extension later, or just simple prompt for now
+                    >
+                      Xin gia hạn thời gian
+                    </Button>
+                  </div>
+                )}
+
+                {selectedTask.payload?.deadlineExtensionStatus === 'PENDING' && (
+                  <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 p-2 rounded text-xs text-orange-700 dark:text-orange-400 flex justify-between items-center">
+                    <span>Đang chờ duyệt gia hạn đến {formatTaskDate(selectedTask.payload?.proposedNewDueDate)}</span>
+                    <Badge className="bg-orange-100 text-orange-700 border-0">PENDING</Badge>
+                  </div>
+                )}
+
+                {selectedTask.status === 'Chờ duyệt' ? (
+                  <div className="flex gap-2 pt-4 border-t border-slate-100 dark:border-slate-800">
+                    <Button 
+                      onClick={() => handleApproveTask(selectedTask.id)}
+                      className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white border-0 text-xs h-9 font-bold"
+                    >
+                      Duyệt hoàn thành
+                    </Button>
+                    <Button 
+                      onClick={() => handleRejectTask(selectedTask.id)}
+                      variant="outline"
+                      className="flex-1 text-orange-600 border-orange-200 hover:bg-orange-50 hover:text-orange-700 text-xs h-9 font-bold"
+                    >
+                      Yêu cầu chỉnh sửa
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex justify-end pt-4 border-t border-slate-100 dark:border-slate-800">
+                    <Button onClick={() => setIsTaskOpen(false)} className="text-xs h-9">
+                      Đóng
+                    </Button>
+                  </div>
+                )}
+              </TabsContent>
+              
+              <TabsContent value="comments" activeValue={taskTab} className="pt-4 space-y-4">
+                <div className="space-y-3 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
+                  {selectedTask.payload?.comments?.length > 0 ? selectedTask.payload.comments.map((c: any, i: number) => (
+                    <div key={i} className="flex gap-3">
+                      <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs shrink-0">
+                        {c.authorName?.charAt(0) || 'U'}
+                      </div>
+                      <div className="bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-lg p-3 flex-1 text-xs">
+                        <div className="flex justify-between items-center mb-1">
+                          <span className="font-bold text-slate-700 dark:text-slate-300">{c.authorName}</span>
+                          <span className="text-[10px] text-slate-400">{formatTaskDate(c.createdAt)}</span>
+                        </div>
+                        <p className="text-slate-600 dark:text-slate-400">{c.content}</p>
+                      </div>
+                    </div>
+                  )) : (
+                    <div className="text-center text-xs text-slate-500 py-4">Chưa có bình luận nào.</div>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  <input type="text" placeholder="Nhập bình luận..." className="flex-1 text-xs p-2 rounded border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 focus:ring-1 focus:ring-blue-500" />
+                  <Button className="h-auto text-xs bg-blue-600 hover:bg-blue-700">Gửi</Button>
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="attachments" activeValue={taskTab} className="pt-4 space-y-4">
+                <div className="space-y-2">
+                  {selectedTask.payload?.attachments?.length > 0 ? selectedTask.payload.attachments.map((a: any, i: number) => (
+                    <div key={i} className="flex items-center justify-between p-2.5 rounded border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-xs">
+                      <div className="flex items-center gap-2">
+                        <Paperclip className="h-4 w-4 text-blue-500" />
+                        <a href={a.url} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline font-medium">{a.name}</a>
+                      </div>
+                      <span className="text-[10px] text-slate-400">{formatTaskDate(a.uploadedAt)}</span>
+                    </div>
+                  )) : (
+                    <div className="text-center text-xs text-slate-500 py-4">Chưa có tệp đính kèm nào.</div>
+                  )}
+                </div>
+                <Button variant="outline" className="w-full text-xs border-dashed border-2 py-6 text-slate-500 hover:text-blue-600 hover:border-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20">
+                  <Plus className="h-4 w-4 mr-1" /> Thêm đính kèm
                 </Button>
-                <Button 
-                  onClick={() => handleRejectTask(selectedTask.id)}
-                  variant="outline"
-                  className="flex-1 text-orange-600 border-orange-200 hover:bg-orange-50 hover:text-orange-700 text-xs h-9 font-bold"
-                >
-                  Yêu cầu chỉnh sửa
-                </Button>
-              </div>
-            ) : (
-              <div className="flex justify-end pt-4 border-t border-slate-100 dark:border-slate-800">
-                <Button onClick={() => setIsTaskOpen(false)} className="text-xs h-9">
-                  Đóng
-                </Button>
-              </div>
-            )}
+              </TabsContent>
+
+              <TabsContent value="history" activeValue={taskTab} className="pt-4 space-y-4">
+                <div className="space-y-4 max-h-60 overflow-y-auto pr-2 custom-scrollbar relative">
+                  <div className="absolute left-[11px] top-2 bottom-2 w-px bg-slate-200 dark:bg-slate-800"></div>
+                  {selectedTask.payload?.history?.length > 0 ? selectedTask.payload.history.map((h: any, i: number) => (
+                    <div key={i} className="relative flex gap-4 text-xs">
+                      <div className="w-6 h-6 rounded-full bg-white dark:bg-slate-950 border-2 border-blue-500 flex items-center justify-center shrink-0 z-10 mt-0.5">
+                        <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-slate-600 dark:text-slate-400">
+                          <strong className="text-slate-900 dark:text-white">{h.actorName}</strong> {h.action.toLowerCase()}
+                        </p>
+                        <p className="text-[10px] text-slate-400 mt-0.5">{formatTaskDate(h.timestamp)}</p>
+                      </div>
+                    </div>
+                  )).reverse() : (
+                    <div className="text-center text-xs text-slate-500 py-4 ml-6">Không có lịch sử thay đổi.</div>
+                  )}
+                </div>
+              </TabsContent>
+              <TabsContent value="extension" activeValue={taskTab} className="pt-4 space-y-4">
+                <div className="space-y-3">
+                  <div className="p-3 bg-orange-50 dark:bg-orange-900/10 border border-orange-200 dark:border-orange-800 rounded-lg text-orange-800 dark:text-orange-300">
+                    <p className="text-xs font-bold mb-1">Quy trình xin gia hạn deadline</p>
+                    <p className="text-[10px]">Yêu cầu gia hạn sẽ được gửi đến người phân công để phê duyệt. Vui lòng cung cấp lý do chính đáng và thời gian hoàn thành dự kiến mới hợp lý.</p>
+                  </div>
+                  
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Hạn chót hiện tại</label>
+                    <div className="text-xs p-2 bg-slate-100 dark:bg-slate-900 rounded border border-slate-200 dark:border-slate-800 text-slate-500 line-through">
+                      {formatTaskDate(selectedTask.deadline)}
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Đề xuất hạn chót mới <span className="text-red-500">*</span></label>
+                    <input 
+                      type="date" 
+                      id={`ext-date-${selectedTask.id}`}
+                      className="w-full text-xs p-2 rounded border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 focus:ring-1 focus:ring-blue-500" 
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Lý do & Kế hoạch hoàn thành <span className="text-red-500">*</span></label>
+                    <textarea 
+                      rows={3}
+                      id={`ext-reason-${selectedTask.id}`}
+                      placeholder="Trình bày lý do xin gia hạn và kế hoạch đảm bảo tiến độ..." 
+                      className="w-full text-xs p-2 rounded border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 focus:ring-1 focus:ring-blue-500" 
+                    />
+                  </div>
+                  
+                  <div className="pt-2 flex justify-end gap-2">
+                    <Button variant="outline" size="sm" onClick={() => setTaskTab('details')} className="text-xs h-8">
+                      Hủy
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      className="bg-orange-600 hover:bg-orange-700 text-white text-xs h-8"
+                      onClick={() => {
+                        const date = (document.getElementById(`ext-date-${selectedTask.id}`) as HTMLInputElement)?.value;
+                        const reason = (document.getElementById(`ext-reason-${selectedTask.id}`) as HTMLTextAreaElement)?.value;
+                        if (!date || !reason?.trim()) {
+                          alert('Vui lòng chọn ngày mới và nhập lý do!');
+                          return;
+                        }
+                        alert(`Đã gửi yêu cầu gia hạn đến ${date} với lý do: ${reason}`);
+                        setTaskTab('details');
+                      }}
+                    >
+                      Gửi yêu cầu phê duyệt
+                    </Button>
+                  </div>
+                </div>
+              </TabsContent>
+            </Tabs>
           </div>
         )}
       </Dialog>

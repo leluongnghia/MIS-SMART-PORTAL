@@ -2,6 +2,7 @@ import { serverStorage } from '../libs/client/server-storage';
 import React, { useState, useEffect, useMemo } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { translateBooking, translateIssue } from '../utils/translations';
+import { useToast } from './ui/Toast';
 import { 
   Plus, 
   Check, 
@@ -57,6 +58,7 @@ const ROOMS_LIST = [
 
 export default function SchoolLogistics({ currentUser }: SchoolLogisticsProps) {
   const { lang, t } = useLanguage();
+  const { success: toastSuccess, error: toastError } = useToast();
   const [activeSubTab, setActiveSubTab] = useState<'ROOMS_ISSUES' | 'INVENTORY'>('ROOMS_ISSUES');
 
   // Inventory & Library states
@@ -116,11 +118,11 @@ export default function SchoolLogistics({ currentUser }: SchoolLogisticsProps) {
     // Check if item exists and has quantity
     const matchedItem = inventoryItems.find(item => item.code === borrowItemCode);
     if (!matchedItem) {
-      alert('Không tìm thấy tài sản với mã này trong hệ thống.');
+      toastError('Lỗi', 'Không tìm thấy tài sản với mã này trong hệ thống.');
       return;
     }
     if (matchedItem.quantity <= 0) {
-      alert('Số lượng trong kho đã hết. Không thể cho mượn.');
+      toastError('Lỗi', 'Số lượng trong kho đã hết. Không thể cho mượn.');
       return;
     }
 
@@ -153,7 +155,7 @@ export default function SchoolLogistics({ currentUser }: SchoolLogisticsProps) {
     setBorrowItemCode('');
     setBorrowerName('');
     setShowBorrowForm(false);
-    alert('Đăng ký phiếu mượn tài sản thành công!');
+    toastSuccess('Thành công', 'Đăng ký phiếu mượn tài sản thành công!');
   };
 
   const handleReturnItem = (logId: string) => {
@@ -183,7 +185,7 @@ export default function SchoolLogistics({ currentUser }: SchoolLogisticsProps) {
       return item;
     }));
 
-    alert('Đã ghi nhận trả tài sản thành công!');
+    toastSuccess('Thành công', 'Đã ghi nhận trả tài sản thành công!');
   };
 
   const handleUpdateItemStatus = (e: React.FormEvent) => {
@@ -192,7 +194,7 @@ export default function SchoolLogistics({ currentUser }: SchoolLogisticsProps) {
 
     const matchedItem = inventoryItems.find(item => item.code === updateItemCode);
     if (!matchedItem) {
-      alert('Không tìm thấy tài sản với mã này.');
+      toastError('Lỗi', 'Không tìm thấy tài sản với mã này.');
       return;
     }
 
@@ -209,7 +211,7 @@ export default function SchoolLogistics({ currentUser }: SchoolLogisticsProps) {
 
     setUpdateItemCode('');
     setShowUpdateForm(false);
-    alert('Cập nhật trạng thái và kiểm kê tài sản thành công!');
+    toastSuccess('Thành công', 'Cập nhật trạng thái và kiểm kê tài sản thành công!');
   };
 
   // 1. Quản lý Đăng ký phòng

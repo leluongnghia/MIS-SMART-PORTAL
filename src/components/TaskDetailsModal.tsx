@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Task, UserProfile, Comment, TaskStatus, RbacConfig } from '../types';
 import { getTaskIntelligences, MOCK_USERS } from '../mockData';
 import { MOCK_DEPARTMENT_OKRS } from '../miAndOkrUtils';
+import { useToast } from './ui/Toast';
 import { 
   X, 
   User, 
@@ -48,6 +49,7 @@ export default function TaskDetailsModal({
   onSwitchTask,
   onUpdateTask
 }: TaskDetailsModalProps) {
+  const { success: toastSuccess, error: toastError } = useToast();
   const [newComment, setNewComment] = useState('');
   const [evidenceText, setEvidenceText] = useState('');
   const [rejectionReason, setRejectionReason] = useState('');
@@ -76,11 +78,11 @@ export default function TaskDetailsModal({
 
   const handleSaveEdit = () => {
     if (!editTitle.trim()) {
-      alert('Vui lòng nhập tiêu đề công việc.');
+      toastError('Lỗi', 'Vui lòng nhập tiêu đề công việc.');
       return;
     }
     if (!editDescription.trim()) {
-      alert('Vui lòng nhập mô tả công việc.');
+      toastError('Lỗi', 'Vui lòng nhập mô tả công việc.');
       return;
     }
 
@@ -165,7 +167,7 @@ export default function TaskDetailsModal({
   const handleSendProgressReport = (e: React.FormEvent) => {
     e.preventDefault();
     if (!evidenceText.trim()) {
-      alert('Vui lòng nhập báo cáo kết quả và minh chứng thực hiện.');
+      toastError('Lỗi', 'Vui lòng nhập báo cáo kết quả và minh chứng thực hiện.');
       return;
     }
     onUpdateStatus(task.id, 'CHO_DUYET', evidenceText.trim());
@@ -176,7 +178,7 @@ export default function TaskDetailsModal({
   const handleSendRejectionBack = (e: React.FormEvent) => {
     e.preventDefault();
     if (!rejectionReason.trim()) {
-      alert('Vui lòng chỉ rõ lý do và nội dung cần sửa đổi.');
+      toastError('Lỗi', 'Vui lòng chỉ rõ lý do và nội dung cần sửa đổi.');
       return;
     }
     onRejectTask(task.id, rejectionReason.trim());

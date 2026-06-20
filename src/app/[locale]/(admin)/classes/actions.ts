@@ -47,6 +47,7 @@ async function seedClassesIfEmpty() {
 
   await db.insert(schema.classes).values(classes.map(c => ({
     ...c,
+    payload: {},
     createdAt: new Date(),
     updatedAt: new Date()
   }))).onConflictDoNothing();

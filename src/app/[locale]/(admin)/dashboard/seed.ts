@@ -56,18 +56,18 @@ export async function seedDashboardData() {
 
   // Seed risks
   await db.insert(schema.risks).values([
-    { id: uuidv4(), title: 'Rủi ro về thiếu GV bộ môn Toán', severity: 'high', status: 'open' },
-    { id: uuidv4(), title: 'Tiến độ tuyển sinh thấp hơn kế hoạch', severity: 'high', status: 'open' },
-    { id: uuidv4(), title: 'Chậm phê duyệt thanh toán', severity: 'medium', status: 'open' }
+    { id: uuidv4(), title: 'Rủi ro về thiếu GV bộ môn Toán', severity: 'high', status: 'open', payload: {} },
+    { id: uuidv4(), title: 'Tiến độ tuyển sinh thấp hơn kế hoạch', severity: 'high', status: 'open', payload: {} },
+    { id: uuidv4(), title: 'Chậm phê duyệt thanh toán', severity: 'medium', status: 'open', payload: {} }
   ]).onConflictDoNothing();
 
   // Seed events
   await db.insert(schema.events).values([
-    { id: uuidv4(), title: 'Nguyễn Văn Nam đã phê duyệt Kế hoạch dạy học HKII', date: new Date('2025-05-16T09:24:00Z'), department: 'Phòng Đào tạo' },
-    { id: uuidv4(), title: 'Phê duyệt đề xuất mua sắm 30 bộ máy tính', date: new Date('2025-05-16T08:15:00Z'), department: 'Phòng Tài chính' },
-    { id: uuidv4(), title: 'Cập nhật điểm danh học sinh 11A1', date: new Date('2025-05-15T17:30:00Z'), department: 'GVCN - Trần Thị Mai' },
-    { id: uuidv4(), title: 'Đăng thông báo: Lịch thi thử THPTQG đợt 2', date: new Date('2025-05-15T16:45:00Z'), department: 'Phòng Đào tạo' },
-    { id: uuidv4(), title: 'Hệ thống tự động sao lưu dữ liệu thành công', date: new Date('2025-05-15T14:12:00Z'), department: 'Hệ thống' }
+    { id: uuidv4(), title: 'Nguyễn Văn Nam đã phê duyệt Kế hoạch dạy học HKII', date: new Date('2025-05-16T09:24:00Z'), department: 'Phòng Đào tạo', payload: {} },
+    { id: uuidv4(), title: 'Phê duyệt đề xuất mua sắm 30 bộ máy tính', date: new Date('2025-05-16T08:15:00Z'), department: 'Phòng Tài chính', payload: {} },
+    { id: uuidv4(), title: 'Cập nhật điểm danh học sinh 11A1', date: new Date('2025-05-15T17:30:00Z'), department: 'GVCN - Trần Thị Mai', payload: {} },
+    { id: uuidv4(), title: 'Đăng thông báo: Lịch thi thử THPTQG đợt 2', date: new Date('2025-05-15T16:45:00Z'), department: 'Phòng Đào tạo', payload: {} },
+    { id: uuidv4(), title: 'Hệ thống tự động sao lưu dữ liệu thành công', date: new Date('2025-05-15T14:12:00Z'), department: 'Hệ thống', payload: {} }
   ]).onConflictDoNothing();
   
   // Create a user for employee profiles
@@ -96,16 +96,16 @@ export async function seedDashboardData() {
     const l4 = uuidv4();
 
     await db.insert(schema.leads).values([
-      { id: l1, fullName: "Học sinh A", status: "enrolled", source: "Facebook", grade: "Khối 10", phone: "0900000001", leadCode: "LD-SEED-001" },
-      { id: l2, fullName: "Học sinh B", status: "enrolled", source: "Google", grade: "Khối 10", phone: "0900000002", leadCode: "LD-SEED-002" },
-      { id: l3, fullName: "Học sinh C", status: "seat_reserved", source: "Facebook", grade: "Khối 11", phone: "0900000003", leadCode: "LD-SEED-003" },
-      { id: l4, fullName: "Học sinh D", status: "docs_submitted", source: "Website", grade: "Khối 10", phone: "0900000004", leadCode: "LD-SEED-004" },
+      { id: l1, fullName: "Học sinh A", status: "enrolled", source: "Facebook", grade: "Khối 10", phone: "0900000001", leadCode: "LD-SEED-001", payload: {} },
+      { id: l2, fullName: "Học sinh B", status: "enrolled", source: "Google", grade: "Khối 10", phone: "0900000002", leadCode: "LD-SEED-002", payload: {} },
+      { id: l3, fullName: "Học sinh C", status: "seat_reserved", source: "Facebook", grade: "Khối 11", phone: "0900000003", leadCode: "LD-SEED-003", payload: {} },
+      { id: l4, fullName: "Học sinh D", status: "docs_submitted", source: "Website", grade: "Khối 10", phone: "0900000004", leadCode: "LD-SEED-004", payload: {} },
     ]).onConflictDoNothing();
 
     await db.insert(schema.payments).values([
-      { id: uuidv4(), leadId: l1, type: "tuition", amount: 15000000, status: "paid", transferContent: "TS-SEED-001" },
-      { id: uuidv4(), leadId: l2, type: "tuition", amount: 15000000, status: "paid", transferContent: "TS-SEED-002" },
-      { id: uuidv4(), leadId: l3, type: "seat_reservation", amount: 5000000, status: "paid", transferContent: "TS-SEED-003" },
+      { id: uuidv4(), leadId: l1, type: "tuition", amount: 15000000, status: "paid", transferContent: "TS-SEED-001", payload: {} },
+      { id: uuidv4(), leadId: l2, type: "tuition", amount: 15000000, status: "paid", transferContent: "TS-SEED-002", payload: {} },
+      { id: uuidv4(), leadId: l3, type: "seat_reservation", amount: 5000000, status: "paid", transferContent: "TS-SEED-003", payload: {} },
     ]).onConflictDoNothing();
   }
 

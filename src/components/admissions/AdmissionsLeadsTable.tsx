@@ -745,7 +745,7 @@ export default function AdmissionsLeadsTable({ leads, setLeads, chuongTrinhList,
                             className="h-4 w-4 rounded border-slate-300 text-blue-600" />
                         </td>
                         <td className="py-3 px-3">
-                          <p className="font-bold text-blue-600 hover:text-blue-700 hover:underline">{lead.hoTen}</p>
+                          <p className="font-bold text-blue-600 hover:text-blue-700 hover:underline cursor-pointer" onClick={() => onViewDetail ? onViewDetail(lead.id) : showToast(`Xem chi tiết: ${lead.hoTen}`)}>{lead.hoTen}</p>
                         </td>
                         <td className="py-3 px-3">
                           <span className="flex items-center gap-1.5 text-slate-600 font-medium">

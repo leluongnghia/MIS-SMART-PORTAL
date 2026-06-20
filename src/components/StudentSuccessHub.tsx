@@ -29,6 +29,7 @@ import { normalizeStudentProfile, normalizeStudentProfiles, initializeUnifiedDat
 import { readCrmLeadsFromStorage, syncEnrolledCrmLeadsToLifecycle } from '../utils/crmStudentSync';
 import { db } from '../firebase';
 import { collection, onSnapshot, doc, setDoc } from 'firebase/firestore';
+import { useToast } from './ui/Toast';
 
 type ConductLevel = 'Tốt' | 'Khá' | 'Trung bình';
 type AttendanceStatus = 'PRESENT' | 'LATE' | 'ABSENT' | 'EXCUSED';
@@ -299,6 +300,7 @@ function statusColor(status: AttendanceStatus) {
 }
 
 export default function StudentSuccessHub({ currentUser }: { currentUser: UserProfile }) {
+  const { success: toastSuccess, error: toastError } = useToast();
   const [students, setStudents] = useState<StudentRecord[]>(() => {
     const unified = initializeUnifiedDatabase(initialStudents, []);
     return unified.filter(s => s.enrollmentStatus === 'ENROLLED') as StudentRecord[];
@@ -383,7 +385,7 @@ export default function StudentSuccessHub({ currentUser }: { currentUser: UserPr
     const isNurse = currentUser.workspaceId === 'HANH_CHINH' && currentUser.title.includes('Y tế');
     const canEdit = currentUser.role === 'ADMIN' || isNurse;
     if (!canEdit) {
-      alert('Bạn không có quyền ghi nhận tiêm chủng.');
+      toastError('Lỗi quyền hạn', 'Bạn không có quyền ghi nhận tiêm chủng.');
       return;
     }
     const record: VaccinationRecord = {
@@ -585,7 +587,7 @@ export default function StudentSuccessHub({ currentUser }: { currentUser: UserPr
                     (currentUser.role === 'MANAGER' && currentUser.workspaceId === 'CTHS_TAM_LY') ||
                     (currentUser.role === 'STAFF' && (currentUser.workspaceId === 'TOAN_TIN' || currentUser.workspaceId === 'VAN'));
     if (!canEdit) {
-      alert('Bạn không có quyền điểm danh học vụ.');
+      toastError('Lỗi quyền hạn', 'Bạn không có quyền điểm danh học vụ.');
       return;
     }
 
@@ -623,7 +625,7 @@ export default function StudentSuccessHub({ currentUser }: { currentUser: UserPr
   const handleAddStudent = (e: React.FormEvent) => {
     e.preventDefault();
     if (currentUser.role !== 'ADMIN') {
-      alert('Chỉ Ban Giám hiệu mới có quyền thêm học sinh mới.');
+      toastError('Lỗi quyền hạn', 'Chỉ Ban Giám hiệu mới có quyền thêm học sinh mới.');
       return;
     }
     if (!newStudentName.trim()) return;
@@ -670,7 +672,7 @@ export default function StudentSuccessHub({ currentUser }: { currentUser: UserPr
     const canEdit = currentUser.role === 'ADMIN' || isToanTinTeacher || isVanTeacher || isEngTeacher;
 
     if (!canEdit) {
-      alert(`Bạn không có quyền nhập điểm môn ${newGrade.subject} (quyền hạn thuộc Tổ chuyên môn).`);
+      toastError('Lỗi quyền hạn', `Bạn không có quyền nhập điểm môn ${newGrade.subject} (quyền hạn thuộc Tổ chuyên môn).`);
       return;
     }
 
@@ -692,7 +694,7 @@ export default function StudentSuccessHub({ currentUser }: { currentUser: UserPr
   const handleAddTransfer = (e: React.FormEvent) => {
     e.preventDefault();
     if (currentUser.role !== 'ADMIN') {
-      alert('Chỉ Ban Giám hiệu mới có quyền điều chuyển lớp học sinh.');
+      toastError('Lỗi quyền hạn', 'Chỉ Ban Giám hiệu mới có quyền điều chuyển lớp học sinh.');
       return;
     }
     if (!selectedStudent || !transferForm.toClass.trim()) return;
@@ -723,7 +725,7 @@ export default function StudentSuccessHub({ currentUser }: { currentUser: UserPr
     if (!selectedStudent || !newDisciplineText.trim()) return;
     const canEdit = currentUser.role === 'ADMIN' || currentUser.role === 'MANAGER' || currentUser.workspaceId === 'CTHS_TAM_LY';
     if (!canEdit) {
-      alert('Bạn không có quyền ghi nhận nề nếp học sinh.');
+      toastError('Lỗi quyền hạn', 'Bạn không có quyền ghi nhận nề nếp học sinh.');
       return;
     }
 
@@ -739,7 +741,7 @@ export default function StudentSuccessHub({ currentUser }: { currentUser: UserPr
 
   const handleExportStudents = () => {
     if (currentUser.role !== 'ADMIN') {
-      alert('An ninh SIS: Chỉ Ban Giám hiệu mới có quyền xuất dữ liệu học sinh ra file CSV.');
+      toastError('An ninh SIS', 'Chỉ Ban Giám hiệu mới có quyền xuất dữ liệu học sinh ra file CSV.');
       return;
     }
     const headers = ['Mã học sinh', 'Họ tên', 'Lớp', 'GPA', 'Chuyên cần', 'Phụ huynh', 'SĐT', 'Email phụ huynh', 'Cảnh báo'];
@@ -764,7 +766,7 @@ export default function StudentSuccessHub({ currentUser }: { currentUser: UserPr
     e.preventDefault();
     if (!selectedStudent) return;
     if (currentUser.role !== 'ADMIN') {
-      alert('Chỉ Ban Giám hiệu mới có quyền thêm lịch sử năm học.');
+      toastError('Lỗi quyền hạn', 'Chỉ Ban Giám hiệu mới có quyền thêm lịch sử năm học.');
       return;
     }
     const record: AcademicYearRecord = {
@@ -789,7 +791,7 @@ export default function StudentSuccessHub({ currentUser }: { currentUser: UserPr
     const isNurse = currentUser.workspaceId === 'HANH_CHINH' && currentUser.title.includes('Y tế');
     const canEdit = currentUser.role === 'ADMIN' || isNurse;
     if (!canEdit) {
-      alert('Bạn không có quyền chỉnh sửa hồ sơ y tế học sinh.');
+      toastError('Lỗi quyền hạn', 'Bạn không có quyền chỉnh sửa hồ sơ y tế học sinh.');
       return;
     }
     setStudents(prev => prev.map(student => (
@@ -811,7 +813,7 @@ export default function StudentSuccessHub({ currentUser }: { currentUser: UserPr
     e.preventDefault();
     if (!selectedStudent) return;
     if (currentUser.role !== 'ADMIN') {
-      alert('Bạn không có quyền chỉnh sửa hồ sơ học sinh.');
+      toastError('Lỗi quyền hạn', 'Bạn không có quyền chỉnh sửa hồ sơ học sinh.');
       return;
     }
     setStudents(prev => prev.map(student => (
@@ -839,7 +841,7 @@ export default function StudentSuccessHub({ currentUser }: { currentUser: UserPr
     const isNurse = currentUser.workspaceId === 'HANH_CHINH' && currentUser.title.includes('Y tế');
     const canEdit = currentUser.role === 'ADMIN' || isNurse;
     if (!canEdit) {
-      alert('Bạn không có quyền ghi nhận sự cố y tế học đường.');
+      toastError('Lỗi quyền hạn', 'Bạn không có quyền ghi nhận sự cố y tế học đường.');
       return;
     }
     const record: HealthIncident = {
@@ -862,7 +864,7 @@ export default function StudentSuccessHub({ currentUser }: { currentUser: UserPr
 
   const handlePrintClassReportCard = () => {
     if (classFilter === 'Tất cả') {
-      alert('Vui lòng chọn một lớp cụ thể để xuất bảng điểm cả lớp.');
+      toastError('Lỗi nhập liệu', 'Vui lòng chọn một lớp cụ thể để xuất bảng điểm cả lớp.');
       return;
     }
     const classStudents = studentMetrics.filter(({ student }) => student.className === classFilter);
@@ -935,7 +937,7 @@ export default function StudentSuccessHub({ currentUser }: { currentUser: UserPr
 
   const handleImportBackup = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (currentUser.role !== 'ADMIN') {
-      alert('Chỉ Ban Giám hiệu mới có quyền khôi phục cơ sở dữ liệu.');
+      toastError('Lỗi quyền hạn', 'Chỉ Ban Giám hiệu mới có quyền khôi phục cơ sở dữ liệu.');
       return;
     }
     const file = e.target.files?.[0];
@@ -947,7 +949,7 @@ export default function StudentSuccessHub({ currentUser }: { currentUser: UserPr
 
         // 🛡️ XSS Guard: reject files containing HTML/script tags
         if (/<\s*script|<\s*iframe|<\s*img|on\w+\s*=/i.test(rawText)) {
-          alert('⛔ File backup bị từ chối: Phát hiện mã HTML/JavaScript nguy hiểm (XSS). Vui lòng sử dụng file backup gốc từ hệ thống.');
+          toastError('An ninh SIS', 'File backup bị từ chối: Phát hiện mã HTML/JavaScript nguy hiểm (XSS). Vui lòng sử dụng file backup gốc từ hệ thống.');
           return;
         }
 
@@ -958,7 +960,7 @@ export default function StudentSuccessHub({ currentUser }: { currentUser: UserPr
           const { signature, ...payloadWithoutSig } = data;
           const expectedSig = generateBackupSignature(JSON.stringify(payloadWithoutSig));
           if (signature !== expectedSig) {
-            alert('⛔ Xác thực thất bại: Chữ ký số không hợp lệ. File backup có thể đã bị chỉnh sửa hoặc giả mạo. Hủy khôi phục.');
+            toastError('An ninh SIS', 'Xác thực thất bại: Chữ ký số không hợp lệ. File backup có thể đã bị chỉnh sửa hoặc giả mạo. Hủy khôi phục.');
             return;
           }
         }
@@ -968,13 +970,13 @@ export default function StudentSuccessHub({ currentUser }: { currentUser: UserPr
           setGrades(data.grades);
           setAttendance(data.attendance);
           if (data.auditLogs) setAuditLogs(data.auditLogs);
-          alert('✅ Khôi phục dữ liệu SIS thành công! Chữ ký số đã được xác thực.');
+          toastSuccess('Khôi phục dữ liệu', 'Khôi phục dữ liệu SIS thành công! Chữ ký số đã được xác thực.');
           logSisAction('Khôi phục dữ liệu', 'Hệ thống SIS', 'Nhập file backup JSON khôi phục dữ liệu thành công — chữ ký hợp lệ');
         } else {
-          alert('File backup không hợp lệ hoặc thiếu dữ liệu.');
+          toastError('Lỗi khôi phục', 'File backup không hợp lệ hoặc thiếu dữ liệu.');
         }
       } catch (err) {
-        alert('Không thể đọc file backup. Lỗi định dạng JSON.');
+        toastError('Lỗi khôi phục', 'Không thể đọc file backup. Lỗi định dạng JSON.');
       }
     };
     reader.readAsText(file);

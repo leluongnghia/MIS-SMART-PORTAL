@@ -6,6 +6,7 @@ import {
   ChevronRight, Users, Zap, RefreshCw, Eye, Filter,
   ClipboardList, BarChart3, MessageSquare, Activity
 } from 'lucide-react';
+import { useToast } from './ui/Toast';
 
 // ─── TYPES ─────────────────────────────────────────────────────────────────
 
@@ -357,6 +358,7 @@ function BuilderNode({
 // ─── MAIN COMPONENT ────────────────────────────────────────────────────────
 
 export default function WorkflowBuilder() {
+  const { success: toastSuccess } = useToast();
   const [activeTab, setActiveTab] = useState<TabType>('TEMPLATES');
   const [requests, setRequests] = useState<ApprovalRequest[]>(INITIAL_REQUESTS);
 
@@ -515,7 +517,7 @@ export default function WorkflowBuilder() {
   };
 
   const handleReminder = (reqId: string) => {
-    alert(`📬 Đã gửi nhắc nhở SLA đến người duyệt cho yêu cầu ${reqId}`);
+    toastSuccess('Đã nhắc nhở', `📬 Đã gửi nhắc nhở SLA đến người duyệt cho yêu cầu ${reqId}`);
   };
 
   // ─── FILTERED REQUESTS ────────────────────────────────────────────────────

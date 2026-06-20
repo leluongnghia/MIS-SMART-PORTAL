@@ -18,7 +18,7 @@ interface StudentQuickProfileProps {
 }
 
 export default function StudentQuickProfile({ isOpen, onClose, student, locale = 'vi' }: StudentQuickProfileProps) {
-  const { success: toastSuccess } = useToast();
+  const { success: toastSuccess, error: toastError } = useToast();
   const [actionDialog, setActionDialog] = useState<{
     isOpen: boolean;
     type: 'notification' | 'message' | 'note' | null;
@@ -143,7 +143,7 @@ export default function StudentQuickProfile({ isOpen, onClose, student, locale =
                     if (p.phone) {
                       window.location.href = `tel:${p.phone.replace(/\s+/g, '')}`;
                     } else {
-                      alert("Chưa cập nhật số điện thoại phụ huynh!");
+                      toastError("Chưa cập nhật số điện thoại phụ huynh!");
                     }
                   }}><Phone className="h-3.5 w-3.5" /></Button>
                 </div>

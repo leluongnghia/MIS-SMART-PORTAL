@@ -111,41 +111,41 @@ CREATE TABLE "schools" (
 	CONSTRAINT "schools_code_unique" UNIQUE("code")
 );
 --> statement-breakpoint
-ALTER TABLE "announcements" ADD COLUMN "deleted_at" timestamp with time zone;--> statement-breakpoint
-ALTER TABLE "announcements" ADD COLUMN "deleted_by" text;--> statement-breakpoint
-ALTER TABLE "data_files" ADD COLUMN "mime_type" text;--> statement-breakpoint
-ALTER TABLE "data_files" ADD COLUMN "storage_provider" text DEFAULT 'LOCAL' NOT NULL;--> statement-breakpoint
-ALTER TABLE "data_files" ADD COLUMN "storage_key" text;--> statement-breakpoint
-ALTER TABLE "data_files" ADD COLUMN "module" text DEFAULT 'SYSTEM' NOT NULL;--> statement-breakpoint
-ALTER TABLE "data_files" ADD COLUMN "entity_type" text;--> statement-breakpoint
-ALTER TABLE "data_files" ADD COLUMN "entity_id" text;--> statement-breakpoint
-ALTER TABLE "data_files" ADD COLUMN "entity_label" text;--> statement-breakpoint
-ALTER TABLE "data_files" ADD COLUMN "uploaded_by_name" text;--> statement-breakpoint
-ALTER TABLE "data_files" ADD COLUMN "deleted_by" text;--> statement-breakpoint
-ALTER TABLE "data_files" ADD COLUMN "metadata" jsonb DEFAULT '{}'::jsonb NOT NULL;--> statement-breakpoint
-ALTER TABLE "directives" ADD COLUMN "deleted_at" timestamp with time zone;--> statement-breakpoint
-ALTER TABLE "directives" ADD COLUMN "deleted_by" text;--> statement-breakpoint
-ALTER TABLE "events" ADD COLUMN "deleted_at" timestamp with time zone;--> statement-breakpoint
-ALTER TABLE "events" ADD COLUMN "deleted_by" text;--> statement-breakpoint
-ALTER TABLE "leads" ADD COLUMN "deleted_at" timestamp with time zone;--> statement-breakpoint
-ALTER TABLE "leads" ADD COLUMN "deleted_by" text;--> statement-breakpoint
-ALTER TABLE "tasks" ADD COLUMN "deleted_at" timestamp with time zone;--> statement-breakpoint
-ALTER TABLE "tasks" ADD COLUMN "deleted_by" text;--> statement-breakpoint
+ALTER TABLE "announcements" ADD COLUMN IF NOT EXISTS "deleted_at" timestamp with time zone;--> statement-breakpoint
+ALTER TABLE "announcements" ADD COLUMN IF NOT EXISTS "deleted_by" text;--> statement-breakpoint
+ALTER TABLE "data_files" ADD COLUMN IF NOT EXISTS "mime_type" text;--> statement-breakpoint
+ALTER TABLE "data_files" ADD COLUMN IF NOT EXISTS "storage_provider" text DEFAULT 'LOCAL' NOT NULL;--> statement-breakpoint
+ALTER TABLE "data_files" ADD COLUMN IF NOT EXISTS "storage_key" text;--> statement-breakpoint
+ALTER TABLE "data_files" ADD COLUMN IF NOT EXISTS "module" text DEFAULT 'SYSTEM' NOT NULL;--> statement-breakpoint
+ALTER TABLE "data_files" ADD COLUMN IF NOT EXISTS "entity_type" text;--> statement-breakpoint
+ALTER TABLE "data_files" ADD COLUMN IF NOT EXISTS "entity_id" text;--> statement-breakpoint
+ALTER TABLE "data_files" ADD COLUMN IF NOT EXISTS "entity_label" text;--> statement-breakpoint
+ALTER TABLE "data_files" ADD COLUMN IF NOT EXISTS "uploaded_by_name" text;--> statement-breakpoint
+ALTER TABLE "data_files" ADD COLUMN IF NOT EXISTS "deleted_by" text;--> statement-breakpoint
+ALTER TABLE "data_files" ADD COLUMN IF NOT EXISTS "metadata" jsonb DEFAULT '{}'::jsonb NOT NULL;--> statement-breakpoint
+ALTER TABLE "directives" ADD COLUMN IF NOT EXISTS "deleted_at" timestamp with time zone;--> statement-breakpoint
+ALTER TABLE "directives" ADD COLUMN IF NOT EXISTS "deleted_by" text;--> statement-breakpoint
+ALTER TABLE "events" ADD COLUMN IF NOT EXISTS "deleted_at" timestamp with time zone;--> statement-breakpoint
+ALTER TABLE "events" ADD COLUMN IF NOT EXISTS "deleted_by" text;--> statement-breakpoint
+ALTER TABLE "leads" ADD COLUMN IF NOT EXISTS "deleted_at" timestamp with time zone;--> statement-breakpoint
+ALTER TABLE "leads" ADD COLUMN IF NOT EXISTS "deleted_by" text;--> statement-breakpoint
+ALTER TABLE "tasks" ADD COLUMN IF NOT EXISTS "deleted_at" timestamp with time zone;--> statement-breakpoint
+ALTER TABLE "tasks" ADD COLUMN IF NOT EXISTS "deleted_by" text;--> statement-breakpoint
 ALTER TABLE "academic_years" ADD CONSTRAINT "academic_years_school_id_schools_id_fk" FOREIGN KEY ("school_id") REFERENCES "public"."schools"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "classes" ADD CONSTRAINT "classes_academic_year_id_academic_years_id_fk" FOREIGN KEY ("academic_year_id") REFERENCES "public"."academic_years"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "classes" ADD CONSTRAINT "classes_homeroom_teacher_id_users_id_fk" FOREIGN KEY ("homeroom_teacher_id") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
-CREATE INDEX "approval_events_request_idx" ON "approval_events" USING btree ("approval_request_id");--> statement-breakpoint
-CREATE INDEX "approval_events_created_idx" ON "approval_events" USING btree ("created_at");--> statement-breakpoint
-CREATE INDEX "approval_requests_status_idx" ON "approval_requests" USING btree ("status");--> statement-breakpoint
-CREATE INDEX "approval_requests_module_status_idx" ON "approval_requests" USING btree ("module","status");--> statement-breakpoint
-CREATE INDEX "approval_requests_entity_idx" ON "approval_requests" USING btree ("entity_type","entity_id");--> statement-breakpoint
-CREATE INDEX "approval_requests_requester_idx" ON "approval_requests" USING btree ("requester_id");--> statement-breakpoint
-CREATE INDEX "approval_requests_approver_idx" ON "approval_requests" USING btree ("approver_id","approver_role","approver_workspace_id","approver_department_id");--> statement-breakpoint
-CREATE INDEX "notification_recipients_user_status_idx" ON "notification_recipients" USING btree ("user_id","status");--> statement-breakpoint
-CREATE INDEX "notification_recipients_notification_idx" ON "notification_recipients" USING btree ("notification_id");--> statement-breakpoint
-CREATE INDEX "notifications_module_idx" ON "notifications" USING btree ("module");--> statement-breakpoint
-CREATE INDEX "notifications_source_idx" ON "notifications" USING btree ("source_type","source_id");--> statement-breakpoint
-CREATE INDEX "notifications_created_idx" ON "notifications" USING btree ("created_at");--> statement-breakpoint
-CREATE INDEX "data_files_module_idx" ON "data_files" USING btree ("module");--> statement-breakpoint
-CREATE INDEX "data_files_entity_idx" ON "data_files" USING btree ("entity_type","entity_id");--> statement-breakpoint
-CREATE INDEX "data_files_storage_key_idx" ON "data_files" USING btree ("storage_provider","storage_key");
+CREATE INDEX IF NOT EXISTS "approval_events_request_idx" ON "approval_events" USING btree ("approval_request_id");--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "approval_events_created_idx" ON "approval_events" USING btree ("created_at");--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "approval_requests_status_idx" ON "approval_requests" USING btree ("status");--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "approval_requests_module_status_idx" ON "approval_requests" USING btree ("module","status");--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "approval_requests_entity_idx" ON "approval_requests" USING btree ("entity_type","entity_id");--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "approval_requests_requester_idx" ON "approval_requests" USING btree ("requester_id");--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "approval_requests_approver_idx" ON "approval_requests" USING btree ("approver_id","approver_role","approver_workspace_id","approver_department_id");--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "notification_recipients_user_status_idx" ON "notification_recipients" USING btree ("user_id","status");--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "notification_recipients_notification_idx" ON "notification_recipients" USING btree ("notification_id");--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "notifications_module_idx" ON "notifications" USING btree ("module");--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "notifications_source_idx" ON "notifications" USING btree ("source_type","source_id");--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "notifications_created_idx" ON "notifications" USING btree ("created_at");--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "data_files_module_idx" ON "data_files" USING btree ("module");--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "data_files_entity_idx" ON "data_files" USING btree ("entity_type","entity_id");--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "data_files_storage_key_idx" ON "data_files" USING btree ("storage_provider","storage_key");

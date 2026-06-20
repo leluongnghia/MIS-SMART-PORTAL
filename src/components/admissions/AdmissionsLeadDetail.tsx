@@ -6,6 +6,7 @@ import {
   CheckCircle2, Circle, ChevronRight, Upload, Eye, Clock,
   Zap, FileText, GraduationCap, CreditCard, Activity, History
 } from 'lucide-react';
+import { type Lead } from './AdmissionsLeadsTable';
 
 type Tab = 'overview' | 'contact' | 'study' | 'test' | 'tuition' | 'documents' | 'activity' | 'history';
 
@@ -54,8 +55,23 @@ const RELATED_TASKS = [
   { title: 'Gọi nhắc lịch test cho phụ huynh', date: '13/05/2025', by: 'Trần Bảo Ngọc', status: 'Chưa bắt đầu' },
 ];
 
-export default function AdmissionsLeadDetail({ onBack }: { onBack?: () => void }) {
+export default function AdmissionsLeadDetail({ lead, onBack }: { lead?: Lead; onBack?: () => void }) {
   const [activeTab, setActiveTab] = useState<Tab>('overview');
+
+  const studentName = lead?.hoTen || 'Nguyễn Hoàng Minh';
+  const studentInitials = lead?.hoTen
+    ? lead.hoTen.split(' ').filter(Boolean).map(w => w[0]).join('').slice(0, 3).toUpperCase()
+    : 'NHM';
+  const leadCode = lead?.id ? `LD250510-0${lead.id.replace(/\D/g, '')}` : 'LD250510-01284';
+  const ngayTao = lead?.ngayTao || '10/05/2025 09:15';
+  const nguonLead = lead?.nguonLead || 'Website';
+  const tvv = lead?.tvv || 'Trần Bảo Ngọc';
+  const trangThai = lead?.trangThai || 'Mới';
+  const diemLead = lead?.diemLead ?? 85;
+
+  const parentName = lead ? `Phụ huynh của ${lead.hoTen}` : 'Nguyễn Thị Hạnh';
+  const parentPhone = lead?.sdt || '0908 123 456';
+  const parentEmail = lead?.email || 'hanh.nguyen@example.com';
 
   const TABS: { id: Tab; label: string; icon: React.ElementType }[] = [
     { id: 'overview', label: 'Tổng quan', icon: Activity },
@@ -103,27 +119,27 @@ export default function AdmissionsLeadDetail({ onBack }: { onBack?: () => void }
           <div className="shrink-0 border-b border-slate-100 bg-white px-5 py-4">
             <div className="flex items-start gap-4">
               <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-blue-700 text-xl font-black text-white shadow">
-                NHM
+                {studentInitials}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
-                  <h1 className="text-xl font-black text-slate-900">Nguyễn Hoàng Minh</h1>
-                  <span className="rounded-xl bg-blue-100 px-2.5 py-1 text-xs font-black text-blue-700">NEW_LEAD</span>
+                  <h1 className="text-xl font-black text-slate-900">{studentName}</h1>
+                  <span className="rounded-xl bg-blue-100 px-2.5 py-1 text-xs font-black text-blue-700">{trangThai}</span>
                   <button type="button" className="text-slate-400 hover:text-slate-600"><Edit3 className="h-4 w-4" /></button>
                 </div>
                 <div className="mt-1 flex flex-wrap items-center gap-3 text-xs font-semibold text-slate-500">
-                  <span>Lead Code: <strong className="text-slate-700">LD250510-01284</strong></span>
+                  <span>Lead Code: <strong className="text-slate-700">{leadCode}</strong></span>
                   <span>·</span>
-                  <span>Ngày tạo: <strong className="text-slate-700">10/05/2025 09:15</strong></span>
+                  <span>Ngày tạo: <strong className="text-slate-700">{ngayTao}</strong></span>
                   <span>·</span>
-                  <span>Nguồn: <strong className="text-blue-600">Website</strong></span>
+                  <span>Nguồn: <strong className="text-blue-600">{nguonLead}</strong></span>
                 </div>
                 <div className="mt-1 flex flex-wrap items-center gap-3 text-xs font-semibold text-slate-500">
-                  <span>Tư vấn viên: <strong className="text-slate-700">Trần Bảo Ngọc</strong></span>
+                  <span>Tư vấn viên: <strong className="text-slate-700">{tvv}</strong></span>
                   <span>·</span>
                   <span>Chi nhánh: <strong className="text-slate-700">Cơ sở Nguyễn Văn Linh</strong></span>
                   <span>·</span>
-                  <span>Ngày cập nhật: <strong className="text-slate-700">12/05/2025 10:30</strong></span>
+                  <span>Ngày cập nhật: <strong className="text-slate-700">{ngayTao}</strong></span>
                 </div>
               </div>
 
@@ -213,9 +229,9 @@ export default function AdmissionsLeadDetail({ onBack }: { onBack?: () => void }
                   <p className="mb-3 text-xs font-black uppercase tracking-wide text-slate-400">Thông tin nguyện vọng</p>
                   <div className="space-y-2 text-sm">
                     {[
-                      ['Khối/Grade mong muốn', 'Grade 6'],
+                      ['Khối/Grade mong muốn', lead?.khoi || 'Grade 6'],
                       ['Niên khóa dự kiến', '2025 - 2026'],
-                      ['Chương trình quan tâm', 'Song ngữ Quốc tế (Bilingual)'],
+                      ['Chương trình quan tâm', lead?.khoi ? `${lead.khoi} - Song ngữ Quốc tế` : 'Song ngữ Quốc tế (Bilingual)'],
                       ['Học bổng quan tâm', 'Học bổng thành tích học tập'],
                     ].map(([k, v]) => (
                       <div key={k} className="flex justify-between gap-2">
@@ -237,7 +253,7 @@ export default function AdmissionsLeadDetail({ onBack }: { onBack?: () => void }
                   <p className="mb-3 text-xs font-black uppercase tracking-wide text-slate-400">Nguồn & Phân loại</p>
                   <div className="space-y-2 text-sm">
                     {[
-                      ['Nguồn Lead', 'Website'],
+                      ['Nguồn Lead', nguonLead],
                       ['Chiến dịch', 'Tháng 5 - Ưu đãi học phí'],
                     ].map(([k, v]) => (
                       <div key={k} className="flex justify-between gap-2">
@@ -252,10 +268,13 @@ export default function AdmissionsLeadDetail({ onBack }: { onBack?: () => void }
                     <div className="flex justify-between gap-2 items-center">
                       <span className="text-slate-500">Điểm Lead</span>
                       <div className="flex items-center gap-1">
-                        {'★★★★☆'.split('').map((s, i) => (
-                          <span key={i} className={i < 4 ? 'text-amber-400' : 'text-slate-200'}>★</span>
-                        ))}
-                        <span className="text-xs font-black text-slate-700">85/100</span>
+                        {'★★★★★'.split('').map((s, i) => {
+                          const starCount = Math.round(diemLead / 20);
+                          return (
+                            <span key={i} className={i < starCount ? 'text-amber-400' : 'text-slate-200'}>★</span>
+                          );
+                        })}
+                        <span className="text-xs font-black text-slate-700">{diemLead}/100</span>
                       </div>
                     </div>
                   </div>
@@ -343,10 +362,10 @@ export default function AdmissionsLeadDetail({ onBack }: { onBack?: () => void }
                         <span className="rounded-lg bg-indigo-100 px-2 py-1 text-xs font-black text-indigo-700">Liên hệ chính (Mẹ)</span>
                         <button className="text-slate-400 hover:text-blue-600"><Edit3 className="h-4 w-4" /></button>
                       </div>
-                      <p className="mb-1 text-lg font-black text-slate-900">Nguyễn Thị Hạnh</p>
+                      <p className="mb-1 text-lg font-black text-slate-900">{parentName}</p>
                       <div className="space-y-2 mt-3 text-sm text-slate-600">
-                        <div className="flex items-center gap-2"><Phone className="h-4 w-4 text-slate-400" /> 0908 123 456</div>
-                        <div className="flex items-center gap-2"><Mail className="h-4 w-4 text-slate-400" /> hanh.nguyen@example.com</div>
+                        <div className="flex items-center gap-2"><Phone className="h-4 w-4 text-slate-400" /> {parentPhone}</div>
+                        <div className="flex items-center gap-2"><Mail className="h-4 w-4 text-slate-400" /> {parentEmail}</div>
                         <div className="flex items-center gap-2"><Activity className="h-4 w-4 text-slate-400" /> Nghề nghiệp: Trưởng phòng Marketing</div>
                       </div>
                     </div>
@@ -574,16 +593,18 @@ export default function AdmissionsLeadDetail({ onBack }: { onBack?: () => void }
             </div>
             <div className="space-y-2 text-xs">
               <div className="flex items-center gap-2">
-                <div className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 text-[9px] font-black text-blue-700">NH</div>
+                <div className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 text-[9px] font-black text-blue-700">
+                  {studentInitials.slice(0, 2)}
+                </div>
                 <div>
-                  <p className="font-black text-slate-800">Nguyễn Thị Hạnh</p>
+                  <p className="font-black text-slate-800">{parentName}</p>
                   <p className="text-slate-500">Mẹ (Liên hệ chính)</p>
                 </div>
               </div>
               {[
-                [Phone, '0908 123 456'],
-                [Mail, 'hanh.nguyen@example.com'],
-                [MessageSquare, '0908 123 456'],
+                [Phone, parentPhone],
+                [Mail, parentEmail],
+                [MessageSquare, parentPhone],
               ].map(([Icon, val], i) => {
                 const Ic = Icon as React.ElementType;
                 return (

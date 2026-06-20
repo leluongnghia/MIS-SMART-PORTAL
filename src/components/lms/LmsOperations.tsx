@@ -5,6 +5,9 @@ import {
   Video, Plus, RefreshCw, BookOpenCheck, FileSpreadsheet, BookOpen, Calculator, Bookmark, ChevronRight, Calendar
 } from 'lucide-react';
 import { useToast } from '../ui/Toast';
+import { Dialog } from '../ui/dialog';
+import { Button } from '../ui/button';
+import { Textarea } from '../ui/textarea';
 import { ALL_VIETNAM_SUBJECT_NAMES, VIETNAM_GRADE_LEVELS, getSubjectsForClassName } from '../../utils/vietnameseCurriculum';
 import { exportToCsv } from '../../utils/exportUtils';
 import { UserProfile } from '../../types';
@@ -110,6 +113,10 @@ export default function LmsOperations({
   const toast = useToast();
   // Local states for Review assignments
   const [showCreateReviewForm, setShowCreateReviewForm] = useState(false);
+  const [rejectLeaveDialog, setRejectLeaveDialog] = useState({
+    isOpen: false,
+    reason: '',
+  });
   const [activeReviewId, setActiveReviewId] = useState<string>(reviewAssignments[0]?.id || '');
   const [newReviewData, setNewReviewData] = useState({
     title: '',
@@ -839,10 +846,7 @@ export default function LmsOperations({
                     Phê duyệt
                   </button>
                   <button 
-                    onClick={() => {
-                      const reason = window.prompt("Nhập lý do từ chối nghỉ phép:");
-                      if (reason) toast.success('Đã từ chối', `Đã từ chối bàn giao lịch phân tổ. Lý do: ${reason}`);
-                    }}
+                    onClick={() => setRejectLeaveDialog({ isOpen: true, reason: '' })}
                     className="px-2 py-1 bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-350 text-[10px] font-bold rounded hover:bg-slate-300 dark:hover:bg-slate-700 cursor-pointer"
                   >
                     Khước từ
@@ -1187,6 +1191,42 @@ export default function LmsOperations({
         </div>
 
       </div>
+
+      <Dialog
+        open={rejectLeaveDialog.isOpen}
+        onOpenChange={(open) => setRejectLeaveDialog(prev => ({ ...prev, isOpen: open }))}
+        title="Từ chối nghỉ phép"
+        description="Vui lòng cung cấp lý do từ chối đơn xin nghỉ phép của cô Thanh Nhàn:"
+      >
+        <div className="space-y-4">
+          <Textarea
+            value={rejectLeaveDialog.reason}
+            onChange={(e) => setRejectLeaveDialog(prev => ({ ...prev, reason: e.target.value }))}
+            placeholder="Nhập lý do từ chối..."
+            className="w-full font-sans"
+          />
+          <div className="flex justify-end gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => setRejectLeaveDialog({ isOpen: false, reason: '' })}
+            >
+              Hủy
+            </Button>
+            <Button 
+              onClick={() => {
+                if (rejectLeaveDialog.reason.trim()) {
+                  toast.success('Đã từ chối', `Đã từ chối bàn giao lịch phân tổ. Lý do: ${rejectLeaveDialog.reason}`);
+                  setRejectLeaveDialog({ isOpen: false, reason: '' });
+                }
+              }}
+              variant="destructive"
+              disabled={!rejectLeaveDialog.reason.trim()}
+            >
+              Xác nhận từ chối
+            </Button>
+          </div>
+        </div>
+      </Dialog>
     </div>
   );
 }

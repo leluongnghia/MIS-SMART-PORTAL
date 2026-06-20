@@ -55,14 +55,14 @@ export const APPROVAL_MOCK_DATA = {
 };
 
 export const SEED_TASKS = [
-  { title: 'Soạn đề thi HSG cấp trường', status: 'todo', priority: 'high', dept: 'Toán', tag: 'Chuyên môn' },
-  { title: 'Lên lịch họp phụ huynh cuối kỳ', status: 'todo', priority: 'medium', dept: 'BGH', tag: 'Hành chính' },
-  { title: 'Chấm thi thử THPT Quốc gia', status: 'in_progress', priority: 'high', dept: 'Văn', tag: 'Chuyên môn' },
-  { title: 'Báo cáo tổng kết tuần 12', status: 'pending_approval', priority: 'medium', dept: 'Đoàn đội', tag: 'Báo cáo' },
-  { title: 'Duyệt danh sách học sinh giỏi', status: 'pending_approval', priority: 'high', dept: 'BGH', tag: 'Phê duyệt' },
-  { title: 'Mua sắm dụng cụ thí nghiệm Hóa học', status: 'completed', priority: 'low', dept: 'Hóa', tag: 'Mua sắm' },
-  { title: 'Tập huấn PCCC năm 2025', status: 'todo', priority: 'high', dept: 'Hành chính', tag: 'Sự kiện' },
-  { title: 'Xếp thời khóa biểu tuần 15', status: 'in_progress', priority: 'high', dept: 'BGH', tag: 'Chuyên môn' },
-  { title: 'Đánh giá chất lượng giáo viên', status: 'in_progress', priority: 'medium', dept: 'BGH', tag: 'Đánh giá' },
-  { title: 'Nhập điểm giữa kỳ lên hệ thống', status: 'todo', priority: 'high', dept: 'Tiếng Anh', tag: 'Chuyên môn' },
+  { title: 'Soạn đề thi HSG cấp trường', status: 'todo', priority: 'high', dept: 'Toán', tag: 'Chuyên môn', overdueDays: -5 },
+  { title: 'Lên lịch họp phụ huynh cuối kỳ', status: 'todo', priority: 'medium', dept: 'BGH', tag: 'Hành chính', overdueDays: 2 }, // LIGHT
+  { title: 'Chấm thi thử THPT Quốc gia', status: 'in_progress', priority: 'high', dept: 'Văn', tag: 'Chuyên môn', overdueDays: 5 }, // MEDIUM
+  { title: 'Báo cáo tổng kết tuần 12', status: 'pending_approval', priority: 'medium', dept: 'Đoàn đội', tag: 'Báo cáo', overdueDays: 10 }, // HIGH
+  { title: 'Duyệt danh sách học sinh giỏi', status: 'pending_approval', priority: 'URGENT', dept: 'BGH', tag: 'Phê duyệt', overdueDays: 2 }, // CRITICAL (URGENT)
+  { title: 'Mua sắm dụng cụ thí nghiệm Hóa học', status: 'completed', priority: 'low', dept: 'Hóa', tag: 'Mua sắm', overdueDays: -10 },
+  { title: 'Tập huấn PCCC năm 2025', status: 'todo', priority: 'high', dept: 'Hành chính', tag: 'Sự kiện', overdueDays: 16 }, // CRITICAL
+  { title: 'Xếp thời khóa biểu tuần 15', status: 'in_progress', priority: 'high', dept: 'BGH', tag: 'Chuyên môn', overdueDays: 6, overdueReason: 'Chưa chốt được lịch phòng máy tính', isBlocked: true },
+  { title: 'Đánh giá chất lượng giáo viên', status: 'in_progress', priority: 'medium', dept: 'BGH', tag: 'Đánh giá', overdueDays: 4, deadlineExtensionStatus: 'PENDING', proposedNewDueDate: 5 },
+  { title: 'Nhập điểm giữa kỳ lên hệ thống', status: 'todo', priority: 'high', dept: 'Tiếng Anh', tag: 'Chuyên môn', overdueDays: 0 },
 ];
