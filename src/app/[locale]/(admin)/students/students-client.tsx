@@ -47,7 +47,7 @@ export default function Student360Dashboard({ initialData }: { initialData?: any
   const [selectedStudentId, setSelectedStudentId] = useState<string>(() => {
     return initialData?.students?.[0]?.id || '';
   });
-  const [currentTab, setCurrentTab] = useState<'overview' | 'academics' | 'attendance' | 'conduct' | 'health'>('overview');
+  const [currentTab, setCurrentTab] = useState<'overview' | 'academics' | 'attendance' | 'conduct' | 'health' | 'documents'>('overview');
   const [selectedClass, setSelectedClass] = useState<string>('all');
   const [hienTimelineDialog, setHienTimelineDialog] = useState(false);
   const [hienTuyChinh, setHienTuyChinh] = useState(false);
@@ -515,6 +515,7 @@ export default function Student360Dashboard({ initialData }: { initialData?: any
               ['attendance', 'Chuyên cần'],
               ['conduct', 'Hạnh kiểm'],
               ['health', 'Y tế'],
+              ['documents', 'Hồ sơ đính kèm'],
             ].map(([tab, label]) => (
               <button
                 key={tab}
@@ -795,6 +796,41 @@ export default function Student360Dashboard({ initialData }: { initialData?: any
             </Card>
           )}
         </div>
+
+        {currentTab === 'documents' && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card>
+              <CardHeader className="p-4 pb-2 border-b border-slate-100 dark:border-slate-800 flex flex-row items-center justify-between">
+                <CardTitle className="text-sm font-bold">Hồ sơ & Giấy tờ đính kèm</CardTitle>
+                <Button size="sm" variant="outline" className="h-8 gap-1 font-bold text-blue-600 border-blue-200 hover:bg-blue-50">
+                  + Tải file lên
+                </Button>
+              </CardHeader>
+              <CardContent className="p-4">
+                <div className="space-y-3">
+                  {[
+                    { name: 'Giấy khai sinh (Bản sao)', date: '15/08/2024', size: '1.2 MB', type: 'PDF' },
+                    { name: 'Học bạ tiểu học', date: '15/08/2024', size: '4.5 MB', type: 'PDF' },
+                    { name: 'Đơn xin nhập học', date: '12/08/2024', size: '0.8 MB', type: 'DOCX' },
+                  ].map((file, idx) => (
+                    <div key={idx} className="flex items-center justify-between p-3 rounded-lg border border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors cursor-pointer">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded bg-blue-50 dark:bg-blue-950/30 text-blue-600 flex items-center justify-center font-bold text-xs">
+                          {file.type}
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-slate-900 dark:text-white">{file.name}</p>
+                          <p className="text-xs text-slate-500">{file.date} • {file.size}</p>
+                        </div>
+                      </div>
+                      <Button variant="ghost" size="sm" className="text-blue-600 font-bold text-xs">Tải xuống</Button>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         {/* Right Sidebar: Timeline */}
         <div className="lg:col-span-3 space-y-6">
