@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/src/components/ui/ca
 import { Button } from '@/src/components/ui/button';
 import { Badge } from '@/src/components/ui/badge';
 import { Users, GraduationCap, Settings } from 'lucide-react';
+import { Dialog } from '@/src/components/ui/dialog';
 
 import Drawer from '@/src/components/ui/Drawer';
 import StudentQuickProfile from '@/src/components/students/student-quick-profile';
@@ -15,6 +16,10 @@ export default function ClassesClient({ initialData }: { initialData: any }) {
   const [selectedClassId, setSelectedClassId] = useState<string>(defaultClass?.id || '');
   const [isListDrawerOpen, setIsListDrawerOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
+
+  const [hienTuyChinh, setHienTuyChinh] = useState(false);
+  const [tuyChinhAnSiSo, setTuyChinhAnSiSo] = useState(false);
+  const [tuyChinhAnTrangThai, setTuyChinhAnTrangThai] = useState(false);
 
   const selectedClass = classes.find((c: any) => c.id === selectedClassId);
   const classStudents = students.filter((s: any) => s.className === selectedClass?.name);
@@ -35,7 +40,7 @@ export default function ClassesClient({ initialData }: { initialData: any }) {
               <option key={c.id} value={c.id}>{c.name}</option>
             ))}
           </select>
-          <Button variant="outline" className="gap-2 font-bold">
+          <Button variant="outline" className="gap-2 font-bold" onClick={() => setHienTuyChinh(true)}>
             <Settings className="h-4 w-4" /> Tùy chỉnh
           </Button>
         </div>
@@ -49,7 +54,9 @@ export default function ClassesClient({ initialData }: { initialData: any }) {
             </div>
             <div>
               <p className="text-sm font-bold text-slate-500">Sĩ số lớp</p>
-              <h3 className="text-2xl font-black text-slate-900 dark:text-white">{classStudents.length}</h3>
+              <h3 className="text-2xl font-black text-slate-900 dark:text-white">
+                {tuyChinhAnSiSo ? "—" : classStudents.length}
+              </h3>
             </div>
           </CardContent>
         </Card>
@@ -120,7 +127,9 @@ export default function ClassesClient({ initialData }: { initialData: any }) {
                 <tr>
                   <th className="px-4 py-3 font-bold text-slate-600 dark:text-slate-400">Mã HS</th>
                   <th className="px-4 py-3 font-bold text-slate-600 dark:text-slate-400">Họ và tên</th>
-                  <th className="px-4 py-3 font-bold text-slate-600 dark:text-slate-400">Trạng thái</th>
+                  {!tuyChinhAnTrangThai && (
+                    <th className="px-4 py-3 font-bold text-slate-600 dark:text-slate-400">Trạng thái</th>
+                  )}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -128,16 +137,18 @@ export default function ClassesClient({ initialData }: { initialData: any }) {
                   <tr key={s.id} className="hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors">
                     <td className="px-4 py-3 font-medium text-slate-900 dark:text-slate-100">{s.code}</td>
                     <td className="px-4 py-3 font-bold cursor-pointer text-blue-600 hover:underline" onClick={() => setSelectedStudent(s)}>{s.name}</td>
-                    <td className="px-4 py-3">
-                      <span className="inline-flex items-center rounded-md bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
-                        {s.payload?.status || 'Đang học'}
-                      </span>
-                    </td>
+                    {!tuyChinhAnTrangThai && (
+                      <td className="px-4 py-3">
+                        <span className="inline-flex items-center rounded-md bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
+                          {s.payload?.status || 'Đang học'}
+                        </span>
+                      </td>
+                    )}
                   </tr>
                 ))}
                 {classStudents.length === 0 && (
                   <tr>
-                    <td colSpan={3} className="px-4 py-8 text-center text-slate-500 italic">
+                    <td colSpan={tuyChinhAnTrangThai ? 2 : 3} className="px-4 py-8 text-center text-slate-500 italic">
                       Chưa có học sinh nào trong lớp này.
                     </td>
                   </tr>
@@ -147,6 +158,30 @@ export default function ClassesClient({ initialData }: { initialData: any }) {
           </div>
         </CardContent>
       </Card>
+
+      <Dialog
+        open={hienTuyChinh}
+        onOpenChange={setHienTuyChinh}
+        title="Tùy chỉnh danh sách lớp học"
+        description="Các tùy chọn này áp dụng ngay trên màn hình hiện tại."
+      >
+        <div className="space-y-4 text-sm">
+          <label className="flex items-center justify-between gap-4 rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+            <span>
+              <span className="block font-bold text-slate-900 dark:text-white">Ẩn sĩ số lớp</span>
+              <span className="text-xs text-slate-500">Giấu số lượng học sinh trong lớp trên thẻ tổng quan.</span>
+            </span>
+            <input type="checkbox" checked={tuyChinhAnSiSo} onChange={(e) => setTuyChinhAnSiSo(e.target.checked)} className="h-4 w-4" />
+          </label>
+          <label className="flex items-center justify-between gap-4 rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+            <span>
+              <span className="block font-bold text-slate-900 dark:text-white">Ẩn cột trạng thái</span>
+              <span className="text-xs text-slate-500">Ẩn cột Trạng thái trong bảng danh sách học sinh.</span>
+            </span>
+            <input type="checkbox" checked={tuyChinhAnTrangThai} onChange={(e) => setTuyChinhAnTrangThai(e.target.checked)} className="h-4 w-4" />
+          </label>
+        </div>
+      </Dialog>
     </div>
   );
 }
