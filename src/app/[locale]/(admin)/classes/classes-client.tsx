@@ -11,7 +11,8 @@ import StudentQuickProfile from '@/src/components/students/student-quick-profile
 
 export default function ClassesClient({ initialData }: { initialData: any }) {
   const { classes = [], students = [] } = initialData;
-  const [selectedClassId, setSelectedClassId] = useState<string>(classes[0]?.id || '');
+  const defaultClass = classes.find((c: any) => students.some((s: any) => s.className === c.name)) || classes[0];
+  const [selectedClassId, setSelectedClassId] = useState<string>(defaultClass?.id || '');
   const [isListDrawerOpen, setIsListDrawerOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
 
