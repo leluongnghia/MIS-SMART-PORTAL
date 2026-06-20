@@ -10,6 +10,9 @@ export type FileModule = 'TASKS' | 'ADMISSIONS' | 'STUDENTS' | 'FACILITIES' | 'S
 export type FileVisibility = 'PRIVATE' | 'MODULE' | 'DEPARTMENT' | 'SCHOOL' | 'SCHOOL_WIDE' | 'PUBLIC' | 'ADMIN_ONLY';
 export type FileStatus = 'ACTIVE' | 'ARCHIVED' | 'DELETED';
 
+const APP_URL = process.env.APP_URL || '';
+const DEFAULT_STORAGE_PROVIDER = (process.env.STORAGE_PROVIDER as StorageProvider) || 'LOCAL';
+
 const UPLOAD_DIR = path.join(process.cwd(), 'storage', 'uploads');
 const SAFE_EXTENSIONS = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'csv', 'png', 'jpg', 'jpeg', 'webp', 'txt', 'zip'];
 const DANGEROUS_EXTENSIONS = ['exe', 'bat', 'cmd', 'sh', 'msi', 'js', 'jsx', 'ts', 'tsx', 'php', 'asp', 'aspx', 'jar', 'ps1'];
@@ -38,7 +41,19 @@ function validateUpload(file: File) {
   return ext;
 }
 function publicFile(file: any) {
-  return { ...file, mimeType: file.mimeType || file.fileType, storageProvider: file.storageProvider || 'LOCAL', storageKey: file.storageKey || file.fileName, module: file.module || normalizeModule(file.relatedModule), url: `/api/storage/files/${file.id}` };
+  const previewUrl = `${APP_URL}/api/storage/files/${file.id}/preview`;
+  const downloadUrl = `${APP_URL}/api/storage/files/${file.id}/download`;
+
+  return { 
+    ...file, 
+    mimeType: file.mimeType || file.fileType, 
+    storageProvider: file.storageProvider || 'LOCAL', 
+    storageKey: file.storageKey || file.fileName, 
+    module: file.module || normalizeModule(file.relatedModule), 
+    url: previewUrl,
+    previewUrl,
+    downloadUrl
+  };
 }
 
 export function canAccessFile(actor: Actor, file: any, action: 'view' | 'download' | 'edit' | 'delete' | 'archive' | 'restore' | 'permanentDelete') {
@@ -89,12 +104,25 @@ export async function uploadFileToStorage(formData: FormData, actorOverride?: Ac
   const duplicates = await db.query.dataFiles.findMany({ where: eq(schema.dataFiles.originalName, file.name) });
   if (duplicates.length && conflictMode === 'cancel') throw new Error('Tên file đã tồn tại');
   await ensureUploadDir();
-  const fileId = id('file'); const diskFileName = `${fileId}.${ext}`;
-  await fs.writeFile(path.join(UPLOAD_DIR, diskFileName), Buffer.from(await file.arrayBuffer()));
+  const provider = DEFAULT_STORAGE_PROVIDER;
   const now = new Date();
-  const row = { id: fileId, fileName: diskFileName, originalName: file.name, displayName, description: String(formData.get('description') || ''), fileUrl: `/api/storage/files/${fileId}`, fileType: file.type || 'application/octet-stream', mimeType: file.type || 'application/octet-stream', extension: ext, fileSize: file.size, storageProvider: 'LOCAL', storageKey: diskFileName, module, entityType, entityId, entityLabel, documentType: String(formData.get('documentType') || '') || null, category: String(formData.get('category') || module), relatedModule: String(formData.get('relatedModule') || module), tags: String(formData.get('tags') || '').split(',').map(t => t.trim()).filter(Boolean), visibility, departmentId: actor.departmentId, version: duplicates.length && conflictMode === 'version' ? duplicates.length + 1 : 1, parentFileId: String(formData.get('parentFileId') || '') || null, uploadedBy: actor.id, uploadedByName: actor.name, status: 'ACTIVE', downloadCount: 0, metadata: {}, createdAt: now, updatedAt: now } as any;
+  
+  let diskFileName = '';
+  let fileSize = file.size;
+
+  if (provider === 'MOCK') {
+    diskFileName = `mock_${fileId}.${ext}`;
+    // Log instead of actual write
+    console.log(`[MOCK STORAGE] Would write ${diskFileName} to ${UPLOAD_DIR}`);
+  } else {
+    diskFileName = `${fileId}.${ext}`;
+    await ensureUploadDir();
+    await fs.writeFile(path.join(UPLOAD_DIR, diskFileName), Buffer.from(await file.arrayBuffer()));
+  }
+
+  const row = { id: fileId, fileName: diskFileName, originalName: file.name, displayName, description: String(formData.get('description') || ''), fileUrl: `${APP_URL}/api/storage/files/${fileId}/preview`, fileType: file.type || 'application/octet-stream', mimeType: file.type || 'application/octet-stream', extension: ext, fileSize, storageProvider: provider, storageKey: diskFileName, module, entityType, entityId, entityLabel, documentType: String(formData.get('documentType') || '') || null, category: String(formData.get('category') || module), relatedModule: String(formData.get('relatedModule') || module), tags: String(formData.get('tags') || '').split(',').map(t => t.trim()).filter(Boolean), visibility, departmentId: actor.departmentId, version: duplicates.length && conflictMode === 'version' ? duplicates.length + 1 : 1, parentFileId: String(formData.get('parentFileId') || '') || null, uploadedBy: actor.id, uploadedByName: actor.name, status: 'ACTIVE', downloadCount: 0, metadata: {}, createdAt: now, updatedAt: now } as any;
   await db.insert(schema.dataFiles).values(row);
-  await writeAuditLog(actor.id, 'UPLOAD_FILE', 'DATA_FILE', fileId, { fileName: file.name, module, entityType, entityId });
+  await writeAuditLog(actor.id, 'UPLOAD_FILE', 'DATA_FILE', fileId, { fileName: file.name, module, entityType, entityId, provider });
   await createNotification({ title: 'File mới được tải lên', message: displayName, module: 'STORAGE', type: 'FILE_UPLOADED', severity: 'INFO', targetUrl: '/system-data/storage', sourceType: 'DATA_FILE', sourceId: fileId, scopeType: visibility === 'PRIVATE' ? 'USER' : visibility === 'DEPARTMENT' || visibility === 'MODULE' ? 'DEPARTMENT' : 'SCHOOL', scopeId: visibility === 'PRIVATE' ? actor.id : visibility === 'DEPARTMENT' || visibility === 'MODULE' ? actor.departmentId : null, payload: { module, entityType, entityId } }, actor).catch(() => null);
   return publicFile(row);
 }
@@ -138,7 +166,11 @@ export async function restoreFile(fileId: string) { return setFileStatus(fileId,
 export async function permanentlyDeleteFile(fileId: string) {
   const actor = await getCurrentActor(); if (!actor || !canPermanentlyDeleteFile(actor)) throw new Error('Chỉ Admin mới được xóa vĩnh viễn');
   const file = await db.query.dataFiles.findFirst({ where: eq(schema.dataFiles.id, fileId) }); if (!file) throw new Error('Not found');
-  try { await fs.unlink(path.join(UPLOAD_DIR, file.storageKey || file.fileName)); } catch {}
+  try { 
+    if (file.storageProvider !== 'MOCK') {
+      await fs.unlink(path.join(UPLOAD_DIR, file.storageKey || file.fileName)); 
+    }
+  } catch {}
   await db.delete(schema.dataFiles).where(eq(schema.dataFiles.id, fileId));
   await writeAuditLog(actor.id, 'PERMANENT_DELETE_FILE', 'DATA_FILE', fileId, { fileName: file.fileName });
   return { success: true };
