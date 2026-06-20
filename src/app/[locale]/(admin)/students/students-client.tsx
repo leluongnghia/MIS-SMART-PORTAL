@@ -2,6 +2,8 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { Dialog } from '@/src/components/ui/dialog';
+import { Textarea } from '@/src/components/ui/textarea';
+import { useToast } from '@/src/components/ui/Toast';
 import { CheckCircle2, 
   UserCircle,
   GraduationCap,
@@ -53,6 +55,16 @@ export default function Student360Dashboard({ initialData }: { initialData?: any
   const [hienTuyChinh, setHienTuyChinh] = useState(false);
   const [tuyChinhAnLop, setTuyChinhAnLop] = useState(false);
   const [tuyChinhAnGPA, setTuyChinhAnGPA] = useState(false);
+  const { success: toastSuccess, error: toastError } = useToast();
+  const [actionDialog, setActionDialog] = useState<{
+    isOpen: boolean;
+    type: 'notification' | 'message' | 'note' | null;
+    inputValue: string;
+  }>({
+    isOpen: false,
+    type: null,
+    inputValue: '',
+  });
 
   const studentsByClass = useMemo(() => {
     const students = initialData?.students || [];
@@ -153,41 +165,19 @@ export default function Student360Dashboard({ initialData }: { initialData?: any
   const [localTimelines, setLocalTimelines] = useState<Record<string, any[]>>({});
 
   const handleSendNotification = () => {
-    const msg = prompt(`Nhập nội dung thông báo gửi cho phụ huynh học sinh ${currentStudent.name}:`);
-    if (msg) {
-      const newActivity = {
-        time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' ' + new Date().toLocaleDateString('vi-VN'),
-        title: 'Đã gửi thông báo',
-        desc: msg,
-        user: 'Giáo viên (Bản thân)',
-        icon: 'Bell',
-        color: 'bg-blue-600'
-      };
-      setLocalTimelines(prev => ({
-        ...prev,
-        [currentStudent.id]: [newActivity, ...(prev[currentStudent.id] || [])]
-      }));
-      alert(`Gửi thông báo thành công!`);
-    }
+    setActionDialog({
+      isOpen: true,
+      type: 'notification',
+      inputValue: ''
+    });
   };
 
   const handleSendMessage = () => {
-    const msg = prompt(`Nhập tin nhắn nhanh gửi cho phụ huynh học sinh ${currentStudent.name}:`);
-    if (msg) {
-      const newActivity = {
-        time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' ' + new Date().toLocaleDateString('vi-VN'),
-        title: 'Tin nhắn trao đổi',
-        desc: msg,
-        user: 'Giáo viên (Bản thân)',
-        icon: 'MessageSquare',
-        color: 'bg-emerald-500'
-      };
-      setLocalTimelines(prev => ({
-        ...prev,
-        [currentStudent.id]: [newActivity, ...(prev[currentStudent.id] || [])]
-      }));
-      alert(`Gửi tin nhắn thành công!`);
-    }
+    setActionDialog({
+      isOpen: true,
+      type: 'message',
+      inputValue: ''
+    });
   };
 
   const handleCall = () => {
@@ -195,14 +185,45 @@ export default function Student360Dashboard({ initialData }: { initialData?: any
     if (phone) {
       window.location.href = `tel:${phone.replace(/\s+/g, '')}`;
     } else {
-      alert("Chưa cập nhật số điện thoại phụ huynh!");
+      toastError("Chưa cập nhật số điện thoại phụ huynh!");
     }
   };
 
   const handleCreateNote = () => {
-    const msg = prompt(`Nhập ghi chú trao đổi về học sinh ${currentStudent.name}:`);
-    if (msg) {
-      const newActivity = {
+    setActionDialog({
+      isOpen: true,
+      type: 'note',
+      inputValue: ''
+    });
+  };
+
+  const handleActionSubmit = () => {
+    const msg = actionDialog.inputValue.trim();
+    if (!msg) return;
+
+    let newActivity: any = null;
+    if (actionDialog.type === 'notification') {
+      newActivity = {
+        time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' ' + new Date().toLocaleDateString('vi-VN'),
+        title: 'Đã gửi thông báo',
+        desc: msg,
+        user: 'Giáo viên (Bản thân)',
+        icon: 'Bell',
+        color: 'bg-blue-600'
+      };
+      toastSuccess('Gửi thông báo thành công!', `Nội dung: ${msg}`);
+    } else if (actionDialog.type === 'message') {
+      newActivity = {
+        time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' ' + new Date().toLocaleDateString('vi-VN'),
+        title: 'Tin nhắn trao đổi',
+        desc: msg,
+        user: 'Giáo viên (Bản thân)',
+        icon: 'MessageSquare',
+        color: 'bg-emerald-500'
+      };
+      toastSuccess('Gửi tin nhắn thành công!', `Nội dung: ${msg}`);
+    } else if (actionDialog.type === 'note') {
+      newActivity = {
         time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' ' + new Date().toLocaleDateString('vi-VN'),
         title: 'Ghi chú trao đổi',
         desc: msg,
@@ -210,11 +231,21 @@ export default function Student360Dashboard({ initialData }: { initialData?: any
         icon: 'Edit3',
         color: 'bg-orange-500'
       };
+      toastSuccess('Lưu ghi chú thành công!', `Nội dung: ${msg}`);
+    }
+
+    if (newActivity) {
       setLocalTimelines(prev => ({
         ...prev,
         [currentStudent.id]: [newActivity, ...(prev[currentStudent.id] || [])]
       }));
     }
+
+    setActionDialog({
+      isOpen: false,
+      type: null,
+      inputValue: ''
+    });
   };
 
   const payload = currentStudent.payload || {};
@@ -224,6 +255,18 @@ export default function Student360Dashboard({ initialData }: { initialData?: any
   const achievements = payload.achievements || [];
   const parents = payload.parents || [];
   const timeline = [...(localTimelines[currentStudent.id] || []), ...(payload.timeline || [])];
+
+  const dialogTitle = actionDialog.type === 'notification' 
+    ? 'Gửi thông báo cho phụ huynh' 
+    : actionDialog.type === 'message' 
+      ? 'Nhắn tin nhanh cho phụ huynh' 
+      : 'Tạo ghi chú trao đổi';
+
+  const dialogDesc = actionDialog.type === 'notification'
+    ? `Nhập nội dung thông báo gửi cho phụ huynh học sinh ${currentStudent.name}:`
+    : actionDialog.type === 'message'
+      ? `Nhập tin nhắn nhanh gửi cho phụ huynh học sinh ${currentStudent.name}:`
+      : `Nhập ghi chú trao đổi về học sinh ${currentStudent.name}:`;
 
   return (
     <div className="space-y-6">
@@ -1018,6 +1061,37 @@ export default function Student360Dashboard({ initialData }: { initialData?: any
           )) : (
             <p className="text-sm italic text-slate-400">Chưa có hoạt động trao đổi nào.</p>
           )}
+        </div>
+      </Dialog>
+
+      <Dialog
+        open={actionDialog.isOpen}
+        onOpenChange={(open) => setActionDialog(prev => ({ ...prev, isOpen: open }))}
+        title={dialogTitle}
+        description={dialogDesc}
+      >
+        <div className="space-y-4">
+          <Textarea
+            value={actionDialog.inputValue}
+            onChange={(e) => setActionDialog(prev => ({ ...prev, inputValue: e.target.value }))}
+            placeholder="Nhập nội dung vào đây..."
+            className="w-full"
+          />
+          <div className="flex justify-end gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => setActionDialog({ isOpen: false, type: null, inputValue: '' })}
+            >
+              Hủy
+            </Button>
+            <Button 
+              onClick={handleActionSubmit}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-bold"
+              disabled={!actionDialog.inputValue.trim()}
+            >
+              Xác nhận
+            </Button>
+          </div>
         </div>
       </Dialog>
     </div>

@@ -1,11 +1,14 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Drawer from '@/src/components/ui/Drawer';
 import { Badge } from '@/src/components/ui/badge';
 import { Button } from '@/src/components/ui/button';
 import { Phone, MessageSquare, Edit3, Bell, GraduationCap, AlertTriangle, Activity } from 'lucide-react';
 import Link from 'next/link';
+import { Dialog } from '@/src/components/ui/dialog';
+import { Textarea } from '@/src/components/ui/textarea';
+import { useToast } from '@/src/components/ui/Toast';
 
 interface StudentQuickProfileProps {
   isOpen: boolean;
@@ -15,6 +18,17 @@ interface StudentQuickProfileProps {
 }
 
 export default function StudentQuickProfile({ isOpen, onClose, student, locale = 'vi' }: StudentQuickProfileProps) {
+  const { success: toastSuccess } = useToast();
+  const [actionDialog, setActionDialog] = useState<{
+    isOpen: boolean;
+    type: 'notification' | 'message' | 'note' | null;
+    inputValue: string;
+  }>({
+    isOpen: false,
+    type: null,
+    inputValue: '',
+  });
+
   if (!student) return null;
 
   const payload = student.payload || {};
@@ -22,8 +36,47 @@ export default function StudentQuickProfile({ isOpen, onClose, student, locale =
   const attendance = payload.attendanceStat || { present: 0, excused: 0, unexcused: 0, late: 0 };
   const conduct = payload.conduct || { status: 'Chưa đánh giá', advantages: [], notes: [] };
 
+  const handleActionClick = (type: 'notification' | 'message' | 'note') => {
+    setActionDialog({
+      isOpen: true,
+      type,
+      inputValue: '',
+    });
+  };
+
+  const handleActionSubmit = () => {
+    if (!actionDialog.inputValue.trim()) return;
+    
+    if (actionDialog.type === 'notification') {
+      toastSuccess('Gửi thông báo thành công!', `Nội dung: ${actionDialog.inputValue}`);
+    } else if (actionDialog.type === 'message') {
+      toastSuccess('Gửi tin nhắn thành công!', `Nội dung: ${actionDialog.inputValue}`);
+    } else if (actionDialog.type === 'note') {
+      toastSuccess('Đã lưu ghi chú thành công!', `Nội dung: ${actionDialog.inputValue}`);
+    }
+
+    setActionDialog({
+      isOpen: false,
+      type: null,
+      inputValue: '',
+    });
+  };
+
+  const dialogTitle = actionDialog.type === 'notification' 
+    ? 'Gửi thông báo cho phụ huynh' 
+    : actionDialog.type === 'message' 
+      ? 'Nhắn tin nhanh cho phụ huynh' 
+      : 'Tạo ghi chú cho học sinh';
+
+  const dialogDesc = actionDialog.type === 'notification'
+    ? `Nhập nội dung thông báo gửi cho phụ huynh học sinh ${student.name}:`
+    : actionDialog.type === 'message'
+      ? `Nhập tin nhắn nhanh gửi cho phụ huynh học sinh ${student.name}:`
+      : `Nhập ghi chú cho học sinh ${student.name}:`;
+
   return (
-    <Drawer
+    <>
+      <Drawer
       isOpen={isOpen}
       onClose={onClose}
       title="Hồ sơ Nhanh Học Sinh"
@@ -127,22 +180,51 @@ export default function StudentQuickProfile({ isOpen, onClose, student, locale =
         <div className="space-y-3">
           <p className="text-xs font-black uppercase text-slate-500 tracking-wider">Thao tác nhanh</p>
           <div className="grid grid-cols-3 gap-2">
-            <Button variant="outline" className="h-auto py-2 flex flex-col gap-1 text-[10px]" onClick={() => {
-              const msg = prompt(`Nhập nội dung thông báo gửi cho phụ huynh học sinh ${student.name}:`);
-              if (msg) alert(`Đã gửi thông báo thành công!`);
-            }}><Bell className="h-3.5 w-3.5 text-blue-500" /> Thông báo</Button>
-            <Button variant="outline" className="h-auto py-2 flex flex-col gap-1 text-[10px]" onClick={() => {
-              const msg = prompt(`Nhập tin nhắn nhanh gửi cho phụ huynh học sinh ${student.name}:`);
-              if (msg) alert(`Đã gửi tin nhắn thành công!`);
-            }}><MessageSquare className="h-3.5 w-3.5 text-emerald-500" /> Nhắn tin</Button>
-            <Button variant="outline" className="h-auto py-2 flex flex-col gap-1 text-[10px]" onClick={() => {
-              const msg = prompt(`Nhập ghi chú cho học sinh ${student.name}:`);
-              if (msg) alert(`Đã lưu ghi chú thành công!`);
-            }}><Edit3 className="h-3.5 w-3.5 text-orange-500" /> Ghi chú</Button>
+            <Button variant="outline" className="h-auto py-2 flex flex-col gap-1 text-[10px]" onClick={() => handleActionClick('notification')}>
+              <Bell className="h-3.5 w-3.5 text-blue-500" /> Thông báo
+            </Button>
+            <Button variant="outline" className="h-auto py-2 flex flex-col gap-1 text-[10px]" onClick={() => handleActionClick('message')}>
+              <MessageSquare className="h-3.5 w-3.5 text-emerald-500" /> Nhắn tin
+            </Button>
+            <Button variant="outline" className="h-auto py-2 flex flex-col gap-1 text-[10px]" onClick={() => handleActionClick('note')}>
+              <Edit3 className="h-3.5 w-3.5 text-orange-500" /> Ghi chú
+            </Button>
           </div>
         </div>
 
       </div>
     </Drawer>
+
+    <Dialog
+      open={actionDialog.isOpen}
+      onOpenChange={(open) => setActionDialog(prev => ({ ...prev, isOpen: open }))}
+      title={dialogTitle}
+      description={dialogDesc}
+    >
+      <div className="space-y-4">
+        <Textarea
+          value={actionDialog.inputValue}
+          onChange={(e) => setActionDialog(prev => ({ ...prev, inputValue: e.target.value }))}
+          placeholder="Nhập nội dung vào đây..."
+          className="w-full"
+        />
+        <div className="flex justify-end gap-2">
+          <Button 
+            variant="outline" 
+            onClick={() => setActionDialog({ isOpen: false, type: null, inputValue: '' })}
+          >
+            Hủy
+          </Button>
+          <Button 
+            onClick={handleActionSubmit}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-bold"
+            disabled={!actionDialog.inputValue.trim()}
+          >
+            Xác nhận
+          </Button>
+        </div>
+      </div>
+    </Dialog>
+    </>
   );
 }
