@@ -4,6 +4,7 @@ import { db, schema } from '../../../../../libs/server/db';
 import { buildVietQrUrl, crmPaymentTypeToDb, dbLeadToCrmLead, normalizeCrmLead } from '../../../../../libs/server/crm';
 import { getBankConfig } from '../../../../../libs/server/crm';
 import { getCurrentActor, writeAuditLog } from '../../../../../libs/server/auth-helper';
+import { notifyAdmissionPaymentUpdated } from '@/src/libs/server/notification-center';
 
 function normalizeTransferPart(value: unknown) {
   return String(value || '')
@@ -91,6 +92,7 @@ export async function POST(request: Request) {
     updatedAt: now,
   });
   await writeAuditLog(actor.id, 'CREATE_VIETQR', 'PAYMENT', payment.id, { leadId: persistedLead.id, code, amount, crmType, module: 'crm' });
+  await notifyAdmissionPaymentUpdated({ ...payment, code }, actor).catch(error => console.error('notifyAdmissionPaymentUpdated failed:', error));
 
   const responsePayment = {
     id: payment.id,

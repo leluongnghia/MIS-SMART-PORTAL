@@ -668,6 +668,41 @@ export const systemSettings = pgTable('system_settings', {
   ...timestamps,
 });
 
+export const notifications = pgTable('notifications', {
+  id: text('id').primaryKey(),
+  title: text('title').notNull(),
+  message: text('message').notNull(),
+  module: text('module').notNull(),
+  type: text('type').notNull(),
+  severity: text('severity').default('INFO').notNull(),
+  actorId: text('actor_id'),
+  actorName: text('actor_name'),
+  targetUrl: text('target_url'),
+  sourceType: text('source_type'),
+  sourceId: text('source_id'),
+  scopeType: text('scope_type').default('USER').notNull(),
+  scopeId: text('scope_id'),
+  payload: jsonb('payload').notNull().default({}),
+  ...timestamps,
+}, table => [
+  index('notifications_module_idx').on(table.module),
+  index('notifications_source_idx').on(table.sourceType, table.sourceId),
+  index('notifications_created_idx').on(table.createdAt),
+]);
+
+export const notificationRecipients = pgTable('notification_recipients', {
+  id: text('id').primaryKey(),
+  notificationId: text('notification_id').notNull(),
+  userId: text('user_id').notNull(),
+  status: text('status').default('UNREAD').notNull(),
+  readAt: timestamp('read_at', { withTimezone: true }),
+  archivedAt: timestamp('archived_at', { withTimezone: true }),
+  ...timestamps,
+}, table => [
+  index('notification_recipients_user_status_idx').on(table.userId, table.status),
+  index('notification_recipients_notification_idx').on(table.notificationId),
+]);
+
 export const systemCategories = pgTable('system_categories', {
   id: text('id').primaryKey(),
   group: text('group').notNull(),

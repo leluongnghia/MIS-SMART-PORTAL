@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { db, schema } from '../../../../../libs/server/db';
 import { crmStageToLeadStatus, dbLeadToCrmLead, normalizeCrmLead } from '../../../../../libs/server/crm';
+import { getCurrentActor } from '@/src/libs/server/auth-helper';
+import { notifyAdmissionLeadAssigned } from '@/src/libs/server/notification-center';
 
 export async function POST(request: Request) {
   const payload = await request.json();
@@ -51,6 +53,9 @@ export async function POST(request: Request) {
     activityAt: now,
     updatedAt: now,
   });
+
+  const actor = await getCurrentActor().catch(() => null);
+  await notifyAdmissionLeadAssigned(created, actor).catch(error => console.error('notifyAdmissionLeadAssigned failed:', error));
 
   return NextResponse.json({
     status: 'success',

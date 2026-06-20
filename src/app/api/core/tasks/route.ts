@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
 import { db, schema } from '../../../../libs/server/db';
-import { verifyApiAuth } from '../../../../libs/server/auth';
 import { eq } from 'drizzle-orm';
+import { verifyApiAuth } from '../../../../libs/server/auth';
+import { getCurrentActor } from '@/src/libs/server/auth-helper';
+import { notifyApprovalRequested, notifyTaskAssigned } from '@/src/libs/server/notification-center';
 
 export async function GET(req: Request) {
   // Verify auth (Must be logged in to fetch tasks)
@@ -90,6 +92,14 @@ export async function POST(request: Request) {
       updatedAt: new Date(),
     },
   });
+
+  const actor = await getCurrentActor().catch(() => null);
+  if (!existingTask) {
+    await notifyTaskAssigned(task, actor).catch(error => console.error('notifyTaskAssigned failed:', error));
+  }
+  if (task.status === 'CHO_DUYET' && existingTask?.status !== 'CHO_DUYET') {
+    await notifyApprovalRequested(task, actor).catch(error => console.error('notifyApprovalRequested failed:', error));
+  }
 
   return NextResponse.json({ status: 'success', task });
 }

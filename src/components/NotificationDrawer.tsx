@@ -1,305 +1,162 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
-import { Bell, Megaphone, Calendar, CheckCircle2, Info, ChevronRight, Inbox, Trash2 } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { Archive, Bell, Check, ChevronLeft, ChevronRight, ExternalLink, Inbox, Loader2, RefreshCcw, Search, ShieldAlert } from 'lucide-react';
 import Drawer from './ui/Drawer';
-import { Announcement, BoardDirective, Task } from '../types';
+import { Button } from './ui/button';
+
+const MODULES = ['all', 'TASKS', 'APPROVALS', 'ADMISSIONS', 'STUDENTS', 'STORAGE', 'SETTINGS', 'AUDIT_LOGS', 'SYSTEM'];
+const SEVERITIES = ['all', 'INFO', 'SUCCESS', 'WARNING', 'ERROR'];
+const STATUSES = [
+  { value: 'all', label: 'Tất cả' },
+  { value: 'unread', label: 'Chưa đọc' },
+  { value: 'read', label: 'Đã đọc' },
+  { value: 'archived', label: 'Đã lưu trữ' },
+];
+
+type NotificationItem = {
+  id: string;
+  title: string;
+  message: string;
+  module: string;
+  type: string;
+  severity: 'INFO' | 'SUCCESS' | 'WARNING' | 'ERROR';
+  status: 'UNREAD' | 'READ' | 'ARCHIVED';
+  actor?: { name?: string; title?: string };
+  targetUrl?: string;
+  createdAt: string;
+  readAt?: string | null;
+};
 
 interface NotificationDrawerProps {
   isOpen: boolean;
   onClose: () => void;
-  announcements: Announcement[];
-  directives: BoardDirective[];
-  tasks: Task[];
   currentUser: any;
-  summaryItems?: { id: string; type: string; title: string; href: string }[];
-  onViewTask?: (task: Task) => void;
-  onViewDirective?: (directive: BoardDirective) => void;
+  onChanged?: () => void;
+  announcements?: any[];
+  directives?: any[];
+  tasks?: any[];
+  summaryItems?: any[];
+  onViewTask?: any;
+  onViewDirective?: any;
 }
 
-type TabType = 'all' | 'announcements' | 'directives' | 'tasks';
+export default function NotificationDrawer({ isOpen, onClose, onChanged }: NotificationDrawerProps) {
+  const [items, setItems] = useState<NotificationItem[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [toast, setToast] = useState('');
+  const [status, setStatus] = useState('all');
+  const [module, setModule] = useState('all');
+  const [severity, setSeverity] = useState('all');
+  const [q, setQ] = useState('');
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [unread, setUnread] = useState(0);
+  const pageSize = 8;
 
-export default function NotificationDrawer({
-  isOpen,
-  onClose,
-  announcements = [],
-  directives = [],
-  tasks = [],
-  currentUser,
-  summaryItems = [],
-  onViewTask,
-  onViewDirective,
-}: NotificationDrawerProps) {
-  const [activeTab, setActiveTab] = useState<TabType>('all');
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
-  // Lọc thông báo cho user hiện tại (ví dụ: filter theo targetRoles nếu có)
-  const filteredAnnouncements = useMemo(() => {
-    return announcements.filter(a => {
-      if (!a.targetRoles || a.targetRoles.length === 0) return true;
-      return a.targetRoles.includes(currentUser?.role);
-    });
-  }, [announcements, currentUser]);
+  const query = useMemo(() => {
+    const params = new URLSearchParams({ status, module, severity, q, page: String(page), pageSize: String(pageSize) });
+    return params.toString();
+  }, [status, module, severity, q, page]);
 
-  // Lọc chỉ đạo liên quan đến user (ví dụ: được giao hoặc tạo bởi user, hoặc thuộc phòng ban của user)
-  const filteredDirectives = useMemo(() => {
-    return directives.filter(d => {
-      if (currentUser?.role === 'ADMIN') return true;
-      // Trưởng phòng hoặc giáo viên liên quan
-      return d.senderId === currentUser?.id || d.implementations?.some(imp => imp.userId === currentUser?.id);
-    });
-  }, [directives, currentUser]);
-
-  // Lọc tasks liên quan: các task chờ duyệt (nếu là quản lý) hoặc task được giao sắp trễ hạn
-  const filteredTasks = useMemo(() => {
-    return tasks.filter(t => {
-      // Task chờ duyệt
-      if (t.status === 'CHO_DUYET' && (currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER')) {
-        return true;
-      }
-      // Task của bản thân sắp đến hạn hoặc trễ hạn
-      const isMyTask = t.assignedId === currentUser?.id;
-      if (isMyTask && (t.status === 'CHUA_BAT_DA' || t.status === 'DANG_TIEN_HANH')) {
-        // Kiểm tra xem có trễ hạn hoặc sắp đến hạn không (VD: trong vòng 2 ngày)
-        if (t.deadline) {
-          const due = new Date(t.deadline).getTime();
-          const now = Date.now();
-          const diff = due - now;
-          return diff < 2 * 24 * 60 * 60 * 1000; // trễ hạn hoặc < 2 ngày
-        }
-      }
-      return false;
-    });
-  }, [tasks, currentUser]);
-
-  // Gộp tất cả các loại thông báo để hiển thị tab "Tất cả"
-  const allNotifications = useMemo(() => {
-    const items = [
-      ...filteredAnnouncements.map(a => ({
-        id: a.id,
-        type: 'announcement' as const,
-        title: a.title,
-        content: a.content,
-        time: a.createdAt,
-        sender: a.senderName,
-        senderTitle: a.senderTitle,
-        isMeeting: a.isMeeting,
-        originalData: a,
-      })),
-      ...filteredDirectives.map(d => ({
-        id: d.id,
-        type: 'directive' as const,
-        title: d.title,
-        content: d.content,
-        time: d.createdAt,
-        sender: d.senderName,
-        senderTitle: 'Ban Giám Hiệu',
-        isMeeting: false,
-        originalData: d,
-      })),
-      ...filteredTasks.map(t => {
-        let title = '';
-        let content = '';
-        if (t.status === 'CHO_DUYET') {
-          title = `Nhiệm vụ cần phê duyệt`;
-          content = `"${t.title}" đang chờ bạn phê duyệt hoàn thành.`;
-        } else {
-          title = `Nhiệm vụ sắp đến hạn`;
-          content = `"${t.title}" có hạn chót vào ngày ${t.deadline}.`;
-        }
-        return {
-          id: t.id,
-          type: 'task' as const,
-          title,
-          content,
-          time: t.deadline,
-          sender: 'Hệ thống',
-          senderTitle: 'Hệ thống tự động',
-          isMeeting: false,
-          originalData: t,
-        };
-      }),
-    ];
-
-    // AdminShell only receives compact summary data from the API.
-    // Use it as a fallback so the bell drawer is not empty while the badge shows items.
-    if (items.length === 0 && summaryItems.length > 0) {
-      return summaryItems.map(item => ({
-        id: item.id,
-        type: item.type as 'announcement' | 'directive' | 'task',
-        title: item.type === 'task' ? 'Công việc cần kiểm tra' : item.type === 'directive' ? 'Chỉ đạo cần kiểm tra' : 'Thông báo mới',
-        content: item.title,
-        time: new Date().toISOString(),
-        sender: 'Hệ thống',
-        senderTitle: 'MIS Smart Portal',
-        isMeeting: false,
-        href: item.href,
-        originalData: item,
-      }));
-    }
-
-    // Sắp xếp theo thời gian giảm dần
-    return items.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
-  }, [filteredAnnouncements, filteredDirectives, filteredTasks, summaryItems]);
-
-  const itemsToDisplay = useMemo(() => {
-    if (activeTab === 'all') return allNotifications;
-    if (activeTab === 'announcements') {
-      return allNotifications.filter(n => n.type === 'announcement');
-    }
-    if (activeTab === 'directives') {
-      return allNotifications.filter(n => n.type === 'directive');
-    }
-    if (activeTab === 'tasks') {
-      return allNotifications.filter(n => n.type === 'task');
-    }
-    return [];
-  }, [activeTab, allNotifications]);
-
-  const getIcon = (type: string, isMeeting: boolean) => {
-    if (isMeeting) return <Calendar className="w-4 h-4 text-amber-500" />;
-    if (type === 'announcement') return <Bell className="w-4 h-4 text-indigo-500" />;
-    if (type === 'directive') return <Megaphone className="w-4 h-4 text-rose-500" />;
-    return <Info className="w-4 h-4 text-emerald-500" />;
-  };
-
-  const getBgColor = (type: string, isMeeting: boolean) => {
-    if (isMeeting) return 'bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400';
-    if (type === 'announcement') return 'bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400';
-    if (type === 'directive') return 'bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-450';
-    return 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400';
-  };
-
-  const formatTime = (timeStr: string) => {
+  const load = async () => {
+    setLoading(true);
+    setError('');
     try {
-      const date = new Date(timeStr);
-      return date.toLocaleDateString('vi-VN', {
-        month: 'numeric',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      });
-    } catch {
-      return timeStr;
+      const res = await fetch(`/api/notifications?${query}`, { cache: 'no-store' });
+      const data = await res.json();
+      if (!res.ok || data.status !== 'success') throw new Error(data.error || 'Không tải được thông báo');
+      setItems(data.items || []);
+      setTotal(Number(data.total || 0));
+      setUnread(Number(data.unread || 0));
+    } catch (err: any) {
+      setError(err.message || 'Không tải được thông báo');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleItemClick = (item: any) => {
-    if (item.type === 'task' && onViewTask && item.originalData?.title) {
-      onViewTask(item.originalData as Task);
-    } else if (item.type === 'directive' && onViewDirective && item.originalData?.title) {
-      onViewDirective(item.originalData as BoardDirective);
-    } else if (item.href) {
-      window.location.href = item.href.startsWith('/') ? `/${window.location.pathname.split('/')[1]}${item.href}` : item.href;
+  useEffect(() => {
+    if (isOpen) load();
+  }, [isOpen, query]);
+
+  const notify = (msg: string) => {
+    setToast(msg);
+    window.setTimeout(() => setToast(''), 2500);
+  };
+
+  const mutate = async (url: string, method: string, msg: string) => {
+    try {
+      const res = await fetch(url, { method });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data.status === 'error') throw new Error(data.error || 'Thao tác thất bại');
+      notify(msg);
+      await load();
+      onChanged?.();
+    } catch (err: any) {
+      notify(err.message || 'Thao tác thất bại');
     }
+  };
+
+  const openTarget = (item: NotificationItem) => {
+    if (item.status === 'UNREAD') mutate(`/api/notifications/${encodeURIComponent(item.id)}/read`, 'PATCH', 'Đã đánh dấu đã đọc');
+    if (item.targetUrl) window.location.href = item.targetUrl.startsWith('/') ? `/${window.location.pathname.split('/')[1]}${item.targetUrl}` : item.targetUrl;
     onClose();
   };
 
+  const badgeClass = (s: string) => s === 'ERROR' ? 'bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300' : s === 'WARNING' ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300' : s === 'SUCCESS' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300' : 'bg-sky-100 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300';
+
   return (
-    <Drawer
-      isOpen={isOpen}
-      onClose={onClose}
-      title="Trung tâm Thông báo"
-      description="Xem tất cả cập nhật, chỉ đạo và cuộc họp của trường"
-      width="md"
-    >
-      {/* Tabs */}
-      <div className="flex border-b border-slate-100 dark:border-slate-800 px-4 py-2 bg-slate-50/50 dark:bg-slate-900/50 sticky top-0 z-10 backdrop-blur-xs">
-        <button
-          onClick={() => setActiveTab('all')}
-          className={`flex-1 py-2 text-xs font-bold border-b-2 transition-all cursor-pointer ${
-            activeTab === 'all'
-              ? 'border-indigo-650 text-indigo-600 dark:text-indigo-400 font-black'
-              : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
-          }`}
-        >
-          Tất cả ({allNotifications.length})
-        </button>
-        <button
-          onClick={() => setActiveTab('announcements')}
-          className={`flex-1 py-2 text-xs font-bold border-b-2 transition-all cursor-pointer ${
-            activeTab === 'announcements'
-              ? 'border-indigo-650 text-indigo-600 dark:text-indigo-400 font-black'
-              : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
-          }`}
-        >
-          Thông báo ({allNotifications.filter(n => n.type === 'announcement').length})
-        </button>
-        <button
-          onClick={() => setActiveTab('directives')}
-          className={`flex-1 py-2 text-xs font-bold border-b-2 transition-all cursor-pointer ${
-            activeTab === 'directives'
-              ? 'border-indigo-650 text-indigo-600 dark:text-indigo-400 font-black'
-              : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
-          }`}
-        >
-          Chỉ đạo ({allNotifications.filter(n => n.type === 'directive').length})
-        </button>
-        <button
-          onClick={() => setActiveTab('tasks')}
-          className={`flex-1 py-2 text-xs font-bold border-b-2 transition-all cursor-pointer ${
-            activeTab === 'tasks'
-              ? 'border-indigo-650 text-indigo-600 dark:text-indigo-400 font-black'
-              : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
-          }`}
-        >
-          Nhiệm vụ ({allNotifications.filter(n => n.type === 'task').length})
-        </button>
+    <Drawer isOpen={isOpen} onClose={onClose} title="Trung tâm Thông báo" description={`${unread} thông báo chưa đọc · đồng bộ toàn hệ thống`} width="lg">
+      {toast && <div className="fixed right-5 top-20 z-[9999] rounded-xl bg-slate-950 px-4 py-2 text-xs font-bold text-white shadow-2xl">{toast}</div>}
+      <div className="sticky top-0 z-10 space-y-3 border-b border-slate-200 bg-white/90 p-4 backdrop-blur dark:border-slate-800 dark:bg-slate-950/90">
+        <div className="flex flex-wrap items-center gap-2">
+          {STATUSES.map(s => <button key={s.value} onClick={() => { setStatus(s.value); setPage(1); }} className={`rounded-full px-3 py-1.5 text-xs font-bold transition ${status === s.value ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-900 dark:text-slate-300'}`}>{s.label}</button>)}
+          <Button size="sm" variant="outline" onClick={() => mutate('/api/notifications/read-all', 'PATCH', 'Đã đọc tất cả')} className="ml-auto gap-1"><Check className="h-3.5 w-3.5" />Đọc tất cả</Button>
+          <Button size="sm" variant="ghost" onClick={load} className="gap-1"><RefreshCcw className="h-3.5 w-3.5" />Refresh</Button>
+        </div>
+        <div className="grid gap-2 md:grid-cols-[1fr_150px_150px]">
+          <div className="relative"><Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" /><input value={q} onChange={e => { setQ(e.target.value); setPage(1); }} placeholder="Tìm tiêu đề, nội dung, module..." className="w-full rounded-xl border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm outline-none focus:border-blue-500 dark:border-slate-800 dark:bg-slate-900" /></div>
+          <select value={module} onChange={e => { setModule(e.target.value); setPage(1); }} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-800 dark:bg-slate-900">{MODULES.map(m => <option key={m} value={m}>{m === 'all' ? 'Tất cả module' : m}</option>)}</select>
+          <select value={severity} onChange={e => { setSeverity(e.target.value); setPage(1); }} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-800 dark:bg-slate-900">{SEVERITIES.map(s => <option key={s} value={s}>{s === 'all' ? 'Tất cả mức độ' : s}</option>)}</select>
+        </div>
       </div>
 
-      {/* Notifications list */}
-      <div className="p-4 space-y-3">
-        {itemsToDisplay.length === 0 ? (
-          <div className="py-16 text-center">
-            <Inbox className="w-10 h-10 text-slate-300 dark:text-slate-700 mx-auto mb-3" />
-            <p className="text-xs text-slate-400 dark:text-slate-500 font-semibold">
-              Hộp thông báo trống
-            </p>
-            <p className="text-[10.5px] text-slate-400 dark:text-slate-500 mt-1 max-w-[200px] mx-auto leading-relaxed">
-              Bạn đã xử lý hết mọi thông tin của hôm nay. Hãy tiếp tục duy trì!
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-2.5">
-            {itemsToDisplay.map((item) => (
-              <div
-                key={item.id}
-                onClick={() => handleItemClick(item)}
-                className="p-3 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 rounded-xl hover:border-indigo-300 dark:hover:border-indigo-950 hover:bg-slate-50/50 dark:hover:bg-slate-950/30 transition-all duration-200 cursor-pointer flex gap-3 group relative overflow-hidden"
-              >
-                {/* Left icon wrapper */}
-                <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${getBgColor(item.type, item.isMeeting)}`}>
-                  {getIcon(item.type, item.isMeeting)}
-                </div>
-
-                {/* Main Info */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-[10.5px] font-extrabold text-slate-400 dark:text-slate-500">
-                      {item.sender}
-                    </span>
-                    <span className="text-[9px] font-mono text-slate-400 dark:text-slate-500 whitespace-nowrap">
-                      {formatTime(item.time)}
-                    </span>
+      <div className="p-4">
+        {loading && <div className="flex h-48 items-center justify-center text-slate-500"><Loader2 className="mr-2 h-5 w-5 animate-spin" />Đang tải thông báo...</div>}
+        {error && !loading && <div className="rounded-2xl border border-rose-200 bg-rose-50 p-5 text-sm text-rose-700 dark:border-rose-900 dark:bg-rose-950/30"><ShieldAlert className="mb-2 h-5 w-5" />{error}</div>}
+        {!loading && !error && items.length === 0 && <div className="flex h-56 flex-col items-center justify-center rounded-3xl border border-dashed border-slate-200 text-center dark:border-slate-800"><Inbox className="mb-3 h-10 w-10 text-slate-300" /><div className="font-black">Không có thông báo</div><p className="text-sm text-slate-500">Bộ lọc hiện tại chưa có dữ liệu.</p></div>}
+        <div className="space-y-3">
+          {!loading && !error && items.map(item => (
+            <div key={item.id} className={`group rounded-2xl border p-4 transition hover:-translate-y-0.5 hover:shadow-xl ${item.status === 'UNREAD' ? 'border-blue-200 bg-blue-50/60 shadow-blue-500/5 dark:border-blue-900 dark:bg-blue-950/20' : 'border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950'}`}>
+              <div className="flex gap-3">
+                <div className={`mt-1 h-2.5 w-2.5 rounded-full ${item.status === 'UNREAD' ? 'bg-blue-600' : 'bg-slate-300'}`} />
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-black ${badgeClass(item.severity)}`}>{item.severity}</span>
+                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-black text-slate-600 dark:bg-slate-900 dark:text-slate-300">{item.module}</span>
+                    <span className="text-[11px] text-slate-400">{new Date(item.createdAt).toLocaleString('vi-VN')}</span>
                   </div>
-                  <h4 className="text-xs font-bold text-slate-900 dark:text-white mt-1 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-1">
-                    {item.title}
-                  </h4>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-450 mt-1 leading-normal line-clamp-2">
-                    {item.content}
-                  </p>
-
-                  {/* Add action hint */}
-                  {(item.type === 'task' || item.type === 'directive') && (
-                    <div className="mt-2 flex items-center gap-1 text-[9.5px] font-black text-indigo-650 dark:text-indigo-400 uppercase tracking-wider">
-                      <span>Xem chi tiết</span>
-                      <ChevronRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
-                    </div>
-                  )}
+                  <button onClick={() => openTarget(item)} className="mt-1 text-left text-sm font-black text-slate-900 hover:text-blue-700 dark:text-white">{item.title}</button>
+                  <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-slate-600 dark:text-slate-400">{item.message}</p>
+                  {item.actor?.name && <p className="mt-1 text-[11px] text-slate-400">Actor: {item.actor.name}{item.actor.title ? ` · ${item.actor.title}` : ''}</p>}
+                </div>
+                <div className="flex shrink-0 flex-col gap-1 opacity-80 group-hover:opacity-100">
+                  {item.status === 'UNREAD' && <Button size="icon" variant="ghost" title="Đánh dấu đã đọc" onClick={() => mutate(`/api/notifications/${encodeURIComponent(item.id)}/read`, 'PATCH', 'Đã đánh dấu đã đọc')}><Check className="h-4 w-4" /></Button>}
+                  <Button size="icon" variant="ghost" title="Mở" onClick={() => openTarget(item)}><ExternalLink className="h-4 w-4" /></Button>
+                  <Button size="icon" variant="ghost" title="Lưu trữ" onClick={() => mutate(`/api/notifications/${encodeURIComponent(item.id)}/archive`, 'PATCH', 'Đã lưu trữ thông báo')}><Archive className="h-4 w-4" /></Button>
                 </div>
               </div>
-            ))}
-          </div>
-        )}
+            </div>
+          ))}
+        </div>
+        <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-4 text-xs text-slate-500 dark:border-slate-800">
+          <span>Trang {page}/{totalPages} · {total} thông báo</span>
+          <div className="flex gap-2"><Button size="sm" variant="outline" disabled={page <= 1} onClick={() => setPage(p => Math.max(1, p - 1))}><ChevronLeft className="h-4 w-4" /></Button><Button size="sm" variant="outline" disabled={page >= totalPages} onClick={() => setPage(p => Math.min(totalPages, p + 1))}><ChevronRight className="h-4 w-4" /></Button></div>
+        </div>
       </div>
     </Drawer>
   );

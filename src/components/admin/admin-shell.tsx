@@ -273,6 +273,25 @@ export default function AdminShell({ locale, children }: { locale: string; child
     setSwitcherOpen(false);
   };
 
+  const refreshNotificationSummary = async () => {
+    try {
+      const response = await fetch('/api/notifications/summary', { cache: 'no-store' });
+      if (!response.ok) return;
+      const data = await response.json();
+      if (data?.status !== 'success') return;
+      setNotificationSummary({
+        total: Number(data.total || 0),
+        tasks: Number(data.tasks || 0),
+        directives: Number(data.directives || 0),
+        announcements: Number(data.announcements || 0),
+        urgent: Number(data.urgent || 0),
+        latest: Array.isArray(data.latest) ? data.latest : [],
+      });
+    } catch (error) {
+      console.warn('Notification summary failed', error);
+    }
+  };
+
   useEffect(() => {
     if (!currentUser) return;
 
@@ -820,6 +839,7 @@ export default function AdminShell({ locale, children }: { locale: string; child
         tasks={[]}
         currentUser={currentUser}
         summaryItems={notificationSummary.latest}
+        onChanged={refreshNotificationSummary}
       />
     </div>
   );
