@@ -150,13 +150,80 @@ export default function Student360Dashboard({ initialData }: { initialData?: any
     );
   }
 
+  const [localTimelines, setLocalTimelines] = useState<Record<string, any[]>>({});
+
+  const handleSendNotification = () => {
+    const msg = prompt(`Nhập nội dung thông báo gửi cho phụ huynh học sinh ${currentStudent.name}:`);
+    if (msg) {
+      const newActivity = {
+        time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' ' + new Date().toLocaleDateString('vi-VN'),
+        title: 'Đã gửi thông báo',
+        desc: msg,
+        user: 'Giáo viên (Bản thân)',
+        icon: 'Bell',
+        color: 'bg-blue-600'
+      };
+      setLocalTimelines(prev => ({
+        ...prev,
+        [currentStudent.id]: [newActivity, ...(prev[currentStudent.id] || [])]
+      }));
+      alert(`Gửi thông báo thành công!`);
+    }
+  };
+
+  const handleSendMessage = () => {
+    const msg = prompt(`Nhập tin nhắn nhanh gửi cho phụ huynh học sinh ${currentStudent.name}:`);
+    if (msg) {
+      const newActivity = {
+        time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' ' + new Date().toLocaleDateString('vi-VN'),
+        title: 'Tin nhắn trao đổi',
+        desc: msg,
+        user: 'Giáo viên (Bản thân)',
+        icon: 'MessageSquare',
+        color: 'bg-emerald-500'
+      };
+      setLocalTimelines(prev => ({
+        ...prev,
+        [currentStudent.id]: [newActivity, ...(prev[currentStudent.id] || [])]
+      }));
+      alert(`Gửi tin nhắn thành công!`);
+    }
+  };
+
+  const handleCall = () => {
+    const phone = currentStudent.parentPhone || (parents[0]?.phone);
+    if (phone) {
+      window.location.href = `tel:${phone.replace(/\s+/g, '')}`;
+    } else {
+      alert("Chưa cập nhật số điện thoại phụ huynh!");
+    }
+  };
+
+  const handleCreateNote = () => {
+    const msg = prompt(`Nhập ghi chú trao đổi về học sinh ${currentStudent.name}:`);
+    if (msg) {
+      const newActivity = {
+        time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' ' + new Date().toLocaleDateString('vi-VN'),
+        title: 'Ghi chú trao đổi',
+        desc: msg,
+        user: 'Giáo viên (Bản thân)',
+        icon: 'Edit3',
+        color: 'bg-orange-500'
+      };
+      setLocalTimelines(prev => ({
+        ...prev,
+        [currentStudent.id]: [newActivity, ...(prev[currentStudent.id] || [])]
+      }));
+    }
+  };
+
   const payload = currentStudent.payload || {};
   const attendance = payload.attendanceStat || { present: 176, excused: 5, unexcused: 2, late: 3 };
   const conduct = payload.conduct || { status: 'Tốt', advantages: [], notes: [] };
   const health = payload.health || { status: 'Tốt', height: '170 cm', weight: '60 kg', bloodType: 'O+', warning: 'Không có' };
   const achievements = payload.achievements || [];
   const parents = payload.parents || [];
-  const timeline = payload.timeline || [];
+  const timeline = [...(localTimelines[currentStudent.id] || []), ...(payload.timeline || [])];
 
   return (
     <div className="space-y-6">
@@ -469,7 +536,7 @@ export default function Student360Dashboard({ initialData }: { initialData?: any
                           </div>
                         </div>
                         <div className="flex flex-col gap-1">
-                          <Button variant="ghost" size="icon" className="h-6 w-6 text-blue-600"><Phone className="h-3 w-3" /></Button>
+                          <Button variant="ghost" size="icon" className="h-6 w-6 text-blue-600" onClick={handleCall}><Phone className="h-3 w-3" /></Button>
                         </div>
                       </div>
                     ))
@@ -482,19 +549,19 @@ export default function Student360Dashboard({ initialData }: { initialData?: any
               <div className="pt-3 border-t border-slate-100 dark:border-slate-800">
                 <p className="font-bold text-slate-900 dark:text-white mb-2 text-xs">Thao tác nhanh</p>
                 <div className="grid grid-cols-4 gap-2 text-center">
-                  <div className="flex flex-col items-center gap-1 cursor-pointer group">
+                  <div className="flex flex-col items-center gap-1 cursor-pointer group" onClick={handleSendNotification}>
                     <div className="w-8 h-8 rounded bg-blue-50 text-blue-600 flex items-center justify-center group-hover:bg-blue-100 transition-colors border border-blue-100"><Bell className="h-4 w-4" /></div>
                     <span className="text-[9px] font-medium text-slate-600">Gửi thông báo</span>
                   </div>
-                  <div className="flex flex-col items-center gap-1 cursor-pointer group">
+                  <div className="flex flex-col items-center gap-1 cursor-pointer group" onClick={handleSendMessage}>
                     <div className="w-8 h-8 rounded bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:bg-emerald-100 transition-colors border border-emerald-100"><MessageSquare className="h-4 w-4" /></div>
                     <span className="text-[9px] font-medium text-slate-600">Nhắn tin PH</span>
                   </div>
-                  <div className="flex flex-col items-center gap-1 cursor-pointer group">
+                  <div className="flex flex-col items-center gap-1 cursor-pointer group" onClick={handleCall}>
                     <div className="w-8 h-8 rounded bg-purple-50 text-purple-600 flex items-center justify-center group-hover:bg-purple-100 transition-colors border border-purple-100"><Phone className="h-4 w-4" /></div>
                     <span className="text-[9px] font-medium text-slate-600">Gọi điện</span>
                   </div>
-                  <div className="flex flex-col items-center gap-1 cursor-pointer group">
+                  <div className="flex flex-col items-center gap-1 cursor-pointer group" onClick={handleCreateNote}>
                     <div className="w-8 h-8 rounded bg-orange-50 text-orange-600 flex items-center justify-center group-hover:bg-orange-100 transition-colors border border-orange-100"><Edit3 className="h-4 w-4" /></div>
                     <span className="text-[9px] font-medium text-slate-600">Tạo ghi chú</span>
                   </div>

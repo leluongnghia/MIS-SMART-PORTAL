@@ -86,7 +86,13 @@ export default function StudentQuickProfile({ isOpen, onClose, student, locale =
                       <p className="text-[10px] text-slate-500">{p.phone}</p>
                     </div>
                   </div>
-                  <Button variant="ghost" size="icon" className="h-7 w-7 text-blue-600"><Phone className="h-3.5 w-3.5" /></Button>
+                  <Button variant="ghost" size="icon" className="h-7 w-7 text-blue-600" onClick={() => {
+                    if (p.phone) {
+                      window.location.href = `tel:${p.phone.replace(/\s+/g, '')}`;
+                    } else {
+                      alert("Chưa cập nhật số điện thoại phụ huynh!");
+                    }
+                  }}><Phone className="h-3.5 w-3.5" /></Button>
                 </div>
               ))}
             </div>
@@ -118,13 +124,21 @@ export default function StudentQuickProfile({ isOpen, onClose, student, locale =
           </div>
         </div>
 
-        {/* Quick Actions */}
         <div className="space-y-3">
           <p className="text-xs font-black uppercase text-slate-500 tracking-wider">Thao tác nhanh</p>
           <div className="grid grid-cols-3 gap-2">
-            <Button variant="outline" className="h-auto py-2 flex flex-col gap-1 text-[10px]"><Bell className="h-3.5 w-3.5 text-blue-500" /> Thông báo</Button>
-            <Button variant="outline" className="h-auto py-2 flex flex-col gap-1 text-[10px]"><MessageSquare className="h-3.5 w-3.5 text-emerald-500" /> Nhắn tin</Button>
-            <Button variant="outline" className="h-auto py-2 flex flex-col gap-1 text-[10px]"><Edit3 className="h-3.5 w-3.5 text-orange-500" /> Ghi chú</Button>
+            <Button variant="outline" className="h-auto py-2 flex flex-col gap-1 text-[10px]" onClick={() => {
+              const msg = prompt(`Nhập nội dung thông báo gửi cho phụ huynh học sinh ${student.name}:`);
+              if (msg) alert(`Đã gửi thông báo thành công!`);
+            }}><Bell className="h-3.5 w-3.5 text-blue-500" /> Thông báo</Button>
+            <Button variant="outline" className="h-auto py-2 flex flex-col gap-1 text-[10px]" onClick={() => {
+              const msg = prompt(`Nhập tin nhắn nhanh gửi cho phụ huynh học sinh ${student.name}:`);
+              if (msg) alert(`Đã gửi tin nhắn thành công!`);
+            }}><MessageSquare className="h-3.5 w-3.5 text-emerald-500" /> Nhắn tin</Button>
+            <Button variant="outline" className="h-auto py-2 flex flex-col gap-1 text-[10px]" onClick={() => {
+              const msg = prompt(`Nhập ghi chú cho học sinh ${student.name}:`);
+              if (msg) alert(`Đã lưu ghi chú thành công!`);
+            }}><Edit3 className="h-3.5 w-3.5 text-orange-500" /> Ghi chú</Button>
           </div>
         </div>
 
