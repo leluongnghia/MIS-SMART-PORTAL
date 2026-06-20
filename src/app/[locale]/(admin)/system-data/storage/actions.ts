@@ -8,6 +8,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import { canArchiveFile, canDeleteFile, canEditFile, canPermanentlyDeleteFile, canRestoreBackup, canRestoreFile, canUploadFile, canViewFile } from './storage.permissions';
 import { FILE_CATEGORIES, RELATED_MODULES, STORAGE_SCOPE } from './storage.constants';
+import { archiveFile, listFiles, permanentlyDeleteFile, recordFileDownload, restoreFile, softDeleteFile, updateFileMetadata, uploadFileToStorage } from '@/src/libs/server/file-service';
 
 const UPLOAD_DIR = path.join(process.cwd(), 'storage', 'uploads');
 const SAFE_EXTENSIONS = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'csv', 'png', 'jpg', 'jpeg', 'webp', 'txt', 'zip'];
@@ -202,85 +203,29 @@ export async function checkDuplicateFileName(name: string) {
 }
 
 export async function uploadStorageFile(formData: FormData) {
-  const actor = await getCurrentActor();
-  if (!actor) throw new Error('Unauthorized');
-  const file = formData.get('file') as File;
-  const displayName = String(formData.get('displayName') || '').trim();
-  const category = String(formData.get('category') || '');
-  const relatedModule = String(formData.get('relatedModule') || 'Khác');
-  const visibility = String(formData.get('visibility') || STORAGE_SCOPE.PRIVATE);
-  const conflictMode = String(formData.get('conflictMode') || 'version');
-  if (!file || file.size === 0) throw new Error('Không cho upload file rỗng');
-  if (!displayName) throw new Error('Tên tài liệu không được để trống');
-  if (!category) throw new Error('Phải chọn danh mục');
-  if (!visibility) throw new Error('Phải chọn phạm vi chia sẻ');
-  const ext = path.extname(file.name).replace('.', '').toLowerCase();
-  if (DANGEROUS_EXTENSIONS.includes(ext) || !SAFE_EXTENSIONS.includes(ext)) throw new Error(`Định dạng .${ext} không được phép`);
-  const limit = ext === 'zip' ? MAX_ZIP_BYTES : ['png', 'jpg', 'jpeg', 'webp'].includes(ext) ? MAX_IMAGE_BYTES : MAX_BYTES;
-  if (file.size > limit) throw new Error('Dung lượng file vượt quá giới hạn cho phép');
-  if (!canUploadFile(actor, visibility, actor.departmentId)) throw new Error('Bạn không có quyền tải lên file với phạm vi này');
-  const duplicates = await db.query.dataFiles.findMany({ where: eq(schema.dataFiles.originalName, file.name) });
-  if (duplicates.length && conflictMode === 'cancel') throw new Error('Tên file đã tồn tại');
-  await ensureUploadDir();
-  const id = `file_${Math.random().toString(36).slice(2, 9)}`;
-  const diskFileName = `${id}.${ext}`;
-  await fs.writeFile(path.join(UPLOAD_DIR, diskFileName), Buffer.from(await file.arrayBuffer()));
-  const now = new Date();
-  await db.insert(schema.dataFiles).values({ id, fileName: diskFileName, originalName: file.name, displayName, description: String(formData.get('description') || ''), category, relatedModule, fileUrl: `/api/storage/files/${id}`, fileType: file.type || 'application/octet-stream', extension: ext, fileSize: file.size, visibility, departmentId: actor.departmentId, uploadedBy: actor.id, status: 'ACTIVE', version: duplicates.length && conflictMode === 'version' ? duplicates.length + 1 : 1, createdAt: now, updatedAt: now });
-  await writeAuditLog(actor.id, 'UPLOAD_FILE', 'DATA_FILE', id, { fileName: file.name, displayName });
+  const item = await uploadFileToStorage(formData);
   revalidatePath('/[locale]/(admin)/system-data/storage', 'page');
-  return { success: true, id };
+  return { success: true, id: item.id };
 }
 
 export async function updateStorageFile(id: string, data: any) {
-  const actor = await getCurrentActor();
-  if (!actor) throw new Error('Unauthorized');
-  const file = await db.query.dataFiles.findFirst({ where: eq(schema.dataFiles.id, id) });
-  if (!file) throw new Error('Not found');
-  if (!canEditFile(actor, file)) throw new Error('Bạn không có quyền sửa file này');
-  await db.update(schema.dataFiles).set({ ...data, updatedAt: new Date() }).where(eq(schema.dataFiles.id, id));
-  await writeAuditLog(actor.id, 'UPDATE_FILE', 'DATA_FILE', id, { displayName: data.displayName || file.displayName });
+  await updateFileMetadata(id, data);
   revalidatePath('/[locale]/(admin)/system-data/storage', 'page');
   return { success: true };
 }
 
-export async function archiveStorageFile(id: string) { return setStatus(id, 'ARCHIVED', 'ARCHIVE_FILE'); }
-export async function restoreStorageFile(id: string) { return setStatus(id, 'ACTIVE', 'RESTORE_FILE'); }
-export async function deleteFile(id: string) { return setStatus(id, 'DELETED', 'DELETE_FILE'); }
-
-async function setStatus(id: string, status: string, action: string) {
-  const actor = await getCurrentActor();
-  if (!actor) throw new Error('Unauthorized');
-  const file = await db.query.dataFiles.findFirst({ where: eq(schema.dataFiles.id, id) });
-  if (!file) throw new Error('Not found');
-  if (status === 'ARCHIVED' && !canArchiveFile(actor, file)) throw new Error('Bạn không có quyền lưu trữ file này');
-  if (status === 'DELETED' && !canDeleteFile(actor, file)) throw new Error('Bạn không có quyền xóa file này');
-  if (status === 'ACTIVE' && !canRestoreFile(actor, file)) throw new Error('Bạn không có quyền khôi phục file này');
-  await db.update(schema.dataFiles).set({ status, deletedAt: status === 'DELETED' ? new Date() : null, archivedAt: status === 'ARCHIVED' ? new Date() : null, updatedAt: new Date() }).where(eq(schema.dataFiles.id, id));
-  await writeAuditLog(actor.id, action, 'DATA_FILE', id, { fileName: file.fileName });
-  revalidatePath('/[locale]/(admin)/system-data/storage', 'page');
-  return { success: true };
-}
+export async function archiveStorageFile(id: string) { await archiveFile(id); revalidatePath('/[locale]/(admin)/system-data/storage', 'page'); return { success: true }; }
+export async function restoreStorageFile(id: string) { await restoreFile(id); revalidatePath('/[locale]/(admin)/system-data/storage', 'page'); return { success: true }; }
+export async function deleteFile(id: string) { await softDeleteFile(id); revalidatePath('/[locale]/(admin)/system-data/storage', 'page'); return { success: true }; }
 
 export async function permanentlyDeleteStorageFile(id: string) {
-  const actor = await getCurrentActor();
-  if (!actor || !canPermanentlyDeleteFile(actor)) throw new Error('Chỉ Admin mới được xóa vĩnh viễn');
-  const file = await db.query.dataFiles.findFirst({ where: eq(schema.dataFiles.id, id) });
-  if (!file) throw new Error('Not found');
-  try { await fs.unlink(path.join(UPLOAD_DIR, file.fileName)); } catch {}
-  await db.delete(schema.dataFiles).where(eq(schema.dataFiles.id, id));
-  await writeAuditLog(actor.id, 'PERMANENT_DELETE_FILE', 'DATA_FILE', id, { fileName: file.fileName });
+  await permanentlyDeleteFile(id);
   revalidatePath('/[locale]/(admin)/system-data/storage', 'page');
   return { success: true };
 }
 
 export async function downloadStorageFileAction(id: string) {
-  const actor = await getCurrentActor();
-  if (!actor) throw new Error('Unauthorized');
-  const file = await db.query.dataFiles.findFirst({ where: eq(schema.dataFiles.id, id) });
-  if (!file || !canViewFile(actor, file)) throw new Error('Unauthorized');
-  await db.update(schema.dataFiles).set({ downloadCount: sql`${schema.dataFiles.downloadCount} + 1` }).where(eq(schema.dataFiles.id, id));
-  await writeAuditLog(actor.id, 'DOWNLOAD_FILE', 'DATA_FILE', id, { fileName: file.fileName });
+  const file = await recordFileDownload(id);
   return { success: true, url: `/api/storage/files/${id}`, name: file.originalName };
 }
 
