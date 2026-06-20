@@ -1,4 +1,4 @@
-export type Role = 'ADMIN' | 'CHAIRMAN' | 'BGH' | 'MANAGER' | 'TEACHER' | 'STAFF' | 'ADMISSIONS' | 'HRM' | 'FACILITIES' | 'PARENT' | 'STUDENT';
+export type Role = 'ADMIN' | 'MANAGER' | 'STAFF' | 'PARENT' | 'STUDENT';
 
 export interface RolePermissions {
   createTask: boolean;       // Khởi tạo chỉ đạo / nhiệm vụ mới
@@ -12,7 +12,7 @@ export interface RolePermissions {
   manageWorkspaces: boolean; // Quản trị cơ cấu phòng chức năng / tổ chuyên môn
 }
 
-export type RbacConfig = Partial<Record<Role, RolePermissions>>;
+export type RbacConfig = Record<Role, RolePermissions>;
 
 export interface MIProfile {
   logical: number;       // Trí tuệ Logic - Toán

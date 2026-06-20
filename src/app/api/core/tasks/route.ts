@@ -1,17 +1,15 @@
 import { NextResponse } from 'next/server';
 import { db, schema } from '../../../../libs/server/db';
 import { verifyApiAuth } from '../../../../libs/server/auth';
-import { canAccessData, canCreate, canEdit } from '@/src/libs/security/permissions';
 import { eq } from 'drizzle-orm';
 
 export async function GET(req: Request) {
   // Verify auth (Must be logged in to fetch tasks)
-  const { user, errorResponse } = await verifyApiAuth(req);
+  const { errorResponse } = await verifyApiAuth(req);
   if (errorResponse) return errorResponse;
 
   const rows = await db.select().from(schema.tasks);
-  const tasks = rows.map(row => row.payload).filter((task: any) => user && canAccessData(user, task));
-  return NextResponse.json({ status: 'success', tasks, count: tasks.length });
+  return NextResponse.json({ status: 'success', tasks: rows.map(row => row.payload), count: rows.length });
 }
 
 export async function POST(request: Request) {
@@ -28,14 +26,39 @@ export async function POST(request: Request) {
   const existingTaskRows = await db.select().from(schema.tasks).where(eq(schema.tasks.id, task.id));
   const existingTask = existingTaskRows.length > 0 ? (existingTaskRows[0].payload as any) : null;
 
-  if (!existingTask && !canCreate(user, 'TASKS')) {
-    return NextResponse.json({ status: 'error', error: 'Forbidden. Cannot create tasks.' }, { status: 403 });
-  }
-  if (existingTask && !canEdit(user, 'TASKS', existingTask)) {
-    return NextResponse.json({ status: 'error', error: 'Forbidden. Cannot modify this task.' }, { status: 403 });
-  }
-  if (task && !canAccessData(user, { ...task, assignedId: task.assignedId || user?.id })) {
-    return NextResponse.json({ status: 'error', error: 'Forbidden. Task is outside your data scope.' }, { status: 403 });
+  // Enforce role-based security policies for non-ADMIN
+  if (user && user.role !== 'ADMIN' && user.workspaceId !== 'BGH') {
+    // 1. MANAGER restriction: Cannot modify tasks outside their own department
+    if (user.role === 'MANAGER') {
+      if (task.workspaceId && task.workspaceId !== user.workspaceId) {
+        return NextResponse.json(
+          { status: 'error', error: 'Forbidden. Cannot create/modify tasks outside your workspace.' },
+          { status: 403 }
+        );
+      }
+      if (existingTask && existingTask.workspaceId !== user.workspaceId) {
+        return NextResponse.json(
+          { status: 'error', error: 'Forbidden. Cannot modify tasks outside your workspace.' },
+          { status: 403 }
+        );
+      }
+    }
+
+    // 2. STAFF restriction: Cannot create new tasks, and can only edit tasks assigned to themselves
+    if (user.role === 'STAFF') {
+      if (!existingTask) {
+        return NextResponse.json(
+          { status: 'error', error: 'Forbidden. Staff members cannot create new tasks.' },
+          { status: 403 }
+        );
+      }
+      if (existingTask.assignedId !== user.id) {
+        return NextResponse.json(
+          { status: 'error', error: 'Forbidden. Cannot modify tasks assigned to other users.' },
+          { status: 403 }
+        );
+      }
+    }
   }
 
   await db.insert(schema.tasks).values({
