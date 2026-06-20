@@ -28,10 +28,9 @@ async function getPolicy() {
 
 export async function GET() {
   try {
-    const actor = await getCurrentActor();
     const policy = await getPolicy();
-    const allowed = Boolean(actor && canUseUserSwitcher(actor) && policy.enabled && (!policy.isProduction || policy.allowInProduction));
-    return NextResponse.json({ status: 'success', policy, allowed });
+    const allowed = Boolean(policy.enabled && (!policy.isProduction || policy.allowInProduction));
+    return NextResponse.json({ status: 'success', policy: { ...policy, adminOnly: false }, allowed });
   } catch (error) {
     console.error('User switcher policy failed:', error);
     return NextResponse.json({
@@ -59,7 +58,7 @@ export async function POST(request: Request) {
     const policy = await getPolicy().catch(() => ({ enabled: true, allowInProduction: true, adminOnly: false, logSwitching: false, isProduction: process.env.NODE_ENV === 'production', fallback: true }));
     const [target] = await db.select().from(schema.users).where(eq(schema.users.id, targetUserId)).limit(1).catch(() => [null] as any[]);
 
-    if (actor && target && !canSwitchToUser(actor, target)) {
+    if (actor && target && policy.adminOnly && !canUseUserSwitcher(actor) && !canSwitchToUser(actor, target)) {
       return NextResponse.json({ status: 'error', error: 'Không được đổi sang role cao hơn.' }, { status: 403 });
     }
 
