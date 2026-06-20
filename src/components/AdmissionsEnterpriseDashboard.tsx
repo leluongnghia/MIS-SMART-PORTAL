@@ -157,7 +157,7 @@ export default function AdmissionsEnterpriseDashboard({
   return (
     <div className="min-h-screen bg-slate-50/50">
       {/* Sticky admissions command bar */}
-      <div className="sticky top-0 z-40 border-b border-blue-100/80 bg-white/90 shadow-[0_14px_45px_rgba(15,23,42,0.08)] backdrop-blur-xl">
+      <div className="sticky top-0 z-30 border-b border-blue-100/80 bg-white/90 shadow-[0_14px_45px_rgba(15,23,42,0.08)] backdrop-blur-xl">
         <div className="flex flex-col gap-3 px-4 py-3 xl:flex-row xl:items-center xl:justify-between">
           <div className="flex min-w-0 items-center gap-3">
             <div className="hidden h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 via-cyan-500 to-emerald-400 text-white shadow-lg shadow-blue-500/20 sm:flex">

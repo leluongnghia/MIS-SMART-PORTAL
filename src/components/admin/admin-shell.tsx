@@ -672,7 +672,7 @@ export default function AdminShell({ locale, children }: { locale: string; child
       )}
 
       <div className={cn('transition-all', collapsed ? 'lg:pl-20' : 'lg:pl-72')}>
-        <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-slate-200 bg-white px-4 dark:border-slate-800 dark:bg-slate-950">
+        <header className="sticky top-0 z-[100] flex h-16 items-center justify-between border-b border-slate-200 bg-white px-4 dark:border-slate-800 dark:bg-slate-950">
           <div className="flex min-w-0 items-center gap-3">
             <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setMobileOpen(true)}>
               <Menu className="h-5 w-5" />
@@ -737,7 +737,7 @@ export default function AdminShell({ locale, children }: { locale: string; child
               </Button>
               {switcherPolicy && <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-amber-500 ring-2 ring-white" title="Demo mode đang được kiểm soát" />}
               {switcherOpen && (
-                <div className="absolute right-0 z-[80] mt-2 w-[min(92vw,560px)] overflow-hidden rounded-[1.35rem] border border-slate-200 bg-white shadow-2xl shadow-slate-900/15 dark:border-slate-800 dark:bg-slate-950">
+                <div className="absolute right-0 z-[120] mt-2 w-[min(92vw,560px)] overflow-hidden rounded-[1.35rem] border border-slate-200 bg-white shadow-2xl shadow-slate-900/15 dark:border-slate-800 dark:bg-slate-950">
                   <div className="border-b border-slate-100 bg-gradient-to-r from-blue-50 via-white to-slate-50 px-4 py-3 dark:border-slate-800 dark:from-blue-950/40 dark:via-slate-950 dark:to-slate-900">
                     <div className="flex items-center justify-between gap-3">
                       <div>
