@@ -792,6 +792,8 @@ export default function Student360Dashboard({ initialData }: { initialData?: any
                     </div>
                   ))}
                 </div>
+              </CardContent>
+            </Card>
           )}
 
           {currentTab === 'documents' && (
