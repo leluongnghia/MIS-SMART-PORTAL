@@ -35,17 +35,17 @@ export async function GET() {
   } catch (error) {
     console.error('User switcher policy failed:', error);
     return NextResponse.json({
-      status: 'success',
+      status: 'error',
       policy: {
-        enabled: true,
-        allowInProduction: true,
-        adminOnly: false,
-        logSwitching: false,
+        enabled: false,
+        allowInProduction: false,
+        adminOnly: true,
+        logSwitching: true,
         isProduction: process.env.NODE_ENV === 'production',
         fallback: true,
       },
-      allowed: true,
-    });
+      allowed: false,
+    }, { status: 500 });
   }
 }
 
@@ -59,7 +59,17 @@ export async function POST(request: Request) {
     const policy = await getPolicy().catch(() => ({ enabled: true, allowInProduction: true, adminOnly: false, logSwitching: false, isProduction: process.env.NODE_ENV === 'production', fallback: true }));
     const [target] = await db.select().from(schema.users).where(eq(schema.users.id, targetUserId)).limit(1).catch(() => [null] as any[]);
 
-    if (actor && target && !canSwitchToUser(actor, target)) {
+    if (!actor) {
+      return NextResponse.json({ status: 'error', error: 'Unauthorized' }, { status: 401 });
+    }
+    if (!policy.enabled || (policy.isProduction && !policy.allowInProduction) || !canUseUserSwitcher(actor)) {
+      await writeAuditLog(actor.id, 'SWITCH_DEMO_USER_DENIED', 'AUTH_DEMO', targetUserId, { success: false, module: 'auth' });
+      return NextResponse.json({ status: 'error', error: 'Không có quyền đổi user.' }, { status: 403 });
+    }
+    if (!target) {
+      return NextResponse.json({ status: 'error', error: 'Target user not found' }, { status: 404 });
+    }
+    if (!canSwitchToUser(actor, target)) {
       return NextResponse.json({ status: 'error', error: 'Không được đổi sang role cao hơn.' }, { status: 403 });
     }
 
@@ -87,6 +97,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ status: 'success', targetUserId, persisted: Boolean(target) });
   } catch (error) {
     console.error('User switcher POST failed:', error);
-    return NextResponse.json({ status: 'success', targetUserId, persisted: false, fallback: true });
+    return NextResponse.json({ status: 'error', error: 'User switcher failed' }, { status: 500 });
   }
 }

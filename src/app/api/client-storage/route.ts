@@ -1,9 +1,19 @@
 import { NextResponse } from 'next/server';
 import { eq } from 'drizzle-orm';
 import { db, schema } from '@/src/libs/server/db';
+import { getCurrentActor } from '@/src/libs/server/auth-helper';
+import { canConfigure } from '@/src/libs/security/permissions';
 
 const keyFromRequest = (request: Request) => new URL(request.url).searchParams.get('key') || '';
 const rowKey = (key: string) => `client:${key}`;
+const SENSITIVE_CLIENT_KEYS = /logged_in_user_id|role|permission|backup|restore|settings|admin/i;
+
+async function denySensitiveClientWrite(key: string) {
+  if (key === 'mis_edutask_logged_in_user_id') return true;
+  if (!SENSITIVE_CLIENT_KEYS.test(key)) return false;
+  const actor = await getCurrentActor();
+  return !actor || !canConfigure(actor, 'SETTINGS');
+}
 
 export async function GET(request: Request) {
   const key = keyFromRequest(request);
@@ -23,6 +33,7 @@ export async function POST(request: Request) {
   const key = String(body?.key || '');
   const value = String(body?.value ?? '');
   if (!key) return NextResponse.json({ status: 'error', error: 'key is required' }, { status: 400 });
+  if (await denySensitiveClientWrite(key)) return NextResponse.json({ status: 'error', error: 'Forbidden client storage key' }, { status: 403 });
 
   try {
     await db.insert(schema.systemSettings).values({
@@ -49,6 +60,7 @@ export async function POST(request: Request) {
 export async function DELETE(request: Request) {
   const key = keyFromRequest(request);
   if (!key) return NextResponse.json({ status: 'success' });
+  if (await denySensitiveClientWrite(key)) return NextResponse.json({ status: 'error', error: 'Forbidden client storage key' }, { status: 403 });
 
   try {
     await db.delete(schema.systemSettings).where(eq(schema.systemSettings.key, rowKey(key)));

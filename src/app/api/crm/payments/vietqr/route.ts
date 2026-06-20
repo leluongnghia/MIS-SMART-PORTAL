@@ -4,6 +4,7 @@ import { db, schema } from '../../../../../libs/server/db';
 import { buildVietQrUrl, crmPaymentTypeToDb, dbLeadToCrmLead, normalizeCrmLead } from '../../../../../libs/server/crm';
 import { getBankConfig } from '../../../../../libs/server/crm';
 import { getCurrentActor, writeAuditLog } from '../../../../../libs/server/auth-helper';
+import { hasPermission } from '@/src/libs/security/permissions';
 
 function normalizeTransferPart(value: unknown) {
   return String(value || '')
@@ -26,7 +27,7 @@ export async function POST(request: Request) {
   if (!actor) {
     return NextResponse.json({ status: 'error', error: 'Unauthorized' }, { status: 401 });
   }
-  if (actor.role !== 'ADMIN' && actor.workspaceId !== 'BGH' && actor.workspaceId !== 'TUYEN_SINH_PR') {
+  if (!hasPermission(actor, 'ADMISSIONS', 'CREATE')) {
     await writeAuditLog(actor.id, 'CREATE_VIETQR_DENIED', 'PAYMENT', 'unknown', { success: false, module: 'crm' });
     return NextResponse.json({ status: 'error', error: 'Không có quyền tạo QR thanh toán.' }, { status: 403 });
   }

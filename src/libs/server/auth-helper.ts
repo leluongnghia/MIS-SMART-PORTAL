@@ -1,5 +1,21 @@
 import { db, schema } from './db';
 import { eq } from 'drizzle-orm';
+import {
+  canAccessData as canAccessScopedData,
+  canApprove as canApproveScoped,
+  canConfigure as canConfigureScoped,
+  canCreate as canCreateScoped,
+  canDelete as canDeleteScoped,
+  canEdit as canEditScoped,
+  canExport as canExportScoped,
+  canManageBackup,
+  canManagePermissions,
+  canManageUsers,
+  canViewModule as canViewPermissionModule,
+  getUserDataScope,
+  hasPermission,
+  normalizeSystemRole,
+} from '@/src/libs/security/permissions';
 
 export interface Actor {
   id: string;
@@ -133,13 +149,12 @@ export async function writeAuditLog(
   }
 }
 
-// User authorization helpers
 export function isAdminTruong(actor: Actor) {
-  return actor.role === 'ADMIN';
+  return normalizeSystemRole(actor) === 'ADMIN';
 }
 
 export function isTruongPhong(actor: Actor) {
-  return actor.role === 'MANAGER';
+  return normalizeSystemRole(actor) === 'MANAGER';
 }
 
 export function canViewUser(actor: Actor, targetUser: any) {
@@ -390,17 +405,18 @@ export function canViewAuditLogs(actor: Actor) {
 }
 
 export function canUseUserSwitcher(actor: Actor) {
-  return isAdminTruong(actor);
+  return canManagePermissions(actor);
 }
 
 export function getRoleRank(role: string) {
-  const ranks: Record<string, number> = { STAFF: 1, MANAGER: 2, ADMIN: 3 };
+  const ranks: Record<string, number> = { PARENT: 0, STUDENT: 0, STAFF: 1, TEACHER: 1, FACILITIES: 2, HRM: 2, ADMISSIONS: 2, MANAGER: 3, BGH: 4, CHAIRMAN: 4, ADMIN: 5 };
   return ranks[role] || 0;
 }
 
-export function canSwitchToUser(actor: Actor, targetUser: { role: string }) {
-  if (isAdminTruong(actor)) return true;
-  return getRoleRank(actor.role) >= getRoleRank(targetUser.role);
+export function canSwitchToUser(actor: Actor, targetUser: { role: string; id?: string | null }) {
+  if (!canUseUserSwitcher(actor)) return false;
+  if (targetUser.id && actor.id === targetUser.id) return true;
+  return getRoleRank(String(actor.role).toUpperCase()) >= getRoleRank(String(targetUser.role).toUpperCase());
 }
 
 // ==========================================
@@ -479,61 +495,37 @@ export function canManageFacilitySla(actor: Actor) {
   return isAdminTruong(actor);
 }
 
-// ==========================================
-// CENTRALIZED GENERIC PERMISSION HELPERS
-// ==========================================
-
 export function canViewModule(actor: Actor, module: string): boolean {
-  if (isAdminTruong(actor)) return true;
-  if (module === 'settings' || module === 'audit' || module === 'rbac') {
-    return false;
-  }
-  return true;
+  return canViewPermissionModule(actor, module);
 }
 
 export function canCreate(actor: Actor, module: string): boolean {
-  if (isAdminTruong(actor)) return true;
-  if (isTruongPhong(actor)) return true;
-  if (module === 'tasks' || module === 'announcements' || module === 'directives') return false;
-  return true;
+  return canCreateScoped(actor, module);
 }
 
 export function canEdit(actor: Actor, module: string, entity: any): boolean {
-  if (isAdminTruong(actor)) return true;
-  if (isTruongPhong(actor)) {
-    if (entity && (entity.workspaceId === actor.workspaceId || entity.departmentId === actor.departmentId)) return true;
-  }
-  if (entity && (entity.assignedId === actor.id || entity.uploadedBy === actor.id || entity.id === actor.id)) return true;
-  return false;
+  return canEditScoped(actor, module, entity);
 }
 
 export function canDelete(actor: Actor, module: string, entity: any): boolean {
-  if (isAdminTruong(actor)) return true;
-  if (isTruongPhong(actor) && entity && (entity.workspaceId === actor.workspaceId || entity.departmentId === actor.departmentId)) return true;
-  if (entity && (entity.assignedId === actor.id || entity.uploadedBy === actor.id)) return true;
-  return false;
+  return canDeleteScoped(actor, module, entity);
 }
 
 export function canApprove(actor: Actor, module: string, entity: any): boolean {
-  if (isAdminTruong(actor)) return true;
-  if (isTruongPhong(actor) && module === 'approvals' && entity && (entity.workspaceId === actor.workspaceId || entity.departmentId === actor.departmentId)) return true;
-  return false;
+  return canApproveScoped(actor, module, entity);
 }
 
 export function canExport(actor: Actor, module: string): boolean {
-  return isAdminTruong(actor) || isTruongPhong(actor);
+  return canExportScoped(actor, module);
 }
 
 export function canConfigure(actor: Actor, module: string): boolean {
-  return isAdminTruong(actor);
+  return canConfigureScoped(actor, module);
 }
 
 export function canAccessData(actor: Actor, entity: any): boolean {
-  if (isAdminTruong(actor)) return true;
-  if (!entity) return false;
-  if (isTruongPhong(actor)) {
-    return entity.workspaceId === actor.workspaceId || entity.departmentId === actor.departmentId || entity.assignedId === actor.id;
-  }
-  return entity.assignedId === actor.id || entity.uploadedBy === actor.id || entity.id === actor.id;
+  return canAccessScopedData(actor, entity);
 }
+
+export { canManageBackup, canManagePermissions, canManageUsers, getUserDataScope, hasPermission, normalizeSystemRole };
 

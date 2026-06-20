@@ -45,12 +45,25 @@ import { cn } from '@/src/lib/utils';
 import LoginPortal from '@/src/components/LoginPortal';
 import { MOCK_USERS, WORKSPACES } from '@/src/mockData';
 import type { UserProfile, Announcement, BoardDirective, Task } from '@/src/types';
+import { canManageUsers, canViewModule } from '@/src/libs/security/permissions';
 import NotificationDrawer from '../NotificationDrawer';
 
 type MenuItemGroup = {
   title: string;
-  items: { label: string; href: string; icon: any; badgeKey?: 'tasks' | 'directives' | 'announcements' }[];
+  items: { label: string; href: string; icon: any; badgeKey?: 'tasks' | 'directives' | 'announcements'; module?: string }[];
 };
+
+function moduleForHref(href: string): string {
+  const base = href.split('?')[0];
+  const map: Record<string, string> = {
+    dashboard: 'DASHBOARD', reports: 'REPORTS', okr: 'REPORTS', plans: 'TASKS', kpi: 'REPORTS', forecast: 'REPORTS',
+    tasks: 'TASKS', approvals: 'APPROVALS', events: 'CALENDAR', directives: 'DIRECTIVES', announcements: 'ANNOUNCEMENTS', chat: 'CHAT',
+    hrm: 'HRM', facilities: 'FACILITIES', risk: 'RISKS', admissions: 'ADMISSIONS', students: 'STUDENTS', schedule: 'TIMETABLE',
+    'system-data/categories': 'CATEGORIES', 'system-data/reports': 'REPORTS', 'system-data/storage': 'STORAGE',
+    users: 'USERS', settings: 'SETTINGS', 'system-data/settings': 'SETTINGS',
+  };
+  return map[base] || 'DASHBOARD';
+}
 
 type NotificationSummary = {
   total: number;
@@ -497,7 +510,7 @@ export default function AdminShell({ locale, children }: { locale: string; child
         const extraItems: { label: string; href: string; icon: any; badgeKey?: 'tasks' | 'directives' | 'announcements' }[] = [
           { label: 'Chat nội bộ', href: 'chat', icon: MessageSquare }
         ];
-        if (group.title !== 'VẬN HÀNH NỘI BỘ' && (currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER')) {
+        if (group.title !== 'VẬN HÀNH NỘI BỘ' && currentUser && canManageUsers(currentUser)) {
           extraItems.push({ label: 'Quản lý người dùng & phân quyền', href: 'users', icon: Users });
         }
         
@@ -516,11 +529,13 @@ export default function AdminShell({ locale, children }: { locale: string; child
     const finalGroups = mapped.filter(g => g.title !== 'DỮ LIỆU HỆ THỐNG' && g.title !== 'DỮ LIỆU & HỆ THỐNG' && g.title !== 'QUẢN TRỊ NỀN TẢNG');
 
     const systemDataItems: any[] = [];
-    if (currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER') {
+    if (currentUser && canViewModule(currentUser, 'CATEGORIES')) {
       systemDataItems.push({ label: 'Danh mục hệ thống', href: 'system-data/categories', icon: List });
+    }
+    if (currentUser && canViewModule(currentUser, 'REPORTS')) {
       systemDataItems.push({ label: 'Trung tâm báo cáo', href: 'system-data/reports', icon: FileBarChart });
-      systemDataItems.push({ label: 'Lưu trữ & Dữ liệu', href: 'system-data/storage', icon: Database });
-    } else if (currentUser?.role === 'STAFF') {
+    }
+    if (currentUser && canViewModule(currentUser, 'STORAGE')) {
       systemDataItems.push({ label: 'Lưu trữ & Dữ liệu', href: 'system-data/storage', icon: Database });
     }
 
@@ -532,11 +547,11 @@ export default function AdminShell({ locale, children }: { locale: string; child
     }
 
     const platformItems: any[] = [];
-    if (currentUser?.role === 'ADMIN') {
+    if (currentUser && canManageUsers(currentUser)) {
       platformItems.push({ label: 'Quản lý người dùng & phân quyền', href: 'users', icon: Users });
+    }
+    if (currentUser && canViewModule(currentUser, 'SETTINGS')) {
       platformItems.push({ label: 'Cấu hình hệ thống', href: 'system-data/settings', icon: Settings });
-    } else if (currentUser?.role === 'MANAGER') {
-      platformItems.push({ label: 'Quản lý người dùng & phân quyền', href: 'users', icon: Users });
     }
 
     if (platformItems.length > 0) {
@@ -546,7 +561,12 @@ export default function AdminShell({ locale, children }: { locale: string; child
       });
     }
 
-    return finalGroups;
+    return finalGroups
+      .map(group => ({
+        ...group,
+        items: group.items.filter(item => currentUser ? canViewModule(currentUser, (item as any).module || moduleForHref(item.href)) : false),
+      }))
+      .filter(group => group.items.length > 0);
   }, [rawMenuGroups, currentUser]);
 
   if (!isAuthReady) {
