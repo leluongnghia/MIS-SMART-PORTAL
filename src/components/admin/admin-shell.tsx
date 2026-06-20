@@ -5,7 +5,7 @@ import { serverStorage } from '../../libs/client/server-storage';
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   BarChart3,
   ChevronDown,
@@ -166,6 +166,8 @@ export default function AdminShell({ locale, children }: { locale: string; child
   const [toastNotice, setToastNotice] = useState<string>('');
   const [switcherAllowed, setSwitcherAllowed] = useState(false);
   const [switcherPolicy, setSwitcherPolicy] = useState<any>(null);
+  const switcherRef = useRef<HTMLDivElement | null>(null);
+  const userMenuRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const updateTab = () => {
@@ -208,6 +210,21 @@ export default function AdminShell({ locale, children }: { locale: string; child
       })
       .catch(() => setSwitcherAllowed(false));
   }, [currentUser?.id]);
+
+  useEffect(() => {
+    const handlePointerDown = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (switcherRef.current && !switcherRef.current.contains(target)) {
+        setSwitcherOpen(false);
+      }
+      if (userMenuRef.current && !userMenuRef.current.contains(target)) {
+        setUserOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handlePointerDown);
+    return () => document.removeEventListener('mousedown', handlePointerDown);
+  }, []);
 
   const handleSwitchUser = async (user: UserProfile) => {
     try {
@@ -704,7 +721,7 @@ export default function AdminShell({ locale, children }: { locale: string; child
             </Button>
 
             {switcherAllowed && (
-            <div className="relative">
+            <div className="relative" ref={switcherRef}>
               <Button
                 variant="ghost"
                 className="h-9 gap-2 rounded-full border border-slate-200 bg-white px-2.5 text-slate-600 shadow-sm hover:bg-blue-50 hover:text-blue-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-blue-950/30"
@@ -720,7 +737,7 @@ export default function AdminShell({ locale, children }: { locale: string; child
               </Button>
               {switcherPolicy && <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-amber-500 ring-2 ring-white" title="Demo mode đang được kiểm soát" />}
               {switcherOpen && (
-                <div className="absolute right-0 mt-2 w-[min(92vw,560px)] overflow-hidden rounded-[1.35rem] border border-slate-200 bg-white shadow-2xl shadow-slate-900/15 dark:border-slate-800 dark:bg-slate-950">
+                <div className="absolute right-0 z-[80] mt-2 w-[min(92vw,560px)] overflow-hidden rounded-[1.35rem] border border-slate-200 bg-white shadow-2xl shadow-slate-900/15 dark:border-slate-800 dark:bg-slate-950">
                   <div className="border-b border-slate-100 bg-gradient-to-r from-blue-50 via-white to-slate-50 px-4 py-3 dark:border-slate-800 dark:from-blue-950/40 dark:via-slate-950 dark:to-slate-900">
                     <div className="flex items-center justify-between gap-3">
                       <div>
@@ -761,7 +778,7 @@ export default function AdminShell({ locale, children }: { locale: string; child
             </div>
             )}
             
-            <div className="relative">
+            <div className="relative" ref={userMenuRef}>
               <Button variant="ghost" className="h-9 px-2 gap-2 flex items-center" onClick={() => {
                 setUserOpen(value => !value);
                 setSwitcherOpen(false);
@@ -774,7 +791,7 @@ export default function AdminShell({ locale, children }: { locale: string; child
                 <ChevronDown className="h-4 w-4 text-slate-500" />
               </Button>
               {userOpen && (
-                <div className="absolute right-0 mt-2 w-56 rounded-xl border border-slate-200 bg-white p-2 shadow-lg dark:border-slate-800 dark:bg-slate-950">
+                <div className="absolute right-0 z-[80] mt-2 w-56 rounded-xl border border-slate-200 bg-white p-2 shadow-lg dark:border-slate-800 dark:bg-slate-950">
                   <div className="px-3 py-2 text-sm border-b border-slate-100 dark:border-slate-800 mb-1">
                     <div className="font-bold text-slate-900 dark:text-white">{currentUser.name}</div>
                     <div className="text-xs text-slate-500">{getSimulatedEmail(currentUser)}</div>
