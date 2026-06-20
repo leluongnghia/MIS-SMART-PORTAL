@@ -25,21 +25,21 @@ interface KpiCard {
 
 // ─── Mock Data ───────────────────────────────────────────────────────────────
 const kpis: KpiCard[] = [
-  { label: 'Lead mới hôm nay', value: '68', delta: '28%', deltaUp: true, compareLabel: 'so với 05/05 - 11/05', icon: Users, iconBg: 'bg-blue-50', iconColor: 'text-blue-600' },
-  { label: 'Đang tư vấn', value: '232', delta: '16%', deltaUp: true, compareLabel: 'so với 05/05 - 11/05', icon: MessageSquare, iconBg: 'bg-purple-50', iconColor: 'text-purple-600' },
-  { label: 'Hồ sơ đã nộp', value: '87', delta: '18%', deltaUp: true, compareLabel: 'so với 05/05 - 11/05', icon: FileText, iconBg: 'bg-orange-50', iconColor: 'text-orange-600' },
-  { label: 'Đã giữ chỗ', value: '41', delta: '21%', deltaUp: true, compareLabel: 'so với 05/05 - 11/05', icon: CalendarCheck, iconBg: 'bg-pink-50', iconColor: 'text-pink-600' },
-  { label: 'Đã nhập học', value: '26', delta: '24%', deltaUp: true, compareLabel: 'so với 05/05 - 11/05', icon: GraduationCap, iconBg: 'bg-green-50', iconColor: 'text-green-600' },
-  { label: 'Tỷ lệ chuyển đổi', value: '11.2%', delta: '2.3%', deltaUp: true, compareLabel: 'so với 05/05 - 11/05', icon: TrendingUp, iconBg: 'bg-indigo-50', iconColor: 'text-indigo-600' },
+  { label: 'Học sinh đang tuyển', value: '150', delta: 'Hiện tại', deltaUp: true, compareLabel: 'năm học tới', icon: Users, iconBg: 'bg-blue-50', iconColor: 'text-blue-600' },
+  { label: 'Đang tư vấn', value: '30', delta: '20%', deltaUp: true, compareLabel: 'trong pipeline 150', icon: MessageSquare, iconBg: 'bg-purple-50', iconColor: 'text-purple-600' },
+  { label: 'Đã hẹn kiểm tra', value: '25', delta: '16.7%', deltaUp: true, compareLabel: 'trong pipeline 150', icon: FileText, iconBg: 'bg-orange-50', iconColor: 'text-orange-600' },
+  { label: 'Đã dự kiểm tra', value: '20', delta: '13.3%', deltaUp: true, compareLabel: 'trong pipeline 150', icon: CalendarCheck, iconBg: 'bg-pink-50', iconColor: 'text-pink-600' },
+  { label: 'Đã giữ chỗ', value: '20', delta: '13.3%', deltaUp: true, compareLabel: 'trong pipeline 150', icon: GraduationCap, iconBg: 'bg-green-50', iconColor: 'text-green-600' },
+  { label: 'Đã nộp hồ sơ', value: '10', delta: '6.7%', deltaUp: true, compareLabel: 'trong pipeline 150', icon: TrendingUp, iconBg: 'bg-indigo-50', iconColor: 'text-indigo-600' },
 ];
 
 const funnelData = [
-  { label: 'NEW_LEAD', value: 1284, percent: '100%', color: '#3B82F6', width: '100%' },
-  { label: 'CONSULTING', value: 232, percent: '18.1%', color: '#8B5CF6', width: '70%' },
-  { label: 'TEST_SCHEDULED', value: 123, percent: '9.6%', color: '#06B6D4', width: '55%' },
-  { label: 'DOCUMENTS_PENDING', value: 87, percent: '6.8%', color: '#F59E0B', width: '42%' },
-  { label: 'SEAT_RESERVED', value: 41, percent: '3.2%', color: '#F97316', width: '30%' },
-  { label: 'ENROLLED', value: 26, percent: '2.0%', color: '#10B981', width: '20%' },
+  { label: 'TIẾP NHẬN', value: 45, percent: '30.0%', color: '#3B82F6', width: '100%' },
+  { label: 'ĐANG TƯ VẤN', value: 30, percent: '20.0%', color: '#8B5CF6', width: '67%' },
+  { label: 'ĐÃ HẸN KIỂM TRA', value: 25, percent: '16.7%', color: '#06B6D4', width: '56%' },
+  { label: 'ĐÃ DỰ KIỂM TRA', value: 20, percent: '13.3%', color: '#F59E0B', width: '44%' },
+  { label: 'ĐÃ GIỮ CHỖ', value: 20, percent: '13.3%', color: '#F97316', width: '44%' },
+  { label: 'ĐÃ NỘP HỒ SƠ', value: 10, percent: '6.7%', color: '#10B981', width: '22%' },
 ];
 
 const revenueData = [
@@ -139,13 +139,13 @@ export default function AdmissionsDashboard({ onNavigate }: { onNavigate?: (tab:
           <h1 className="text-2xl font-black tracking-tight text-slate-900">Tổng quan tuyển sinh</h1>
           <p className="mt-0.5 flex items-center gap-1.5 text-xs font-medium text-slate-500">
             <RefreshCw className="h-3 w-3" />
-            Cập nhật đến 10:30 18/05/2025
+            Pipeline hiện tại: 150 học sinh đang tuyển cho năm học tới
           </p>
         </div>
         <div className="flex items-center gap-2">
           <div className="flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 shadow-xs">
             <CalendarCheck className="h-3.5 w-3.5 text-slate-400" />
-            12/05/2025 - 18/05/2025
+            Năm học tới 2026-2027
           </div>
           <button type="button" className="flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-50">
             <Filter className="h-3.5 w-3.5" /> Bộ lọc
