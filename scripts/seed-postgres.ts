@@ -719,16 +719,32 @@ async function seed() {
   const mockGrades: any[] = [];
   const mockTuitions: any[] = [];
 
+  const classCounts: Record<string, number> = {
+    '1A1': 31, '1A2': 31, '1A3': 31, '1A4': 29,
+    '2A1': 31, '2A2': 31, '2A3': 30, '2A4': 30,
+    '3A1': 31, '3A2': 31, '3A3': 30, '3A4': 30,
+    '4A1': 31, '4A2': 31, '4A3': 30, '4A4': 30,
+    '5A1': 31, '5A2': 31, '5A3': 30, '5A4': 30,
+    '6A1': 31, '6A2': 30,
+    '7A1': 31, '7A2': 30,
+    '8A1': 31, '8A2': 30,
+    '9A1': 31, '9A2': 30,
+    '10A1': 32, '10A2': 32,
+    '11A1': 32, '11A2': 32,
+    '12A1': 32, '12A2': 31,
+  };
+
   let globalIdx = 0;
   for (const c of seedClasses) {
-    for (let sIdx = 1; sIdx <= 2; sIdx++) {
+    const limit = classCounts[c.name] || 30;
+    for (let sIdx = 1; sIdx <= limit; sIdx++) {
       globalIdx++;
       const fn = FIRST_NAMES[globalIdx % FIRST_NAMES.length];
       const mn = MIDDLE_NAMES[(globalIdx * 3) % MIDDLE_NAMES.length];
       const ln = LAST_NAMES[(globalIdx * 7) % LAST_NAMES.length];
       const name = `${fn} ${mn} ${ln}`;
-      const code = `HS2026${String(100 + globalIdx).padStart(4, '0')}`;
-      const studentId = `stud_${String(globalIdx).padStart(3, '0')}`;
+      const code = `HS2026${String(1000 + globalIdx).padStart(4, '0')}`;
+      const studentId = `stud_${String(globalIdx).padStart(4, '0')}`;
       const className = c.name;
       const gpa = Number((7.0 + (globalIdx % 6) * 0.4 + (sIdx % 2) * 0.3).toFixed(1));
       const attendanceRate = `${95 + (globalIdx % 4)}.${globalIdx % 9}%`;
@@ -753,7 +769,7 @@ async function seed() {
           ethnicity: 'Kinh',
           admissionDate: '01/08/2024',
           sparkline: `M0,15 L20,${10 + (globalIdx % 8)} L40,${5 + (globalIdx % 10)} L60,${12 + (globalIdx % 6)} L80,${8 + (globalIdx % 5)} L100,${2 + (globalIdx % 3)}`,
-          rank: `${sIdx}/${sIdx === 1 ? 32 : 31}`,
+          rank: `${sIdx}/${limit}`,
           gpa: gpa,
           attendanceRate: attendanceRate,
           attendanceStat: { present, excused, unexcused, late },
@@ -781,7 +797,7 @@ async function seed() {
       subjects.forEach((subj, sIdx) => {
         const score = Number((gpa - 0.5 + (sIdx % 3) * 0.4).toFixed(1));
         mockGrades.push({
-          id: `gr_${String(globalIdx).padStart(3, '0')}_${sIdx + 1}`,
+          id: `gr_${String(globalIdx).padStart(4, '0')}_${sIdx + 1}`,
           studentId: studentId,
           subject: subj,
           payload: { score, scores: { midTerm: score - 0.5, finalTerm: score + 0.5, quizzes: [score, score - 0.2, score + 0.3] } },
@@ -791,7 +807,7 @@ async function seed() {
       });
 
       mockTuitions.push({ 
-        id: `tf_${String(globalIdx).padStart(3, '0')}_01`, 
+        id: `tf_${String(globalIdx).padStart(4, '0')}_01`, 
         studentId: studentId, 
         invoiceNo: `INV-2025-${String(globalIdx).padStart(3, '0')}`, 
         amount: '4500000', 
@@ -803,15 +819,23 @@ async function seed() {
     }
   }
 
-  await db.insert(schema.studentDirectory).values(mockStudents).onConflictDoNothing();
+  // Insert students in chunks
+  console.log(`Inserting ${mockStudents.length} students...`);
+  for (let i = 0; i < mockStudents.length; i += 500) {
+    await db.insert(schema.studentDirectory).values(mockStudents.slice(i, i + 500)).onConflictDoNothing();
+  }
 
   // Seed SIS Grades
-  console.log("Seeding student grades...");
-  await db.insert(schema.sisGrades).values(mockGrades).onConflictDoNothing();
+  console.log(`Seeding ${mockGrades.length} student grades...`);
+  for (let i = 0; i < mockGrades.length; i += 1000) {
+    await db.insert(schema.sisGrades).values(mockGrades.slice(i, i + 1000)).onConflictDoNothing();
+  }
 
   // Seed Tuition Fees
-  console.log("Seeding tuition fees...");
-  await db.insert(schema.tuitionFees).values(mockTuitions).onConflictDoNothing();
+  console.log(`Seeding ${mockTuitions.length} tuition fees...`);
+  for (let i = 0; i < mockTuitions.length; i += 500) {
+    await db.insert(schema.tuitionFees).values(mockTuitions.slice(i, i + 500)).onConflictDoNothing();
+  }
 
   // Seed Announcements
   console.log("Seeding announcements...");
