@@ -726,7 +726,7 @@ export default function AdminShell({ locale, children }: { locale: string; child
               </div>
             )}
 
-            <Button variant="ghost" size="icon" onClick={() => setIsNotifOpen(true)} className="relative text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300" title={`${notificationSummary.total} mục cần kiểm tra`}>
+            <Button variant="ghost" size="icon" onClick={() => setIsNotifOpen(true)} className="relative text-amber-500 hover:bg-amber-50 hover:text-amber-600 dark:text-amber-400 dark:hover:bg-amber-950/30 dark:hover:text-amber-300" title={`${notificationSummary.total} mục cần kiểm tra`}>
               <Bell className="h-5 w-5" />
               {notificationSummary.total > 0 && (
                 <span className="absolute top-1.5 right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-blue-600 px-1 text-[10px] font-bold text-white">
