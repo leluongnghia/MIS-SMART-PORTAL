@@ -4,6 +4,7 @@ import { eq } from 'drizzle-orm';
 import { verifyApiAuth } from '../../../../libs/server/auth';
 import { getCurrentActor } from '@/src/libs/server/auth-helper';
 import { notifyApprovalRequested, notifyTaskAssigned } from '@/src/libs/server/notification-center';
+import { createApprovalRequest } from '@/src/libs/server/approval-engine';
 
 export async function GET(req: Request) {
   // Verify auth (Must be logged in to fetch tasks)
@@ -99,6 +100,21 @@ export async function POST(request: Request) {
   }
   if (task.status === 'CHO_DUYET' && existingTask?.status !== 'CHO_DUYET') {
     await notifyApprovalRequested(task, actor).catch(error => console.error('notifyApprovalRequested failed:', error));
+    if (actor) {
+      await createApprovalRequest({
+        module: 'TASKS',
+        entityType: 'TASK',
+        entityId: task.id,
+        title: task.title,
+        description: task.description || 'Công việc đang chờ phê duyệt',
+        requesterId: actor.id,
+        requesterName: actor.name,
+        approverRole: 'MANAGER',
+        approverWorkspaceId: task.workspaceId || actor.workspaceId,
+        targetUrl: '/tasks',
+        payload: { task },
+      }, actor).catch(error => console.error('createApprovalRequest for task failed:', error));
+    }
   }
 
   return NextResponse.json({ status: 'success', task });

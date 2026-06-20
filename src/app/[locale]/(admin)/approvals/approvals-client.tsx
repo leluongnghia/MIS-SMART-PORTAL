@@ -1,278 +1,113 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/src/components/ui/card';
 import { Badge } from '@/src/components/ui/badge';
 import { Button } from '@/src/components/ui/button';
+import { Card } from '@/src/components/ui/card';
 import { Dialog } from '@/src/components/ui/dialog';
-import { UserCheck, Calendar, Clock, CheckCircle2, XCircle, AlertCircle, FileText, User } from 'lucide-react';
-import { approveLeaveRequest, rejectLeaveRequest } from './actions';
+import { AlertCircle, CheckCircle2, Clock, GitPullRequest, RotateCcw, XCircle } from 'lucide-react';
 import type { Actor } from '@/src/libs/server/auth-helper';
+import { approveEngineRequest, approveLeaveRequest, cancelEngineRequest, rejectEngineRequest, rejectLeaveRequest, requestEngineRevision } from './actions';
 
-type LeaveRequest = {
-  id: string;
-  employeeProfileId: string;
-  type: string;
-  startDate: Date;
-  endDate: Date;
-  reason: string;
-  status: string;
-  approvedById: string | null;
-  substituteTeacherId: string | null;
-  payload: any;
-  createdAt: Date;
-  updatedAt: Date;
-};
+type LeaveRequest = { id: string; type: string; startDate: Date; endDate: Date; reason: string; status: string; approvedById: string | null; substituteTeacherId: string | null; payload: any; createdAt: Date; updatedAt: Date; employeeProfileId: string; };
+type EngineRequest = { id: string; module: string; entityType: string; entityId: string; title: string; description?: string | null; status: string; requesterId?: string | null; requesterName?: string | null; approverRole?: string | null; approverWorkspaceId?: string | null; targetUrl?: string | null; payload: any; createdAt: Date; updatedAt: Date; };
+type InitialData = { data?: LeaveRequest[]; approvalRequests?: EngineRequest[]; actor?: Actor | null };
 
-export default function ApprovalsPage({ initialData }: { initialData?: { data?: LeaveRequest[], actor?: Actor | null } }) {
-  const requests = initialData?.data || [];
+const statusLabels: Record<string, string> = { DRAFT: 'Nháp', PENDING: 'Chờ duyệt', APPROVED: 'Đã duyệt', REJECTED: 'Từ chối', NEEDS_REVISION: 'Cần bổ sung', CANCELLED: 'Đã hủy' };
+
+export default function ApprovalsPage({ initialData }: { initialData?: InitialData }) {
+  const leaveRequests = initialData?.data || [];
+  const engineRequests = initialData?.approvalRequests || [];
   const actor = initialData?.actor || null;
-  const [activeTab, setActiveTab] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
-  const [selectedRequest, setSelectedRequest] = useState<LeaveRequest | null>(null);
-  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [view, setView] = useState<'engine' | 'leave'>('engine');
+  const [engineStatus, setEngineStatus] = useState('ALL');
+  const [leaveTab, setLeaveTab] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
+  const [selectedEngine, setSelectedEngine] = useState<EngineRequest | null>(null);
+  const [selectedLeave, setSelectedLeave] = useState<LeaveRequest | null>(null);
+  const [comment, setComment] = useState('');
   const [isPending, startTransition] = useTransition();
 
-  // Filter requests based on tab
-  const filteredRequests = requests.filter((req) => {
-    if (activeTab === 'all') return true;
-    return req.status === activeTab;
-  });
+  const visibleEngine = engineRequests.filter(r => engineStatus === 'ALL' || r.status === engineStatus);
+  const visibleLeave = leaveRequests.filter(r => leaveTab === 'all' || r.status === leaveTab);
+  const canApprove = actor && (actor.role === 'ADMIN' || actor.role === 'MANAGER' || actor.workspaceId === 'BGH');
 
-  const handleApprove = (id: string) => {
+  const runEngineAction = (action: 'approve' | 'reject' | 'revision' | 'cancel') => {
+    if (!selectedEngine) return;
     startTransition(async () => {
-      const res = await approveLeaveRequest(id);
-      if (res.success) {
-        setIsDetailsOpen(false);
-      } else {
-        alert("Lỗi: " + res.error);
-      }
+      const fn = action === 'approve' ? approveEngineRequest : action === 'reject' ? rejectEngineRequest : action === 'revision' ? requestEngineRevision : cancelEngineRequest;
+      const res = await fn(selectedEngine.id, comment);
+      if (!res.success) alert('Lỗi: ' + res.error);
+      else { setSelectedEngine(null); setComment(''); }
     });
   };
 
-  const handleReject = (id: string) => {
+  const runLeaveAction = (action: 'approve' | 'reject') => {
+    if (!selectedLeave) return;
     startTransition(async () => {
-      const res = await rejectLeaveRequest(id);
-      if (res.success) {
-        setIsDetailsOpen(false);
-      } else {
-        alert("Lỗi: " + res.error);
-      }
+      const res = action === 'approve' ? await approveLeaveRequest(selectedLeave.id) : await rejectLeaveRequest(selectedLeave.id);
+      if (!res.success) alert('Lỗi: ' + res.error);
+      else setSelectedLeave(null);
     });
   };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'approved':
-        return <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-0 flex gap-1 items-center w-fit"><CheckCircle2 className="h-3 w-3" /> Đã duyệt</Badge>;
-      case 'rejected':
-        return <Badge className="bg-rose-100 text-rose-700 hover:bg-rose-100 border-0 flex gap-1 items-center w-fit"><XCircle className="h-3 w-3" /> Từ chối</Badge>;
-      default:
-        return <Badge className="bg-orange-100 text-orange-700 hover:bg-orange-100 border-0 flex gap-1 items-center w-fit"><Clock className="h-3 w-3 text-orange-500" /> Chờ duyệt</Badge>;
-    }
-  };
-
-  const formatDate = (date: Date) => {
-    const d = new Date(date);
-    if (Number.isNaN(d.getTime())) return String(date);
-    return d.toLocaleDateString('vi-VN') + ' ' + d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
-  };
-
-  const getDaysCount = (start: Date, end: Date) => {
-    const s = new Date(start);
-    const e = new Date(end);
-    const diff = Math.abs(e.getTime() - s.getTime());
-    const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
-    return days || 1;
-  };
-
-  return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Danh sách yêu cầu phê duyệt</h2>
-        <p className="text-sm text-slate-500">Quản lý và phê duyệt đơn xin nghỉ phép, đề xuất chi tiêu và các quy trình hành chính</p>
-      </div>
-
-      {/* Tabs */}
-      <div className="flex border-b border-slate-200 dark:border-slate-800 text-sm font-bold gap-4">
-        {[
-          { key: 'all', label: 'Tất cả', count: requests.length },
-          { key: 'pending', label: 'Chờ duyệt', count: requests.filter(r => r.status === 'pending').length },
-          { key: 'approved', label: 'Đã duyệt', count: requests.filter(r => r.status === 'approved').length },
-          { key: 'rejected', label: 'Đã từ chối', count: requests.filter(r => r.status === 'rejected').length }
-        ].map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key as any)}
-            className={cn(
-              "pb-3 border-b-2 transition-colors flex items-center gap-1.5",
-              activeTab === tab.key
-                ? "border-blue-600 text-blue-600 dark:text-blue-400"
-                : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
-            )}
-          >
-            {tab.label}
-            <Badge className={cn("px-1.5 py-0 text-[10px]", activeTab === tab.key ? "bg-blue-100 text-blue-700" : "bg-slate-100 text-slate-600")}>
-              {tab.count}
-            </Badge>
-          </button>
-        ))}
-      </div>
-
-      {/* List / Table */}
-      <Card className="border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left">
-            <thead className="text-xs text-slate-500 bg-slate-50 dark:bg-slate-900/50 uppercase border-b border-slate-100 dark:border-slate-800">
-              <tr>
-                <th className="px-5 py-3.5 font-bold">Mã Đơn / Nhân sự</th>
-                <th className="px-5 py-3.5 font-bold">Loại đề xuất</th>
-                <th className="px-5 py-3.5 font-bold">Thời gian nghỉ</th>
-                <th className="px-5 py-3.5 font-bold">Lý do xin nghỉ</th>
-                <th className="px-5 py-3.5 font-bold">Trạng thái</th>
-                <th className="px-5 py-3.5 font-bold text-right">Thao tác</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {filteredRequests.map((req) => (
-                <tr key={req.id} className="hover:bg-slate-50 dark:hover:bg-slate-900/50 cursor-pointer" onClick={() => {
-                  setSelectedRequest(req);
-                  setIsDetailsOpen(true);
-                }}>
-                  <td className="px-5 py-4">
-                    <div>
-                      <span className="text-xs font-mono text-slate-400">#{req.id}</span>
-                      <p className="font-bold text-slate-900 dark:text-slate-100">{req.payload?.employeeName || 'Cán bộ giáo viên'}</p>
-                      <p className="text-[10px] text-slate-500">{req.payload?.department || 'Tổ chuyên môn'}</p>
-                    </div>
-                  </td>
-                  <td className="px-5 py-4">
-                    <span className="font-semibold text-slate-700 dark:text-slate-300">{req.type}</span>
-                  </td>
-                  <td className="px-5 py-4">
-                    <div className="text-xs space-y-0.5">
-                      <p className="font-medium">{formatDate(req.startDate)}</p>
-                      <p className="text-slate-400">Đến: {formatDate(req.endDate)}</p>
-                      <Badge className="bg-blue-50 text-blue-700 dark:bg-blue-950/20 text-[9px] py-0 border-0">{getDaysCount(req.startDate, req.endDate)} ngày</Badge>
-                    </div>
-                  </td>
-                  <td className="px-5 py-4 max-w-xs truncate">
-                    <span className="text-slate-600 dark:text-slate-400">{req.reason}</span>
-                  </td>
-                  <td className="px-5 py-4">
-                    {getStatusBadge(req.status)}
-                  </td>
-                  <td className="px-5 py-4" onClick={(e) => e.stopPropagation()}>
-                    <div className="flex items-center justify-end gap-2">
-                      <Button
-                        variant={req.status === 'pending' ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => {
-                          setSelectedRequest(req);
-                          setIsDetailsOpen(true);
-                        }}
-                        className={cn(
-                          "h-8 text-xs font-semibold",
-                          req.status === 'pending' 
-                            ? "bg-blue-600 hover:bg-blue-700 text-white border-0 shadow-sm" 
-                            : "text-slate-700 dark:text-slate-350"
-                        )}
-                      >
-                        {req.status === 'pending' ? 'Xem & Phê duyệt' : 'Xem chi tiết'}
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-
-              {filteredRequests.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="px-5 py-12 text-center text-slate-500">
-                    Không có yêu cầu phê duyệt nào phù hợp.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+  return <div className="space-y-6">
+    <div className="rounded-3xl border border-amber-200/70 bg-gradient-to-br from-amber-50 via-white to-sky-50 p-6 shadow-sm dark:border-amber-900/40 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <Badge className="mb-3 border-0 bg-amber-100 text-amber-800">Approval Engine</Badge>
+          <h2 className="text-3xl font-black tracking-tight text-slate-950 dark:text-white">Trung tâm phê duyệt toàn hệ thống</h2>
+          <p className="mt-2 max-w-3xl text-sm text-slate-600 dark:text-slate-300">Chuẩn hóa luồng gửi duyệt, duyệt, từ chối, yêu cầu bổ sung, hủy yêu cầu, notification và audit log cho Tasks, Admissions, Students, Facilities, Storage, Settings.</p>
         </div>
-      </Card>
-
-      {/* DETAILS DIALOG */}
-      <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen} title="Chi tiết đơn xin nghỉ phép">
-        {selectedRequest && (
-          <div className="space-y-5 pt-2">
-            <div className="flex justify-between items-start border-b border-slate-100 dark:border-slate-800 pb-3">
-              <div>
-                <span className="text-[10px] font-mono text-slate-400">Mã đơn: #{selectedRequest.id}</span>
-                <h3 className="font-bold text-sm text-slate-900 dark:text-white">{selectedRequest.payload?.employeeName}</h3>
-                <p className="text-xs text-slate-500">{selectedRequest.payload?.department}</p>
-              </div>
-              {getStatusBadge(selectedRequest.status)}
-            </div>
-
-            <div className="grid grid-cols-2 gap-4 text-xs">
-              <div className="space-y-1">
-                <span className="text-slate-500 block">Thời gian nghỉ:</span>
-                <span className="font-bold flex items-center gap-1.5"><Calendar className="h-3.5 w-3.5 text-slate-400" /> {formatDate(selectedRequest.startDate)}</span>
-                <span className="text-slate-400 block pl-5">Đến: {formatDate(selectedRequest.endDate)}</span>
-              </div>
-              <div className="space-y-1">
-                <span className="text-slate-500 block">Số ngày nghỉ:</span>
-                <span className="font-bold text-sm text-blue-600">{getDaysCount(selectedRequest.startDate, selectedRequest.endDate)} ngày</span>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4 text-xs">
-              <div className="space-y-1">
-                <span className="text-slate-500 block">Loại hình nghỉ:</span>
-                <span className="font-bold">{selectedRequest.type}</span>
-              </div>
-              <div className="space-y-1">
-                <span className="text-slate-500 block">Giáo viên dạy thay đề cử:</span>
-                <span className="font-bold flex items-center gap-1"><User className="h-3.5 w-3.5 text-slate-400" /> {selectedRequest.substituteTeacherId === 'user_hoa' ? 'Cô Trịnh Thúy Hoa' : 'Thầy Lê Quang Minh'}</span>
-              </div>
-            </div>
-
-            <div className="space-y-1 text-xs">
-              <span className="text-slate-500 block">Lý do xin nghỉ phép:</span>
-              <p className="p-3 bg-slate-50 dark:bg-slate-900 rounded border border-slate-100 dark:border-slate-800 text-slate-600 dark:text-slate-400 leading-relaxed">
-                {selectedRequest.reason}
-              </p>
-            </div>
-
-            {selectedRequest.status === 'pending' && actor && (actor.role === 'ADMIN' || actor.role === 'MANAGER') ? (
-              <div className="flex gap-2 pt-4 border-t border-slate-100 dark:border-slate-800">
-                <Button 
-                  onClick={() => handleApprove(selectedRequest.id)}
-                  disabled={isPending}
-                  className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white border-0 text-xs h-9"
-                >
-                  {isPending ? 'Đang xử lý...' : 'Phê duyệt thông qua'}
-                </Button>
-                <Button 
-                  onClick={() => handleReject(selectedRequest.id)}
-                  disabled={isPending}
-                  variant="outline"
-                  className="flex-1 text-red-600 border-red-200 hover:bg-rose-50 hover:text-red-700 text-xs h-9"
-                >
-                  {isPending ? 'Đang xử lý...' : 'Từ chối đơn xin nghỉ'}
-                </Button>
-              </div>
-            ) : (
-              <div className="flex justify-end pt-4 border-t border-slate-100 dark:border-slate-800">
-                <Button onClick={() => setIsDetailsOpen(false)} className="text-xs h-9">
-                  Đóng
-                </Button>
-              </div>
-            )}
-          </div>
-        )}
-      </Dialog>
+        <div className="grid grid-cols-3 gap-2 text-center">
+          <Metric label="Chờ duyệt" value={engineRequests.filter(r => r.status === 'PENDING').length} tone="amber" />
+          <Metric label="Đã duyệt" value={engineRequests.filter(r => r.status === 'APPROVED').length} tone="emerald" />
+          <Metric label="Cần bổ sung" value={engineRequests.filter(r => r.status === 'NEEDS_REVISION').length} tone="sky" />
+        </div>
+      </div>
     </div>
-  );
+
+    <div className="flex gap-2 rounded-2xl border bg-white p-1 shadow-sm dark:border-slate-800 dark:bg-slate-950">
+      <Tab active={view === 'engine'} onClick={() => setView('engine')}>Approval Engine ({engineRequests.length})</Tab>
+      <Tab active={view === 'leave'} onClick={() => setView('leave')}>Nghỉ phép cũ ({leaveRequests.length})</Tab>
+    </div>
+
+    {view === 'engine' ? <>
+      <div className="flex flex-wrap gap-2">
+        {['ALL', 'PENDING', 'APPROVED', 'REJECTED', 'NEEDS_REVISION', 'CANCELLED'].map(s => <Button key={s} size="sm" variant={engineStatus === s ? 'default' : 'outline'} onClick={() => setEngineStatus(s)} className="text-xs">{s === 'ALL' ? 'Tất cả' : statusLabels[s]}</Button>)}
+      </div>
+      <Card className="overflow-hidden border-slate-200 shadow-sm dark:border-slate-800">
+        <table className="w-full text-left text-sm">
+          <thead className="border-b bg-slate-50 text-xs uppercase text-slate-500 dark:bg-slate-900/50"><tr><th className="px-5 py-3">Yêu cầu</th><th className="px-5 py-3">Module</th><th className="px-5 py-3">Người gửi</th><th className="px-5 py-3">Trạng thái</th><th className="px-5 py-3 text-right">Thao tác</th></tr></thead>
+          <tbody className="divide-y dark:divide-slate-800">
+            {visibleEngine.map(req => <tr key={req.id} className="hover:bg-amber-50/40 dark:hover:bg-slate-900"><td className="px-5 py-4"><div className="flex gap-3"><span className="rounded-xl bg-amber-100 p-2 text-amber-700"><GitPullRequest className="h-4 w-4" /></span><div><p className="font-bold text-slate-900 dark:text-white">{req.title}</p><p className="text-xs text-slate-500">{req.entityType} · {req.entityId}</p><p className="text-xs text-slate-500">{req.description}</p></div></div></td><td className="px-5 py-4"><Badge className="border-0 bg-slate-100 text-slate-700">{req.module}</Badge></td><td className="px-5 py-4 text-slate-600 dark:text-slate-300">{req.requesterName || req.requesterId || '-'}</td><td className="px-5 py-4">{statusBadge(req.status)}</td><td className="px-5 py-4 text-right"><Button size="sm" onClick={() => setSelectedEngine(req)}>Xem xử lý</Button></td></tr>)}
+            {visibleEngine.length === 0 && <tr><td colSpan={5} className="px-5 py-12 text-center text-slate-500">Chưa có yêu cầu Approval Engine.</td></tr>}
+          </tbody>
+        </table>
+      </Card>
+    </> : <LegacyLeave requests={visibleLeave} active={leaveTab} setActive={setLeaveTab} select={setSelectedLeave} />}
+
+    <Dialog open={!!selectedEngine} onOpenChange={(open) => !open && setSelectedEngine(null)} title="Chi tiết Approval Engine">
+      {selectedEngine && <div className="space-y-4 pt-2 text-sm">
+        <div className="rounded-2xl border bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900"><p className="text-xs text-slate-500">#{selectedEngine.id}</p><h3 className="font-bold">{selectedEngine.title}</h3><p className="text-slate-600 dark:text-slate-300">{selectedEngine.description || 'Không có mô tả'}</p></div>
+        <div className="grid grid-cols-2 gap-3 text-xs"><Info k="Module" v={selectedEngine.module} /><Info k="Entity" v={`${selectedEngine.entityType} · ${selectedEngine.entityId}`} /><Info k="Người gửi" v={selectedEngine.requesterName || '-'} /><Info k="Trạng thái" v={statusLabels[selectedEngine.status] || selectedEngine.status} /></div>
+        <textarea value={comment} onChange={e => setComment(e.target.value)} placeholder="Ghi chú xử lý (bắt buộc khi từ chối/yêu cầu bổ sung)" className="min-h-24 w-full rounded-xl border border-slate-200 bg-white p-3 text-xs outline-none focus:border-amber-400 dark:border-slate-800 dark:bg-slate-950" />
+        {selectedEngine.status === 'PENDING' || selectedEngine.status === 'NEEDS_REVISION' ? <div className="grid grid-cols-2 gap-2 border-t pt-4 dark:border-slate-800">
+          <Button disabled={isPending || !canApprove} onClick={() => runEngineAction('approve')} className="bg-emerald-600 text-white hover:bg-emerald-700"><CheckCircle2 className="mr-1 h-4 w-4" /> Duyệt</Button>
+          <Button disabled={isPending || !canApprove} onClick={() => runEngineAction('reject')} variant="outline" className="border-rose-200 text-rose-600"><XCircle className="mr-1 h-4 w-4" /> Từ chối</Button>
+          <Button disabled={isPending || !canApprove} onClick={() => runEngineAction('revision')} variant="outline" className="border-sky-200 text-sky-700"><RotateCcw className="mr-1 h-4 w-4" /> Yêu cầu bổ sung</Button>
+          <Button disabled={isPending} onClick={() => runEngineAction('cancel')} variant="outline"><AlertCircle className="mr-1 h-4 w-4" /> Hủy yêu cầu</Button>
+        </div> : <Button onClick={() => setSelectedEngine(null)}>Đóng</Button>}
+      </div>}
+    </Dialog>
+
+    <Dialog open={!!selectedLeave} onOpenChange={(open) => !open && setSelectedLeave(null)} title="Chi tiết đơn nghỉ phép">
+      {selectedLeave && <div className="space-y-4 text-sm"><h3 className="font-bold">{selectedLeave.payload?.employeeName || selectedLeave.id}</h3><p>{selectedLeave.reason}</p>{statusBadge(selectedLeave.status)}{selectedLeave.status === 'pending' && canApprove ? <div className="flex gap-2 border-t pt-4"><Button disabled={isPending} onClick={() => runLeaveAction('approve')} className="flex-1 bg-emerald-600 text-white">Phê duyệt</Button><Button disabled={isPending} onClick={() => runLeaveAction('reject')} variant="outline" className="flex-1 text-rose-600">Từ chối</Button></div> : <Button onClick={() => setSelectedLeave(null)}>Đóng</Button>}</div>}
+    </Dialog>
+  </div>;
 }
 
-function cn(...inputs: any[]) {
-  return inputs.filter(Boolean).join(' ');
-}
-
+function Metric({ label, value, tone }: { label: string; value: number; tone: string }) { return <div className={`rounded-2xl border bg-white/80 px-4 py-3 shadow-sm dark:bg-slate-900`}><p className={`text-2xl font-black text-${tone}-600`}>{value}</p><p className="text-[11px] font-bold text-slate-500">{label}</p></div>; }
+function Tab({ active, onClick, children }: any) { return <button onClick={onClick} className={`flex-1 rounded-xl px-4 py-2 text-sm font-bold transition ${active ? 'bg-slate-950 text-white dark:bg-white dark:text-slate-950' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-900'}`}>{children}</button>; }
+function Info({ k, v }: { k: string; v: string }) { return <div className="rounded-xl border p-3 dark:border-slate-800"><p className="text-slate-500">{k}</p><p className="font-bold">{v}</p></div>; }
+function statusBadge(status: string) { const s = status.toUpperCase(); const cls = s === 'APPROVED' || status === 'approved' ? 'bg-emerald-100 text-emerald-700' : s === 'REJECTED' || status === 'rejected' ? 'bg-rose-100 text-rose-700' : s === 'NEEDS_REVISION' ? 'bg-sky-100 text-sky-700' : s === 'CANCELLED' ? 'bg-slate-100 text-slate-700' : 'bg-amber-100 text-amber-700'; return <Badge className={`${cls} border-0`}><Clock className="mr-1 h-3 w-3" />{statusLabels[s] || (status === 'pending' ? 'Chờ duyệt' : status)}</Badge>; }
+function LegacyLeave({ requests, active, setActive, select }: any) { return <><div className="flex gap-2">{['all','pending','approved','rejected'].map(s => <Button key={s} size="sm" variant={active === s ? 'default' : 'outline'} onClick={() => setActive(s)}>{s}</Button>)}</div><Card className="overflow-hidden"><table className="w-full text-left text-sm"><tbody>{requests.map((r: LeaveRequest) => <tr key={r.id} className="border-b"><td className="px-5 py-4"><p className="font-bold">{r.payload?.employeeName || r.id}</p><p className="text-xs text-slate-500">{r.type}</p></td><td className="px-5 py-4">{r.reason}</td><td className="px-5 py-4">{statusBadge(r.status)}</td><td className="px-5 py-4 text-right"><Button size="sm" onClick={() => select(r)}>Xem</Button></td></tr>)}</tbody></table></Card></>; }

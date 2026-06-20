@@ -2,12 +2,13 @@
 
 import { db, schema } from "@/src/libs/server/db";
 import { getCurrentActor, writeAuditLog } from "@/src/libs/server/auth-helper";
+import { approveApprovalRequest, cancelApprovalRequest, getApprovalHistory, getApprovalRequests, rejectApprovalRequest, requestApprovalRevision } from "@/src/libs/server/approval-engine";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 export async function getInitialData() {
   const actor = await getCurrentActor();
-  if (!actor) return { data: [], actor: null };
+  if (!actor) return { data: [], approvalRequests: [], actor: null };
 
   try {
     // 1. Ensure employeeProfiles exists for our seed users
@@ -97,10 +98,12 @@ export async function getInitialData() {
       return item.user?.id === actor.id;
     });
 
-    return { data: filtered, actor };
+    const approvalRequests = await getApprovalRequests({ pageSize: 100 });
+
+    return { data: filtered, approvalRequests: approvalRequests.items, actor };
   } catch (e) {
     console.error("Approvals getInitialData failed:", e);
-    return { data: [], actor };
+    return { data: [], approvalRequests: [], actor };
   }
 }
 
@@ -158,3 +161,52 @@ export async function rejectLeaveRequest(id: string) {
   }
 }
 
+
+export async function approveEngineRequest(id: string, comment?: string) {
+  try {
+    const item = await approveApprovalRequest(id, comment);
+    revalidatePath('/[locale]/approvals', 'layout');
+    return { success: true, item };
+  } catch (e: any) {
+    return { success: false, error: e.message };
+  }
+}
+
+export async function rejectEngineRequest(id: string, comment?: string) {
+  try {
+    const item = await rejectApprovalRequest(id, comment);
+    revalidatePath('/[locale]/approvals', 'layout');
+    return { success: true, item };
+  } catch (e: any) {
+    return { success: false, error: e.message };
+  }
+}
+
+export async function requestEngineRevision(id: string, comment?: string) {
+  try {
+    const item = await requestApprovalRevision(id, comment);
+    revalidatePath('/[locale]/approvals', 'layout');
+    return { success: true, item };
+  } catch (e: any) {
+    return { success: false, error: e.message };
+  }
+}
+
+export async function cancelEngineRequest(id: string, comment?: string) {
+  try {
+    const item = await cancelApprovalRequest(id, comment);
+    revalidatePath('/[locale]/approvals', 'layout');
+    return { success: true, item };
+  } catch (e: any) {
+    return { success: false, error: e.message };
+  }
+}
+
+export async function getEngineRequestHistory(id: string) {
+  try {
+    const history = await getApprovalHistory(id);
+    return { success: true, history };
+  } catch (e: any) {
+    return { success: false, error: e.message, history: [] };
+  }
+}

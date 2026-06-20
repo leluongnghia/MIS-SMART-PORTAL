@@ -703,6 +703,50 @@ export const notificationRecipients = pgTable('notification_recipients', {
   index('notification_recipients_notification_idx').on(table.notificationId),
 ]);
 
+export const approvalRequests = pgTable('approval_requests', {
+  id: text('id').primaryKey(),
+  module: text('module').notNull(),
+  entityType: text('entity_type').notNull(),
+  entityId: text('entity_id').notNull(),
+  title: text('title').notNull(),
+  description: text('description'),
+  status: text('status').default('PENDING').notNull(),
+  requesterId: text('requester_id'),
+  requesterName: text('requester_name'),
+  approverId: text('approver_id'),
+  approverRole: text('approver_role'),
+  approverWorkspaceId: text('approver_workspace_id'),
+  approverDepartmentId: text('approver_department_id'),
+  currentStep: integer('current_step').default(1).notNull(),
+  targetUrl: text('target_url'),
+  payload: jsonb('payload').notNull().default({}),
+  submittedAt: timestamp('submitted_at', { withTimezone: true }).defaultNow(),
+  resolvedAt: timestamp('resolved_at', { withTimezone: true }),
+  ...timestamps,
+}, table => [
+  index('approval_requests_status_idx').on(table.status),
+  index('approval_requests_module_status_idx').on(table.module, table.status),
+  index('approval_requests_entity_idx').on(table.entityType, table.entityId),
+  index('approval_requests_requester_idx').on(table.requesterId),
+  index('approval_requests_approver_idx').on(table.approverId, table.approverRole, table.approverWorkspaceId, table.approverDepartmentId),
+]);
+
+export const approvalEvents = pgTable('approval_events', {
+  id: text('id').primaryKey(),
+  approvalRequestId: text('approval_request_id').notNull(),
+  action: text('action').notNull(),
+  fromStatus: text('from_status'),
+  toStatus: text('to_status'),
+  actorId: text('actor_id'),
+  actorName: text('actor_name'),
+  comment: text('comment'),
+  metadata: jsonb('metadata').notNull().default({}),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+}, table => [
+  index('approval_events_request_idx').on(table.approvalRequestId),
+  index('approval_events_created_idx').on(table.createdAt),
+]);
+
 export const systemCategories = pgTable('system_categories', {
   id: text('id').primaryKey(),
   group: text('group').notNull(),
