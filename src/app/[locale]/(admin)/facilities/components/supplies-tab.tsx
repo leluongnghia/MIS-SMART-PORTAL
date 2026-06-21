@@ -26,6 +26,8 @@ export function SuppliesTab({ initialSupplies = [] }: { initialSupplies?: Supply
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogType, setDialogType] = useState<'IMPORT' | 'EXPORT'>('IMPORT');
   const [dialogSupplyId, setDialogSupplyId] = useState<string>('');
+  const [dialogSupplyName, setDialogSupplyName] = useState<string>('');
+  const [dialogSupplyUnit, setDialogSupplyUnit] = useState<string>('');
   const [dialogQty, setDialogQty] = useState('');
 
   // Form states
@@ -61,9 +63,11 @@ export function SuppliesTab({ initialSupplies = [] }: { initialSupplies?: Supply
     setIsProcessing(false);
   };
 
-  const handleOpenDialog = (id: string, type: 'IMPORT' | 'EXPORT') => {
+  const handleOpenDialog = (id: string, name: string, unit: string, type: 'IMPORT' | 'EXPORT') => {
     setDialogType(type);
     setDialogSupplyId(id);
+    setDialogSupplyName(name);
+    setDialogSupplyUnit(unit);
     setDialogQty('');
     setDialogOpen(true);
   };
@@ -180,7 +184,7 @@ export function SuppliesTab({ initialSupplies = [] }: { initialSupplies?: Supply
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleOpenDialog(item.id, 'IMPORT')}
+                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleOpenDialog(item.id, item.name, item.unit, 'IMPORT'); }}
                           disabled={isProcessing}
                           title="Nhập kho"
                         >
@@ -189,7 +193,7 @@ export function SuppliesTab({ initialSupplies = [] }: { initialSupplies?: Supply
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleOpenDialog(item.id, 'EXPORT')}
+                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleOpenDialog(item.id, item.name, item.unit, 'EXPORT'); }}
                           disabled={isProcessing}
                           title="Xuất kho"
                         >
@@ -218,11 +222,11 @@ export function SuppliesTab({ initialSupplies = [] }: { initialSupplies?: Supply
             <DialogHeader>
               <DialogTitle>{dialogType === 'IMPORT' ? 'Nhập kho vật tư' : 'Xuất kho vật tư'}</DialogTitle>
               <DialogDescription>
-                Vui lòng nhập số lượng bạn muốn {dialogType === 'IMPORT' ? 'nhập thêm vào kho' : 'xuất đi'}.
+                Vui lòng nhập số lượng <b>{dialogSupplyName}</b> bạn muốn {dialogType === 'IMPORT' ? 'nhập thêm vào kho' : 'xuất đi'}.
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
-              <div className="space-y-2">
+              <div className="space-y-2 flex items-center gap-2">
                 <Input
                   type="number"
                   min="1"
@@ -231,7 +235,9 @@ export function SuppliesTab({ initialSupplies = [] }: { initialSupplies?: Supply
                   onChange={(e) => setDialogQty(e.target.value)}
                   autoFocus
                   required
+                  className="flex-1"
                 />
+                <span className="text-sm text-muted-foreground w-16 whitespace-nowrap">{dialogSupplyUnit}</span>
               </div>
             </div>
             <DialogFooter>
