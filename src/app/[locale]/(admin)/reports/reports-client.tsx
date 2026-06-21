@@ -62,6 +62,8 @@ export default function ReportsClient({ locale, data }: ReportsClientProps) {
     setMounted(true);
   }, []);
 
+  const { success: toastSuccess } = useToast();
+
   if (!mounted) {
     return (
       <div className="flex h-96 items-center justify-center">
@@ -77,8 +79,6 @@ export default function ReportsClient({ locale, data }: ReportsClientProps) {
   const formatCurrency = (val: number) => {
     return `${val.toLocaleString('vi-VN')} đ`;
   };
-
-  const { success: toastSuccess } = useToast();
 
   const handleExportReportCSV = () => {
     const sections = [
