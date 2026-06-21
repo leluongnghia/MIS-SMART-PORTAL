@@ -53,7 +53,7 @@ type PurchaseRequest = {
   neededByDate: string;
 };
 
-type Supply = { id: string; name: string; current: number; min: number; unit: string; status: 'LOW' | 'NEED_MORE' };
+type Supply = { id: string; name: string; currentQuantity: number; minimumQuantity: number; unit: string; status: 'LOW' | 'NEED_MORE' };
 
 const purchaseRequests: PurchaseRequest[] = [
   { id: 'P001', title: 'Thay máy chiếu phòng 1A', requestedByName: 'Nguyễn Văn A', department: 'Khối 1', itemCount: 1, priority: 'HIGH', status: 'SUBMITTED', neededByDate: '20/06' },
@@ -64,12 +64,12 @@ const purchaseRequests: PurchaseRequest[] = [
 ];
 
 const lowStockSupplies: Supply[] = [
-  { id: 'S001', name: 'Mực in Canon', current: 1, min: 3, unit: 'hộp', status: 'LOW' },
-  { id: 'S002', name: 'Bóng đèn LED', current: 4, min: 10, unit: 'chiếc', status: 'LOW' },
-  { id: 'S003', name: 'Pin điều khiển', current: 2, min: 8, unit: 'viên', status: 'LOW' },
-  { id: 'S004', name: 'Dây mạng Cat6', current: 5, min: 20, unit: 'mét', status: 'NEED_MORE' },
-  { id: 'S005', name: 'Ổ cắm điện 3 chấu', current: 3, min: 12, unit: 'cái', status: 'NEED_MORE' },
-  { id: 'S006', name: 'Giấy in A4', current: 8, min: 20, unit: 'ream', status: 'LOW' },
+  { id: 'S001', name: 'Mực in Canon', currentQuantity: 1, minimumQuantity: 3, unit: 'hộp', status: 'LOW' },
+  { id: 'S002', name: 'Bóng đèn LED', currentQuantity: 4, minimumQuantity: 10, unit: 'chiếc', status: 'LOW' },
+  { id: 'S003', name: 'Pin điều khiển', currentQuantity: 2, minimumQuantity: 8, unit: 'viên', status: 'LOW' },
+  { id: 'S004', name: 'Dây mạng Cat6', currentQuantity: 5, minimumQuantity: 20, unit: 'mét', status: 'NEED_MORE' },
+  { id: 'S005', name: 'Ổ cắm điện 3 chấu', currentQuantity: 3, minimumQuantity: 12, unit: 'cái', status: 'NEED_MORE' },
+  { id: 'S006', name: 'Giấy in A4', currentQuantity: 8, minimumQuantity: 20, unit: 'ream', status: 'LOW' },
 ];
 
 const maintenanceSeed: FacilityMaintenanceLog[] = [
@@ -343,7 +343,7 @@ export default function FacilitiesClient({ initialLocations = [], initialAssets 
         <div className="grid gap-4 xl:grid-cols-2">
           <Card className="shadow-sm"><CardHeader className="flex flex-row items-center justify-between"><div><CardTitle>Vật tư tồn kho thấp</CardTitle><CardDescription>So sánh tồn hiện tại với mức tối thiểu</CardDescription></div><Button size="sm" onClick={() => setActiveTab('purchases')}><PackagePlus className="mr-2 h-4 w-4" />Tạo đề xuất mua bổ sung</Button></CardHeader><CardContent><div className="grid gap-3 sm:grid-cols-2">
             {lowStockSupplies.map(s => {
-              const ratio = s.current / s.min;
+              const ratio = s.currentQuantity / s.minimumQuantity;
               const barColor = ratio <= 0.34 ? 'bg-red-500' : ratio <= 0.67 ? 'bg-amber-500' : 'bg-emerald-500';
               return (
                 <div key={s.id} className="rounded-xl border p-3 bg-card/50">
@@ -351,7 +351,7 @@ export default function FacilitiesClient({ initialLocations = [], initialAssets 
                     <p className="font-semibold">{s.name}</p>
                     <FacilityBadge value={s.status} label={s.status === 'LOW' ? 'Sắp hết' : 'Cần bổ sung'} />
                   </div>
-                  <p className="mt-2 text-sm text-muted-foreground">Tồn: <b className="text-foreground">{s.current}</b> / tối thiểu {s.min} {s.unit}</p>
+                  <p className="mt-2 text-sm text-muted-foreground">Tồn: <b className="text-foreground">{s.currentQuantity}</b> / tối thiểu {s.minimumQuantity} {s.unit}</p>
                   <div className="mt-2 h-2 rounded-full bg-muted">
                     <div className={`h-2 rounded-full ${barColor} transition-all`} style={{ width: `${Math.min(100, ratio * 100)}%` }} />
                   </div>
