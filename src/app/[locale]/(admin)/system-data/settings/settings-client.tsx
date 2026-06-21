@@ -1162,7 +1162,7 @@ export default function SettingsClient({ isAdmin }: { isAdmin: boolean }) {
                 </div>
                 <div className="grid gap-1">
                   <label className="text-[10px] font-black uppercase tracking-wider text-slate-500 font-mono">Email gửi đi mặc định</label>
-                  <Input value={integrationData['email:from_email'] || ''} onChange={e => handleIntegrationChange('email:from_email', e.target.value)} disabled={!isAdmin} placeholder="noreply@mis.edu.vn" className="font-mono text-sm" type="email" />
+                  <Input value={integrationData['email:from_email'] || ''} onChange={e => handleIntegrationChange('email:from_email', e.target.value)} disabled={!isAdmin} placeholder="noreply@misvn.edu.vn" className="font-mono text-sm" type="email" />
                 </div>
                 <div className="grid gap-1">
                   <label className="text-[10px] font-black uppercase tracking-wider text-slate-500 font-mono">Tên người gửi</label>

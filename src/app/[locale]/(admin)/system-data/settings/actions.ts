@@ -15,7 +15,7 @@ const DEFAULT_SETTINGS = [
   { key: 'school_info:address', value: 'Lô TH2, Khu đô thị mới Dịch Vọng, Cầu Giấy, Hà Nội', group: 'school_info', label: 'Địa chỉ', description: 'Địa chỉ trụ sở chính' },
   { key: 'school_info:hotline_general', value: '024 1234 5678', group: 'school_info', label: 'Hotline chung', description: 'Hotline liên hệ chung' },
   { key: 'school_info:hotline', value: '024 1234 5678', group: 'school_info', label: 'Hotline tuyển sinh', description: 'Hotline hỗ trợ tuyển sinh' },
-  { key: 'school_info:email', value: 'info@mis.edu.vn', group: 'school_info', label: 'Email trường', description: 'Hòm thư điện tử chính thức' },
+  { key: 'school_info:email', value: 'info@misvn.edu.vn', group: 'school_info', label: 'Email trường', description: 'Hòm thư điện tử chính thức' },
   { key: 'school_info:website', value: 'https://mis.edu.vn', group: 'school_info', label: 'Website', description: 'Trang thông tin điện tử' },
   { key: 'school_info:representative_name', value: 'Thầy PGS.TS. Nguyễn Văn Minh', group: 'school_info', label: 'Người đại diện', description: 'Tên người đại diện pháp luật' },
   { key: 'school_info:representative_title', value: 'Chủ tịch Hội đồng Trường', group: 'school_info', label: 'Chức danh người đại diện', description: 'Chức vụ người đại diện' },

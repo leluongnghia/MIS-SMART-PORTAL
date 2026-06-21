@@ -139,7 +139,7 @@ export function normalizeUserProfile<T extends UserProfile>(user: T, index = 0):
 
   return {
     ...user,
-    email: user.email || `${normalizedId}@mis.edu.vn`,
+    email: user.email || `${normalizedId}@misvn.edu.vn`,
     personalEmail: user.personalEmail || `${normalizedId}.personal@gmail.com`,
     phone: user.phone || deterministicPhone(seed),
     address: user.address || `Số ${(seed % 88) + 10}, ngõ ${(seed % 45) + 1}, ${ADDRESS_AREAS[seed % ADDRESS_AREAS.length]}`,

@@ -236,7 +236,7 @@ export default function HrmCenter({ currentUser, users, onUpdateUsers, hasCapabi
 
     return {
       employeeCode: user.employeeCode || `MIS-HR-${String(seed).padStart(4, '0')}`,
-      email: user.email || `${normalizedId}@mis.edu.vn`,
+      email: user.email || `${normalizedId}@misvn.edu.vn`,
       personalEmail: user.personalEmail || `${normalizedId}.personal@gmail.com`,
       phone: user.phone || `09${String(10000000 + (seed * 7919) % 90000000).padStart(8, '0')}`,
       address: user.address || `Số ${(seed % 88) + 10}, ngõ ${(seed % 45) + 1}, ${addressAreas[seed % addressAreas.length]}`,

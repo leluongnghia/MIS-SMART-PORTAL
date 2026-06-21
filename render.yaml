@@ -29,7 +29,7 @@ services:
       - key: SMTP_PASS
         sync: false  # Mật khẩu SMTP hoặc app password
       - key: EMAIL_FROM
-        sync: false  # Tên/người gửi, ví dụ "MIS Smart Portal <noreply@mis.edu.vn>"
+        sync: false  # Tên/người gửi, ví dụ "MIS Smart Portal <noreply@misvn.edu.vn>"
       - key: ZALO_OA_ID
         sync: false  # Zalo Official Account ID
       - key: ZALO_APP_ID

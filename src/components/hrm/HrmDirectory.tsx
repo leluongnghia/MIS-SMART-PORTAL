@@ -43,7 +43,7 @@ export default function HrmDirectory({
     const seed = Array.from(u.id).reduce((sum, char) => sum + char.charCodeAt(0), 0);
     const normalizedId = u.id.replace(/[^a-zA-Z0-9]/g, '').toLowerCase() || `ns${seed}`;
     return {
-      email: u.email || `${normalizedId}@mis.edu.vn`,
+      email: u.email || `${normalizedId}@misvn.edu.vn`,
       phone: u.phone || `09${String(10000000 + (seed * 7919) % 90000000).padStart(8, '0')}`,
     };
   };

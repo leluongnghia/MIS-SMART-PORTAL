@@ -59,18 +59,18 @@ const MAU_UU_TIEN: Record<DoUuTien, string> = {
 
 // ─── Dữ liệu mẫu ─────────────────────────────────────────────────────────────
 const THE_MAU_KHOI_TAO: TheKanban[] = [
-  { id: 'k1',  hoTen: 'Lê Minh Khang',    khoi: 'Lớp 6', nguon: 'Website',     tvv: 'Trần Bảo Ngọc',       tvvKyHieu: 'TN', diemLead: 68, doUuTien: 'Cao',       giaiDoan: 'Tiếp nhận mới', hoatDongCuoi: '18/05 09:12', buocTiep: 'Gọi điện tư vấn' },
-  { id: 'k2',  hoTen: 'Nguyễn Gia Bảo',   khoi: 'Lớp 3', nguon: 'Zalo OA',    tvv: 'Trần Bảo Ngọc',       tvvKyHieu: 'TN', diemLead: 72, doUuTien: 'Cao',       giaiDoan: 'Tiếp nhận mới', hoatDongCuoi: '18/05 10:15', buocTiep: 'Gửi tài liệu' },
-  { id: 'k3',  hoTen: 'Võ Thị Hoa',       khoi: 'Lớp 2', nguon: 'Facebook',   tvv: 'Trần Bảo Ngọc',       tvvKyHieu: 'TN', diemLead: 45, doUuTien: 'Thấp',      giaiDoan: 'Tiếp nhận mới', hoatDongCuoi: '17/05 16:05', buocTiep: 'Gửi Zalo' },
-  { id: 'k4',  hoTen: 'Trần Bảo Ngọc',    khoi: 'Lớp 7', nguon: 'Website',    tvv: 'Phạm Gia Huy',         tvvKyHieu: 'PH', diemLead: 75, doUuTien: 'Cao',       giaiDoan: 'Đang tư vấn',   hoatDongCuoi: '18/05 10:15', buocTiep: 'Tư vấn chuyên sâu' },
-  { id: 'k5',  hoTen: 'Phạm Minh Châu',   khoi: 'Lớp 4', nguon: 'Facebook',   tvv: 'Nguyễn Phương Linh',   tvvKyHieu: 'NL', diemLead: 60, doUuTien: 'Trung bình', giaiDoan: 'Đang tư vấn',   hoatDongCuoi: '18/05 09:45', buocTiep: 'Tư vấn học phí' },
-  { id: 'k6',  hoTen: 'Nguyễn Minh Anh',  khoi: 'Lớp 6', nguon: 'Website',    tvv: 'Phạm Gia Huy',         tvvKyHieu: 'PH', diemLead: 80, doUuTien: 'Cao',       giaiDoan: 'Đặt lịch test', hoatDongCuoi: '18/05 10:02', buocTiep: 'Nhắc lịch test', hanChot: '20/05 14:00' },
-  { id: 'k7',  hoTen: 'Lê Gia Bảo',       khoi: 'Lớp 5', nguon: 'Zalo OA',    tvv: 'Nguyễn Phương Linh',   tvvKyHieu: 'NL', diemLead: 65, doUuTien: 'Trung bình', giaiDoan: 'Đặt lịch test', hoatDongCuoi: '18/05 09:20', buocTiep: 'Nhắc lịch test', hanChot: '19/05 09:00' },
-  { id: 'k8',  hoTen: 'Hoàn An Nhiên',    khoi: 'Lớp 9', nguon: 'Giới thiệu', tvv: 'Phạm Gia Huy',         tvvKyHieu: 'PH', diemLead: 85, doUuTien: 'Cao',       giaiDoan: 'Đã thi test',   hoatDongCuoi: '18/05 11:20', buocTiep: 'Phân tích kết quả' },
-  { id: 'k9',  hoTen: 'Phan Gia Huy',     khoi: 'Lớp 6', nguon: 'Website',    tvv: 'Lê Hoàng Minh',        tvvKyHieu: 'LM', diemLead: 88, doUuTien: 'Cao',       giaiDoan: 'Nộp hồ sơ',    hoatDongCuoi: '18/05 11:05', buocTiep: 'Nhận nộp hồ sơ', tienDoHoSo: '2/4' },
-  { id: 'k10', hoTen: 'Đỗ Bảo Ngọc',     khoi: 'Lớp 5', nguon: 'Facebook Ads', tvv: 'Trần Bảo Ngọc',     tvvKyHieu: 'TN', diemLead: 90, doUuTien: 'Cao',       giaiDoan: 'Giữ chỗ',      hoatDongCuoi: '18/05 11:30', buocTiep: 'Ký hợp đồng', hanChot: '18/05' },
-  { id: 'k11', hoTen: 'Phạm Gia Hân',    khoi: 'Lớp 3', nguon: 'Website',     tvv: 'Phạm Gia Huy',         tvvKyHieu: 'PH', diemLead: 92, doUuTien: 'Cao',       giaiDoan: 'Nhập học',     hoatDongCuoi: '18/05 09:00', buocTiep: 'Nhập học thành công' },
-  { id: 'k12', hoTen: 'Lê Anh Khoa',     khoi: 'Lớp 4', nguon: 'Facebook Ads', tvv: 'Lê Hoàng Minh',      tvvKyHieu: 'LM', diemLead: 30, doUuTien: 'Thấp',      giaiDoan: 'Không tiếp tục', hoatDongCuoi: '15/05 15:00', buocTiep: 'Ghi nhận lý do' },
+  { id: 'l1',  hoTen: 'Lê Minh Khang',    khoi: 'Lớp 6', nguon: 'Website',     tvv: 'Trần Bảo Ngọc',       tvvKyHieu: 'TN', diemLead: 68, doUuTien: 'Cao',       giaiDoan: 'Tiếp nhận mới', hoatDongCuoi: '18/05 09:12', buocTiep: 'Gọi điện tư vấn' },
+  { id: 'l2',  hoTen: 'Nguyễn Gia Bảo',   khoi: 'Lớp 3', nguon: 'Zalo OA',    tvv: 'Trần Bảo Ngọc',       tvvKyHieu: 'TN', diemLead: 72, doUuTien: 'Cao',       giaiDoan: 'Tiếp nhận mới', hoatDongCuoi: '18/05 10:15', buocTiep: 'Gửi tài liệu' },
+  { id: 'l3',  hoTen: 'Võ Thị Hoa',       khoi: 'Lớp 2', nguon: 'Facebook',   tvv: 'Trần Bảo Ngọc',       tvvKyHieu: 'TN', diemLead: 45, doUuTien: 'Thấp',      giaiDoan: 'Tiếp nhận mới', hoatDongCuoi: '17/05 16:05', buocTiep: 'Gửi Zalo' },
+  { id: 'l4',  hoTen: 'Trần Bảo Ngọc',    khoi: 'Lớp 7', nguon: 'Website',    tvv: 'Phạm Gia Huy',         tvvKyHieu: 'PH', diemLead: 75, doUuTien: 'Cao',       giaiDoan: 'Đang tư vấn',   hoatDongCuoi: '18/05 10:15', buocTiep: 'Tư vấn chuyên sâu' },
+  { id: 'l5',  hoTen: 'Phạm Minh Châu',   khoi: 'Lớp 4', nguon: 'Facebook',   tvv: 'Nguyễn Phương Linh',   tvvKyHieu: 'NL', diemLead: 60, doUuTien: 'Trung bình', giaiDoan: 'Đang tư vấn',   hoatDongCuoi: '18/05 09:45', buocTiep: 'Tư vấn học phí' },
+  { id: 'l6',  hoTen: 'Nguyễn Minh Anh',  khoi: 'Lớp 6', nguon: 'Website',    tvv: 'Phạm Gia Huy',         tvvKyHieu: 'PH', diemLead: 80, doUuTien: 'Cao',       giaiDoan: 'Đặt lịch test', hoatDongCuoi: '18/05 10:02', buocTiep: 'Nhắc lịch test', hanChot: '20/05 14:00' },
+  { id: 'l7',  hoTen: 'Lê Gia Bảo',       khoi: 'Lớp 5', nguon: 'Zalo OA',    tvv: 'Nguyễn Phương Linh',   tvvKyHieu: 'NL', diemLead: 65, doUuTien: 'Trung bình', giaiDoan: 'Đặt lịch test', hoatDongCuoi: '18/05 09:20', buocTiep: 'Nhắc lịch test', hanChot: '19/05 09:00' },
+  { id: 'l8',  hoTen: 'Hoàn An Nhiên',    khoi: 'Lớp 9', nguon: 'Giới thiệu', tvv: 'Phạm Gia Huy',         tvvKyHieu: 'PH', diemLead: 85, doUuTien: 'Cao',       giaiDoan: 'Đã thi test',   hoatDongCuoi: '18/05 11:20', buocTiep: 'Phân tích kết quả' },
+  { id: 'l9',  hoTen: 'Phan Gia Huy',     khoi: 'Lớp 6', nguon: 'Website',    tvv: 'Lê Hoàng Minh',        tvvKyHieu: 'LM', diemLead: 88, doUuTien: 'Cao',       giaiDoan: 'Nộp hồ sơ',    hoatDongCuoi: '18/05 11:05', buocTiep: 'Nhận nộp hồ sơ', tienDoHoSo: '2/4' },
+  { id: 'l10', hoTen: 'Đỗ Bảo Ngọc',     khoi: 'Lớp 5', nguon: 'Facebook Ads', tvv: 'Trần Bảo Ngọc',     tvvKyHieu: 'TN', diemLead: 90, doUuTien: 'Cao',       giaiDoan: 'Giữ chỗ',      hoatDongCuoi: '18/05 11:30', buocTiep: 'Ký hợp đồng', hanChot: '18/05' },
+  { id: 'l11', hoTen: 'Phạm Gia Hân',    khoi: 'Lớp 3', nguon: 'Website',     tvv: 'Phạm Gia Huy',         tvvKyHieu: 'PH', diemLead: 92, doUuTien: 'Cao',       giaiDoan: 'Nhập học',     hoatDongCuoi: '18/05 09:00', buocTiep: 'Nhập học thành công' },
+  { id: 'l12', hoTen: 'Lê Anh Khoa',     khoi: 'Lớp 4', nguon: 'Facebook Ads', tvv: 'Lê Hoàng Minh',      tvvKyHieu: 'LM', diemLead: 30, doUuTien: 'Thấp',      giaiDoan: 'Không tiếp tục', hoatDongCuoi: '15/05 15:00', buocTiep: 'Ghi nhận lý do' },
 ];
 
 const THU_TU_GIAI_DOAN: GiaiDoan[] = [
@@ -356,8 +356,45 @@ function PanelChiTiet({
 // ─── Component chính ──────────────────────────────────────────────────────────
 const VISIBLE_LIMIT = 3;
 
-export default function AdmissionsPipelineKanban() {
+export default function AdmissionsPipelineKanban({
+  leads,
+  onViewDetail
+}: {
+  leads?: any[];
+  onViewDetail?: (leadId: string) => void;
+} = {}) {
   const [danhSachThe, setDanhSachThe] = useState<TheKanban[]>(THE_MAU_KHOI_TAO);
+
+  // Sync leads from parent
+  React.useEffect(() => {
+    if (leads && leads.length > 0) {
+      const mapped = leads.map(l => {
+        let gd: GiaiDoan = 'Tiếp nhận mới';
+        if (l.trangThai === 'Mới') gd = 'Tiếp nhận mới';
+        else if (l.trangThai === 'Đang tư vấn') gd = 'Đang tư vấn';
+        else if (l.trangThai === 'Đăng ký test') gd = 'Đặt lịch test';
+        else if (l.trangThai === 'Nộp hồ sơ') gd = 'Nộp hồ sơ';
+        else if (l.trangThai === 'Giữ chỗ') gd = 'Giữ chỗ';
+        else if (l.trangThai === 'Nhập học') gd = 'Nhập học';
+        else if (l.trangThai === 'Không tiếp tục') gd = 'Không tiếp tục';
+
+        return {
+          id: l.id,
+          hoTen: l.hoTen,
+          khoi: l.khoi,
+          nguon: l.nguonLead,
+          tvv: l.tvv,
+          tvvKyHieu: l.tvvAvatar,
+          diemLead: l.diemLead,
+          doUuTien: l.diemLead >= 80 ? 'Cao' : l.diemLead >= 60 ? 'Trung bình' : 'Thấp',
+          giaiDoan: gd,
+          hoatDongCuoi: l.ngayTao,
+          buocTiep: 'Cập nhật trạng thái'
+        } as TheKanban;
+      });
+      setDanhSachThe(mapped);
+    }
+  }, [leads]);
   const [theChon, setTheChon] = useState<TheKanban | null>(null);
   const [locTvv, setLocTvv] = useState('Tất cả tư vấn viên');
   const [locNguon, setLocNguon] = useState('Tất cả nguồn');
@@ -516,7 +553,13 @@ export default function AdmissionsPipelineKanban() {
                   <TheKanbanItem 
                     key={the.id} 
                     the={the} 
-                    onClick={() => setTheChon(the)} 
+                    onClick={() => {
+                      if (onViewDetail) {
+                        onViewDetail(the.id);
+                      } else {
+                        setTheChon(the);
+                      }
+                    }} 
                     anDiem={tuyChinhAnDiem}
                     anTvv={tuyChinhAnTvv}
                     onActionClick={(e) => {

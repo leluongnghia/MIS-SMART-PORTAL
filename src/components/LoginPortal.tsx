@@ -118,7 +118,7 @@ export default function LoginPortal({ onLoginSuccess, initialUser }: LoginPortal
       .replace(/[\u0300-\u036f]/g, '')
       .replace(/[đĐ]/g, 'd')
       .replace(/\s+/g, '.');
-    return `${cleanName}@mis.edu.vn`;
+    return `${cleanName}@misvn.edu.vn`;
   };
 
   const handleGoogleLogin = async () => {
@@ -267,7 +267,7 @@ export default function LoginPortal({ onLoginSuccess, initialUser }: LoginPortal
                     type="email"
                     value={emailInput}
                     onChange={(e) => setEmailInput(e.target.value)}
-                    placeholder="name@mis.edu.vn"
+                    placeholder="name@misvn.edu.vn"
                     className="w-full bg-slate-900 border border-slate-800 text-slate-200 placeholder-slate-500 rounded-xl py-2.5 pl-10 pr-4 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-all font-sans"
                   />
                 </div>

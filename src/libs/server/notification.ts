@@ -32,7 +32,7 @@ export async function getNotificationConfigStatus() {
       secure: process.env.SMTP_SECURE === 'true',
       userConfigured: Boolean(process.env.SMTP_USER),
       passConfigured: Boolean(process.env.SMTP_PASS),
-      from: process.env.EMAIL_FROM || '"MIS Smart Portal" <noreply@mis.edu.vn>',
+      from: process.env.EMAIL_FROM || '"MIS Smart Portal" <noreply@misvn.edu.vn>',
       testReceiverConfigured: Boolean(process.env.TEST_RECEIVER_EMAIL),
       testReceiverEmail: process.env.TEST_RECEIVER_EMAIL || '',
       maxCampaignEmailsPerRun: process.env.MAX_CAMPAIGN_EMAILS_PER_RUN || '20',
@@ -56,7 +56,7 @@ export async function getNotificationConfigStatus() {
       secure: process.env.ADMISSIONS_SMTP_SECURE === 'true',
       userConfigured: Boolean(process.env.ADMISSIONS_SMTP_USER),
       passConfigured: Boolean(process.env.ADMISSIONS_SMTP_PASS),
-      from: process.env.ADMISSIONS_SMTP_FROM || '"Phòng Tuyển sinh MIS" <admissions@mis.edu.vn>',
+      from: process.env.ADMISSIONS_SMTP_FROM || '"Phòng Tuyển sinh MIS" <admissions@misvn.edu.vn>',
       requiredEnv: ['ADMISSIONS_SMTP_HOST', 'ADMISSIONS_SMTP_PORT', 'ADMISSIONS_SMTP_SECURE', 'ADMISSIONS_SMTP_USER', 'ADMISSIONS_SMTP_PASS', 'ADMISSIONS_SMTP_FROM'],
     },
     bank: {
@@ -102,7 +102,7 @@ export async function sendMailWithFallback(mailOptions: {
     greetingTimeout: 10000,
     socketTimeout: 15000,
   };
-  let from = process.env.EMAIL_FROM || '"MIS Smart Portal" <noreply@mis.edu.vn>';
+  let from = process.env.EMAIL_FROM || '"MIS Smart Portal" <noreply@misvn.edu.vn>';
   let hasSmtp = hasSmtpConfig();
 
   if (useAdmissions && process.env.ADMISSIONS_SMTP_HOST) {
@@ -118,7 +118,7 @@ export async function sendMailWithFallback(mailOptions: {
       greetingTimeout: 10000,
       socketTimeout: 15000,
     };
-    from = process.env.ADMISSIONS_SMTP_FROM || '"Phòng Tuyển sinh MIS" <admissions@mis.edu.vn>';
+    from = process.env.ADMISSIONS_SMTP_FROM || '"Phòng Tuyển sinh MIS" <admissions@misvn.edu.vn>';
     hasSmtp = Boolean(process.env.ADMISSIONS_SMTP_HOST && process.env.ADMISSIONS_SMTP_USER && process.env.ADMISSIONS_SMTP_PASS);
   }
 

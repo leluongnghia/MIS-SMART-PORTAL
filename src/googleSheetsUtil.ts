@@ -450,7 +450,7 @@ function autoSendDailyReportEmail() {
   var percent = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
   
   // Danh sách email nhận báo cáo của ban lãnh đạo (Thay thế bằng các email thật)
-  var emailRecipients = "principal@mis.edu.vn, board@mis.edu.vn, duonghinhi22@gmail.com";
+  var emailRecipients = "principal@misvn.edu.vn, board@misvn.edu.vn, duonghinhi22@gmail.com";
   
   var dateStr = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "dd/MM/yyyy");
   

@@ -640,7 +640,7 @@ export default function StudentSuccessHub({ currentUser }: { currentUser: UserPr
       avatar: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150&h=150&fit=crop&crop=face',
       parentName: 'Phụ huynh chưa cập nhật',
       parentPhone: 'Chưa cập nhật',
-      parentEmail: 'parent@mis.edu.vn',
+      parentEmail: 'parent@misvn.edu.vn',
       emergencyContact: 'Chưa cập nhật',
       address: 'Chưa cập nhật',
       healthNote: 'Chưa cập nhật hồ sơ y tế.',

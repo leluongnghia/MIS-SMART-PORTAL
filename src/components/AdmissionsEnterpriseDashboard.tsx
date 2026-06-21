@@ -140,10 +140,10 @@ export default function AdmissionsEnterpriseDashboard({
     switch (internalModule) {
       case 'dashboard':    return <AdmissionsDashboard onNavigate={(tab) => setInternalModule(tab as AdmissionsModule)} />;
       case 'leads':        return <AdmissionsLeadsTable leads={leads} setLeads={setLeads} chuongTrinhList={chuongTrinhList.filter(c => c.hoatDong).map(c => c.ten)} onViewDetail={(leadId) => { setSelectedLeadId(leadId); setInternalModule('lead_detail'); }} />;
-      case 'pipeline':     return <AdmissionsPipelineKanban />;
+      case 'pipeline':     return <AdmissionsPipelineKanban leads={leads} onViewDetail={(leadId) => { setSelectedLeadId(leadId); setInternalModule('lead_detail'); }} />;
       case 'lead_detail':  {
         const selectedLead = leads.find(l => l.id === selectedLeadId) || leads[0];
-        return <AdmissionsLeadDetail lead={selectedLead} onBack={() => setInternalModule('leads')} />;
+        return <AdmissionsLeadDetail lead={selectedLead} onBack={() => setInternalModule('pipeline')} />;
       }
       case 'appointments': return <AdmissionsAppointments />;
       case 'documents':    return <AdmissionsDocuments />;

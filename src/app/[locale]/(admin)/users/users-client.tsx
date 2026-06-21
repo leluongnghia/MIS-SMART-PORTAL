@@ -229,7 +229,7 @@ export default function UsersClient({ locale, initialActor }: { locale: string; 
     notify("Đã xuất CSV.");
   };
 
-  const downloadTemplate = () => downloadCsv("mis-users-import-template.csv", [{ "Họ tên": "Nguyễn Văn A", Email: "a@mis.edu.vn", "Số điện thoại": "0900000000", "Phòng ban": "dept_bgh", "Tổ chuyên môn": "", "Chức danh": "Giáo viên", "Vai trò": "TEACHER", "Phạm vi dữ liệu": "CLASS", "Trạng thái": "ACTIVE", "Ghi chú": "" }]);
+  const downloadTemplate = () => downloadCsv("mis-users-import-template.csv", [{ "Họ tên": "Nguyễn Văn A", Email: "a@misvn.edu.vn", "Số điện thoại": "0900000000", "Phòng ban": "dept_bgh", "Tổ chuyên môn": "", "Chức danh": "Giáo viên", "Vai trò": "TEACHER", "Phạm vi dữ liệu": "CLASS", "Trạng thái": "ACTIVE", "Ghi chú": "" }]);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -253,7 +253,7 @@ export default function UsersClient({ locale, initialActor }: { locale: string; 
     // Ánh xạ dữ liệu từ CSV vào định dạng User
     const usersToImport = importData.map(row => ({
       name: row["Họ tên"] || row["name"] || "Không tên",
-      email: row["Email"] || row["email"] || `import.${Date.now()}.${Math.random().toString(36).substring(7)}@mis.edu.vn`,
+      email: row["Email"] || row["email"] || `import.${Date.now()}.${Math.random().toString(36).substring(7)}@misvn.edu.vn`,
       phone: row["Số điện thoại"] || row["phone"] || "0900000000",
       departmentId: departments.find(d => d.name === row["Phòng ban"])?.id || departments[0]?.id || "dept_bgh",
       title: row["Chức danh"] || row["title"] || "Nhân viên",

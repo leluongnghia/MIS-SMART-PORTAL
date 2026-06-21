@@ -163,7 +163,7 @@ export default function GoogleSheetsCenter({ tasks, onSyncComplete }: GoogleShee
 
   // Email report configuration state
   const [recipientEmails, setRecipientEmails] = useState(() => {
-    return serverStorage.getItem('mis_recipient_emails') || 'duonghinhi225@gmail.com, principal@mis.edu.vn, board@mis.edu.vn';
+    return serverStorage.getItem('mis_recipient_emails') || 'duonghinhi225@gmail.com, principal@misvn.edu.vn, board@misvn.edu.vn';
   });
   const [isAutoReportActive, setIsAutoReportActive] = useState(() => {
     return serverStorage.getItem('mis_auto_report_active') === 'true';
@@ -1177,7 +1177,7 @@ export default function GoogleSheetsCenter({ tasks, onSyncComplete }: GoogleShee
                   type="text"
                   value={recipientEmails}
                   onChange={(e) => setRecipientEmails(e.target.value)}
-                  placeholder="duonghinhi225@gmail.com, principal@mis.edu.vn"
+                  placeholder="duonghinhi225@gmail.com, principal@misvn.edu.vn"
                   className="w-full bg-white border border-slate-300 rounded-lg p-2 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-green-500 text-slate-750"
                 />
               </div>

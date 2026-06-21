@@ -400,7 +400,7 @@ export default function SystemSettingsModal({ onClose, currentUserId }: SystemSe
 
                   <div>
                     <label className="block text-[10.5px] font-extrabold text-slate-400 mb-1 uppercase tracking-wider">Tên & Email gửi (From)</label>
-                    <input value={smtpFrom} onChange={e => setSmtpFrom(e.target.value)} placeholder='"MIS Smart Portal" <noreply@mis.edu.vn>' className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200 bg-white" />
+                    <input value={smtpFrom} onChange={e => setSmtpFrom(e.target.value)} placeholder='"MIS Smart Portal" <noreply@misvn.edu.vn>' className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200 bg-white" />
                   </div>
                 </div>
 

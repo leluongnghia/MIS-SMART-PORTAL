@@ -118,7 +118,7 @@ export const WORKSPACES: Workspace[] = [
 export const MOCK_USERS: UserProfile[] = [
   {
     id: 'user_chutich',
-    email: 'chutich@mis.edu.vn',
+    email: 'chutich@misvn.edu.vn',
     name: 'Thầy PGS.TS. Nguyễn Văn Minh',
     role: 'ADMIN',
     roleName: 'Ban Giám hiệu & Hội đồng',
@@ -128,7 +128,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_ceo',
-    email: 'ceo@mis.edu.vn',
+    email: 'ceo@misvn.edu.vn',
     name: 'HVL',
     role: 'ADMIN',
     roleName: 'Ban Giám hiệu & Hội đồng',
@@ -138,7 +138,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_triet',
-    email: 'triet@mis.edu.vn',
+    email: 'triet@misvn.edu.vn',
     name: 'Thầy Nguyễn Minh Triết',
     role: 'ADMIN',
     roleName: 'Ban Giám hiệu',
@@ -148,7 +148,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_tuan',
-    email: 'tuan@mis.edu.vn',
+    email: 'tuan@misvn.edu.vn',
     name: 'Thầy Ngô Anh Tuấn',
     role: 'ADMIN',
     roleName: 'Ban Giám hiệu',
@@ -158,7 +158,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_nam_anh',
-    email: 'nam_anh@mis.edu.vn',
+    email: 'nam_anh@misvn.edu.vn',
     name: 'Thầy Dương Nam Anh',
     role: 'ADMIN',
     roleName: 'Ban Giám hiệu',
@@ -168,7 +168,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_nhan',
-    email: 'nhan@mis.edu.vn',
+    email: 'nhan@misvn.edu.vn',
     name: 'Cô Lê Thị Thanh Nhàn',
     role: 'MANAGER',
     roleName: 'Tổ trưởng Chuyên môn',
@@ -178,7 +178,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_dat',
-    email: 'dat@mis.edu.vn',
+    email: 'dat@misvn.edu.vn',
     name: 'Thầy Vũ Tiến Đạt',
     role: 'MANAGER',
     roleName: 'Tổ trưởng Chuyên môn',
@@ -188,7 +188,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_binh_mgr',
-    email: 'binh_mgr@mis.edu.vn',
+    email: 'binh_mgr@misvn.edu.vn',
     name: 'Cô Hoàng Trúc Liên',
     role: 'MANAGER',
     roleName: 'Tổ trưởng Chức năng',
@@ -199,7 +199,7 @@ export const MOCK_USERS: UserProfile[] = [
   // -- BỔ SUNG CÁC TỔ TRƯỞNG / TRƯỞNG NHÓM THEO SƠ ĐỒ CHUYÊN MÔN --
   {
     id: 'user_khtn_mgr',
-    email: 'kimanh@mis.edu.vn',
+    email: 'kimanh@misvn.edu.vn',
     name: 'Cô Trần Thị Kim Anh',
     role: 'MANAGER',
     roleName: 'Tổ trưởng Chuyên môn',
@@ -209,7 +209,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_lsdl_mgr',
-    email: 'vanson@mis.edu.vn',
+    email: 'vanson@misvn.edu.vn',
     name: 'Thầy Hoàng Văn Sơn',
     role: 'MANAGER',
     roleName: 'Tổ trưởng Chuyên môn',
@@ -219,7 +219,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_nn_mgr',
-    email: 'minhtuyet@mis.edu.vn',
+    email: 'minhtuyet@misvn.edu.vn',
     name: 'Cô Minh Tuyết',
     role: 'MANAGER',
     roleName: 'Tổ trưởng Chuyên môn',
@@ -229,7 +229,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_nt_mgr',
-    email: 'hoanghuong@mis.edu.vn',
+    email: 'hoanghuong@misvn.edu.vn',
     name: 'Cô Hoàng Thị Hương',
     role: 'MANAGER',
     roleName: 'Tổ trưởng Chuyên môn',
@@ -239,7 +239,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_khtn_cs_mgr',
-    email: 'minhkhang@mis.edu.vn',
+    email: 'minhkhang@misvn.edu.vn',
     name: 'Thầy Vũ Minh Khang',
     role: 'MANAGER',
     roleName: 'Tổ trưởng Chuyên môn',
@@ -249,7 +249,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_toan_th_mgr',
-    email: 'maichi@mis.edu.vn',
+    email: 'maichi@misvn.edu.vn',
     name: 'Cô Nguyễn Mai Chi',
     role: 'MANAGER',
     roleName: 'Tổ trưởng Chuyên môn',
@@ -259,7 +259,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_khtn_th_mgr',
-    email: 'thuha@mis.edu.vn',
+    email: 'thuha@misvn.edu.vn',
     name: 'Cô Lê Thu Hà',
     role: 'MANAGER',
     roleName: 'Tổ trưởng Chuyên môn',
@@ -269,7 +269,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_nt_th_mgr',
-    email: 'congson@mis.edu.vn',
+    email: 'congson@misvn.edu.vn',
     name: 'Thầy Trịnh Công Sơn',
     role: 'MANAGER',
     roleName: 'Tổ trưởng Chuyên môn',
@@ -279,7 +279,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_nam',
-    email: 'nam@mis.edu.vn',
+    email: 'nam@misvn.edu.vn',
     name: 'Thầy Trần Hoàng Nam',
     role: 'MANAGER',
     roleName: 'Tổ phó Chuyên môn',
@@ -289,7 +289,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_nhung',
-    email: 'nhung@mis.edu.vn',
+    email: 'nhung@misvn.edu.vn',
     name: 'Cô Phạm Hồng Nhung',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -299,7 +299,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_kha',
-    email: 'kha@mis.edu.vn',
+    email: 'kha@misvn.edu.vn',
     name: 'Thầy Nguyễn Văn Kha',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -309,7 +309,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_lan',
-    email: 'lan@mis.edu.vn',
+    email: 'lan@misvn.edu.vn',
     name: 'Cô Nguyễn Thanh Lan',
     role: 'MANAGER',
     roleName: 'Tổ trưởng Chuyên môn',
@@ -319,7 +319,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_phong',
-    email: 'phong@mis.edu.vn',
+    email: 'phong@misvn.edu.vn',
     name: 'Thầy Bùi Hải Phong',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -329,7 +329,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_quyen',
-    email: 'quyen@mis.edu.vn',
+    email: 'quyen@misvn.edu.vn',
     name: 'Cô Đỗ Thục Quyên',
     role: 'MANAGER',
     roleName: 'Liên hệ chuyên môn',
@@ -339,7 +339,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_binh',
-    email: 'binh@mis.edu.vn',
+    email: 'binh@misvn.edu.vn',
     name: 'Thầy Phạm Thanh Bình',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -349,7 +349,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_dung',
-    email: 'dung@mis.edu.vn',
+    email: 'dung@misvn.edu.vn',
     name: 'Cô Mai Phương Dũng',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -359,7 +359,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_minh',
-    email: 'minh@mis.edu.vn',
+    email: 'minh@misvn.edu.vn',
     name: 'Thầy Lê Quang Minh',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -369,7 +369,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_hoa',
-    email: 'hoa@mis.edu.vn',
+    email: 'hoa@misvn.edu.vn',
     name: 'Cô Trịnh Thúy Hoa',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -379,7 +379,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_khanh',
-    email: 'khanh@mis.edu.vn',
+    email: 'khanh@misvn.edu.vn',
     name: 'Thầy Nguyễn Quốc Khánh',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -389,7 +389,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_ngoc',
-    email: 'ngoc@mis.edu.vn',
+    email: 'ngoc@misvn.edu.vn',
     name: 'Cô Lâm Nhã Ngọc',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -399,7 +399,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_van_anh',
-    email: 'van_anh@mis.edu.vn',
+    email: 'van_anh@misvn.edu.vn',
     name: 'Cô Trần Vân Anh',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -409,7 +409,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_long',
-    email: 'long@mis.edu.vn',
+    email: 'long@misvn.edu.vn',
     name: 'Thầy Hoàng Thăng Long',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -420,7 +420,7 @@ export const MOCK_USERS: UserProfile[] = [
   // -- BỔ SUNG THÀNH VIÊN TỔ TOÁN - TIN (12 giáo viên) --
   {
     id: 'user_toan_thai',
-    email: 'toan_thai@mis.edu.vn',
+    email: 'toan_thai@misvn.edu.vn',
     name: 'Thầy Lê Quốc Thái',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -430,7 +430,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_toan_thao',
-    email: 'toan_thao@mis.edu.vn',
+    email: 'toan_thao@misvn.edu.vn',
     name: 'Cô Vũ Thu Thảo',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -440,7 +440,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_toan_dang',
-    email: 'toan_dang@mis.edu.vn',
+    email: 'toan_dang@misvn.edu.vn',
     name: 'Thầy Phan Hải Đăng',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -450,7 +450,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_toan_linh',
-    email: 'toan_linh@mis.edu.vn',
+    email: 'toan_linh@misvn.edu.vn',
     name: 'Cô Đặng Khánh Linh',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -460,7 +460,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_toan_quan',
-    email: 'toan_quan@mis.edu.vn',
+    email: 'toan_quan@misvn.edu.vn',
     name: 'Thầy Trịnh Minh Quân',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -470,7 +470,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_toan_trang',
-    email: 'toan_trang@mis.edu.vn',
+    email: 'toan_trang@misvn.edu.vn',
     name: 'Cô Phạm Kiều Trang',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -480,7 +480,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_toan_hoang',
-    email: 'toan_hoang@mis.edu.vn',
+    email: 'toan_hoang@misvn.edu.vn',
     name: 'Thầy Nguyễn Văn Hoàng',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -490,7 +490,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_toan_yen',
-    email: 'toan_yen@mis.edu.vn',
+    email: 'toan_yen@misvn.edu.vn',
     name: 'Cô Đỗ Hoàng Yến',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -500,7 +500,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_toan_dao',
-    email: 'toan_dao@mis.edu.vn',
+    email: 'toan_dao@misvn.edu.vn',
     name: 'Thầy Bùi Quang Đạo',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -510,7 +510,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_toan_chi',
-    email: 'toan_chi@mis.edu.vn',
+    email: 'toan_chi@misvn.edu.vn',
     name: 'Cô Nguyễn Quỳnh Chi',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -520,7 +520,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_toan_long',
-    email: 'toan_long@mis.edu.vn',
+    email: 'toan_long@misvn.edu.vn',
     name: 'Thầy Lâm Hoàng Long',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -530,7 +530,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_toan_ngan',
-    email: 'toan_ngan@mis.edu.vn',
+    email: 'toan_ngan@misvn.edu.vn',
     name: 'Cô Phan Kim Ngân',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -542,7 +542,7 @@ export const MOCK_USERS: UserProfile[] = [
   // -- BỔ SUNG THÀNH VIÊN TỔ NGỮ VĂN (12 giáo viên) --
   {
     id: 'user_van_mai',
-    email: 'van_mai@mis.edu.vn',
+    email: 'van_mai@misvn.edu.vn',
     name: 'Cô Nguyễn Tuyết Mai',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -552,7 +552,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_van_bao',
-    email: 'van_bao@mis.edu.vn',
+    email: 'van_bao@misvn.edu.vn',
     name: 'Thầy Đinh Gia Bảo',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -562,7 +562,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_van_vi',
-    email: 'van_vi@mis.edu.vn',
+    email: 'van_vi@misvn.edu.vn',
     name: 'Cô Huỳnh Thúy Vi',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -572,7 +572,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_van_bich',
-    email: 'van_bich@mis.edu.vn',
+    email: 'van_bich@misvn.edu.vn',
     name: 'Cô Lưu Ngọc Bích',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -582,7 +582,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_van_ky',
-    email: 'van_ky@mis.edu.vn',
+    email: 'van_ky@misvn.edu.vn',
     name: 'Thầy Trương Vĩnh Kỳ',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -592,7 +592,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_van_my',
-    email: 'van_my@mis.edu.vn',
+    email: 'van_my@misvn.edu.vn',
     name: 'Cô Hoàng Diễm My',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -602,7 +602,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_van_huong',
-    email: 'van_huong@mis.edu.vn',
+    email: 'van_huong@misvn.edu.vn',
     name: 'Cô Ngô Vũ Quỳnh Hương',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -612,7 +612,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_van_khanh_mr',
-    email: 'van_khanh_mr@mis.edu.vn',
+    email: 'van_khanh_mr@misvn.edu.vn',
     name: 'Thầy Mai Quốc Khánh',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -622,7 +622,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_van_an',
-    email: 'van_an@mis.edu.vn',
+    email: 'van_an@misvn.edu.vn',
     name: 'Cô Kiều Khánh An',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -632,7 +632,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_van_hung',
-    email: 'van_hung@mis.edu.vn',
+    email: 'van_hung@misvn.edu.vn',
     name: 'Thầy Vương Chí Hùng',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -642,7 +642,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_van_vandang',
-    email: 'van_vandang@mis.edu.vn',
+    email: 'van_vandang@misvn.edu.vn',
     name: 'Cô Đặng Thanh Vân',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -652,7 +652,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_van_duy',
-    email: 'van_duy@mis.edu.vn',
+    email: 'van_duy@misvn.edu.vn',
     name: 'Thầy Trần Đình Duy',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -664,7 +664,7 @@ export const MOCK_USERS: UserProfile[] = [
   // -- BỔ SUNG CHUYÊN VIÊN TỔ HÀNH CHÍNH (12 chuyên viên) --
   {
     id: 'user_hc_ha',
-    email: 'hc_ha@mis.edu.vn',
+    email: 'hc_ha@misvn.edu.vn',
     name: 'Thầy Triệu Quang Hà',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -674,7 +674,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_hc_dung',
-    email: 'hc_dung@mis.edu.vn',
+    email: 'hc_dung@misvn.edu.vn',
     name: 'Cô Tống Phương Dung',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -684,7 +684,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_hc_thuan',
-    email: 'hc_thuan@mis.edu.vn',
+    email: 'hc_thuan@misvn.edu.vn',
     name: 'Thầy Lâm Vĩnh Thuận',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -694,7 +694,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_hc_hanh',
-    email: 'hc_hanh@mis.edu.vn',
+    email: 'hc_hanh@misvn.edu.vn',
     name: 'Cô Lương Mỹ Hạnh',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -704,7 +704,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_hc_son',
-    email: 'hc_son@mis.edu.vn',
+    email: 'hc_son@misvn.edu.vn',
     name: 'Thầy Cao Thanh Sơn',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -714,7 +714,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_hc_vy',
-    email: 'hc_vy@mis.edu.vn',
+    email: 'hc_vy@misvn.edu.vn',
     name: 'Cô Dương Ái Vy',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -724,7 +724,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_hc_sanh',
-    email: 'hc_sanh@mis.edu.vn',
+    email: 'hc_sanh@misvn.edu.vn',
     name: 'Thầy Nguyễn Thạch Sanh',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -734,7 +734,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_hc_nga',
-    email: 'hc_nga@mis.edu.vn',
+    email: 'hc_nga@misvn.edu.vn',
     name: 'Cô Kiều Nguyệt Nga',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -744,7 +744,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_hc_thanh',
-    email: 'hc_thanh@mis.edu.vn',
+    email: 'hc_thanh@misvn.edu.vn',
     name: 'Thầy Lương Thế Thành',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -754,7 +754,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_hc_linh',
-    email: 'hc_linh@mis.edu.vn',
+    email: 'hc_linh@misvn.edu.vn',
     name: 'Cô Tạ Ngọc Linh',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -764,7 +764,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_hc_thang',
-    email: 'hc_thang@mis.edu.vn',
+    email: 'hc_thang@misvn.edu.vn',
     name: 'Thầy Vương Toàn Thắng',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -774,7 +774,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_hc_huong',
-    email: 'hc_huong@mis.edu.vn',
+    email: 'hc_huong@misvn.edu.vn',
     name: 'Cô Phan Thu Hương',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -785,7 +785,7 @@ export const MOCK_USERS: UserProfile[] = [
   // -- BỘ PHẬN 1: PHÒNG TUYỂN SINH & TRUYỀN THÔNG (TUYEN_SINH_PR) --
   {
     id: 'user_pr_mgr',
-    email: 'pr_mgr@mis.edu.vn',
+    email: 'pr_mgr@misvn.edu.vn',
     name: 'Cô Vũ Khánh Chi',
     role: 'MANAGER',
     roleName: 'Tổ trưởng Chức năng',
@@ -795,7 +795,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_pr_ts1',
-    email: 'pr_ts1@mis.edu.vn',
+    email: 'pr_ts1@misvn.edu.vn',
     name: 'Cô Mai Phương Thảo',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -805,7 +805,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_pr_mkt',
-    email: 'pr_mkt@mis.edu.vn',
+    email: 'pr_mkt@misvn.edu.vn',
     name: 'Thầy Nguyễn Tiến Đạt',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -816,7 +816,7 @@ export const MOCK_USERS: UserProfile[] = [
   // -- BỘ PHẬN 2: BAN CHƯƠNG TRÌNH QUỐC TẾ (QUOC_TE) --
   {
     id: 'user_qt_mgr',
-    email: 'qt_mgr@mis.edu.vn',
+    email: 'qt_mgr@misvn.edu.vn',
     name: 'Thầy David Miller',
     role: 'MANAGER',
     roleName: 'Tổ trưởng Chuyên môn',
@@ -826,7 +826,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_qt_staff1',
-    email: 'qt_staff1@mis.edu.vn',
+    email: 'qt_staff1@misvn.edu.vn',
     name: 'Cô Trần Thanh Vân',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -836,7 +836,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_qt_staff2',
-    email: 'qt_staff2@mis.edu.vn',
+    email: 'qt_staff2@misvn.edu.vn',
     name: 'Thầy Jack Harrison',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -857,7 +857,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_kt_staff1',
-    email: 'kt_staff1@mis.edu.vn',
+    email: 'kt_staff1@misvn.edu.vn',
     name: 'Thầy Lưu Nhật Nam',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -867,7 +867,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_kt_staff2',
-    email: 'kt_staff2@mis.edu.vn',
+    email: 'kt_staff2@misvn.edu.vn',
     name: 'Cô Bùi Hà My',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -878,7 +878,7 @@ export const MOCK_USERS: UserProfile[] = [
   // -- BỘ PHẬN 4: TỔ CÔNG TÁC HỌC SINH & THAM VẤN (CTHS_TAM_LY) --
   {
     id: 'user_tl_mgr',
-    email: 'tl_mgr@mis.edu.vn',
+    email: 'tl_mgr@misvn.edu.vn',
     name: 'Thầy Nguyễn Hoàng Hải',
     role: 'MANAGER',
     roleName: 'Tổ trưởng Chức năng',
@@ -888,7 +888,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_tl_staff1',
-    email: 'tl_staff1@mis.edu.vn',
+    email: 'tl_staff1@misvn.edu.vn',
     name: 'Cô Nguyễn Minh Thư',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -898,7 +898,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_tl_staff2',
-    email: 'tl_staff2@mis.edu.vn',
+    email: 'tl_staff2@misvn.edu.vn',
     name: 'Cô Lê Quỳnh Chi',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -909,7 +909,7 @@ export const MOCK_USERS: UserProfile[] = [
   // -- BỘ PHẬN 5: PHÒNG DỊCH VỤ & VẬN HÀNH HỌC ĐƯỜNG (DICH_VU_HOC_DUONG) --
   {
     id: 'user_dv_mgr',
-    email: 'dv_mgr@mis.edu.vn',
+    email: 'dv_mgr@misvn.edu.vn',
     name: 'Thầy Phạm Thế Anh',
     role: 'MANAGER',
     roleName: 'Tổ trưởng Chức năng',
@@ -919,7 +919,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_dv_bus',
-    email: 'dv_bus@mis.edu.vn',
+    email: 'dv_bus@misvn.edu.vn',
     name: 'Thầy Trương Quốc Bảo',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -929,7 +929,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_dv_chef',
-    email: 'dv_chef@mis.edu.vn',
+    email: 'dv_chef@misvn.edu.vn',
     name: 'Cô Hoàng Kim Oanh',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -939,7 +939,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_dv_nurse',
-    email: 'dv_nurse@mis.edu.vn',
+    email: 'dv_nurse@misvn.edu.vn',
     name: 'Cô Ngô Khánh Linh',
     role: 'STAFF',
     roleName: 'Giáo viên / Nhân viên',
@@ -949,7 +949,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_dv_kitchen',
-    email: 'dv_kitchen@mis.edu.vn',
+    email: 'dv_kitchen@misvn.edu.vn',
     name: 'Cô Nguyễn Thị Hòa',
     role: 'STAFF',
     roleName: 'Nhân viên vận hành học đường',
@@ -962,7 +962,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_dv_canteen',
-    email: 'dv_canteen@mis.edu.vn',
+    email: 'dv_canteen@misvn.edu.vn',
     name: 'Cô Trần Mai Hương',
     role: 'STAFF',
     roleName: 'Nhân viên vận hành học đường',
@@ -975,7 +975,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_dv_cleaning',
-    email: 'dv_cleaning@mis.edu.vn',
+    email: 'dv_cleaning@misvn.edu.vn',
     name: 'Cô Phạm Thị Dung',
     role: 'STAFF',
     roleName: 'Nhân viên vận hành học đường',
@@ -988,7 +988,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_dv_security',
-    email: 'dv_security@mis.edu.vn',
+    email: 'dv_security@misvn.edu.vn',
     name: 'Thầy Lê Văn Dũng',
     role: 'STAFF',
     roleName: 'Nhân viên vận hành học đường',
@@ -1001,7 +1001,7 @@ export const MOCK_USERS: UserProfile[] = [
   },
   {
     id: 'user_cths_giamthi',
-    email: 'giamthi@mis.edu.vn',
+    email: 'giamthi@misvn.edu.vn',
     name: 'Thầy Nguyễn Đức Thành',
     role: 'STAFF',
     roleName: 'Nhân viên công tác học sinh',

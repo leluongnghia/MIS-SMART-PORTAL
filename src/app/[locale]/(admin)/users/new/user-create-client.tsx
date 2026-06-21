@@ -177,7 +177,7 @@ export default function UserCreateClient({
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 required
-                placeholder="username@mis.edu.vn"
+                placeholder="username@misvn.edu.vn"
                 className={inputCls}
               />
             </div>

@@ -340,7 +340,7 @@ export default function AdminShell({ locale, children }: { locale: string; child
       .replace(/[\u0300-\u036f]/g, '')
       .replace(/[đĐ]/g, 'd')
       .replace(/\\s+/g, '.');
-    return `${cleanName}@mis.edu.vn`;
+    return `${cleanName}@misvn.edu.vn`;
   };
 
   const usersByWorkspace = useMemo(() => {

@@ -501,7 +501,7 @@ export default function settingsPage({ initialData }: { initialData?: any }) {
                   </div>
                   <div>
                     <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Danh tính gửi (From)</label>
-                    <input value={smtpFrom} onChange={e => setSmtpFrom(e.target.value)} placeholder='"MIS Smart Portal" <noreply@mis.edu.vn>' className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 dark:bg-slate-900 rounded-xl text-xs bg-white" />
+                    <input value={smtpFrom} onChange={e => setSmtpFrom(e.target.value)} placeholder='"MIS Smart Portal" <noreply@misvn.edu.vn>' className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 dark:bg-slate-900 rounded-xl text-xs bg-white" />
                   </div>
                 </div>
 
@@ -812,7 +812,7 @@ ADMISSIONS_SMTP_FROM="${admissionsFrom}"`}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Tài khoản gửi (SMTP User)</label>
-                        <input value={admissionsUser} onChange={e => setAdmissionsUser(e.target.value)} placeholder="admissions@mis.edu.vn" className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 dark:bg-slate-900 rounded-xl text-xs" />
+                        <input value={admissionsUser} onChange={e => setAdmissionsUser(e.target.value)} placeholder="admissions@misvn.edu.vn" className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 dark:bg-slate-900 rounded-xl text-xs" />
                       </div>
                       <div>
                         <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Mật khẩu gửi (SMTP Pass)</label>
@@ -830,7 +830,7 @@ ADMISSIONS_SMTP_FROM="${admissionsFrom}"`}
                       </div>
                       <div>
                         <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Danh tính & Email gửi (From)</label>
-                        <input value={admissionsFrom} onChange={e => setAdmissionsFrom(e.target.value)} placeholder='"Phòng Tuyển sinh MIS" <admissions@mis.edu.vn>' className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 dark:bg-slate-900 rounded-xl text-xs" />
+                        <input value={admissionsFrom} onChange={e => setAdmissionsFrom(e.target.value)} placeholder='"Phòng Tuyển sinh MIS" <admissions@misvn.edu.vn>' className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 dark:bg-slate-900 rounded-xl text-xs" />
                       </div>
                     </div>
                   </div>
