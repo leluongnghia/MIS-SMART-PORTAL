@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/src
 import { Button } from '@/src/components/ui/button';
 import { Input } from '@/src/components/ui/input';
 import { Plus, Search, Trash2, AlertCircle, ArrowDownToLine, ArrowUpFromLine } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/src/components/ui/dialog';
 import { createSupply, updateSupplyQuantity } from '../actions';
 
 type SupplyItem = {
@@ -20,6 +21,12 @@ export function SuppliesTab({ initialSupplies = [] }: { initialSupplies?: Supply
   const [searchQuery, setSearchQuery] = useState('');
   const [isAdding, setIsAdding] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  
+  // Dialog state
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogType, setDialogType] = useState<'IMPORT' | 'EXPORT'>('IMPORT');
+  const [dialogSupplyId, setDialogSupplyId] = useState<string>('');
+  const [dialogQty, setDialogQty] = useState('');
 
   // Form states
   const [name, setName] = useState('');
@@ -54,25 +61,33 @@ export function SuppliesTab({ initialSupplies = [] }: { initialSupplies?: Supply
     setIsProcessing(false);
   };
 
-  const handleStockAction = async (id: string, type: 'IMPORT' | 'EXPORT') => {
-    const qtyStr = prompt(`Nhập số lượng muốn ${type === 'IMPORT' ? 'nhập' : 'xuất'} kho:`);
-    const qty = Number(qtyStr);
+  const handleOpenDialog = (id: string, type: 'IMPORT' | 'EXPORT') => {
+    setDialogType(type);
+    setDialogSupplyId(id);
+    setDialogQty('');
+    setDialogOpen(true);
+  };
+
+  const handleStockActionSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const qty = Number(dialogQty);
     if (!qty || qty <= 0) return;
 
     setIsProcessing(true);
-    const res = await updateSupplyQuantity(id, qty, type, `Thao tác ${type} từ UI`);
+    const res = await updateSupplyQuantity(dialogSupplyId, qty, dialogType, `Thao tác ${dialogType} từ UI`);
     if (res.success) {
-      setSupplies(supplies.map(s => s.id === id ? { ...s, currentQuantity: res.data.currentQuantity } : s));
-      alert(`Đã ${type === 'IMPORT' ? 'nhập' : 'xuất'} ${qty} đơn vị thành công!`);
+      setSupplies(supplies.map(s => s.id === dialogSupplyId ? { ...s, currentQuantity: res.data.currentQuantity } : s));
+      alert(`Đã ${dialogType === 'IMPORT' ? 'nhập' : 'xuất'} ${qty} đơn vị thành công!`);
     } else {
-      if (res.error === 'Supply not found' && id.startsWith('S00')) {
-        setSupplies(supplies.map(s => s.id === id ? { ...s, currentQuantity: type === 'IMPORT' ? s.currentQuantity + qty : s.currentQuantity - qty } : s));
-        alert(`Đã ${type === 'IMPORT' ? 'nhập' : 'xuất'} ${qty} đơn vị thành công (Dữ liệu tĩnh)!`);
+      if (res.error === 'Supply not found' && dialogSupplyId.startsWith('S00')) {
+        setSupplies(supplies.map(s => s.id === dialogSupplyId ? { ...s, currentQuantity: dialogType === 'IMPORT' ? s.currentQuantity + qty : s.currentQuantity - qty } : s));
+        alert(`Đã ${dialogType === 'IMPORT' ? 'nhập' : 'xuất'} ${qty} đơn vị thành công (Dữ liệu tĩnh)!`);
       } else {
         alert('Lỗi: ' + res.error);
       }
     }
     setIsProcessing(false);
+    setDialogOpen(false);
   };
 
   const filteredSupplies = supplies.filter((item) =>
@@ -165,7 +180,7 @@ export function SuppliesTab({ initialSupplies = [] }: { initialSupplies?: Supply
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleStockAction(item.id, 'IMPORT')}
+                          onClick={() => handleOpenDialog(item.id, 'IMPORT')}
                           disabled={isProcessing}
                           title="Nhập kho"
                         >
@@ -174,7 +189,7 @@ export function SuppliesTab({ initialSupplies = [] }: { initialSupplies?: Supply
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleStockAction(item.id, 'EXPORT')}
+                          onClick={() => handleOpenDialog(item.id, 'EXPORT')}
                           disabled={isProcessing}
                           title="Xuất kho"
                         >
@@ -195,6 +210,41 @@ export function SuppliesTab({ initialSupplies = [] }: { initialSupplies?: Supply
           </table>
         </div>
       </CardContent>
+      
+      {/* Shadcn UI Dialog for Import/Export instead of native prompt */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <form onSubmit={handleStockActionSubmit}>
+            <DialogHeader>
+              <DialogTitle>{dialogType === 'IMPORT' ? 'Nhập kho vật tư' : 'Xuất kho vật tư'}</DialogTitle>
+              <DialogDescription>
+                Vui lòng nhập số lượng bạn muốn {dialogType === 'IMPORT' ? 'nhập thêm vào kho' : 'xuất đi'}.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="space-y-2">
+                <Input
+                  type="number"
+                  min="1"
+                  placeholder="Nhập số lượng..."
+                  value={dialogQty}
+                  onChange={(e) => setDialogQty(e.target.value)}
+                  autoFocus
+                  required
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setDialogOpen(false)} disabled={isProcessing}>
+                Hủy
+              </Button>
+              <Button type="submit" disabled={isProcessing || !dialogQty}>
+                {isProcessing ? 'Đang xử lý...' : 'Xác nhận'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
