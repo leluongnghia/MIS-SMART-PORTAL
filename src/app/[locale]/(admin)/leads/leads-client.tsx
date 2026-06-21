@@ -26,7 +26,8 @@ import {
   ChevronDown as ChevronDownIcon,
   MoreVertical,
   FileSpreadsheet,
-  Upload
+  Upload,
+  Filter
 } from 'lucide-react';
 import { Button } from '@/src/components/ui/button';
 import { Input } from '@/src/components/ui/input';
@@ -652,15 +653,38 @@ export default function LeadsClient({
       </div>
 
       {/* Filter Toolbar */}
-      <Card>
+      <Card className="border-0 bg-white/50 backdrop-blur shadow-sm dark:bg-slate-950/50">
         <CardContent className="p-4">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+            <h3 className="text-sm font-black text-slate-800 dark:text-slate-200 flex items-center gap-2">
+              <Filter className="w-4 h-4 text-blue-500" />
+              Lọc Nâng Cao
+            </h3>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="font-bold border-slate-200 text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-200"
+                onClick={() => {
+                  setSearch('');
+                  setStatus('all');
+                  setSource('all');
+                  setGrade('all');
+                  setAssignedFilter('all');
+                  router.push(`/${locale}/leads`);
+                }}
+              >
+                Đặt lại bộ lọc
+              </Button>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
             {/* Search */}
             <div className="relative lg:col-span-2">
               <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
               <Input
-                placeholder="Tìm tên, SĐT, mã..."
-                className="pl-9"
+                placeholder="Tìm tên, SĐT, mã lead..."
+                className="pl-9 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-blue-500 rounded-xl"
                 value={search}
                 onChange={e => {
                   setSearch(e.target.value);
@@ -671,6 +695,7 @@ export default function LeadsClient({
             {/* Filter Status */}
             <Select
               value={status}
+              className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-xl"
               onChange={e => {
                 setStatus(e.target.value);
                 handleSearchAndFilters({ status: e.target.value, page: 1 });
@@ -684,6 +709,7 @@ export default function LeadsClient({
             {/* Filter Source */}
             <Select
               value={source}
+              className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-xl"
               onChange={e => {
                 setSource(e.target.value);
                 handleSearchAndFilters({ source: e.target.value, page: 1 });
@@ -697,6 +723,7 @@ export default function LeadsClient({
             {/* Filter Grade */}
             <Select
               value={grade}
+              className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-xl"
               onChange={e => {
                 setGrade(e.target.value);
                 handleSearchAndFilters({ grade: e.target.value, page: 1 });
@@ -707,47 +734,27 @@ export default function LeadsClient({
                 <option key={gr} value={gr}>{gr}</option>
               ))}
             </Select>
-            {/* Filter Assigned User */}
-            <Select
-              value={assignedFilter}
-              onChange={e => setAssignedFilter(e.target.value)}
-            >
-              <option value="all">Tất cả phụ trách</option>
-              {users.map(u => (
-                <option key={u.id} value={u.id}>{u.name}</option>
-              ))}
-            </Select>
-          </div>
-          <div className="mt-3 flex justify-end">
-            {/* Reset Filters */}
-            <Button
-              variant="outline"
-              size="sm"
-              className="font-bold border-slate-200 text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-200"
-              onClick={() => {
-                setSearch('');
-                setStatus('all');
-                setSource('all');
-                setGrade('all');
-                setAssignedFilter('all');
-                router.push(`/${locale}/leads`);
-              }}
-            >
-              Đặt lại bộ lọc
-            </Button>
           </div>
         </CardContent>
       </Card>
 
       {/* Table Container */}
-      <Card className="overflow-hidden">
+      <Card className="overflow-hidden border-0 shadow-lg rounded-2xl bg-white dark:bg-slate-950 relative">
+        {isPending && (
+          <div className="absolute inset-0 z-10 bg-white/50 dark:bg-slate-950/50 backdrop-blur-sm flex items-center justify-center">
+            <div className="flex flex-col items-center gap-2">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
+              <span className="text-sm font-bold text-blue-600">Đang tải dữ liệu...</span>
+            </div>
+          </div>
+        )}
         <div className="overflow-x-auto">
           <Table>
-            <TableHeader className="bg-slate-50 dark:bg-slate-900/50">
+            <TableHeader className="bg-slate-50/80 dark:bg-slate-900/50 backdrop-blur">
               {table.getHeaderGroups().map(headerGroup => (
                 <TableRow key={headerGroup.id} className="border-b border-slate-100 dark:border-slate-800">
                   {headerGroup.headers.map(header => (
-                    <TableHead key={header.id} className="text-xs font-bold text-slate-600 dark:text-slate-400">
+                    <TableHead key={header.id} className="text-xs font-black text-slate-600 dark:text-slate-400 uppercase tracking-wider py-4">
                       {header.isPlaceholder
                         ? null
                         : flexRender(header.column.columnDef.header, header.getContext())}
@@ -762,10 +769,10 @@ export default function LeadsClient({
                   <TableRow
                     key={row.id}
                     onClick={() => router.push(`/${locale}/leads/${row.original.id}`)}
-                    className="border-b border-slate-100 hover:bg-blue-50/40 dark:border-slate-800 dark:hover:bg-slate-900/30 cursor-pointer"
+                    className="border-b border-slate-50 hover:bg-blue-50/50 dark:border-slate-800/50 dark:hover:bg-slate-900/50 cursor-pointer transition-colors"
                   >
                     {row.getVisibleCells().map(cell => (
-                      <TableCell key={cell.id} className="py-3.5 text-sm">
+                      <TableCell key={cell.id} className="py-4 text-sm">
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
                       </TableCell>
                     ))}
@@ -773,8 +780,12 @@ export default function LeadsClient({
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={columns.length} className="h-32 text-center text-sm font-semibold text-slate-400">
-                    Không có lead phù hợp với bộ lọc tuyển sinh.
+                  <TableCell colSpan={columns.length} className="h-48 text-center">
+                    <div className="flex flex-col items-center justify-center text-slate-400">
+                      <Search className="h-8 w-8 mb-2 opacity-20" />
+                      <p className="text-sm font-bold text-slate-500">Không tìm thấy dữ liệu</p>
+                      <p className="text-xs mt-1">Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm</p>
+                    </div>
                   </TableCell>
                 </TableRow>
               )}
@@ -784,9 +795,9 @@ export default function LeadsClient({
 
         {/* Pagination controls */}
         {initialData.totalPages > 1 && (
-          <div className="flex items-center justify-between border-t border-slate-100 px-5 py-4 dark:border-slate-800">
+          <div className="flex items-center justify-between border-t border-slate-100 px-6 py-4 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
             <div className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-              Hiển thị trang <span className="text-slate-900 dark:text-white font-bold">{initialData.currentPage}</span> trên tổng số <span className="text-slate-900 dark:text-white font-bold">{initialData.totalPages}</span> trang ({initialData.totalItems} kết quả)
+              Hiển thị trang <span className="text-blue-600 dark:text-blue-400 font-black">{initialData.currentPage}</span> / <span className="text-slate-900 dark:text-white font-bold">{initialData.totalPages}</span> ({initialData.totalItems} kết quả)
             </div>
             <div className="flex items-center gap-1.5">
               <Button
