@@ -1129,15 +1129,19 @@ export default function TasksDashboard({ initialData, defaultTab, defaultTaskId 
                   <div className="flex gap-2 pt-4 border-t border-slate-100 dark:border-slate-800">
                     <Button 
                       onClick={() => handleApproveTask(selectedTask.id)}
+                      disabled={isPending}
                       className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white border-0 text-xs h-9 font-bold"
                     >
+                      {isPending ? <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white/20 border-t-white" /> : null}
                       Duyệt hoàn thành
                     </Button>
                     <Button 
                       onClick={() => handleRejectTask(selectedTask.id)}
                       variant="outline"
+                      disabled={isPending}
                       className="flex-1 text-orange-600 border-orange-200 hover:bg-orange-50 hover:text-orange-700 text-xs h-9 font-bold"
                     >
+                      {isPending ? <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-orange-600/20 border-t-orange-600" /> : null}
                       Yêu cầu chỉnh sửa
                     </Button>
                   </div>
@@ -1408,7 +1412,12 @@ export default function TasksDashboard({ initialData, defaultTab, defaultTaskId 
               className="flex-1 bg-blue-600 hover:bg-blue-700 text-white border-0 text-xs h-9 font-bold"
               disabled={isPending}
             >
-              {isPending ? 'Đang tạo...' : 'Tạo công việc'}
+              {isPending ? (
+                <>
+                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white/20 border-t-white" />
+                  Đang tạo...
+                </>
+              ) : 'Tạo công việc'}
             </Button>
           </div>
         </form>

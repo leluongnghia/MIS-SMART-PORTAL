@@ -92,16 +92,37 @@ export default function ApprovalsPage({ initialData }: { initialData?: InitialDa
         <div className="grid grid-cols-2 gap-3 text-xs"><Info k="Module" v={selectedEngine.module} /><Info k="Entity" v={`${selectedEngine.entityType} · ${selectedEngine.entityId}`} /><Info k="Người gửi" v={selectedEngine.requesterName || '-'} /><Info k="Trạng thái" v={statusLabels[selectedEngine.status] || selectedEngine.status} /></div>
         <textarea value={comment} onChange={e => setComment(e.target.value)} placeholder="Ghi chú xử lý (bắt buộc khi từ chối/yêu cầu bổ sung)" className="min-h-24 w-full rounded-xl border border-slate-200 bg-white p-3 text-xs outline-none focus:border-amber-400 dark:border-slate-800 dark:bg-slate-950" />
         {selectedEngine.status === 'PENDING' || selectedEngine.status === 'NEEDS_REVISION' ? <div className="grid grid-cols-2 gap-2 border-t pt-4 dark:border-slate-800">
-          <Button disabled={isPending || !canApprove} onClick={() => runEngineAction('approve')} className="bg-emerald-600 text-white hover:bg-emerald-700"><CheckCircle2 className="mr-1 h-4 w-4" /> Duyệt</Button>
-          <Button disabled={isPending || !canApprove} onClick={() => runEngineAction('reject')} variant="outline" className="border-rose-200 text-rose-600"><XCircle className="mr-1 h-4 w-4" /> Từ chối</Button>
-          <Button disabled={isPending || !canApprove} onClick={() => runEngineAction('revision')} variant="outline" className="border-sky-200 text-sky-700"><RotateCcw className="mr-1 h-4 w-4" /> Yêu cầu bổ sung</Button>
-          <Button disabled={isPending} onClick={() => runEngineAction('cancel')} variant="outline"><AlertCircle className="mr-1 h-4 w-4" /> Hủy yêu cầu</Button>
+          <Button disabled={isPending || !canApprove} onClick={() => runEngineAction('approve')} className="bg-emerald-600 text-white hover:bg-emerald-700">
+            {isPending ? <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white/20 border-t-white" /> : <CheckCircle2 className="mr-1 h-4 w-4" />}
+            Duyệt
+          </Button>
+          <Button disabled={isPending || !canApprove} onClick={() => runEngineAction('reject')} variant="outline" className="border-rose-200 text-rose-600">
+            {isPending ? <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-rose-600/20 border-t-rose-600" /> : <XCircle className="mr-1 h-4 w-4" />}
+            Từ chối
+          </Button>
+          <Button disabled={isPending || !canApprove} onClick={() => runEngineAction('revision')} variant="outline" className="border-sky-200 text-sky-700">
+            {isPending ? <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-sky-700/20 border-t-sky-700" /> : <RotateCcw className="mr-1 h-4 w-4" />}
+            Yêu cầu bổ sung
+          </Button>
+          <Button disabled={isPending} onClick={() => runEngineAction('cancel')} variant="outline">
+            {isPending ? <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-slate-600/20 border-t-slate-600" /> : <AlertCircle className="mr-1 h-4 w-4" />}
+            Hủy yêu cầu
+          </Button>
         </div> : <Button onClick={() => setSelectedEngine(null)}>Đóng</Button>}
       </div>}
     </Dialog>
 
     <Dialog open={!!selectedLeave} onOpenChange={(open) => !open && setSelectedLeave(null)} title="Chi tiết đơn nghỉ phép">
-      {selectedLeave && <div className="space-y-4 text-sm"><h3 className="font-bold">{selectedLeave.payload?.employeeName || selectedLeave.id}</h3><p>{selectedLeave.reason}</p>{statusBadge(selectedLeave.status)}{selectedLeave.status === 'pending' && canApprove ? <div className="flex gap-2 border-t pt-4"><Button disabled={isPending} onClick={() => runLeaveAction('approve')} className="flex-1 bg-emerald-600 text-white">Phê duyệt</Button><Button disabled={isPending} onClick={() => runLeaveAction('reject')} variant="outline" className="flex-1 text-rose-600">Từ chối</Button></div> : <Button onClick={() => setSelectedLeave(null)}>Đóng</Button>}</div>}
+      {selectedLeave && <div className="space-y-4 text-sm"><h3 className="font-bold">{selectedLeave.payload?.employeeName || selectedLeave.id}</h3><p>{selectedLeave.reason}</p>{statusBadge(selectedLeave.status)}{selectedLeave.status === 'pending' && canApprove ? <div className="flex gap-2 border-t pt-4">
+        <Button disabled={isPending} onClick={() => runLeaveAction('approve')} className="flex-1 bg-emerald-600 text-white">
+          {isPending ? <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white/20 border-t-white" /> : null}
+          Phê duyệt
+        </Button>
+        <Button disabled={isPending} onClick={() => runLeaveAction('reject')} variant="outline" className="flex-1 text-rose-600">
+          {isPending ? <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-rose-600/20 border-t-rose-600" /> : null}
+          Từ chối
+        </Button>
+      </div> : <Button onClick={() => setSelectedLeave(null)}>Đóng</Button>}</div>}
     </Dialog>
   </div>;
 }
