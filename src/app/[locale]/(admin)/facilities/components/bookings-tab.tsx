@@ -43,8 +43,8 @@ export function BookingsTab({ initialBookings = [] }: { initialBookings?: Handov
       receiverId: `U-${Date.now()}`,
       receiverName,
       department,
-      handoverDate: new Date(),
-      expectedReturnDate: expectedReturnDate ? new Date(expectedReturnDate) : null,
+      handoverDate: new Date().toISOString(),
+      expectedReturnDate: expectedReturnDate ? new Date(expectedReturnDate).toISOString() : null,
       status: 'ACTIVE'
     });
 

@@ -375,6 +375,8 @@ export async function createHandover(data: any) {
   try {
     const newHandover = await db.insert(facilitiesHandoverLogs).values({
       ...data,
+      handoverDate: new Date(data.handoverDate),
+      expectedReturnDate: data.expectedReturnDate ? new Date(data.expectedReturnDate) : null,
       id: `HND-${Date.now()}`,
       code: `GIAO-${new Date().getFullYear()}-${Math.floor(Math.random()*10000)}`,
       handedOverById: user.id,
