@@ -920,10 +920,17 @@ export default function LeadsClient({
             </Button>
             <Button
               type="submit"
-              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold min-w-[120px]"
               disabled={createForm.formState.isSubmitting}
             >
-              Lưu thông tin
+              {createForm.formState.isSubmitting ? (
+                <>
+                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white/20 border-t-white" />
+                  Đang lưu...
+                </>
+              ) : (
+                'Lưu thông tin'
+              )}
             </Button>
           </div>
         </form>
@@ -1031,10 +1038,17 @@ export default function LeadsClient({
             </Button>
             <Button
               type="submit"
-              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold min-w-[120px]"
               disabled={editForm.formState.isSubmitting}
             >
-              Lưu thay đổi
+              {editForm.formState.isSubmitting ? (
+                <>
+                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white/20 border-t-white" />
+                  Đang lưu...
+                </>
+              ) : (
+                'Lưu thay đổi'
+              )}
             </Button>
           </div>
         </form>
@@ -1065,10 +1079,18 @@ export default function LeadsClient({
             </Button>
             <Button
               type="button"
-              className="bg-rose-600 hover:bg-rose-700 text-white font-bold"
+              className="bg-rose-600 hover:bg-rose-700 text-white font-bold min-w-[100px]"
+              disabled={isPending}
               onClick={handleDelete}
             >
-              Xác nhận xóa
+              {isPending ? (
+                <>
+                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white/20 border-t-white" />
+                  Đang xóa...
+                </>
+              ) : (
+                'Xóa'
+              )}
             </Button>
           </div>
         </div>

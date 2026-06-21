@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/src
 import { Button } from '@/src/components/ui/button';
 import { Input } from '@/src/components/ui/input';
 import { Select } from '@/src/components/ui/select';
-import { Plus, Search, Trash2, AlertCircle, ArrowDownToLine, ArrowUpFromLine } from 'lucide-react';
+import { Plus, Search, Trash2, AlertCircle, ArrowDownToLine, ArrowUpFromLine, QrCode, ScanBarcode } from 'lucide-react';
 import { Dialog } from '@/src/components/ui/dialog';
 import { createSupply, updateSupplyQuantity } from '../actions';
 
@@ -149,16 +149,19 @@ export function SuppliesTab({ initialSupplies = [] }: { initialSupplies?: Supply
         )}
 
         {/* Thanh tìm kiếm */}
-        <div className="flex items-center space-x-2">
-          <div className="relative w-full md:w-72">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+        <div className="flex flex-col sm:flex-row items-center gap-2">
+          <div className="relative w-full sm:flex-1 md:max-w-md">
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Tìm kiếm vật tư..."
-              className="pl-8"
+              placeholder="Tìm kiếm tên, mã vật tư..."
+              className="pl-9 h-10 rounded-xl"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
+          <Button variant="outline" className="w-full sm:w-auto h-10 rounded-xl font-bold bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-800 border-blue-200 dark:bg-blue-950/30 dark:border-blue-800 dark:text-blue-300">
+            <ScanBarcode className="mr-2 h-4 w-4" /> Quét mã QR
+          </Button>
         </div>
 
         {/* Danh sách vật tư */}
@@ -186,8 +189,8 @@ export function SuppliesTab({ initialSupplies = [] }: { initialSupplies?: Supply
                       <td className="p-3 text-muted-foreground">{item.minimumQuantity} {item.unit}</td>
                       <td className="p-3">
                         {isLow ? (
-                          <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold bg-red-50 text-red-700 border border-red-200 dark:bg-red-950/40 dark:text-red-300">
-                            <AlertCircle className="h-3.5 w-3.5" /> Tồn kho thấp
+                          <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 shadow-sm animate-pulse">
+                            <AlertCircle className="h-3.5 w-3.5" /> Tồn kho đỏ
                           </span>
                         ) : (
                           <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300">
@@ -195,25 +198,29 @@ export function SuppliesTab({ initialSupplies = [] }: { initialSupplies?: Supply
                           </span>
                         )}
                       </td>
-                      <td className="p-3 text-right space-x-1 flex justify-end">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleOpenDialog(item.id, item.name, item.unit, 'IMPORT'); }}
-                          disabled={isProcessing}
-                          title="Nhập kho"
-                        >
-                          <ArrowDownToLine className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleOpenDialog(item.id, item.name, item.unit, 'EXPORT'); }}
-                          disabled={isProcessing}
-                          title="Xuất kho"
-                        >
-                          <ArrowUpFromLine className="h-4 w-4" />
-                        </Button>
+                      <td className="p-3 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 w-8 p-0 rounded-lg bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100 hover:text-emerald-800 dark:bg-emerald-950/30 dark:border-emerald-900"
+                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleOpenDialog(item.id, item.name, item.unit, 'IMPORT'); }}
+                            disabled={isProcessing}
+                            title="Nhập kho"
+                          >
+                            <ArrowDownToLine className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 w-8 p-0 rounded-lg bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100 hover:text-orange-800 dark:bg-orange-950/30 dark:border-orange-900"
+                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleOpenDialog(item.id, item.name, item.unit, 'EXPORT'); }}
+                            disabled={isProcessing}
+                            title="Xuất kho"
+                          >
+                            <ArrowUpFromLine className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   );
