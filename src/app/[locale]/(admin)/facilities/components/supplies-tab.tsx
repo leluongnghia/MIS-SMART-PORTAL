@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/src
 import { Button } from '@/src/components/ui/button';
 import { Input } from '@/src/components/ui/input';
 import { Plus, Search, Trash2, AlertCircle, ArrowDownToLine, ArrowUpFromLine } from 'lucide-react';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/src/components/ui/dialog';
+import { Dialog } from '@/src/components/ui/dialog';
 import { createSupply, updateSupplyQuantity } from '../actions';
 
 type SupplyItem = {
@@ -215,41 +215,38 @@ export function SuppliesTab({ initialSupplies = [] }: { initialSupplies?: Supply
         </div>
       </CardContent>
       
-      {/* Shadcn UI Dialog for Import/Export instead of native prompt */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <form onSubmit={handleStockActionSubmit}>
-            <DialogHeader>
-              <DialogTitle>{dialogType === 'IMPORT' ? 'Nhập kho vật tư' : 'Xuất kho vật tư'}</DialogTitle>
-              <DialogDescription>
-                Vui lòng nhập số lượng <b>{dialogSupplyName}</b> bạn muốn {dialogType === 'IMPORT' ? 'nhập thêm vào kho' : 'xuất đi'}.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="space-y-2 flex items-center gap-2">
-                <Input
-                  type="number"
-                  min="1"
-                  placeholder="Nhập số lượng..."
-                  value={dialogQty}
-                  onChange={(e) => setDialogQty(e.target.value)}
-                  autoFocus
-                  required
-                  className="flex-1"
-                />
-                <span className="text-sm text-muted-foreground w-16 whitespace-nowrap">{dialogSupplyUnit}</span>
-              </div>
+      {/* Dialog for Import/Export instead of native prompt */}
+      <Dialog 
+        open={dialogOpen} 
+        onOpenChange={setDialogOpen}
+        title={dialogType === 'IMPORT' ? 'Nhập kho vật tư' : 'Xuất kho vật tư'}
+        description={`Vui lòng nhập số lượng ${dialogSupplyName} bạn muốn ${dialogType === 'IMPORT' ? 'nhập thêm vào kho' : 'xuất đi'}.`}
+      >
+        <form onSubmit={handleStockActionSubmit}>
+          <div className="grid gap-4 py-2">
+            <div className="space-y-2 flex items-center gap-2">
+              <Input
+                type="number"
+                min="1"
+                placeholder="Nhập số lượng..."
+                value={dialogQty}
+                onChange={(e) => setDialogQty(e.target.value)}
+                autoFocus
+                required
+                className="flex-1"
+              />
+              <span className="text-sm text-muted-foreground w-16 whitespace-nowrap">{dialogSupplyUnit}</span>
             </div>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setDialogOpen(false)} disabled={isProcessing}>
-                Hủy
-              </Button>
-              <Button type="submit" disabled={isProcessing || !dialogQty}>
-                {isProcessing ? 'Đang xử lý...' : 'Xác nhận'}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
+          </div>
+          <div className="flex justify-end gap-2 mt-4">
+            <Button type="button" variant="outline" onClick={() => setDialogOpen(false)} disabled={isProcessing}>
+              Hủy
+            </Button>
+            <Button type="submit" disabled={isProcessing || !dialogQty}>
+              {isProcessing ? 'Đang xử lý...' : 'Xác nhận'}
+            </Button>
+          </div>
+        </form>
       </Dialog>
     </Card>
   );
