@@ -3,26 +3,26 @@ import { db, schema } from './db';
 import { getCurrentActor, writeAuditLog, type Actor } from './auth-helper';
 
 // Generic error classes
-export class DataServiceError extends Error {
+class DataServiceError extends Error {
   constructor(public statusCode: number, message: string) {
     super(message);
     this.name = 'DataServiceError';
   }
 }
 
-export class UnauthorizedError extends DataServiceError {
+class UnauthorizedError extends DataServiceError {
   constructor(message = 'Unauthorized') {
     super(401, message);
   }
 }
 
-export class ForbiddenError extends DataServiceError {
+class ForbiddenError extends DataServiceError {
   constructor(message = 'Forbidden') {
     super(403, message);
   }
 }
 
-export class NotFoundError extends DataServiceError {
+class NotFoundError extends DataServiceError {
   constructor(message = 'Not Found') {
     super(404, message);
   }

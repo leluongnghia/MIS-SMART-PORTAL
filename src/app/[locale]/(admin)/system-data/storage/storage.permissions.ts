@@ -1,7 +1,7 @@
 import { Actor } from '@/src/libs/server/auth-helper';
 import * as auth from '@/src/libs/server/auth-helper';
 
-export function canViewStorage(actor: Actor) {
+function canViewStorage(actor: Actor) {
   return auth.canViewModule(actor, 'storage');
 }
 
@@ -13,11 +13,11 @@ export function canViewFile(actor: Actor, file: any) {
   return auth.canViewFile(actor, file);
 }
 
-export function canDownloadFile(actor: Actor, file: any) {
+function canDownloadFile(actor: Actor, file: any) {
   return auth.canViewFile(actor, file);
 }
 
-export function canPreviewFile(actor: Actor, file: any) {
+function canPreviewFile(actor: Actor, file: any) {
   return auth.canViewFile(actor, file);
 }
 
@@ -41,11 +41,11 @@ export function canPermanentlyDeleteFile(actor: Actor) {
   return auth.canPermanentlyDeleteFile(actor);
 }
 
-export function canViewImportExportLogs(actor: Actor) {
+function canViewImportExportLogs(actor: Actor) {
   return auth.canViewModule(actor, 'import-export');
 }
 
-export function canManageBackups(actor: Actor) {
+function canManageBackups(actor: Actor) {
   return auth.canManageBackups(actor);
 }
 

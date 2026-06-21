@@ -79,7 +79,7 @@ export type FacilityMaintenanceLog = {
   updatedAt: string;
 };
 
-export type FacilityHandoverLog = {
+type FacilityHandoverLog = {
   id: string;
   assetId: string;
   assetName: string | null;
@@ -100,7 +100,7 @@ export type FacilityHandoverLog = {
   updatedAt: string;
 };
 
-export const FACILITY_LOCATION_TYPES = {
+const FACILITY_LOCATION_TYPES = {
   CLASSROOM: 'Phòng học',
   LAB: 'Phòng thực hành/Thí nghiệm',
   LIBRARY: 'Thư viện',
@@ -117,7 +117,7 @@ export const FACILITY_LOCATION_STATUS = {
   INACTIVE: 'Tạm ngừng sử dụng',
 };
 
-export const FACILITY_ASSET_CATEGORIES = {
+const FACILITY_ASSET_CATEGORIES = {
   IT: 'Thiết bị CNTT (Máy tính, Máy chiếu, Mạng)',
   FURNITURE: 'Bàn ghế & Nội thất',
   ELECTRONIC: 'Điện & Điện lạnh (Điều hòa, Quạt)',
@@ -150,7 +150,7 @@ export const REPAIR_STATUS = {
   REJECTED: 'Từ chối',
 };
 
-export const MAINTENANCE_TYPES = {
+const MAINTENANCE_TYPES = {
   ROUTINE: 'Bảo trì định kỳ',
   SAFETY: 'Kiểm tra an toàn',
   REPAIR: 'Sửa chữa',
@@ -164,14 +164,14 @@ export const MAINTENANCE_STATUS = {
   CANCELLED: 'Đã hủy',
 };
 
-export const HANDOVER_STATUS = {
+const HANDOVER_STATUS = {
   ACTIVE: 'Đang bàn giao',
   RETURNED: 'Đã thu hồi',
   OVERDUE: 'Quá hạn trả',
   CANCELLED: 'Hủy',
 };
 
-export type FacilityPurchaseRequest = {
+type FacilityPurchaseRequest = {
   id: string;
   code: string;
   title: string;
@@ -199,7 +199,7 @@ export type FacilityPurchaseRequest = {
   updatedAt: string;
 };
 
-export type FacilityPurchaseItem = {
+type FacilityPurchaseItem = {
   id: string;
   purchaseRequestId: string;
   itemName: string;
@@ -219,7 +219,7 @@ export type FacilityPurchaseItem = {
   updatedAt: string;
 };
 
-export type FacilityInventoryCheck = {
+type FacilityInventoryCheck = {
   id: string;
   code: string;
   title: string;
@@ -238,7 +238,7 @@ export type FacilityInventoryCheck = {
   updatedAt: string;
 };
 
-export type FacilityInventoryCheckItem = {
+type FacilityInventoryCheckItem = {
   id: string;
   inventoryCheckId: string;
   assetId: string;
@@ -253,7 +253,7 @@ export type FacilityInventoryCheckItem = {
   checkedAt: string | null;
 };
 
-export const PURCHASE_REQUEST_TYPES = {
+const PURCHASE_REQUEST_TYPES = {
   NEW: 'Mua mới',
   ADDITIONAL: 'Mua bổ sung',
   REPLACEMENT: 'Thay thế thiết bị hỏng',
@@ -262,7 +262,7 @@ export const PURCHASE_REQUEST_TYPES = {
   URGENT: 'Mua khẩn cấp',
 };
 
-export const PURCHASE_STATUS = {
+const PURCHASE_STATUS = {
   DRAFT: 'Nháp',
   SUBMITTED: 'Đã gửi',
   INFO_REQUIRED: 'Cần bổ sung thông tin',
@@ -274,19 +274,19 @@ export const PURCHASE_STATUS = {
   CANCELLED: 'Đã hủy',
 };
 
-export const PURCHASE_ITEM_STATUS = {
+const PURCHASE_ITEM_STATUS = {
   PENDING: 'Chờ mua',
   PURCHASED: 'Đã mua',
   RECEIVED: 'Đã nhận hàng',
 };
 
-export const INVENTORY_SCOPE = {
+const INVENTORY_SCOPE = {
   ALL: 'Toàn trường',
   LOCATION: 'Theo phòng/khu vực',
   CATEGORY: 'Theo danh mục thiết bị',
 };
 
-export const INVENTORY_STATUS = {
+const INVENTORY_STATUS = {
   DRAFT: 'Nháp',
   IN_PROGRESS: 'Đang kiểm kê',
   WAITING_APPROVAL: 'Chờ xác nhận',
@@ -294,7 +294,7 @@ export const INVENTORY_STATUS = {
   CANCELLED: 'Đã hủy',
 };
 
-export const INVENTORY_RESULT = {
+const INVENTORY_RESULT = {
   CORRECT: 'Đúng',
   WRONG_LOCATION: 'Sai vị trí',
   MISSING: 'Thiếu/Mất',
@@ -335,16 +335,16 @@ export const MOCK_MAINTENANCE_LOGS: FacilityMaintenanceLog[] = [
   { id: 'M001', assetId: 'A004', assetName: 'Điều hòa Daikin 1A', maintenanceType: 'ROUTINE', scheduledDate: new Date().toISOString(), completedDate: null, responsibleUserId: 'U003', responsibleUserName: 'Thợ bảo trì', status: 'SCHEDULED', checklist: { filter: false, gas: false, drain: false }, result: null, note: 'Bảo dưỡng định kỳ hè', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
 ];
 
-export const MOCK_HANDOVERS: FacilityHandoverLog[] = [
+const MOCK_HANDOVERS: FacilityHandoverLog[] = [
   { id: 'H001', assetId: 'A002', assetName: 'Laptop Dell VP01', receiverId: 'U005', receiverName: 'Phạm Thị D', department: 'Tuyển sinh', handoverDate: new Date(Date.now() - 2592000000).toISOString(), expectedReturnDate: null, actualReturnDate: null, conditionOnHandover: 'Mới 100%', conditionOnReturn: null, handedOverById: 'U001', handedOverByName: 'Admin', status: 'ACTIVE', note: 'Cấp laptop làm việc', attachmentUrl: null, createdAt: new Date(Date.now() - 2592000000).toISOString(), updatedAt: new Date(Date.now() - 2592000000).toISOString() },
 ];
 
-export const canManageFacilities = (user: any) => {
+const canManageFacilities = (user: any) => {
   if (!user) return false;
   return user.role === 'ADMIN' || user.role === 'MANAGER' || user.departmentId === 'CSVC';
 };
 
-export const canViewFacilities = (user: any) => {
+const canViewFacilities = (user: any) => {
   if (!user) return false;
   return true; // Everyone can view some part
 };

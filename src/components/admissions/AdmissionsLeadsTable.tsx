@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-export type TrangThai = 'Mới' | 'Đang tư vấn' | 'Đăng ký test' | 'Nộp hồ sơ' | 'Giữ chỗ' | 'Nhập học' | 'Không tiếp tục';
+type TrangThai = 'Mới' | 'Đang tư vấn' | 'Đăng ký test' | 'Nộp hồ sơ' | 'Giữ chỗ' | 'Nhập học' | 'Không tiếp tục';
 
 export interface Lead {
   id: string;

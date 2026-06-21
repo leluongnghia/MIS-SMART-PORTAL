@@ -2,7 +2,7 @@ import { DataService } from './data-service';
 import { db, schema } from './db';
 import { eq } from 'drizzle-orm';
 
-export class StudentService extends DataService<'studentDirectory'> {
+class StudentService extends DataService<'studentDirectory'> {
   constructor() {
     super('studentDirectory');
   }

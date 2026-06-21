@@ -633,7 +633,7 @@ export function translateIssue(i: any, lang: 'vi' | 'en'): any {
   };
 }
 
-export function translateLeave(l: any, lang: 'vi' | 'en'): any {
+function translateLeave(l: any, lang: 'vi' | 'en'): any {
   if (lang === 'vi') return l;
   const reasonTranslations: Record<string, string> = {
     'Tham gia tập huấn chuyên môn đổi mới phương pháp giảng dạy Tin học tại Sở': 'Attend professional IT teaching method innovation training at Dept of Education',

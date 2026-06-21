@@ -5,7 +5,7 @@ import { CheckCircle2, XCircle, AlertTriangle, Info, X } from 'lucide-react';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-export type ToastVariant = 'success' | 'error' | 'warning' | 'info';
+type ToastVariant = 'success' | 'error' | 'warning' | 'info';
 
 export interface Toast {
   id: string;

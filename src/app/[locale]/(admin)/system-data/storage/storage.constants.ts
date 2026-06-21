@@ -1,4 +1,4 @@
-export const STORAGE_FILE_STATUS = {
+const STORAGE_FILE_STATUS = {
   ACTIVE: 'ACTIVE',
   ARCHIVED: 'ARCHIVED',
   DELETED: 'DELETED',
@@ -45,7 +45,7 @@ export const RELATED_MODULES = [
   'Khác'
 ];
 
-export const FILE_TYPES = [
+const FILE_TYPES = [
   'document',
   'spreadsheet',
   'presentation',
@@ -56,7 +56,7 @@ export const FILE_TYPES = [
   'other'
 ] as const;
 
-export const STATUS_STYLES = {
+const STATUS_STYLES = {
   ACTIVE: { label: 'Đang hoạt động', color: 'bg-green-100 text-green-800' },
   ARCHIVED: { label: 'Lưu trữ', color: 'bg-orange-100 text-orange-800' },
   DELETED: { label: 'Đã xóa', color: 'bg-red-100 text-red-800' },

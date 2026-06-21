@@ -90,7 +90,7 @@ export const PERMISSION_ACTIONS = [
   { key: "configure", label: "Cấu hình" },
 ];
 
-export const DEPARTMENTS_LIST = [
+const DEPARTMENTS_LIST = [
   { id: "dept_bgh", name: "BGH / Toàn trường", code: "BGH" },
   { id: "dept_tuyensinh", name: "Tuyển sinh", code: "TUYEN_SINH" },
   { id: "dept_nhansu", name: "Nhân sự", code: "NHAN_SU" },

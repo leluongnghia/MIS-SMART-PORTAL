@@ -1,4 +1,4 @@
-export type CurriculumSubjectType = 'Bắt buộc' | 'Lựa chọn' | 'Tự chọn' | 'Hoạt động giáo dục';
+type CurriculumSubjectType = 'Bắt buộc' | 'Lựa chọn' | 'Tự chọn' | 'Hoạt động giáo dục';
 
 export interface CurriculumSubject {
   name: string;
@@ -110,7 +110,7 @@ const UPPER_SECONDARY: CurriculumSubject[] = [
   { name: 'Tiếng Trung', type: 'Tự chọn' },
 ];
 
-export const VIETNAM_CURRICULUM_SUBJECTS: Record<VietnamGradeLevel, CurriculumSubject[]> = {
+const VIETNAM_CURRICULUM_SUBJECTS: Record<VietnamGradeLevel, CurriculumSubject[]> = {
   'Lớp 1': PRIMARY_1_2,
   'Lớp 2': PRIMARY_1_2,
   'Lớp 3': PRIMARY_3,

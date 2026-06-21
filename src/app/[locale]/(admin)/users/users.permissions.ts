@@ -1,6 +1,6 @@
 import { Actor } from "@/src/libs/server/auth-helper";
 
-export function canAccessUserData(currentUser: Actor & { dataScope?: string; teamId?: string | null; homeroomClassId?: string | null }, targetUser: any) {
+function canAccessUserData(currentUser: Actor & { dataScope?: string; teamId?: string | null; homeroomClassId?: string | null }, targetUser: any) {
   if (!currentUser) return false;
   if (currentUser.role === 'ADMIN') return true;
   if (currentUser.id === targetUser.id) return true;

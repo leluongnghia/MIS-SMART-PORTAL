@@ -1,7 +1,7 @@
 import nodemailer from 'nodemailer';
 import { loadConfigFromDb } from './db';
 
-export const smtpConfig = {
+const smtpConfig = {
   host: process.env.SMTP_HOST || '',
   port: parseInt(process.env.SMTP_PORT || '587', 10),
   secure: process.env.SMTP_SECURE === 'true',
@@ -71,7 +71,7 @@ export async function getNotificationConfigStatus() {
   };
 }
 
-export function withTimeout<T>(promise: Promise<T>, timeoutMs: number, label: string): Promise<T> {
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number, label: string): Promise<T> {
   return Promise.race([
     promise,
     new Promise<T>((_, reject) => {

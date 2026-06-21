@@ -36,12 +36,12 @@ const ADDRESS_AREAS = [
 const stripVietnameseMarks = (value: string) =>
   value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 
-export const stableSeed = (value: string, fallback = 1) => {
+const stableSeed = (value: string, fallback = 1) => {
   const source = value || String(fallback);
   return Array.from(source).reduce((sum, char, index) => sum + char.charCodeAt(0) * (index + 1), fallback);
 };
 
-export const inferVietnameseGender = (name = ''): GenderText => {
+const inferVietnameseGender = (name = ''): GenderText => {
   const lower = name.normalize('NFC').toLowerCase();
   const ascii = stripVietnameseMarks(name);
 
@@ -56,7 +56,7 @@ export const inferVietnameseGender = (name = ''): GenderText => {
   return 'Khác';
 };
 
-export const deterministicPhone = (seed: number, prefix = '09') =>
+const deterministicPhone = (seed: number, prefix = '09') =>
   `${prefix}${String(10000000 + Math.abs(seed * 7919) % 90000000).padStart(8, '0')}`;
 
 const isMissingText = (value?: string) => {

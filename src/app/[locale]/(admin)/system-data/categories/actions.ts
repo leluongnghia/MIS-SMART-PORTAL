@@ -165,7 +165,7 @@ export async function deleteCategory(id: string) {
   return { success: true };
 }
 
-export async function importCategories(group: string, rows: any[]) {
+async function importCategories(group: string, rows: any[]) {
   const actor = await getCurrentActor();
   if (!actor || !canManageCategories(actor)) throw new Error('Unauthorized');
 

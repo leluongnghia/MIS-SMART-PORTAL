@@ -200,7 +200,7 @@ export async function seedTasks(seedData: any[]) {
   }
 }
 
-export async function updateTaskDetail(taskId: string, formData: {
+async function updateTaskDetail(taskId: string, formData: {
   title: string;
   description?: string;
   workspaceId: string;
@@ -262,7 +262,7 @@ export async function updateTaskDetail(taskId: string, formData: {
   }
 }
 
-export async function submitTaskForApproval(taskId: string, comment?: string) {
+async function submitTaskForApproval(taskId: string, comment?: string) {
   const actor = await getCurrentActor();
   if (!actor) return { success: false, error: "Unauthorized" };
 
@@ -320,7 +320,7 @@ export async function submitTaskForApproval(taskId: string, comment?: string) {
   }
 }
 
-export async function approveTaskCompletion(taskId: string, comment?: string) {
+async function approveTaskCompletion(taskId: string, comment?: string) {
   const actor = await getCurrentActor();
   if (!actor) return { success: false, error: "Unauthorized" };
 
@@ -367,7 +367,7 @@ export async function approveTaskCompletion(taskId: string, comment?: string) {
   }
 }
 
-export async function rejectTaskCompletion(taskId: string, comment: string) {
+async function rejectTaskCompletion(taskId: string, comment: string) {
   const actor = await getCurrentActor();
   if (!actor) return { success: false, error: "Unauthorized" };
   if (!comment?.trim()) return { success: false, error: "Ý kiến nhận xét/yêu cầu chỉnh sửa là bắt buộc." };
@@ -415,7 +415,7 @@ export async function rejectTaskCompletion(taskId: string, comment: string) {
   }
 }
 
-export async function addTaskComment(taskId: string, commentText: string) {
+async function addTaskComment(taskId: string, commentText: string) {
   const actor = await getCurrentActor();
   if (!actor) return { success: false, error: "Unauthorized" };
   if (!commentText?.trim()) return { success: false, error: "Bình luận không được để trống." };
@@ -462,7 +462,7 @@ export async function addTaskComment(taskId: string, commentText: string) {
   }
 }
 
-export async function addTaskAttachment(taskId: string, file: { name: string; url: string }) {
+async function addTaskAttachment(taskId: string, file: { name: string; url: string }) {
   const actor = await getCurrentActor();
   if (!actor) return { success: false, error: "Unauthorized" };
 
@@ -508,7 +508,7 @@ export async function addTaskAttachment(taskId: string, file: { name: string; ur
 
 // OVERDUE WORKFLOW ACTIONS
 
-export async function updateOverdueReason(taskId: string, reason: string, isBlocked: boolean) {
+async function updateOverdueReason(taskId: string, reason: string, isBlocked: boolean) {
   const actor = await getCurrentActor();
   if (!actor) return { success: false, error: "Unauthorized" };
 
@@ -546,7 +546,7 @@ export async function updateOverdueReason(taskId: string, reason: string, isBloc
   }
 }
 
-export async function requestDeadlineExtension(taskId: string, newDueDate: string, reason: string) {
+async function requestDeadlineExtension(taskId: string, newDueDate: string, reason: string) {
   const actor = await getCurrentActor();
   if (!actor) return { success: false, error: "Unauthorized" };
 

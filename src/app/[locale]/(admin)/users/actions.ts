@@ -581,7 +581,7 @@ export async function unlockUserAction(userId: string) {
 // ─────────────────────────────────────────────────────────
 // Invitations Management
 // ─────────────────────────────────────────────────────────
-export async function getUserInvitationsList() {
+async function getUserInvitationsList() {
   const check = await checkAccess();
   if (!check.authorized) throw new Error("Unauthorized");
 
@@ -591,7 +591,7 @@ export async function getUserInvitationsList() {
     .orderBy(desc(schema.userInvitations.createdAt));
 }
 
-export async function createUserInvitationAction(data: {
+async function createUserInvitationAction(data: {
   email: string;
   role: string;
   departmentId: string;
@@ -651,7 +651,7 @@ export async function resendUserInvitationAction(inviteId: string) {
   }
 }
 
-export async function cancelUserInvitationAction(inviteId: string) {
+async function cancelUserInvitationAction(inviteId: string) {
   const check = await checkAccess();
   if (!check.authorized) return { success: false, error: "Unauthorized" };
   const actor = check.actor!;
@@ -841,7 +841,7 @@ export async function getAuditLogsForUser(userId: string) {
     .limit(15);
 }
 
-export async function getUserLoginHistory(userId: string) {
+async function getUserLoginHistory(userId: string) {
   const check = await checkAccess();
   if (!check.authorized) return [];
 

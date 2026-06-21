@@ -56,7 +56,7 @@ export interface User {
   payload: any;
 }
 
-export interface UserInvitation {
+interface UserInvitation {
   id: string;
   email: string;
   role: string;
@@ -73,7 +73,7 @@ export interface UserInvitation {
   updatedAt: Date;
 }
 
-export interface UserLoginHistory {
+interface UserLoginHistory {
   id: string;
   userId: string;
   loginAt: Date;
@@ -84,7 +84,7 @@ export interface UserLoginHistory {
   failureReason: string | null;
 }
 
-export interface AuditLog {
+interface AuditLog {
   id: string;
   entityType: string;
   entityId: string;

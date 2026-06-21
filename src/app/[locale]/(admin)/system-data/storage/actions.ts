@@ -135,7 +135,7 @@ export async function getImportExportJobs() {
   ];
 }
 
-export async function createImportErrorFile(input: { jobId: string; module: string; fileName?: string; rows: Array<Record<string, unknown>> }) {
+async function createImportErrorFile(input: { jobId: string; module: string; fileName?: string; rows: Array<Record<string, unknown>> }) {
   const actor = await getCurrentActor();
   if (!actor) throw new Error('Unauthorized');
   if (!input.rows.length) throw new Error('Không có dòng lỗi để ghi file');

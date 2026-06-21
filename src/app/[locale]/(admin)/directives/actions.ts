@@ -122,7 +122,7 @@ export async function addDirectiveResponse(input: { directiveId: string; userId:
   }
 }
 
-export async function createDirective(formData: { title: string; category: string; urgency: string; description: string; deadline: string }) {
+async function createDirective(formData: { title: string; category: string; urgency: string; description: string; deadline: string }) {
   try {
     const id = 'dir_' + Math.random().toString(36).substring(2, 11);
     await db.insert(schema.directives).values({
@@ -148,7 +148,7 @@ export async function createDirective(formData: { title: string; category: strin
   }
 }
 
-export async function deleteDirective(id: string) {
+async function deleteDirective(id: string) {
   try {
     await db.update(schema.directives).set({ deletedAt: new Date(), deletedBy: 'user_triet', updatedAt: new Date() }).where(eq(schema.directives.id, id));
     await writeAudit(id, 'soft_delete', 'user_triet', {});

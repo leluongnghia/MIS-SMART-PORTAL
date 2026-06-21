@@ -2,7 +2,7 @@ import { MOCK_USERS } from '../../mockData';
 import { UserProfile } from '../../types';
 
 // Helper to get authenticated user on the server side
-export async function getApiUser(req: Request): Promise<UserProfile | null> {
+async function getApiUser(req: Request): Promise<UserProfile | null> {
   // 1. Try Clerk if configured
   if (process.env.CLERK_SECRET_KEY) {
     try {

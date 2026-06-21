@@ -5,9 +5,9 @@ import { db, schema } from './db';
 import { canArchiveFile, canDeleteFile, canEditFile, canPermanentlyDeleteFile, canRestoreFile, canUploadFile, canViewFile, getCurrentActor, writeAuditLog, type Actor } from './auth-helper';
 import { createNotification } from './notification-center';
 
-export type StorageProvider = 'LOCAL' | 'DATABASE' | 'S3' | 'R2' | 'SUPABASE' | 'MOCK';
+type StorageProvider = 'LOCAL' | 'DATABASE' | 'S3' | 'R2' | 'SUPABASE' | 'MOCK';
 export type FileModule = 'TASKS' | 'ADMISSIONS' | 'STUDENTS' | 'FACILITIES' | 'SETTINGS' | 'REPORTS' | 'APPROVALS' | 'SYSTEM';
-export type FileVisibility = 'PRIVATE' | 'MODULE' | 'DEPARTMENT' | 'SCHOOL' | 'SCHOOL_WIDE' | 'PUBLIC' | 'ADMIN_ONLY';
+type FileVisibility = 'PRIVATE' | 'MODULE' | 'DEPARTMENT' | 'SCHOOL' | 'SCHOOL_WIDE' | 'PUBLIC' | 'ADMIN_ONLY';
 export type FileStatus = 'ACTIVE' | 'ARCHIVED' | 'DELETED';
 
 const APP_URL = process.env.APP_URL || '';
@@ -56,7 +56,7 @@ function publicFile(file: any) {
   };
 }
 
-export function canAccessFile(actor: Actor, file: any, action: 'view' | 'download' | 'edit' | 'delete' | 'archive' | 'restore' | 'permanentDelete') {
+function canAccessFile(actor: Actor, file: any, action: 'view' | 'download' | 'edit' | 'delete' | 'archive' | 'restore' | 'permanentDelete') {
   if (action === 'view' || action === 'download') return canViewFile(actor, file);
   if (action === 'edit') return canEditFile(actor, file);
   if (action === 'archive') return canArchiveFile(actor, file);
@@ -149,7 +149,7 @@ export async function attachFileToEntity(fileId: string, input: AttachInput) {
   return updated;
 }
 
-export async function setFileStatus(fileId: string, status: FileStatus, action: string) {
+async function setFileStatus(fileId: string, status: FileStatus, action: string) {
   const actor = await getCurrentActor(); if (!actor) throw new Error('Unauthorized');
   const file = await db.query.dataFiles.findFirst({ where: eq(schema.dataFiles.id, fileId) });
   if (!file) throw new Error('Not found');

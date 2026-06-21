@@ -202,7 +202,7 @@ export async function cancelEngineRequest(id: string, comment?: string) {
   }
 }
 
-export async function getEngineRequestHistory(id: string) {
+async function getEngineRequestHistory(id: string) {
   try {
     const history = await getApprovalHistory(id);
     return { success: true, history };

@@ -1,10 +1,10 @@
 import { serverStorage } from '../libs/client/server-storage';
 import { normalizeStudentProfile, getUnifiedStudents, saveUnifiedStudents } from './peopleDirectory';
 
-export const CRM_LEADS_STORAGE_KEY = 'school_crm_leads';
-export const LMS_STUDENTS_STORAGE_KEY = 'mis_lms_students';
-export const SIS_STUDENTS_STORAGE_KEY = 'mis_sis_students_v3';
-export const LMS_TUITION_STORAGE_KEY = 'mis_lms_tuition_fees';
+const CRM_LEADS_STORAGE_KEY = 'school_crm_leads';
+const LMS_STUDENTS_STORAGE_KEY = 'mis_lms_students';
+const SIS_STUDENTS_STORAGE_KEY = 'mis_sis_students_v3';
+const LMS_TUITION_STORAGE_KEY = 'mis_lms_tuition_fees';
 
 type LeadStage =
   | 'NEW'

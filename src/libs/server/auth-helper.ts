@@ -142,7 +142,7 @@ export function isTruongPhong(actor: Actor) {
   return actor.role === 'MANAGER';
 }
 
-export function canViewUser(actor: Actor, targetUser: any) {
+function canViewUser(actor: Actor, targetUser: any) {
   if (isAdminTruong(actor)) return true;
   if (isTruongPhong(actor)) {
     return actor.departmentId === targetUser.departmentId;
@@ -151,11 +151,11 @@ export function canViewUser(actor: Actor, targetUser: any) {
   return actor.id === targetUser.id;
 }
 
-export function canViewUserProfile(actor: Actor, targetUser: any) {
+function canViewUserProfile(actor: Actor, targetUser: any) {
   return canViewUser(actor, targetUser);
 }
 
-export function canUpdateWorkInfo(actor: Actor, targetUser: any) {
+function canUpdateWorkInfo(actor: Actor, targetUser: any) {
   if (isAdminTruong(actor)) return true;
   if (isTruongPhong(actor)) {
     return actor.departmentId === targetUser.departmentId;
@@ -163,22 +163,22 @@ export function canUpdateWorkInfo(actor: Actor, targetUser: any) {
   return false;
 }
 
-export function canUpdateSecurityStatus(actor: Actor, targetUser: any) {
+function canUpdateSecurityStatus(actor: Actor, targetUser: any) {
   // Only admin can change security status
   if (!isAdminTruong(actor)) return false;
   // Cannot lock yourself if you're the only admin
   return true;
 }
 
-export function canChangeUserRole(actor: Actor, _targetUser: any, _nextRole: string) {
+function canChangeUserRole(actor: Actor, _targetUser: any, _nextRole: string) {
   return isAdminTruong(actor);
 }
 
-export function canChangeUserDepartment(actor: Actor, _targetUser: any) {
+function canChangeUserDepartment(actor: Actor, _targetUser: any) {
   return isAdminTruong(actor);
 }
 
-export function canViewUserActivityLog(actor: Actor, targetUser: any) {
+function canViewUserActivityLog(actor: Actor, targetUser: any) {
   if (isAdminTruong(actor)) return true;
   if (isTruongPhong(actor)) {
     return actor.departmentId === targetUser.departmentId;
@@ -187,7 +187,7 @@ export function canViewUserActivityLog(actor: Actor, targetUser: any) {
   return actor.id === targetUser.id;
 }
 
-export function canUpdateMyProfile(actor: Actor, fields: string[]) {
+function canUpdateMyProfile(actor: Actor, fields: string[]) {
   // Fields any user can update on their own profile
   const allowedFields = ['phone', 'avatarUrl'];
   // STAFF can only update allowed fields
@@ -201,7 +201,7 @@ export function canUpdateMyProfile(actor: Actor, fields: string[]) {
   return true;
 }
 
-export function canCreateUser(actor: Actor, roleToAssign: string, departmentId: string) {
+function canCreateUser(actor: Actor, roleToAssign: string, departmentId: string) {
   if (isAdminTruong(actor)) return true;
   if (isTruongPhong(actor)) {
     // Trưởng phòng chỉ được tạo STAFF và chỉ thuộc phòng của mình
@@ -210,7 +210,7 @@ export function canCreateUser(actor: Actor, roleToAssign: string, departmentId: 
   return false;
 }
 
-export function canUpdateUser(actor: Actor, targetUser: any) {
+function canUpdateUser(actor: Actor, targetUser: any) {
   if (isAdminTruong(actor)) return true;
   if (isTruongPhong(actor)) {
     // Trưởng phòng chỉ được sửa user cùng phòng và không được tự nâng role của target, hay đổi department
@@ -219,7 +219,7 @@ export function canUpdateUser(actor: Actor, targetUser: any) {
   return false;
 }
 
-export function canDeleteUser(actor: Actor, targetUser: any) {
+function canDeleteUser(actor: Actor, targetUser: any) {
   if (isAdminTruong(actor)) {
     // Không thể xóa chính mình
     if (actor.id === targetUser.id) return false;
@@ -254,7 +254,7 @@ export function canSendMessage(actor: Actor, conversation: any, memberUserIds: s
   return memberUserIds.includes(actor.id);
 }
 
-export function canPinMessage(actor: Actor, conversation: any) {
+function canPinMessage(actor: Actor, conversation: any) {
   if (isAdminTruong(actor)) return true;
   if (isTruongPhong(actor) && conversation.type === 'DEPARTMENT_CHANNEL' && actor.departmentId === conversation.departmentId) {
     return true;
@@ -272,7 +272,7 @@ export function canDeleteMessage(actor: Actor, message: any, conversation: any) 
 }
 
 // Mentions guards
-export function canMentionUser(actor: Actor, targetUser: any, conversationMembers: string[]) {
+function canMentionUser(actor: Actor, targetUser: any, conversationMembers: string[]) {
   return conversationMembers.includes(targetUser.id);
 }
 
@@ -377,7 +377,7 @@ export function canManageIntegrationSettings(actor: Actor) {
   return isAdminTruong(actor);
 }
 
-export function canManageSystemSettings(actor: Actor) {
+function canManageSystemSettings(actor: Actor) {
   return canUpdateSystemSettings(actor);
 }
 
@@ -393,7 +393,7 @@ export function canUseUserSwitcher(actor: Actor) {
   return isAdminTruong(actor);
 }
 
-export function getRoleRank(role: string) {
+function getRoleRank(role: string) {
   const ranks: Record<string, number> = { STAFF: 1, MANAGER: 2, ADMIN: 3 };
   return ranks[role] || 0;
 }
@@ -421,61 +421,61 @@ export function canApprovePurchaseRequest(actor: Actor) {
   return isAdminTruong(actor);
 }
 
-export function canReceivePurchasedItems(actor: Actor) {
+function canReceivePurchasedItems(actor: Actor) {
   // Người quản lý CSVC nhận hàng
   return canManageFacilities(actor);
 }
 
-export function canCreateAssetFromPurchase(actor: Actor) {
+function canCreateAssetFromPurchase(actor: Actor) {
   return canManageFacilities(actor);
 }
 
-export function canManageInventoryCheck(actor: Actor) {
+function canManageInventoryCheck(actor: Actor) {
   return canManageFacilities(actor);
 }
 
-export function canViewFacilityReports(actor: Actor) {
+function canViewFacilityReports(actor: Actor) {
   return isAdminTruong(actor) || isTruongPhong(actor);
 }
 
 // New Extensions
-export function canManageSupplies(actor: Actor) {
+function canManageSupplies(actor: Actor) {
   return canManageFacilities(actor);
 }
 
-export function canManageSuppliers(actor: Actor) {
+function canManageSuppliers(actor: Actor) {
   return canManageFacilities(actor);
 }
 
-export function canManageWarranties(actor: Actor) {
+function canManageWarranties(actor: Actor) {
   return canManageFacilities(actor);
 }
 
-export function canManageSafetyChecks(actor: Actor) {
+function canManageSafetyChecks(actor: Actor) {
   return canManageFacilities(actor);
 }
 
-export function canCreateBooking(actor: Actor) {
+function canCreateBooking(actor: Actor) {
   return true; // Any user can create a booking
 }
 
-export function canApproveBooking(actor: Actor) {
+function canApproveBooking(actor: Actor) {
   return canManageFacilities(actor);
 }
 
-export function canManageRenovationProjects(actor: Actor) {
+function canManageRenovationProjects(actor: Actor) {
   return canManageFacilities(actor);
 }
 
-export function canGenerateAssetQr(actor: Actor) {
+function canGenerateAssetQr(actor: Actor) {
   return canManageFacilities(actor);
 }
 
-export function canViewFacilityAlerts(actor: Actor) {
+function canViewFacilityAlerts(actor: Actor) {
   return isAdminTruong(actor) || isTruongPhong(actor);
 }
 
-export function canManageFacilitySla(actor: Actor) {
+function canManageFacilitySla(actor: Actor) {
   return isAdminTruong(actor);
 }
 
@@ -491,14 +491,14 @@ export function canViewModule(actor: Actor, module: string): boolean {
   return true;
 }
 
-export function canCreate(actor: Actor, module: string): boolean {
+function canCreate(actor: Actor, module: string): boolean {
   if (isAdminTruong(actor)) return true;
   if (isTruongPhong(actor)) return true;
   if (module === 'tasks' || module === 'announcements' || module === 'directives') return false;
   return true;
 }
 
-export function canEdit(actor: Actor, module: string, entity: any): boolean {
+function canEdit(actor: Actor, module: string, entity: any): boolean {
   if (isAdminTruong(actor)) return true;
   if (isTruongPhong(actor)) {
     if (entity && (entity.workspaceId === actor.workspaceId || entity.departmentId === actor.departmentId)) return true;
@@ -507,28 +507,28 @@ export function canEdit(actor: Actor, module: string, entity: any): boolean {
   return false;
 }
 
-export function canDelete(actor: Actor, module: string, entity: any): boolean {
+function canDelete(actor: Actor, module: string, entity: any): boolean {
   if (isAdminTruong(actor)) return true;
   if (isTruongPhong(actor) && entity && (entity.workspaceId === actor.workspaceId || entity.departmentId === actor.departmentId)) return true;
   if (entity && (entity.assignedId === actor.id || entity.uploadedBy === actor.id)) return true;
   return false;
 }
 
-export function canApprove(actor: Actor, module: string, entity: any): boolean {
+function canApprove(actor: Actor, module: string, entity: any): boolean {
   if (isAdminTruong(actor)) return true;
   if (isTruongPhong(actor) && module === 'approvals' && entity && (entity.workspaceId === actor.workspaceId || entity.departmentId === actor.departmentId)) return true;
   return false;
 }
 
-export function canExport(actor: Actor, module: string): boolean {
+function canExport(actor: Actor, module: string): boolean {
   return isAdminTruong(actor) || isTruongPhong(actor);
 }
 
-export function canConfigure(actor: Actor, module: string): boolean {
+function canConfigure(actor: Actor, module: string): boolean {
   return isAdminTruong(actor);
 }
 
-export function canAccessData(actor: Actor, entity: any): boolean {
+function canAccessData(actor: Actor, entity: any): boolean {
   if (isAdminTruong(actor)) return true;
   if (!entity) return false;
   if (isTruongPhong(actor)) {

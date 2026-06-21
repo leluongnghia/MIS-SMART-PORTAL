@@ -69,7 +69,7 @@ export interface Comment {
   createdAt: string;
 }
 
-export interface HistoryLog {
+interface HistoryLog {
   id: string;
   userName: string;
   userTitle: string;
@@ -77,7 +77,7 @@ export interface HistoryLog {
   createdAt: string;
 }
 
-export interface ChecklistItem {
+interface ChecklistItem {
   id: string;
   text: string;
   done: boolean;
@@ -113,7 +113,7 @@ export interface Task {
   campusId?: 'ALL' | 'CAMPUS_HN' | 'CAMPUS_HCM';
 }
 
-export interface Project {
+interface Project {
   id: string;
   name: string;
   ownerWorkspaceId: string;

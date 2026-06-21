@@ -173,7 +173,7 @@ const SPECIFIC_BADGES: Record<string, string[]> = {
 /**
  * Helper to generate random consistent MI Profile scores based on the teacher's primary workspace department
  */
-export function generateConsistentMIProfile(id: string, workspaceId: string): MIProfile {
+function generateConsistentMIProfile(id: string, workspaceId: string): MIProfile {
   if (SPECIFIC_MI_PROFILES[id]) {
     return SPECIFIC_MI_PROFILES[id];
   }

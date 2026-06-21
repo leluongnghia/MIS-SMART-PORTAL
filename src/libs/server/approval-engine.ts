@@ -5,7 +5,7 @@ import { createNotification, type NotificationModule } from './notification-cent
 
 export type ApprovalStatus = 'DRAFT' | 'PENDING' | 'APPROVED' | 'REJECTED' | 'NEEDS_REVISION' | 'CANCELLED';
 export type ApprovalAction = 'SUBMITTED' | 'APPROVED' | 'REJECTED' | 'NEEDS_REVISION' | 'CANCELLED' | 'COMMENTED';
-export type ApprovalModule = 'TASKS' | 'ADMISSIONS' | 'STUDENTS' | 'FACILITIES' | 'STORAGE' | 'SETTINGS' | 'SYSTEM';
+type ApprovalModule = 'TASKS' | 'ADMISSIONS' | 'STUDENTS' | 'FACILITIES' | 'STORAGE' | 'SETTINGS' | 'SYSTEM';
 
 export interface ApprovalRequestInput {
   module: ApprovalModule;
@@ -57,7 +57,7 @@ function statusMessage(status: ApprovalStatus) {
   }
 }
 
-export function canActOnApproval(actor: Actor, request: any) {
+function canActOnApproval(actor: Actor, request: any) {
   if (isAdmin(actor)) return true;
   if (request.approverId && request.approverId === actor.id) return true;
   if (request.approverRole && request.approverRole === actor.role) return true;

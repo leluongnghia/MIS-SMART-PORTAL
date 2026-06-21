@@ -2,12 +2,12 @@ import { desc, eq, inArray } from 'drizzle-orm';
 import { db, schema } from './db';
 import { getCurrentActor, writeAuditLog, type Actor } from './auth-helper';
 
-export type NotificationSeverity = 'INFO' | 'SUCCESS' | 'WARNING' | 'ERROR';
-export type NotificationStatus = 'UNREAD' | 'READ' | 'ARCHIVED';
+type NotificationSeverity = 'INFO' | 'SUCCESS' | 'WARNING' | 'ERROR';
+type NotificationStatus = 'UNREAD' | 'READ' | 'ARCHIVED';
 export type NotificationModule = 'TASKS' | 'APPROVALS' | 'ADMISSIONS' | 'STUDENTS' | 'STORAGE' | 'SETTINGS' | 'AUDIT_LOGS' | 'SYSTEM';
-export type NotificationType = 'TASK_ASSIGNED' | 'TASK_DUE_SOON' | 'TASK_OVERDUE' | 'APPROVAL_REQUESTED' | 'APPROVAL_APPROVED' | 'APPROVAL_REJECTED' | 'ADMISSION_LEAD_ASSIGNED' | 'ADMISSION_PAYMENT_UPDATED' | 'STUDENT_PROFILE_MISSING' | 'FILE_UPLOADED' | 'FILE_SHARED' | 'SYSTEM_SECURITY' | 'SETTINGS_CHANGED';
+type NotificationType = 'TASK_ASSIGNED' | 'TASK_DUE_SOON' | 'TASK_OVERDUE' | 'APPROVAL_REQUESTED' | 'APPROVAL_APPROVED' | 'APPROVAL_REJECTED' | 'ADMISSION_LEAD_ASSIGNED' | 'ADMISSION_PAYMENT_UPDATED' | 'STUDENT_PROFILE_MISSING' | 'FILE_UPLOADED' | 'FILE_SHARED' | 'SYSTEM_SECURITY' | 'SETTINGS_CHANGED';
 
-export interface PortalNotification {
+interface PortalNotification {
   id: string; title: string; message: string; module: NotificationModule; type: NotificationType; severity: NotificationSeverity; status: NotificationStatus;
   actor?: { id?: string | null; name?: string | null; title?: string | null }; targetUrl?: string | null; createdAt: string; readAt?: string | null; sourceId?: string | null; dedupeKey: string;
 }
@@ -72,7 +72,7 @@ function demoNotifications(actor: Actor): PortalNotification[] {
   return items;
 }
 
-export async function buildNotifications(actor: Actor, filters: NotificationFilters = {}) {
+async function buildNotifications(actor: Actor, filters: NotificationFilters = {}) {
   const persistent = await persistentNotifications(actor);
   let all = persistent.length ? persistent : demoNotifications(actor);
   let items = all;

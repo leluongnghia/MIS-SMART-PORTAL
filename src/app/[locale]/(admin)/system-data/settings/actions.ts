@@ -169,7 +169,7 @@ export async function saveSettings(updates: { key: string; value: string }[]) {
   return { success: true, updatedCount };
 }
 
-export async function getSchoolProfileSettings() {
+async function getSchoolProfileSettings() {
   const actor = await getCurrentActor();
   if (!actor || !canViewSystemSettings(actor)) throw new Error('Unauthorized');
   
@@ -180,11 +180,11 @@ export async function getSchoolProfileSettings() {
   return settings;
 }
 
-export async function updateSchoolProfileSettings(updates: { key: string; value: string }[]) {
+async function updateSchoolProfileSettings(updates: { key: string; value: string }[]) {
   return saveSettings(updates);
 }
 
-export async function getAcademicSettings() {
+async function getAcademicSettings() {
   const actor = await getCurrentActor();
   if (!actor || !canViewSystemSettings(actor)) throw new Error('Unauthorized');
   
@@ -195,7 +195,7 @@ export async function getAcademicSettings() {
   return settings;
 }
 
-export async function updateAcademicSettings(updates: { key: string; value: string }[]) {
+async function updateAcademicSettings(updates: { key: string; value: string }[]) {
   return saveSettings(updates);
 }
 

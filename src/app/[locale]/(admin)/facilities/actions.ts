@@ -24,7 +24,7 @@ import {
 // ==============================
 // TỔNG QUAN
 // ==============================
-export async function getFacilitiesOverview() {
+async function getFacilitiesOverview() {
   const user = await getCurrentActor();
   if (!user) throw new Error('Unauthorized');
   
@@ -61,7 +61,7 @@ export async function getLocations() {
   }
 }
 
-export async function createLocation(data: any) {
+async function createLocation(data: any) {
   const user = await getCurrentActor();
   if (!user || !canManageFacilities(user)) throw new Error('Unauthorized');
 
@@ -88,7 +88,7 @@ export async function getAssets() {
   }
 }
 
-export async function createAsset(data: any) {
+async function createAsset(data: any) {
   const user = await getCurrentActor();
   if (!user || !canManageFacilities(user)) throw new Error('Unauthorized');
 
@@ -115,7 +115,7 @@ export async function getRepairRequests() {
   }
 }
 
-export async function createRepairRequest(data: any) {
+async function createRepairRequest(data: any) {
   const user = await getCurrentActor();
   if (!user) throw new Error('Unauthorized');
 
@@ -132,7 +132,7 @@ export async function createRepairRequest(data: any) {
   }
 }
 
-export async function updateRepairStatus(id: string, status: string, resolutionNote?: string) {
+async function updateRepairStatus(id: string, status: string, resolutionNote?: string) {
   const user = await getCurrentActor();
   if (!user || !canManageFacilities(user)) throw new Error('Unauthorized');
 
@@ -159,7 +159,7 @@ export async function getPurchaseRequests() {
   }
 }
 
-export async function getPurchaseItems(purchaseRequestId: string) {
+async function getPurchaseItems(purchaseRequestId: string) {
   try {
     const data = await db.select().from(facilitiesPurchaseItems).where(eq(facilitiesPurchaseItems.purchaseRequestId, purchaseRequestId));
     return { success: true, data };
@@ -168,7 +168,7 @@ export async function getPurchaseItems(purchaseRequestId: string) {
   }
 }
 
-export async function createPurchaseRequest(data: any, items: any[]) {
+async function createPurchaseRequest(data: any, items: any[]) {
   const user = await getCurrentActor();
   if (!user || !canCreatePurchaseRequest(user)) throw new Error('Unauthorized');
 
@@ -199,7 +199,7 @@ export async function createPurchaseRequest(data: any, items: any[]) {
   }
 }
 
-export async function approvePurchaseRequest(id: string, isApproved: boolean, rejectedReason?: string) {
+async function approvePurchaseRequest(id: string, isApproved: boolean, rejectedReason?: string) {
   const user = await getCurrentActor();
   if (!user || !canApprovePurchaseRequest(user)) throw new Error('Unauthorized');
 

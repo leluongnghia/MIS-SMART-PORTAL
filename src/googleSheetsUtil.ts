@@ -115,7 +115,7 @@ export const createMISSpreadsheet = async (accessToken: string, title = 'Giáo d
 /**
  * Helper to write ranges of cell values to Sheets
  */
-export const writeSheetValues = async (spreadsheetId: string, range: string, values: any[][], accessToken: string) => {
+const writeSheetValues = async (spreadsheetId: string, range: string, values: any[][], accessToken: string) => {
   const response = await fetch(
     `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(range)}?valueInputOption=USER_ENTERED`,
     {
@@ -172,7 +172,7 @@ export const pushTasksToGoogleSheets = async (spreadsheetId: string, tasks: Task
 /**
  * Clear range of cells helper
  */
-export const clearSheetRange = async (spreadsheetId: string, range: string, accessToken: string) => {
+const clearSheetRange = async (spreadsheetId: string, range: string, accessToken: string) => {
   await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(range)}:clear`, {
     method: 'POST',
     headers: {

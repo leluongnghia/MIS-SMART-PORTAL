@@ -1,6 +1,6 @@
 import { DataService } from './data-service';
 
-export class ClassService extends DataService<'classes'> {
+class ClassService extends DataService<'classes'> {
   constructor() {
     super('classes');
   }

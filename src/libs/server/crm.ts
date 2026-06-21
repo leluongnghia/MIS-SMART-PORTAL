@@ -147,7 +147,7 @@ export function normalizeCrmLead(raw: any) {
   };
 }
 
-export function appendCrmWorkflowLog(leadId: string, name: string, channel = 'SYSTEM', status = 'SENT', error = '') {
+function appendCrmWorkflowLog(leadId: string, name: string, channel = 'SYSTEM', status = 'SENT', error = '') {
   const log = {
     id: `wf_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
     leadId,
@@ -178,7 +178,7 @@ export function buildVietQrUrl(payment: any) {
   return `https://img.vietqr.io/image/${payment.bankBin}-${payment.bankAccountNo}-compact2.png?amount=${payment.amount}&addInfo=${addInfo}&accountName=${accountName}`;
 }
 
-export const crmStore = {
+const crmStore = {
   leadIntakeQueue: crmLeadIntakeQueue,
   leads: crmLeadsStore,
   workflowLogs: crmWorkflowLogsStore,
