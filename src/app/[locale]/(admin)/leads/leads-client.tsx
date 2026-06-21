@@ -37,6 +37,7 @@ import { Card, CardContent } from '@/src/components/ui/card';
 import { Dialog } from '@/src/components/ui/dialog';
 import { Textarea } from '@/src/components/ui/textarea';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/src/components/ui/table';
+import { Skeleton } from '@/src/components/ui/skeleton';
 import {
   createLead,
   updateLead,
@@ -207,6 +208,7 @@ export default function LeadsClient({
   // Forms
   const createForm = useForm<LeadFormValues>({
     resolver: zodResolver(leadFormSchema),
+    mode: 'onChange',
     defaultValues: {
       fullName: '',
       parentName: '',
@@ -222,6 +224,7 @@ export default function LeadsClient({
 
   const editForm = useForm<LeadFormValues>({
     resolver: zodResolver(leadFormSchema),
+    mode: 'onChange',
   });
 
   const handleSearchAndFilters = (newFilters: {
@@ -740,14 +743,6 @@ export default function LeadsClient({
 
       {/* Table Container */}
       <Card className="overflow-hidden border-0 shadow-lg rounded-2xl bg-white dark:bg-slate-950 relative">
-        {isPending && (
-          <div className="absolute inset-0 z-10 bg-white/50 dark:bg-slate-950/50 backdrop-blur-sm flex items-center justify-center">
-            <div className="flex flex-col items-center gap-2">
-              <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
-              <span className="text-sm font-bold text-blue-600">Đang tải dữ liệu...</span>
-            </div>
-          </div>
-        )}
         <div className="overflow-x-auto">
           <Table>
             <TableHeader className="bg-slate-50/80 dark:bg-slate-900/50 backdrop-blur">
@@ -764,7 +759,17 @@ export default function LeadsClient({
               ))}
             </TableHeader>
             <TableBody>
-              {table.getRowModel().rows.length ? (
+              {isPending ? (
+                Array.from({ length: 10 }).map((_, index) => (
+                  <TableRow key={index}>
+                    {columns.map((col, cIdx) => (
+                      <TableCell key={cIdx} className="py-4">
+                        <Skeleton className="h-5 w-full" />
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : table.getRowModel().rows.length ? (
                 table.getRowModel().rows.map(row => (
                   <TableRow
                     key={row.id}
@@ -920,16 +925,19 @@ export default function LeadsClient({
             </Button>
             <Button
               type="submit"
-              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold min-w-[120px]"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold min-w-[120px] transition-all relative overflow-hidden"
               disabled={createForm.formState.isSubmitting}
             >
               {createForm.formState.isSubmitting ? (
-                <>
-                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white/20 border-t-white" />
-                  Đang lưu...
-                </>
+                <div className="flex items-center gap-2">
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/20 border-t-white" />
+                  <span>Đang lưu...</span>
+                </div>
               ) : (
-                'Lưu thông tin'
+                <div className="flex items-center gap-2">
+                  <Plus className="h-4 w-4" />
+                  <span>Lưu thông tin</span>
+                </div>
               )}
             </Button>
           </div>
@@ -1038,16 +1046,19 @@ export default function LeadsClient({
             </Button>
             <Button
               type="submit"
-              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold min-w-[120px]"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold min-w-[120px] transition-all relative overflow-hidden"
               disabled={editForm.formState.isSubmitting}
             >
               {editForm.formState.isSubmitting ? (
-                <>
-                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white/20 border-t-white" />
-                  Đang lưu...
-                </>
+                <div className="flex items-center gap-2">
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/20 border-t-white" />
+                  <span>Đang lưu...</span>
+                </div>
               ) : (
-                'Lưu thay đổi'
+                <div className="flex items-center gap-2">
+                  <Edit2 className="h-4 w-4" />
+                  <span>Lưu thay đổi</span>
+                </div>
               )}
             </Button>
           </div>
@@ -1079,17 +1090,20 @@ export default function LeadsClient({
             </Button>
             <Button
               type="button"
-              className="bg-rose-600 hover:bg-rose-700 text-white font-bold min-w-[100px]"
+              className="bg-rose-600 hover:bg-rose-700 text-white font-bold min-w-[100px] transition-all relative overflow-hidden"
               disabled={isPending}
               onClick={handleDelete}
             >
               {isPending ? (
-                <>
-                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white/20 border-t-white" />
-                  Đang xóa...
-                </>
+                <div className="flex items-center gap-2">
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/20 border-t-white" />
+                  <span>Đang xóa...</span>
+                </div>
               ) : (
-                'Xóa'
+                <div className="flex items-center gap-2">
+                  <Trash2 className="h-4 w-4" />
+                  <span>Xóa lead</span>
+                </div>
               )}
             </Button>
           </div>
