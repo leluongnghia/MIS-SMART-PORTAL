@@ -34,7 +34,6 @@ export async function GET() {
         id: `pay_${Date.now()}_${i}`,
         leadId: insertedLeads[Math.floor(Math.random() * insertedLeads.length)],
         type: type as any,
-        code: `PAY-${Math.floor(Math.random() * 10000)}`,
         amount,
         status: 'paid',
         transferContent: 'Thanh toan phi',
