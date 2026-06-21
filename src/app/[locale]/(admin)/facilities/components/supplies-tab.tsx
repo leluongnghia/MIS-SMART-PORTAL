@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/src/components/ui/card';
 import { Button } from '@/src/components/ui/button';
 import { Input } from '@/src/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/src/components/ui/select';
 import { Plus, Search, Trash2, AlertCircle, ArrowDownToLine, ArrowUpFromLine } from 'lucide-react';
 import { Dialog } from '@/src/components/ui/dialog';
 import { createSupply, updateSupplyQuantity } from '../actions';
@@ -119,7 +120,25 @@ export function SuppliesTab({ initialSupplies = [] }: { initialSupplies?: Supply
             </div>
             <div className="space-y-1">
               <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Đơn vị</label>
-              <Input placeholder="cái, hộp, ream..." value={unit} onChange={(e) => setUnit(e.target.value)} required />
+              <Select value={unit} onValueChange={setUnit} required>
+                <SelectTrigger>
+                  <SelectValue placeholder="Chọn đơn vị" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="cái">Cái</SelectItem>
+                  <SelectItem value="hộp">Hộp</SelectItem>
+                  <SelectItem value="chiếc">Chiếc</SelectItem>
+                  <SelectItem value="bộ">Bộ</SelectItem>
+                  <SelectItem value="ram">Ram (Giấy)</SelectItem>
+                  <SelectItem value="cuộn">Cuộn</SelectItem>
+                  <SelectItem value="quyển">Quyển</SelectItem>
+                  <SelectItem value="lọ">Lọ</SelectItem>
+                  <SelectItem value="kg">Kg</SelectItem>
+                  <SelectItem value="lít">Lít</SelectItem>
+                  <SelectItem value="gói">Gói</SelectItem>
+                  <SelectItem value="thùng">Thùng</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-1">
               <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Tồn hiện tại</label>
