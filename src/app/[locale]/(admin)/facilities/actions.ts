@@ -292,10 +292,10 @@ export async function createSupply(data: any) {
 }
 
 export async function updateSupplyQuantity(id: string, quantity: number, type: 'IMPORT' | 'EXPORT' | 'ADJUST', reason?: string) {
-  const user = await getCurrentActor();
-  if (!user || !canManageFacilities(user)) throw new Error('Unauthorized');
-
   try {
+    const user = await getCurrentActor();
+    if (!user || !canManageFacilities(user)) return { success: false, error: 'Unauthorized' };
+
     const supply = await db.select().from(facilitiesSupplies).where(eq(facilitiesSupplies.id, id));
     if (!supply[0]) throw new Error('Supply not found');
 
