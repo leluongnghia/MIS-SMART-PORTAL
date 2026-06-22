@@ -37,6 +37,8 @@ interface AppSidebarProps {
   completionRate: number;
   isGroupOpen: (group: string) => boolean;
   toggleGroup: (group: string) => void;
+  isGroupOpen: (group: string) => boolean;
+  toggleGroup: (group: string) => void;
   canDisplayTab: (tabId: string) => boolean;
   matchesSearch: (tabId: string) => boolean;
   hasVisibleStrategy: boolean;
@@ -44,7 +46,10 @@ interface AppSidebarProps {
   hasVisibleFoundation: boolean;
   hasVisibleBusiness: boolean;
   hasVisibleCampus: boolean;
+  hasVisibleSystem: boolean;
   handleSelectViewOnMobile: (view: string) => void;
+  openSystemSettings: () => void;
+  openRbacSettings: () => void;
 }
 
 export default function AppSidebar({
@@ -66,7 +71,10 @@ export default function AppSidebar({
   hasVisibleFoundation,
   hasVisibleBusiness,
   hasVisibleCampus,
+  hasVisibleSystem,
   handleSelectViewOnMobile,
+  openSystemSettings,
+  openRbacSettings,
 }: AppSidebarProps) {
 
   const groupHeaderClass = (groupName: string) => {
@@ -95,6 +103,10 @@ export default function AppSidebar({
       colorHover = 'hover:text-sky-600 dark:hover:text-sky-400';
       colorActive = isOpen ? 'text-sky-600 dark:text-sky-400 font-extrabold' : '';
       bgDot = 'bg-sky-500';
+    } else if (groupName === 'system') {
+      colorHover = 'hover:text-slate-600 dark:hover:text-slate-400';
+      colorActive = isOpen ? 'text-slate-600 dark:text-slate-400 font-extrabold' : '';
+      bgDot = 'bg-slate-500';
     }
     
     return { colorHover, colorActive, bgDot };
@@ -129,10 +141,10 @@ export default function AppSidebar({
 
   const getIconClass = (tabId: string, baseGroup: string) => {
     const isActive = overviewTab === tabId;
-    if (baseGroup === 'strategy') return isActive ? 'text-rose-600 dark:text-rose-450' : 'text-rose-400 dark:text-rose-550';
-    if (baseGroup === 'operation') return isActive ? 'text-violet-600 dark:text-violet-450' : 'text-violet-400 dark:text-violet-550';
-    if (baseGroup === 'foundation') return isActive ? 'text-indigo-650 dark:text-indigo-400' : 'text-indigo-400 dark:text-indigo-550';
-    if (baseGroup === 'business') return isActive ? 'text-emerald-600 dark:text-emerald-450' : 'text-emerald-400' ;
+    if (baseGroup === 'strategy') return isActive ? 'text-rose-600 dark:text-rose-455' : 'text-rose-400 dark:text-rose-555';
+    if (baseGroup === 'operation') return isActive ? 'text-violet-600 dark:text-violet-455' : 'text-violet-400 dark:text-violet-555';
+    if (baseGroup === 'foundation') return isActive ? 'text-indigo-650 dark:text-indigo-400' : 'text-indigo-400 dark:text-indigo-555';
+    if (baseGroup === 'business') return isActive ? 'text-emerald-600 dark:text-emerald-455' : 'text-emerald-400' ;
     return isActive ? 'text-sky-600 dark:text-sky-455' : 'text-sky-400';
   };
 
@@ -458,160 +470,6 @@ export default function AppSidebar({
                   )}
 
                   {canDisplayTab('STUDENT_SUCCESS') && matchesSearch('STUDENT_SUCCESS') && (
-                    <button 
-                      onClick={() => { setOverviewTab('STUDENT_SUCCESS'); setIsSidebarOpen(false); }}
-                      aria-current={overviewTab === 'STUDENT_SUCCESS' ? 'page' : undefined}
-                      className={getTabClass('STUDENT_SUCCESS', 'business')}
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <Users className={`w-4 h-4 transition-colors ${getIconClass('STUDENT_SUCCESS', 'business')}`} />
-                        <span>Hồ sơ Học sinh 360°</span>
-                      </div>
-                    </button>
-                  )}
-
-                  {canDisplayTab('PARENT_PORTAL') && matchesSearch('PARENT_PORTAL') && (
-                    <button 
-                      onClick={() => { setOverviewTab('PARENT_PORTAL'); setIsSidebarOpen(false); }}
-                      aria-current={overviewTab === 'PARENT_PORTAL' ? 'page' : undefined}
-                      className={getTabClass('PARENT_PORTAL', 'business')}
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <Smartphone className={`w-4 h-4 transition-colors ${getIconClass('PARENT_PORTAL', 'business')}`} />
-                        <span>Cổng PHHS / Học sinh</span>
-                      </div>
-                      <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider font-mono shrink-0 select-none ${getBadgeClass('PARENT_PORTAL', 'business')}`}>NEW</span>
-                    </button>
-                  )}
-
-                  {canDisplayTab('HRM') && matchesSearch('HRM') && (
-                    <button 
-                      onClick={() => { setOverviewTab('HRM'); setIsSidebarOpen(false); }}
-                      aria-current={overviewTab === 'HRM' ? 'page' : undefined}
-                      className={getTabClass('HRM', 'business')}
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <UserCheck className={`w-4 h-4 transition-colors ${getIconClass('HRM', 'business')}`} />
-                        <span>Quản trị HRM</span>
-                      </div>
-                      <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider font-mono shrink-0 select-none ${getBadgeClass('HRM', 'business')}`}>NEW</span>
-                    </button>
-                  )}
-
-                  {canDisplayTab('LMS') && matchesSearch('LMS') && (
-                    <button 
-                      onClick={() => { setOverviewTab('LMS'); setIsSidebarOpen(false); }}
-                      aria-current={overviewTab === 'LMS' ? 'page' : undefined}
-                      className={getTabClass('LMS', 'business')}
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <Laptop className={`w-4 h-4 transition-colors ${getIconClass('LMS', 'business')}`} />
-                        <span>Hệ thống LMS</span>
-                      </div>
-                      <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider font-mono shrink-0 select-none ${getBadgeClass('LMS', 'business')}`}>NEW</span>
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* GROUP 5: CAMPUS (Vận hành Học đường) */}
-          {hasVisibleCampus && (
-            <div className="flex flex-col gap-0.5 border-b border-slate-100 dark:border-slate-800/80 pb-2.5">
-              <button 
-                onClick={() => toggleGroup('campus')}
-                aria-expanded={isGroupOpen('campus')}
-                className={`w-full flex items-center justify-between text-[10px] font-black tracking-wider text-slate-400 dark:text-slate-500 py-1.5 px-3 uppercase font-mono cursor-pointer transition-colors ${groupHeaderClass('campus').colorHover}`}
-              >
-                <span className="flex items-center gap-2">
-                  <span className={`w-1.5 h-1.5 rounded-full ${groupHeaderClass('campus').bgDot}`}></span>
-                  <span className={groupHeaderClass('campus').colorActive}>5. Vận hành Học đường</span>
-                </span>
-                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isGroupOpen('campus') ? groupHeaderClass('campus').colorActive : '-rotate-90'}`} />
-              </button>
-              
-              {isGroupOpen('campus') && (
-                <div className="flex flex-col gap-1 pl-2 ml-2 mt-1 border-l border-sky-100 dark:border-sky-955 transition-all duration-300">
-                  {canDisplayTab('EVENTS') && matchesSearch('EVENTS') && (
-                    <button 
-                      onClick={() => { setOverviewTab('EVENTS'); setIsSidebarOpen(false); }}
-                      aria-current={overviewTab === 'EVENTS' ? 'page' : undefined}
-                      className={getTabClass('EVENTS', 'campus')}
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <Sparkles className={`w-4 h-4 transition-colors ${getIconClass('EVENTS', 'campus')}`} />
-                        <span>Quản lý Sự kiện</span>
-                      </div>
-                      <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider font-mono shrink-0 select-none ${getBadgeClass('EVENTS', 'campus')}`}>NEW</span>
-                    </button>
-                  )}
-
-                  {canDisplayTab('ACADEMIC_OPS') && matchesSearch('ACADEMIC_OPS') && (
-                    <button 
-                      onClick={() => { setOverviewTab('ACADEMIC_OPS'); setIsSidebarOpen(false); }}
-                      aria-current={overviewTab === 'ACADEMIC_OPS' ? 'page' : undefined}
-                      className={getTabClass('ACADEMIC_OPS', 'campus')}
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <GraduationCap className={`w-4 h-4 transition-colors ${getIconClass('ACADEMIC_OPS', 'campus')}`} />
-                        <span>Thời khóa biểu &amp; Giáo án</span>
-                      </div>
-                      <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider font-mono shrink-0 select-none ${getBadgeClass('ACADEMIC_OPS', 'campus')}`}>NEW</span>
-                    </button>
-                  )}
-
-                  {canDisplayTab('LOGISTICS') && matchesSearch('LOGISTICS') && (
-                    <button 
-                      onClick={() => { setOverviewTab('LOGISTICS'); setIsSidebarOpen(false); }}
-                      aria-current={overviewTab === 'LOGISTICS' ? 'page' : undefined}
-                      className={getTabClass('LOGISTICS', 'campus')}
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <BookOpen className={`w-4 h-4 transition-colors ${getIconClass('LOGISTICS', 'campus')}`} />
-                        <span>Thư viện &amp; Thiết bị</span>
-                      </div>
-                      <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider font-mono shrink-0 select-none ${getBadgeClass('LOGISTICS', 'campus')}`}>NEW</span>
-                    </button>
-                  )}
-
-                  {canDisplayTab('REQUESTS') && matchesSearch('REQUESTS') && (
-                    <button 
-                      onClick={() => { setOverviewTab('REQUESTS'); setIsSidebarOpen(false); }}
-                      aria-current={overviewTab === 'REQUESTS' ? 'page' : undefined}
-                      className={getTabClass('REQUESTS', 'campus')}
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <Briefcase className={`w-4 h-4 transition-colors ${getIconClass('REQUESTS', 'campus')}`} />
-                        <span>Yêu cầu &amp; Dịch vụ</span>
-                      </div>
-                      <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider font-mono shrink-0 select-none ${getBadgeClass('REQUESTS', 'campus')}`}>NEW</span>
-                    </button>
-                  )}
-
-                  {canDisplayTab('GOOGLE_SHEETS') && matchesSearch('GOOGLE_SHEETS') && (
-                    <button 
-                      onClick={() => { setOverviewTab('GOOGLE_SHEETS'); setIsSidebarOpen(false); }}
-                      aria-current={overviewTab === 'GOOGLE_SHEETS' ? 'page' : undefined}
-                      className={getTabClass('GOOGLE_SHEETS', 'campus')}
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <RefreshCw className={`w-4 h-4 transition-colors ${getIconClass('GOOGLE_SHEETS', 'campus')}`} />
-                        <span>Đồng bộ Sheets</span>
-                      </div>
-                      <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider font-mono shrink-0 select-none ${getBadgeClass('GOOGLE_SHEETS', 'campus')}`}>NEW</span>
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Goal Completion Meter */}
-        <div className="mt-auto p-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
-          <div className="flex items-center justify-between text-[11px] text-slate-500 mb-1 font-mono">
-            <span className="font-semibold text-slate-600 dark:text-slate-400">Đạt tiến độ mục tiêu</span>
             <span className="font-bold text-indigo-650 dark:text-indigo-400">{completionRate}%</span>
           </div>
           <div className="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200/40 dark:border-slate-700/40 h-1.5 rounded-full overflow-hidden">

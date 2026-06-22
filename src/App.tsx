@@ -755,7 +755,9 @@ function AppInner() {
     (canDisplayTab('REQUESTS') && matchesSearch('REQUESTS')) ||
     (canDisplayTab('GOOGLE_SHEETS') && matchesSearch('GOOGLE_SHEETS'));
 
-  const isGroupOpen = (groupKey: 'strategy' | 'operation' | 'foundation' | 'business' | 'campus') => {
+  const hasVisibleSystem = currentUser.role === 'ADMIN';
+
+  const isGroupOpen = (groupKey: 'strategy' | 'operation' | 'foundation' | 'business' | 'campus' | 'system') => {
     if (sidebarSearchQuery) return true;
     return expandedGroups[groupKey];
   };
@@ -1548,7 +1550,10 @@ function AppInner() {
         hasVisibleFoundation={hasVisibleFoundation}
         hasVisibleBusiness={hasVisibleBusiness}
         hasVisibleCampus={hasVisibleCampus}
+        hasVisibleSystem={hasVisibleSystem}
         handleSelectViewOnMobile={handleSelectViewOnMobile}
+        openSystemSettings={() => setIsSystemSettingsOpen(true)}
+        openRbacSettings={() => setIsRbacModalOpen(true)}
       />
       
         {/* Main Content Area on the Right */}

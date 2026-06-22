@@ -8,7 +8,7 @@ import { revalidatePath } from "next/cache";
 
 export async function getInitialData() {
   const actor = await getCurrentActor();
-  if (!actor) return { data: [], approvalRequests: [], actor: null };
+  if (!actor) return { approvalRequests: [], actor: null };
 
   try {
     // 1. Ensure employeeProfiles exists for our seed users
@@ -41,126 +41,120 @@ export async function getInitialData() {
       }
     }
 
-    // 2. Ensure leaveRequests exists
-    let leaveRows = await db.select().from(schema.leaveRequests);
-    if (leaveRows.length === 0) {
-      const defaultLeaveRequests = [
+    // 2. Ensure approvalRequests exists with 7 types
+    const currentRequests = await db.select().from(schema.approvalRequests).limit(1);
+    if (currentRequests.length === 0) {
+      const defaultApprovalRequests = [
         {
-          id: 'leave_1',
-          employeeProfileId: 'ep_nhung',
-          type: 'Nghỉ phép năm',
-          startDate: new Date('2026-06-20T08:00:00Z'),
-          endDate: new Date('2026-06-21T17:00:00Z'),
-          reason: 'Giải quyết việc gia đình riêng ở quê.',
-          status: 'pending',
-          substituteTeacherId: 'user_hoa',
-          payload: { employeeName: 'Cô Phạm Hồng Nhung', department: 'Tổ Ngữ văn' }
+          id: 'req_leave_1',
+          module: 'APPROVALS',
+          entityType: 'LEAVE_REQUEST',
+          entityId: 'leave_001',
+          title: 'Đơn xin nghỉ phép năm',
+          description: 'Nghỉ giải quyết việc gia đình riêng ở quê',
+          status: 'PENDING',
+          requesterId: 'user_nhung',
+          requesterName: 'Cô Phạm Hồng Nhung',
+          approverRole: 'MANAGER',
+          approverDepartmentId: 'dept_ngu_van',
+          payload: { startDate: '2026-06-20T08:00:00Z', endDate: '2026-06-21T17:00:00Z', reason: 'Việc gia đình', substituteTeacher: 'Cô Hoa' }
         },
         {
-          id: 'leave_2',
-          employeeProfileId: 'ep_phong',
-          type: 'Nghỉ ốm',
-          startDate: new Date('2026-06-18T08:00:00Z'),
-          endDate: new Date('2026-06-18T17:00:00Z'),
-          reason: 'Đi khám bệnh định kỳ tại bệnh viện Bạch Mai.',
-          status: 'pending',
-          substituteTeacherId: 'user_minh',
-          payload: { employeeName: 'Thầy Bùi Hải Phong', department: 'Tổ Toán - Tin học' }
+          id: 'req_resign_1',
+          module: 'APPROVALS',
+          entityType: 'RESIGNATION',
+          entityId: 'resign_001',
+          title: 'Đơn xin nghỉ việc',
+          description: 'Chuyển công tác',
+          status: 'PENDING',
+          requesterId: 'user_phong',
+          requesterName: 'Thầy Bùi Hải Phong',
+          approverRole: 'ADMIN',
+          approverWorkspaceId: 'BGH',
+          payload: { lastWorkingDate: '2026-07-15', reason: 'Chuyển công tác theo nguyện vọng cá nhân', handoverTo: 'Thầy Minh' }
+        },
+        {
+          id: 'req_train_1',
+          module: 'APPROVALS',
+          entityType: 'TRAINING',
+          entityId: 'train_001',
+          title: 'Đề xuất tham gia khóa học',
+          description: 'Khóa học Montessori nâng cao',
+          status: 'APPROVED',
+          requesterId: 'user_nhung',
+          requesterName: 'Cô Phạm Hồng Nhung',
+          approverRole: 'MANAGER',
+          payload: { courseName: 'Montessori nâng cao', provider: 'Viện đào tạo', cost: '5,000,000 VNĐ' }
+        },
+        {
+          id: 'req_purch_1',
+          module: 'APPROVALS',
+          entityType: 'PURCHASE',
+          entityId: 'purch_001',
+          title: 'Đề xuất mua sắm thiết bị',
+          description: 'Mua sắm máy chiếu phòng Toán',
+          status: 'NEEDS_REVISION',
+          requesterId: 'user_phong',
+          requesterName: 'Thầy Bùi Hải Phong',
+          approverRole: 'ADMIN',
+          payload: { items: ['Máy chiếu Sony X1', 'Màn chiếu 120 inch'], estimatedCost: '25,000,000 VNĐ', priority: 'Cao' }
+        },
+        {
+          id: 'req_maint_1',
+          module: 'APPROVALS',
+          entityType: 'MAINTENANCE',
+          entityId: 'maint_001',
+          title: 'Báo hỏng và xin sửa chữa',
+          description: 'Điều hòa phòng 302 không mát',
+          status: 'PENDING',
+          requesterId: 'user_nhung',
+          requesterName: 'Cô Phạm Hồng Nhung',
+          approverWorkspaceId: 'BGH',
+          payload: { location: 'Phòng 302', issue: 'Không mát, có tiếng ồn', urgency: 'Trung bình' }
+        },
+        {
+          id: 'req_asset_1',
+          module: 'APPROVALS',
+          entityType: 'ASSET_TRANSFER',
+          entityId: 'asset_001',
+          title: 'Đề xuất điều chuyển tài sản',
+          description: 'Điều chuyển đàn Piano từ phòng Âm nhạc lên Hội trường',
+          status: 'DRAFT',
+          requesterId: 'user_phong',
+          requesterName: 'Thầy Bùi Hải Phong',
+          payload: { assetName: 'Đàn Piano Yamaha', from: 'Phòng Âm nhạc', to: 'Hội trường lớn', date: '2026-06-25' }
+        },
+        {
+          id: 'req_capa_1',
+          module: 'APPROVALS',
+          entityType: 'CAPA',
+          entityId: 'capa_001',
+          title: 'Hành động khắc phục',
+          description: 'Khắc phục quy trình điểm danh học sinh',
+          status: 'PENDING',
+          requesterId: 'user_nhung',
+          requesterName: 'Cô Phạm Hồng Nhung',
+          approverRole: 'ADMIN',
+          payload: { issue: 'Điểm danh muộn do hệ thống lỗi', correctiveAction: 'Sử dụng hệ thống backup', deadline: '2026-06-30' }
         }
       ];
-      for (const leave of defaultLeaveRequests) {
-        await db.insert(schema.leaveRequests).values(leave);
+      for (const req of defaultApprovalRequests) {
+        await db.insert(schema.approvalRequests).values({
+          ...req,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        });
       }
-      leaveRows = await db.select().from(schema.leaveRequests);
     }
-
-    // Filter leave requests based on data scope permissions
-    const userRows = await db.select().from(schema.users);
-    const profileRows = await db.select().from(schema.employeeProfiles);
-
-    const profileMap = new Map(profileRows.map(p => [p.id, p]));
-    const userMap = new Map(userRows.map(u => [u.id, u]));
-
-    const leaveWithUser = leaveRows.map(l => {
-      const profile = profileMap.get(l.employeeProfileId);
-      const user = profile ? userMap.get(profile.userId) : null;
-      return {
-        ...l,
-        user,
-      };
-    });
-
-    const filtered = leaveWithUser.filter(item => {
-      if (actor.role === 'ADMIN' || actor.workspaceId === 'BGH') return true;
-      if (actor.role === 'MANAGER') {
-        return item.user?.workspaceId === actor.workspaceId || item.user?.departmentId === actor.departmentId;
-      }
-      return item.user?.id === actor.id;
-    });
 
     const approvalRequests = await getApprovalRequests({ pageSize: 100 });
 
-    return { data: filtered, approvalRequests: approvalRequests.items, actor };
+    return { approvalRequests: approvalRequests.items, actor };
   } catch (e) {
     console.error("Approvals getInitialData failed:", e);
-    return { data: [], approvalRequests: [], actor };
+    return { approvalRequests: [], actor };
   }
 }
-
-export async function approveLeaveRequest(id: string) {
-  const actor = await getCurrentActor();
-  if (!actor) return { success: false, error: "Unauthorized" };
-
-  try {
-    const [request] = await db.select().from(schema.leaveRequests).where(eq(schema.leaveRequests.id, id)).limit(1);
-    if (!request) return { success: false, error: "Yêu cầu không tồn tại" };
-
-    if (actor.role !== 'ADMIN' && actor.role !== 'MANAGER') {
-      await writeAuditLog(actor.id, "APPROVE_LEAVE_DENIED", "LEAVE_REQUEST", id, { success: false, reason: "Insufficient permissions" });
-      return { success: false, error: "Bạn không có quyền phê duyệt yêu cầu này." };
-    }
-
-    await db.update(schema.leaveRequests).set({
-      status: 'approved',
-      approvedById: actor.id,
-      updatedAt: new Date(),
-    }).where(eq(schema.leaveRequests.id, id));
-
-    await writeAuditLog(actor.id, "APPROVE_LEAVE", "LEAVE_REQUEST", id, { before: { status: request.status }, after: { status: 'approved' } });
-    revalidatePath('/[locale]/approvals', 'layout');
-    return { success: true };
-  } catch (e: any) {
-    return { success: false, error: e.message };
-  }
-}
-
-export async function rejectLeaveRequest(id: string) {
-  const actor = await getCurrentActor();
-  if (!actor) return { success: false, error: "Unauthorized" };
-
-  try {
-    const [request] = await db.select().from(schema.leaveRequests).where(eq(schema.leaveRequests.id, id)).limit(1);
-    if (!request) return { success: false, error: "Yêu cầu không tồn tại" };
-
-    if (actor.role !== 'ADMIN' && actor.role !== 'MANAGER') {
-      await writeAuditLog(actor.id, "REJECT_LEAVE_DENIED", "LEAVE_REQUEST", id, { success: false, reason: "Insufficient permissions" });
-      return { success: false, error: "Bạn không có quyền từ chối yêu cầu này." };
-    }
-
-    await db.update(schema.leaveRequests).set({
-      status: 'rejected',
-      approvedById: actor.id,
-      updatedAt: new Date(),
-    }).where(eq(schema.leaveRequests.id, id));
-
-    await writeAuditLog(actor.id, "REJECT_LEAVE", "LEAVE_REQUEST", id, { before: { status: request.status }, after: { status: 'rejected' } });
-    revalidatePath('/[locale]/approvals', 'layout');
-    return { success: true };
-  } catch (e: any) {
-    return { success: false, error: e.message };
-  }
-}
-
 
 export async function approveEngineRequest(id: string, comment?: string) {
   try {
@@ -202,11 +196,30 @@ export async function cancelEngineRequest(id: string, comment?: string) {
   }
 }
 
-async function getEngineRequestHistory(id: string) {
+export async function createNewRequest(input: any) {
+  const actor = await getCurrentActor();
+  if (!actor) return { success: false, error: "Unauthorized" };
+
   try {
-    const history = await getApprovalHistory(id);
-    return { success: true, history };
+    const newId = `req_${Date.now()}`;
+    await db.insert(schema.approvalRequests).values({
+      id: newId,
+      module: 'APPROVALS',
+      entityType: input.entityType,
+      entityId: `${input.entityType.toLowerCase()}_${Date.now()}`,
+      title: input.title,
+      description: input.description,
+      status: 'PENDING',
+      requesterId: actor.id,
+      requesterName: actor.name,
+      approverRole: input.approverRole || 'ADMIN',
+      payload: input.payload || {},
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
+    revalidatePath('/[locale]/approvals', 'layout');
+    return { success: true };
   } catch (e: any) {
-    return { success: false, error: e.message, history: [] };
+    return { success: false, error: e.message };
   }
 }

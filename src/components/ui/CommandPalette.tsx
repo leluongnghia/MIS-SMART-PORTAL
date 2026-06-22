@@ -106,7 +106,17 @@ export default function CommandPalette({
       { id: 'LOGISTICS', label: 'Thư viện & Thiết bị', description: 'Sách, thiết bị, mượn trả, kiểm kê', tab: 'LOGISTICS', icon: BookOpen },
       { id: 'TEACHER_HR', label: 'Nhân sự giáo viên', description: 'Danh bạ, KPI, nghỉ phép', tab: 'TEACHER_HR', icon: UserCheck },
       { id: 'RISK_CENTER', label: 'Quản trị rủi ro', description: 'Cảnh báo, giám sát, xử lý', tab: 'RISK_CENTER', icon: AlertCircle },
-      { id: 'ANALYTICS', label: 'Báo cáo phân tích', description: 'Báo cáo, biểu đồ, truy vấn', tab: 'ANALYTICS', icon: FileSpreadsheet }
+      { id: 'ANALYTICS', label: 'Báo cáo phân tích', description: 'Báo cáo, biểu đồ, truy vấn', tab: 'ANALYTICS', icon: FileSpreadsheet },
+      { id: 'BOARD_DIRECTIVES', label: 'Chỉ đạo BGH', description: 'Thông báo nội bộ, quyết định', tab: 'BOARD_DIRECTIVES', icon: TrendingUp },
+      { id: 'MEETING', label: 'Quản lý Cuộc họp', description: 'Lịch họp, biên bản', tab: 'MEETING', icon: CalendarDays },
+      { id: 'KNOWLEDGE', label: 'Kho Tri Thức', description: 'Quy trình, tài liệu hướng dẫn', tab: 'KNOWLEDGE', icon: BookOpen },
+      { id: 'DOCUMENT', label: 'Quản lý Văn bản', description: 'Công văn, biểu mẫu', tab: 'DOCUMENT', icon: FileCheck },
+      { id: 'STUDENT_SUCCESS', label: 'Hồ sơ Học sinh 360°', description: 'Thông tin học sinh toàn diện', tab: 'STUDENT_SUCCESS', icon: Users },
+      { id: 'HRM', label: 'Quản trị HRM', description: 'Hồ sơ, chấm công, lương', tab: 'HRM', icon: UserCheck },
+      { id: 'LMS', label: 'Hệ thống LMS', description: 'Học trực tuyến', tab: 'LMS', icon: BookOpen },
+      { id: 'EVENTS', label: 'Quản lý Sự kiện', description: 'Sự kiện trường học', tab: 'EVENTS', icon: Star },
+      { id: 'REQUESTS', label: 'Yêu cầu & Dịch vụ', description: 'Sửa chữa, mua sắm', tab: 'REQUESTS', icon: Briefcase },
+      { id: 'GOOGLE_SHEETS', label: 'Đồng bộ Sheets', description: 'Đồng bộ dữ liệu ngoài', tab: 'GOOGLE_SHEETS', icon: FileSpreadsheet }
     ]
       .filter(item => matchesTerm(item.label, item.description))
       .slice(0, 6)
