@@ -16,6 +16,23 @@ import HrmKpiWorkload from './hrm/HrmKpiWorkload';
 import HrmMyProfile from './hrm/HrmMyProfile';
 import HrmEmployeeDetailModal from './hrm/HrmEmployeeDetailModal';
 
+// New HRM Modules
+import HrmDashboard from './hrm/HrmDashboard';
+import HrmRecruitment from './hrm/HrmRecruitment';
+import HrmOnboarding from './hrm/HrmOnboarding';
+import HrmProbation from './hrm/HrmProbation';
+import HrmContracts from './hrm/HrmContracts';
+import HrmCpdTraining from './hrm/HrmCpdTraining';
+import HrmDiscipline from './hrm/HrmDiscipline';
+import HrmTransfers from './hrm/HrmTransfers';
+import HrmLeaveManagement from './hrm/HrmLeaveManagement';
+
+import { 
+  MOCK_RECRUITMENT_JOBS, MOCK_CANDIDATES, MOCK_ONBOARDING_TASKS,
+  MOCK_PROBATION_EVALS, MOCK_HR_CONTRACTS, MOCK_CPD_PROGRAMS,
+  MOCK_CPD_PARTICIPANTS, MOCK_DISCIPLINARY_RECORDS, MOCK_TRANSFER_RECORDS
+} from '../mockData';
+
 interface HrmCenterProps {
   currentUser: UserProfile;
   users: UserProfile[];
@@ -80,25 +97,33 @@ export default function HrmCenter({ currentUser, users, onUpdateUsers, hasCapabi
         { id: 'MY_KPI', label: lang === 'vi' ? 'KPIs & Lịch dạy' : 'KPI & CPD Hours' }
       ];
     }
-    if (isManager) {
+    if (isAdmin || (isManager && currentUser.workspaceId === 'HANH_CHINH')) {
       return [
+        { id: 'DASHBOARD', label: lang === 'vi' ? 'Tổng quan HRM' : 'Dashboard' },
+        { id: 'DIRECTORY', label: lang === 'vi' ? 'Hồ sơ Nhân sự 360' : 'Staff Directory' },
+        { id: 'RECRUITMENT', label: lang === 'vi' ? 'Tuyển dụng' : 'Recruitment' },
+        { id: 'ONBOARDING', label: lang === 'vi' ? 'Tiếp nhận (Onboarding)' : 'Onboarding' },
+        { id: 'PROBATION', label: lang === 'vi' ? 'Thử việc' : 'Probation' },
+        { id: 'CONTRACTS', label: lang === 'vi' ? 'Hợp đồng' : 'Contracts' },
+        { id: 'CPD_TRAINING', label: lang === 'vi' ? 'Đào tạo & CPD' : 'Training & CPD' },
+        { id: 'DISCIPLINE', label: lang === 'vi' ? 'Kỷ luật' : 'Discipline' },
+        { id: 'TRANSFERS', label: lang === 'vi' ? 'Thuyên chuyển' : 'Transfers' },
+        { id: 'LEAVES_MGMT', label: lang === 'vi' ? 'Nghỉ phép' : 'Leaves Mgmt' },
+        { id: 'ATTENDANCE_SALARY', label: lang === 'vi' ? 'Chấm công & Lương' : 'Attendance & Payroll' },
         { id: 'ORG_CHART', label: lang === 'vi' ? 'Sơ đồ Tổ chức' : 'Org Chart' },
-        { id: 'DIRECTORY', label: lang === 'vi' ? 'Thành viên trong Tổ' : 'Department Staff' },
-        { id: 'LEAVE_REQUESTS', label: lang === 'vi' ? 'Duyệt nghỉ phép' : 'Approve Leaves' },
-        { id: 'KPI_WORKLOAD', label: lang === 'vi' ? 'KPI & Khối lượng' : 'Department KPIs' }
       ];
     }
     return [
       { id: 'ORG_CHART', label: lang === 'vi' ? 'Sơ đồ Tổ chức' : 'Org Chart' },
-      { id: 'DIRECTORY', label: lang === 'vi' ? 'Danh bạ Nhân sự (Toàn trường)' : 'Staff Directory' },
-      { id: 'ATTENDANCE_SALARY', label: lang === 'vi' ? 'Chấm công & Lương' : 'Attendance & Payroll' },
+      { id: 'DIRECTORY', label: lang === 'vi' ? 'Thành viên trong Tổ' : 'Department Staff' },
       { id: 'LEAVE_REQUESTS', label: lang === 'vi' ? 'Duyệt nghỉ phép' : 'Approve Leaves' },
-      { id: 'KPI_WORKLOAD', label: lang === 'vi' ? 'KPI & Khối lượng giảng dạy' : 'KPIs & Workload' }
+      { id: 'KPI_WORKLOAD', label: lang === 'vi' ? 'KPI & Khối lượng' : 'Department KPIs' }
     ];
-  }, [isStaff, isManager, lang]);
+  }, [isStaff, isManager, isAdmin, currentUser.workspaceId, lang]);
 
   const [activeTab, setActiveTab] = useState<string>(() => {
     if (isStaff) return 'MY_PROFILE';
+    if (isAdmin || (isManager && currentUser.workspaceId === 'HANH_CHINH')) return 'DASHBOARD';
     return 'ORG_CHART';
   });
 
@@ -296,6 +321,50 @@ export default function HrmCenter({ currentUser, users, onUpdateUsers, hasCapabi
 
       {/* Tab contents */}
       <div className="transition-all duration-300">
+
+        {/* NEW HRM TABS */}
+        {activeTab === 'DASHBOARD' && (
+          <HrmDashboard 
+            users={users} 
+            contracts={MOCK_HR_CONTRACTS} 
+            cpdPrograms={MOCK_CPD_PROGRAMS} 
+            disciplines={MOCK_DISCIPLINARY_RECORDS}
+            leaves={leaves}
+            lang={lang} 
+          />
+        )}
+
+        {activeTab === 'RECRUITMENT' && (
+          <HrmRecruitment jobs={MOCK_RECRUITMENT_JOBS} candidates={MOCK_CANDIDATES} lang={lang} />
+        )}
+
+        {activeTab === 'ONBOARDING' && (
+          <HrmOnboarding tasks={MOCK_ONBOARDING_TASKS} lang={lang} />
+        )}
+
+        {activeTab === 'PROBATION' && (
+          <HrmProbation evaluations={MOCK_PROBATION_EVALS} lang={lang} />
+        )}
+
+        {activeTab === 'CONTRACTS' && (
+          <HrmContracts contracts={MOCK_HR_CONTRACTS} lang={lang} />
+        )}
+
+        {activeTab === 'CPD_TRAINING' && (
+          <HrmCpdTraining programs={MOCK_CPD_PROGRAMS} participants={MOCK_CPD_PARTICIPANTS} lang={lang} />
+        )}
+
+        {activeTab === 'DISCIPLINE' && (
+          <HrmDiscipline records={MOCK_DISCIPLINARY_RECORDS} lang={lang} />
+        )}
+
+        {activeTab === 'TRANSFERS' && (
+          <HrmTransfers records={MOCK_TRANSFER_RECORDS} getWorkspaceName={getWorkspaceName} lang={lang} />
+        )}
+
+        {activeTab === 'LEAVES_MGMT' && (
+          <HrmLeaveManagement leaves={leaves} lang={lang} />
+        )}
 
         {/* TAB: SƠ ĐỒ TỔ CHỨC */}
         {activeTab === 'ORG_CHART' && <HrmOrgChart lang={lang} />}

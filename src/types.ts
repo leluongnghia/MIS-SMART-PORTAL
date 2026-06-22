@@ -376,3 +376,123 @@ export interface TimetableSlot {
   room: string;
   teacherId: string;
 }
+
+// HRM & CPD Module Types
+export interface RecruitmentJob {
+  id: string;
+  code: string;
+  position: string;
+  department: string;
+  targetCount: number;
+  reason: string;
+  deadline: string;
+  manager: string;
+  status: 'DRAFT' | 'OPEN' | 'PAUSED' | 'FILLED' | 'CANCELLED';
+}
+
+export interface Candidate {
+  id: string;
+  name: string;
+  phone: string;
+  email: string;
+  jobId: string;
+  jobPosition: string;
+  source: string;
+  status: 'NEW' | 'SCREENING' | 'INTERVIEW' | 'TRIAL' | 'OFFER' | 'HIRED' | 'REJECTED';
+  interviewDate?: string;
+  interviewer?: string;
+  evaluation?: string;
+  notes?: string;
+}
+
+export interface OnboardingTask {
+  id: string;
+  userId: string;
+  userName: string;
+  roleName: string;
+  checklist: { id: string; text: string; done: boolean }[];
+  status: 'PENDING' | 'IN_PROGRESS' | 'MISSING_DOCS' | 'COMPLETED' | 'OVERDUE';
+  mentorName?: string;
+  notes?: string;
+}
+
+export interface ProbationEvaluation {
+  id: string;
+  userId: string;
+  userName: string;
+  position: string;
+  mentorName: string;
+  startDate: string;
+  endDate: string;
+  objectives: string;
+  resultScore?: number;
+  managerComments?: string;
+  recommendation?: 'HIRED' | 'EXTENDED' | 'REJECTED';
+  status: 'IN_PROGRESS' | 'COMPLETED';
+}
+
+export interface HrContract {
+  id: string;
+  userId: string;
+  userName: string;
+  contractType: string;
+  contractNumber: string;
+  signDate: string;
+  effectiveDate: string;
+  expirationDate: string;
+  status: 'ACTIVE' | 'EXPIRING' | 'EXPIRED' | 'RENEWED' | 'TERMINATED';
+  notes?: string;
+}
+
+export interface CpdProgram {
+  id: string;
+  code: string;
+  name: string;
+  type: 'INTERNAL' | 'EXTERNAL' | 'ONLINE' | 'OFFLINE' | 'SPECIALTY' | 'SKILL' | 'SAFETY' | 'TECH' | 'PROCESS';
+  targetAudience: string;
+  manager: string;
+  startDate: string;
+  endDate: string;
+  organizer: string;
+  objectives: string;
+  status: 'PROPOSED' | 'APPROVED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+  expectedCost?: number;
+}
+
+export interface CpdParticipant {
+  id: string;
+  programId: string;
+  programName: string;
+  userId: string;
+  userName: string;
+  status: 'REGISTERED' | 'ATTENDED' | 'ABSENT' | 'COMPLETED';
+  score?: number;
+  certificate?: string;
+  notes?: string;
+}
+
+export interface DisciplinaryRecord {
+  id: string;
+  userId: string;
+  userName: string;
+  date: string;
+  violationType: string;
+  severity: 'REMINDER' | 'LIGHT' | 'MEDIUM' | 'SEVERE';
+  description: string;
+  recordedBy: string;
+  actionTaken?: string;
+  status: 'PENDING' | 'RESOLVED' | 'MONITORING' | 'CLOSED';
+}
+
+export interface TransferRecord {
+  id: string;
+  userId: string;
+  userName: string;
+  currentDept: string;
+  newDept: string;
+  reason: string;
+  effectiveDate: string;
+  proposedBy: string;
+  approvedBy?: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+}

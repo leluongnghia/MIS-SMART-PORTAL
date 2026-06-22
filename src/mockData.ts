@@ -2424,3 +2424,45 @@ export const MOCK_MASTER_TIMETABLE: TimetableSlot[] = [
   { id: 'TKB_9', day: 3, period: 3, subject: 'Giải tích 12', className: '12A2', room: 'P.405', teacherId: 'user_nhan' },
   { id: 'TKB_10', day: 3, period: 4, subject: 'Giải tích 12', className: '12A2', room: 'P.405', teacherId: 'user_nhan' }
 ];
+
+export const MOCK_RECRUITMENT_JOBS: any[] = [
+  { id: 'JOB01', code: 'REC-26-001', position: 'GiÃ¡o viÃªn ToÃ¡n THPT', department: 'TOAN_TIN', targetCount: 2, reason: 'Má»Ÿ rá»™ng quy mÃ´', deadline: '2026-07-15', manager: 'Admin', status: 'OPEN' },
+  { id: 'JOB02', code: 'REC-26-002', position: 'NhÃ¢n viÃªn Y táº¿ Há»c Ä‘Æ°á»ng', department: 'DICH_VU_HOC_DUONG', targetCount: 1, reason: 'Thay tháº¿ nhÃ¢n sá»± nghá»‰ thai sáº£n', deadline: '2026-06-30', manager: 'Admin', status: 'OPEN' },
+  { id: 'JOB03', code: 'REC-26-003', position: 'GiÃ¡o viÃªn Tiáº¿ng Anh Báº£n ngá»¯', department: 'NGOAI_NGU', targetCount: 3, reason: 'ChÆ°Æ¡ng trÃ¬nh Quá»‘c táº¿ má»›i', deadline: '2026-08-01', manager: 'Admin', status: 'DRAFT' },
+];
+
+export const MOCK_CANDIDATES: any[] = [
+  { id: 'CAN01', name: 'Nguyá»…n VÄƒn A', phone: '0901234567', email: 'nva@gmail.com', jobId: 'JOB01', jobPosition: 'GiÃ¡o viÃªn ToÃ¡n THPT', source: 'Facebook', status: 'INTERVIEW', interviewDate: '2026-06-25' },
+  { id: 'CAN02', name: 'Tráº§n Thá»‹ B', phone: '0902345678', email: 'ttb@gmail.com', jobId: 'JOB01', jobPosition: 'GiÃ¡o viÃªn ToÃ¡n THPT', source: 'Website', status: 'TRIAL', interviewDate: '2026-06-20', evaluation: 'ChuyÃªn mÃ´n tá»‘t, cáº§n xem thÃªm sÆ° pháº¡m' },
+  { id: 'CAN03', name: 'LÃª Y Táº¿', phone: '0903456789', email: 'yte@gmail.com', jobId: 'JOB02', jobPosition: 'NhÃ¢n viÃªn Y táº¿', source: 'LinkedIn', status: 'NEW' },
+];
+
+export const MOCK_ONBOARDING_TASKS: any[] = [
+  { id: 'ONB01', userId: 'user_new1', userName: 'HoÃ ng TÃ¢n Binh', roleName: 'GiÃ¡o viÃªn', status: 'IN_PROGRESS', mentorName: 'CÃ´ Nguyá»…n Tuyáº¿t Mai', checklist: [{id:'1', text:'Ná»™p há»“ sÆ¡ gá»‘c', done:true}, {id:'2', text:'Nháº­n laptop', done:false}, {id:'3', text:'Äá»c ná»™i quy', done:false}] },
+];
+
+export const MOCK_PROBATION_EVALS: any[] = [
+  { id: 'PRO01', userId: 'user_prob1', userName: 'Pháº¡m Thá»­ Viá»‡c', position: 'GiÃ¡o viÃªn LÃ½', mentorName: 'Tháº§y Pháº¡m Minh Tuáº¥n', startDate: '2026-05-01', endDate: '2026-07-01', objectives: 'HoÃ n thÃ nh 10 tiáº¿t dáº¡y thá»­, khÃ´ng cÃ³ pháº£n Ã¡nh xáº¥u tá»« phá»¥ huynh', status: 'IN_PROGRESS' },
+];
+
+export const MOCK_HR_CONTRACTS: any[] = [
+  { id: 'CTR01', userId: 'user_mai', userName: 'CÃ´ Nguyá»…n Thá»‹ Mai', contractType: 'Há»£p Ä‘á»“ng khÃ´ng thá»i háº¡n', contractNumber: 'HDLD-001/2020', signDate: '2020-08-01', effectiveDate: '2020-08-01', expirationDate: '2099-12-31', status: 'ACTIVE' },
+  { id: 'CTR02', userId: 'user_dat', userName: 'Tháº§y Tráº§n VÄƒn DÅ©ng', contractType: 'Há»£p Ä‘á»“ng 1 nÄƒm', contractNumber: 'HDLD-152/2025', signDate: '2025-08-01', effectiveDate: '2025-08-01', expirationDate: '2026-07-31', status: 'EXPIRING' },
+];
+
+export const MOCK_CPD_PROGRAMS: any[] = [
+  { id: 'CPD01', code: 'CPD-26-01', name: 'Táº­p huáº¥n ká»¹ nÄƒng PCCC vÃ  Cá»©u náº¡n', type: 'SAFETY', targetAudience: 'ToÃ n thá»ƒ giÃ¡o viÃªn, nhÃ¢n viÃªn', manager: 'Ban An Ninh', startDate: '2026-07-10', endDate: '2026-07-11', organizer: 'CA PCCC Quáº­n', objectives: 'Äáº£m báº£o 100% nhÃ¢n sá»± biáº¿t sá»­ dá»¥ng bÃ¬nh chá»¯a chÃ¡y', status: 'APPROVED' },
+  { id: 'CPD02', code: 'CPD-26-02', name: 'PhÆ°Æ¡ng phÃ¡p Dáº¡y há»c Dá»± Ã¡n (PBL)', type: 'SPECIALTY', targetAudience: 'GiÃ¡o viÃªn Trung há»c', manager: 'Tá»• ChuyÃªn mÃ´n', startDate: '2026-06-15', endDate: '2026-06-17', organizer: 'Ná»™i bá»™', objectives: 'Cáº­p nháº­t phÆ°Æ¡ng phÃ¡p sÆ° pháº¡m má»›i', status: 'IN_PROGRESS' },
+];
+
+export const MOCK_CPD_PARTICIPANTS: any[] = [
+  { id: 'CPDP01', programId: 'CPD02', programName: 'PhÆ°Æ¡ng phÃ¡p Dáº¡y há»c Dá»± Ã¡n (PBL)', userId: 'user_mai', userName: 'CÃ´ Nguyá»…n Thá»‹ Mai', status: 'ATTENDED' },
+];
+
+export const MOCK_DISCIPLINARY_RECORDS: any[] = [
+  { id: 'DIS01', userId: 'user_dat', userName: 'Tháº§y Tráº§n VÄƒn DÅ©ng', date: '2026-06-10', violationType: 'ChuyÃªn cáº§n', severity: 'REMINDER', description: 'Äáº¿n muá»™n 3 láº§n trong thÃ¡ng', recordedBy: 'Admin', status: 'MONITORING' },
+];
+
+export const MOCK_TRANSFER_RECORDS: any[] = [
+  { id: 'TR01', userId: 'user_toan_long', userName: 'Tháº§y LÃ¢m HoÃ ng Long', currentDept: 'HANH_CHINH', newDept: 'TOAN_TIN', reason: 'Chuyá»ƒn cÃ´ng tÃ¡c theo nguyá»‡n vá»ng vÃ  chuyÃªn mÃ´n', effectiveDate: '2026-05-01', proposedBy: 'Admin', status: 'APPROVED' },
+];

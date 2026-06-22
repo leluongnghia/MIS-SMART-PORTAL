@@ -29,14 +29,17 @@ interface AppSidebarProps {
   isSidebarOpen: boolean;
   setIsSidebarOpen: (val: boolean) => void;
   sidebarSearchQuery: string;
+
+interface AppSidebarProps {
+  isSidebarOpen: boolean;
+  setIsSidebarOpen: (val: boolean) => void;
+  sidebarSearchQuery: string;
   setSidebarSearchQuery: (val: string) => void;
   overviewTab: string;
   setOverviewTab: (val: any) => void;
   activeAdmissionsModule: AdmissionsModule;
   setActiveAdmissionsModule: (module: AdmissionsModule) => void;
   completionRate: number;
-  isGroupOpen: (group: string) => boolean;
-  toggleGroup: (group: string) => void;
   isGroupOpen: (group: string) => boolean;
   toggleGroup: (group: string) => void;
   canDisplayTab: (tabId: string) => boolean;
