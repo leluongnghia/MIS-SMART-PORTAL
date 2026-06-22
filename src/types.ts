@@ -252,16 +252,97 @@ export interface VaccinationRecord {
   dose: string;
 }
 
+export interface AssetItem {
+  id: string;
+  code: string;
+  name: string;
+  category: 'CNTT' | 'NOI_THAT' | 'THU_VIEN' | 'THIET_BI_GIANG_DAY' | 'KHAC';
+  location: string; // "Phòng 101", "Kho Tổng"...
+  assignedTo?: string; // User ID
+  assignedName?: string;
+  status: 'SAN_SANG' | 'DANG_SU_DUNG' | 'DANG_SUA_CHUA' | 'THANH_LY';
+  condition: 'MOI' | 'TOT' | 'KHA' | 'KEM' | 'HONG';
+  purchaseDate: string;
+  price?: number;
+  lastMaintenanceDate?: string;
+  nextMaintenanceDate?: string;
+  specs?: string; // Thông số kỹ thuật
+}
+
+export interface AssetHandover {
+  id: string;
+  assetId: string;
+  assetCode: string;
+  assetName: string;
+  receiverId: string;
+  receiverName: string;
+  receiverRole: string;
+  location: string;
+  handoverDate: string;
+  expectedReturnDate?: string;
+  actualReturnDate?: string;
+  conditionAtHandover: string;
+  conditionAtReturn?: string;
+  status: 'CHO_DUYET' | 'DA_BAN_GIAO' | 'DA_THU_HOI' | 'TU_CHOI';
+  notes?: string;
+  approvedBy?: string;
+}
+
+export interface AssetTransfer {
+  id: string;
+  assetId: string;
+  assetCode: string;
+  assetName: string;
+  fromLocation: string;
+  toLocation: string;
+  requestDate: string;
+  transferDate?: string;
+  status: 'CHO_DUYET' | 'DA_CHUYEN' | 'TU_CHOI';
+  requestedBy: string;
+  requestorName: string;
+  approvedBy?: string;
+  reason: string;
+}
+
+export interface MaintenanceReport {
+  id: string;
+  assetId: string;
+  assetCode: string;
+  assetName: string;
+  reportedBy: string;
+  reporterName: string;
+  reportDate: string;
+  issueDescription: string;
+  priority: 'CAO' | 'TRUNG_BINH' | 'THAP';
+  status: 'CHO_TIEP_NHAN' | 'DANG_SUA' | 'DA_HOAN_THANH' | 'HONG_NANG';
+  assignedTechnician?: string;
+  completionDate?: string;
+  repairCost?: number;
+  resolutionNotes?: string;
+}
+
 export interface InventoryItem {
   id: string;
   code: string;
   name: string;
-  category: 'SACH' | 'THIET_BI';
+  category: 'VAN_PHONG_PHAM' | 'VE_SINH' | 'Y_TE' | 'KHAC';
+  unit: string;
+  currentStock: number;
+  minStockLevel: number;
   location: string;
-  quantity: number;
-  status: 'SAN_SANG' | 'DANG_CHO_MUON' | 'BAO_HONG' | 'THANH_LY';
-  condition: 'MOI' | 'BINH_THUONG' | 'CU' | 'HONG';
 }
+
+export interface InventoryTransaction {
+  id: string;
+  itemId: string;
+  itemName: string;
+  type: 'NHAP' | 'XUAT';
+  quantity: number;
+  date: string;
+  performerName: string;
+  notes?: string;
+}
+
 
 export interface BorrowLog {
   id: string;

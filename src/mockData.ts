@@ -2367,19 +2367,46 @@ export const INITIAL_TASKS: Task[] = [
   }
 ];
 
-export const MOCK_INVENTORY_ITEMS: InventoryItem[] = [
-  { id: 'item_1', code: 'SGK-TOAN-10-001', name: 'Sách giáo khoa Toán 10 (Chân trời sáng tạo)', category: 'SACH', location: 'Thư viện Tầng 2 - Kệ A1', quantity: 50, status: 'SAN_SANG', condition: 'MOI' },
-  { id: 'item_2', code: 'SGK-VAN-11-002', name: 'Sách giáo khoa Ngữ văn 11 (Kết nối tri thức)', category: 'SACH', location: 'Thư viện Tầng 2 - Kệ B3', quantity: 35, status: 'SAN_SANG', condition: 'BINH_THUONG' },
-  { id: 'item_3', code: 'MC-EPSON-302', name: 'Máy chiếu Epson EH-TW7000', category: 'THIET_BI', location: 'Phòng học 302', quantity: 1, status: 'SAN_SANG', condition: 'BINH_THUONG' },
-  { id: 'item_4', code: 'LT-DELL-LAB1-01', name: 'Laptop Dell Vostro 3520 (Lab AI)', category: 'THIET_BI', location: 'Phòng Lab AI 1', quantity: 24, status: 'DANG_CHO_MUON', condition: 'MOI' },
-  { id: 'item_5', code: 'SGK-ENG-12-005', name: 'Sách giáo khoa Tiếng Anh 12 (Global Success)', category: 'SACH', location: 'Thư viện Tầng 2 - Kệ C2', quantity: 12, status: 'SAN_SANG', condition: 'CU' },
-  { id: 'item_6', code: 'TV-SONY-405', name: 'Tivi Sony 4K 65 inch', category: 'THIET_BI', location: 'Phòng học 405', quantity: 1, status: 'BAO_HONG', condition: 'HONG' }
+export const MOCK_ASSETS: AssetItem[] = [
+  { id: 'ast_1', code: 'TS-CNTT-001', name: 'Laptop Dell Vostro 3520 (Lab AI)', category: 'CNTT', location: 'Phòng Lab AI 1', status: 'DANG_SU_DUNG', condition: 'MOI', purchaseDate: '2025-08-15', assignedTo: 'user_nam', assignedName: 'Thầy Trần Hoàng Nam' },
+  { id: 'ast_2', code: 'TS-CNTT-002', name: 'Máy chiếu Epson EH-TW7000', category: 'THIET_BI_GIANG_DAY', location: 'Phòng học 302', status: 'SAN_SANG', condition: 'TOT', purchaseDate: '2024-05-10', lastMaintenanceDate: '2026-01-15' },
+  { id: 'ast_3', code: 'TS-NT-001', name: 'Bàn giáo viên cao cấp gỗ Sồi', category: 'NOI_THAT', location: 'Phòng học 405', status: 'DANG_SU_DUNG', condition: 'KHA', purchaseDate: '2023-12-01' },
+  { id: 'ast_4', code: 'TS-TV-001', name: 'Kệ sách thông minh thư viện', category: 'THU_VIEN', location: 'Thư viện Tầng 2', status: 'SAN_SANG', condition: 'TOT', purchaseDate: '2024-10-20' },
+  { id: 'ast_5', code: 'TS-CNTT-005', name: 'Tivi Sony 4K 65 inch', category: 'THIET_BI_GIANG_DAY', location: 'Phòng học 405', status: 'DANG_SUA_CHUA', condition: 'HONG', purchaseDate: '2025-01-15', lastMaintenanceDate: '2026-05-20' },
+  { id: 'ast_6', code: 'TS-CNTT-006', name: 'Màn hình tương tác ViewSonic 75"', category: 'THIET_BI_GIANG_DAY', location: 'Phòng học 301', status: 'SAN_SANG', condition: 'MOI', purchaseDate: '2026-02-10' },
+  { id: 'ast_7', code: 'TS-NT-002', name: 'Tủ đựng thiết bị phòng Lab', category: 'NOI_THAT', location: 'Phòng Lab AI 1', status: 'SAN_SANG', condition: 'TOT', purchaseDate: '2025-08-15' },
+  { id: 'ast_8', code: 'TS-CNTT-008', name: 'Router Wifi Cisco Enterprise', category: 'CNTT', location: 'Phòng Server Tầng 3', status: 'DANG_SU_DUNG', condition: 'TOT', purchaseDate: '2024-09-05', lastMaintenanceDate: '2026-03-01' },
+  { id: 'ast_9', code: 'TS-KHAC-001', name: 'Máy điều hòa Daikin 18000BTU', category: 'KHAC', location: 'Phòng Hội đồng', status: 'DANG_SU_DUNG', condition: 'KHA', purchaseDate: '2023-04-12', nextMaintenanceDate: '2026-07-15' },
+  { id: 'ast_10', code: 'TS-CNTT-010', name: 'Máy in Canon LBP2900', category: 'CNTT', location: 'Văn phòng Hành chính', status: 'THANH_LY', condition: 'HONG', purchaseDate: '2021-02-20' }
 ];
 
-export const MOCK_BORROW_LOGS: BorrowLog[] = [
-  { id: 'br_1', itemCode: 'LT-DELL-LAB1-01', itemName: 'Laptop Dell Vostro 3520 (Lab AI)', category: 'THIET_BI', borrowerName: 'Thầy Trần Hoàng Nam', borrowerRole: 'TEACHER', borrowDate: '2026-06-08', dueDate: '2026-06-15', status: 'DANG_MUON' },
-  { id: 'br_2', itemCode: 'SGK-TOAN-10-001', itemName: 'Sách giáo khoa Toán 10 (Chân trời sáng tạo)', category: 'SACH', borrowerName: 'Nguyễn Minh Quân', borrowerRole: 'STUDENT', borrowDate: '2026-06-05', dueDate: '2026-06-12', returnDate: '2026-06-10', status: 'DA_TRA' },
-  { id: 'br_3', itemCode: 'SGK-VAN-11-002', itemName: 'Sách giáo khoa Ngữ văn 11 (Kết nối tri thức)', category: 'SACH', borrowerName: 'Trần Mỹ Lệ', borrowerRole: 'STUDENT', borrowDate: '2026-05-20', dueDate: '2026-05-27', status: 'QUA_HAN' }
+export const MOCK_ASSET_HANDOVERS: AssetHandover[] = [
+  { id: 'ho_1', assetId: 'ast_1', assetCode: 'TS-CNTT-001', assetName: 'Laptop Dell Vostro 3520 (Lab AI)', receiverId: 'user_nam', receiverName: 'Thầy Trần Hoàng Nam', receiverRole: 'TEACHER', location: 'Phòng Lab AI 1', handoverDate: '2025-09-05', conditionAtHandover: 'Mới 100%, kèm sạc', status: 'DA_BAN_GIAO', approvedBy: 'user_kha' },
+  { id: 'ho_2', assetId: 'ast_6', assetCode: 'TS-CNTT-006', assetName: 'Màn hình tương tác ViewSonic 75"', receiverId: 'user_nhan', receiverName: 'Cô Lê Thị Thanh Nhàn', receiverRole: 'MANAGER', location: 'Phòng học 301', handoverDate: '2026-06-15', conditionAtHandover: 'Mới, đủ phụ kiện', status: 'CHO_DUYET', notes: 'Giáo viên yêu cầu mượn dùng thi giáo viên giỏi' }
+];
+
+export const MOCK_ASSET_TRANSFERS: AssetTransfer[] = [
+  { id: 'tr_1', assetId: 'ast_2', assetCode: 'TS-CNTT-002', assetName: 'Máy chiếu Epson EH-TW7000', fromLocation: 'Phòng học 301', toLocation: 'Phòng học 302', requestDate: '2026-05-10', transferDate: '2026-05-11', status: 'DA_CHUYEN', requestedBy: 'user_dat', requestorName: 'Thầy Vũ Tiến Đạt', approvedBy: 'user_kha', reason: 'Phòng 301 sửa chữa trần nhà' },
+  { id: 'tr_2', assetId: 'ast_3', assetCode: 'TS-NT-001', assetName: 'Bàn giáo viên cao cấp gỗ Sồi', fromLocation: 'Phòng học 405', toLocation: 'Phòng học 101', requestDate: '2026-06-20', status: 'CHO_DUYET', requestedBy: 'user_nhung', requestorName: 'Cô Phạm Hồng Nhung', reason: 'Phòng 101 bị hỏng bàn giáo viên' }
+];
+
+export const MOCK_MAINTENANCE_REPORTS: MaintenanceReport[] = [
+  { id: 'mr_1', assetId: 'ast_5', assetCode: 'TS-CNTT-005', assetName: 'Tivi Sony 4K 65 inch', reportedBy: 'user_hoa', reporterName: 'Cô Trịnh Thúy Hoa', reportDate: '2026-06-18', issueDescription: 'Màn hình bị sọc ngang, không lên hình khi cắm HDMI', priority: 'CAO', status: 'DANG_SUA', assignedTechnician: 'user_son' },
+  { id: 'mr_2', assetId: 'ast_9', assetCode: 'TS-KHAC-001', assetName: 'Máy điều hòa Daikin 18000BTU', reportedBy: 'user_binh_mgr', reporterName: 'Cô Hoàng Trúc Liên', reportDate: '2026-05-25', issueDescription: 'Điều hòa không mát, kêu to', priority: 'TRUNG_BINH', status: 'DA_HOAN_THANH', assignedTechnician: 'user_son', completionDate: '2026-05-26', resolutionNotes: 'Đã bơm thêm gas và vệ sinh cục nóng' },
+  { id: 'mr_3', assetId: 'ast_10', assetCode: 'TS-CNTT-010', assetName: 'Máy in Canon LBP2900', reportedBy: 'user_binh', reporterName: 'Thầy Phạm Thanh Bình', reportDate: '2026-06-21', issueDescription: 'Kẹt giấy liên tục, in bị lem mực', priority: 'CAO', status: 'CHO_TIEP_NHAN' }
+];
+
+export const MOCK_INVENTORY_ITEMS: InventoryItem[] = [
+  { id: 'inv_1', code: 'VT-VPP-001', name: 'Giấy in A4 Double A 70gsm', category: 'VAN_PHONG_PHAM', unit: 'Ram', currentStock: 45, minStockLevel: 20, location: 'Kho Hành chính' },
+  { id: 'inv_2', code: 'VT-VPP-002', name: 'Bút dạ quang viết bảng (Xanh/Đỏ/Đen)', category: 'VAN_PHONG_PHAM', unit: 'Hộp', currentStock: 15, minStockLevel: 10, location: 'Kho Hành chính' },
+  { id: 'inv_3', code: 'VT-VS-001', name: 'Nước lau sàn Sunlight 3.8kg', category: 'VE_SINH', unit: 'Can', currentStock: 8, minStockLevel: 5, location: 'Kho Vật tư Vệ sinh' },
+  { id: 'inv_4', code: 'VT-YT-001', name: 'Cồn y tế 70 độ 500ml', category: 'Y_TE', unit: 'Chai', currentStock: 2, minStockLevel: 10, location: 'Phòng Y tế' }
+];
+
+export const MOCK_INVENTORY_TRANSACTIONS: InventoryTransaction[] = [
+  { id: 'tx_1', itemId: 'inv_1', itemName: 'Giấy in A4 Double A 70gsm', type: 'NHAP', quantity: 50, date: '2026-06-01', performerName: 'Thầy Lâm Vĩnh Thuận', notes: 'Nhập kho đầu tháng' },
+  { id: 'tx_2', itemId: 'inv_1', itemName: 'Giấy in A4 Double A 70gsm', type: 'XUAT', quantity: 5, date: '2026-06-15', performerName: 'Cô Hoàng Trúc Liên', notes: 'Cấp phát cho Tổ Toán - Tin' },
+  { id: 'tx_3', itemId: 'inv_4', itemName: 'Cồn y tế 70 độ 500ml', type: 'XUAT', quantity: 3, date: '2026-06-20', performerName: 'Cô Mai Phương Dũng', notes: 'Sử dụng phòng Y tế' }
 ];
 
 export const MOCK_MASTER_TIMETABLE: TimetableSlot[] = [
