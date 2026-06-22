@@ -93,7 +93,7 @@ export default function HrmCenter({ currentUser, users, onUpdateUsers, hasCapabi
       return [
         { id: 'MY_PROFILE', label: lang === 'vi' ? 'Hồ sơ cá nhân (Self-Service)' : 'My Profile (Self-Service)' },
         { id: 'MY_LEAVE', label: lang === 'vi' ? 'Xin nghỉ & Dạy thay' : 'My Leaves & Substitutes' },
-        { id: 'MY_SALARY', label: lang === 'vi' ? 'Chấm công & Lương' : 'Attendance & Salary' },
+        { id: 'MY_SALARY', label: lang === 'vi' ? 'Chấm công' : 'Attendance' },
         { id: 'MY_KPI', label: lang === 'vi' ? 'KPIs & Lịch dạy' : 'KPI & CPD Hours' }
       ];
     }
@@ -109,7 +109,7 @@ export default function HrmCenter({ currentUser, users, onUpdateUsers, hasCapabi
         { id: 'DISCIPLINE', label: lang === 'vi' ? 'Kỷ luật' : 'Discipline' },
         { id: 'TRANSFERS', label: lang === 'vi' ? 'Thuyên chuyển' : 'Transfers' },
         { id: 'LEAVES_MGMT', label: lang === 'vi' ? 'Nghỉ phép' : 'Leaves Mgmt' },
-        { id: 'ATTENDANCE_SALARY', label: lang === 'vi' ? 'Chấm công & Lương' : 'Attendance & Payroll' },
+        { id: 'ATTENDANCE_SALARY', label: lang === 'vi' ? 'Chấm công' : 'Attendance' },
         { id: 'ORG_CHART', label: lang === 'vi' ? 'Sơ đồ Tổ chức' : 'Org Chart' },
       ];
     }
@@ -229,6 +229,13 @@ export default function HrmCenter({ currentUser, users, onUpdateUsers, hasCapabi
     return MOCK_HR_CONTRACTS;
   });
   useEffect(() => { serverStorage.setItem('mis_hrm_contracts_v2', JSON.stringify(contracts)); }, [contracts]);
+
+  const [probationEvals, setProbationEvals] = useState<any[]>(() => {
+    const saved = serverStorage.getItem('mis_hrm_probation_v2');
+    if (saved) try { return JSON.parse(saved); } catch (e) {}
+    return MOCK_PROBATION_EVALS;
+  });
+  useEffect(() => { serverStorage.setItem('mis_hrm_probation_v2', JSON.stringify(probationEvals)); }, [probationEvals]);
 
   const [cpdPrograms, setCpdPrograms] = useState<any[]>(() => {
     const saved = serverStorage.getItem('mis_hrm_cpd_v2');
@@ -396,7 +403,7 @@ export default function HrmCenter({ currentUser, users, onUpdateUsers, hasCapabi
         )}
 
         {activeTab === 'PROBATION' && (
-          <HrmProbation evaluations={MOCK_PROBATION_EVALS} lang={lang} />
+          <HrmProbation evaluations={probationEvals} setEvaluations={setProbationEvals} users={users} lang={lang} />
         )}
 
         {activeTab === 'CONTRACTS' && (

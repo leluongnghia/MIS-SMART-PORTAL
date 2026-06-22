@@ -1,13 +1,49 @@
-import React from 'react';
-import { UserCheck, Calendar, Clock, AlertTriangle } from 'lucide-react';
-import { ProbationEvaluation } from '../../types';
+import React, { useState } from 'react';
+import { UserCheck, Calendar, Clock, AlertTriangle, X } from 'lucide-react';
+import { ProbationEvaluation, UserProfile } from '../../types';
 
 interface HrmProbationProps {
   evaluations: ProbationEvaluation[];
+  setEvaluations?: (evals: ProbationEvaluation[]) => void;
+  users?: UserProfile[];
   lang: string;
 }
 
-export default function HrmProbation({ evaluations, lang }: HrmProbationProps) {
+export default function HrmProbation({ evaluations, setEvaluations, users = [], lang }: HrmProbationProps) {
+  const [showForm, setShowForm] = useState(false);
+  const [formData, setFormData] = useState({
+    userId: '',
+    position: '',
+    mentorName: '',
+    startDate: '',
+    endDate: '',
+    objectives: ''
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!setEvaluations) return;
+    
+    const selectedUser = users.find(u => u.id === formData.userId);
+    if (!selectedUser) return;
+
+    const newEval: ProbationEvaluation = {
+      id: `prob_${Date.now()}`,
+      userId: selectedUser.id,
+      userName: selectedUser.name,
+      position: formData.position,
+      mentorName: formData.mentorName,
+      startDate: formData.startDate,
+      endDate: formData.endDate,
+      objectives: formData.objectives,
+      status: 'IN_PROGRESS'
+    };
+
+    setEvaluations([newEval, ...evaluations]);
+    setFormData({ userId: '', position: '', mentorName: '', startDate: '', endDate: '', objectives: '' });
+    setShowForm(false);
+  };
+
   return (
     <div className="space-y-4 animate-fade-in">
       <div className="flex justify-between items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-xl shadow-xs">
@@ -15,12 +51,63 @@ export default function HrmProbation({ evaluations, lang }: HrmProbationProps) {
           Quản lý Thử việc / Học việc
         </h3>
         <button 
-          onClick={() => alert('Chức năng đang được cập nhật')}
+          onClick={() => setShowForm(true)}
           className="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[10px] rounded-lg cursor-pointer transition-colors"
         >
           + Thêm Hồ sơ thử việc
         </button>
       </div>
+
+      {showForm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+            <div className="flex justify-between items-center p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50">
+              <h3 className="font-bold text-slate-900 dark:text-white text-sm">Thêm Hồ Sơ Thử Việc</h3>
+              <button onClick={() => setShowForm(false)} className="text-slate-400 hover:text-slate-600 p-1"><X className="w-4 h-4" /></button>
+            </div>
+            <form onSubmit={handleSubmit} className="p-5 space-y-4 text-xs font-sans">
+              <div>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Nhân sự thử việc</label>
+                <select required value={formData.userId} onChange={e => setFormData({...formData, userId: e.target.value})} className="w-full p-2.5 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/30 text-slate-900 dark:text-white font-semibold">
+                  <option value="">-- Chọn nhân sự --</option>
+                  {users.map(u => (
+                    <option key={u.id} value={u.id}>{u.name} ({u.department})</option>
+                  ))}
+                </select>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Vị trí</label>
+                  <input type="text" required value={formData.position} onChange={e => setFormData({...formData, position: e.target.value})} className="w-full p-2.5 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/30 text-slate-900 dark:text-white font-semibold" placeholder="VD: Giáo viên" />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Người hướng dẫn</label>
+                  <input type="text" required value={formData.mentorName} onChange={e => setFormData({...formData, mentorName: e.target.value})} className="w-full p-2.5 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/30 text-slate-900 dark:text-white font-semibold" placeholder="Tên người HD" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Ngày bắt đầu</label>
+                  <input type="date" required value={formData.startDate} onChange={e => setFormData({...formData, startDate: e.target.value})} className="w-full p-2.5 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/30 text-slate-900 dark:text-white font-semibold" />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Ngày kết thúc</label>
+                  <input type="date" required value={formData.endDate} onChange={e => setFormData({...formData, endDate: e.target.value})} className="w-full p-2.5 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/30 text-slate-900 dark:text-white font-semibold" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Mục tiêu thử việc</label>
+                <textarea required value={formData.objectives} onChange={e => setFormData({...formData, objectives: e.target.value})} rows={3} className="w-full p-2.5 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/30 text-slate-900 dark:text-white font-semibold" placeholder="Mô tả mục tiêu cần đạt..."></textarea>
+              </div>
+              
+              <div className="pt-2 flex justify-end gap-2">
+                <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 font-bold text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors">Hủy</button>
+                <button type="submit" className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg shadow-md shadow-indigo-500/20 transition-all">Lưu Hồ Sơ</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {evaluations.map(eva => {

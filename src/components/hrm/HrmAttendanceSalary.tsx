@@ -70,10 +70,10 @@ export default function HrmAttendanceSalary({
 
   if (isStaff) {
     return (
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <div className="grid grid-cols-1 gap-6 items-start">
         
         {/* Personal Checkin log */}
-        <div className="lg:col-span-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl shadow-xs space-y-4">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl shadow-xs space-y-4">
           <h3 className="font-display font-extrabold text-slate-900 dark:text-white text-xs uppercase tracking-wide font-mono">
             Lịch sử Chấm công Tháng này
           </h3>
@@ -99,55 +99,7 @@ export default function HrmAttendanceSalary({
           </div>
         </div>
 
-        {/* Salary Slips */}
-        <div className="lg:col-span-7 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl shadow-xs space-y-4">
-          <h3 className="font-display font-extrabold text-slate-900 dark:text-white text-xs uppercase tracking-wide font-mono border-b pb-2 dark:border-slate-800">
-            Phiếu Lương &amp; Thu Nhập
-          </h3>
-          
-          {personalSalaryRecords.length === 0 ? (
-            <p className="text-xs text-slate-450 italic text-center py-8">Chưa có phiếu lương được phát hành cho Thầy/Cô.</p>
-          ) : (
-            personalSalaryRecords.map(s => {
-              return (
-                <div key={s.id} className="border border-slate-200 dark:border-slate-800 rounded-xl p-5 bg-slate-50/10 dark:bg-slate-900/40 space-y-4 font-sans text-xs">
-                  <div className="flex justify-between items-center border-b pb-2 dark:border-slate-800">
-                    <div>
-                      <strong className="text-sm font-bold text-slate-900 dark:text-white block">Tháng {s.month}</strong>
-                      <span className="text-[9.5px] text-slate-400 uppercase font-bold">{getWorkspaceName(currentUser.workspaceId)}</span>
-                    </div>
-                    <span className={`px-2.5 py-0.5 rounded text-[10px] font-black uppercase ${
-                      s.paid ? 'bg-emerald-50 text-emerald-800' : 'bg-amber-50 text-amber-800'
-                    }`}>{s.paid ? 'Đã chi trả' : 'Đang xử lý'}</span>
-                  </div>
 
-                  <div className="space-y-2 font-semibold">
-                    <div className="flex justify-between">
-                      <span className="text-slate-500">Lương cơ bản (Hợp đồng)</span>
-                      <span className="font-mono text-slate-850 dark:text-slate-200">{fmtVnd(s.baseSalary)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-500">Thù lao giảng dạy / Vượt giờ</span>
-                      <span className="font-mono text-emerald-600">+{fmtVnd(s.teachingBonus)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-500">Thưởng đánh giá KPI</span>
-                      <span className="font-mono text-emerald-600">+{fmtVnd(s.kpiBonus)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-500">Khấu trừ BHXH / Thuế TNCN / Nghỉ quá phép</span>
-                      <span className="font-mono text-rose-500">-{fmtVnd(s.deductions)}</span>
-                    </div>
-                    <div className="border-t pt-2 flex justify-between font-black text-sm text-slate-900 dark:text-white dark:border-slate-800">
-                      <span>THỰC LÃNH TAY (NET)</span>
-                      <span className="font-mono text-indigo-600 dark:text-indigo-400">{fmtVnd(s.totalSalary)}</span>
-                    </div>
-                  </div>
-                </div>
-              );
-            })
-          )}
-        </div>
 
       </div>
     );
