@@ -208,6 +208,28 @@ export default function HrmCenter({ currentUser, users, onUpdateUsers, hasCapabi
     serverStorage.setItem('mis_hrm_salary', JSON.stringify(salaryRecords));
   }, [salaryRecords]);
 
+  // State: Tuyển dụng, Onboarding, Hợp đồng (For MVP flow)
+  const [candidates, setCandidates] = useState<any[]>(() => {
+    const saved = serverStorage.getItem('mis_hrm_candidates');
+    if (saved) try { return JSON.parse(saved); } catch (e) {}
+    return MOCK_CANDIDATES;
+  });
+  useEffect(() => { serverStorage.setItem('mis_hrm_candidates', JSON.stringify(candidates)); }, [candidates]);
+
+  const [onboardingTasks, setOnboardingTasks] = useState<any[]>(() => {
+    const saved = serverStorage.getItem('mis_hrm_onboarding');
+    if (saved) try { return JSON.parse(saved); } catch (e) {}
+    return MOCK_ONBOARDING_TASKS;
+  });
+  useEffect(() => { serverStorage.setItem('mis_hrm_onboarding', JSON.stringify(onboardingTasks)); }, [onboardingTasks]);
+
+  const [contracts, setContracts] = useState<any[]>(() => {
+    const saved = serverStorage.getItem('mis_hrm_contracts');
+    if (saved) try { return JSON.parse(saved); } catch (e) {}
+    return MOCK_HR_CONTRACTS;
+  });
+  useEffect(() => { serverStorage.setItem('mis_hrm_contracts', JSON.stringify(contracts)); }, [contracts]);
+
   // Selected Profile
   const [selectedProfileUser, setSelectedProfileUser] = useState<UserProfile | null>(null);
 
@@ -335,11 +357,21 @@ export default function HrmCenter({ currentUser, users, onUpdateUsers, hasCapabi
         )}
 
         {activeTab === 'RECRUITMENT' && (
-          <HrmRecruitment jobs={MOCK_RECRUITMENT_JOBS} candidates={MOCK_CANDIDATES} lang={lang} />
+          <HrmRecruitment 
+            jobs={MOCK_RECRUITMENT_JOBS} 
+            candidates={candidates} 
+            setCandidates={setCandidates} 
+            lang={lang} 
+          />
         )}
 
         {activeTab === 'ONBOARDING' && (
-          <HrmOnboarding tasks={MOCK_ONBOARDING_TASKS} lang={lang} />
+          <HrmOnboarding 
+            tasks={onboardingTasks} 
+            setTasks={setOnboardingTasks} 
+            candidates={candidates}
+            lang={lang} 
+          />
         )}
 
         {activeTab === 'PROBATION' && (
@@ -347,7 +379,13 @@ export default function HrmCenter({ currentUser, users, onUpdateUsers, hasCapabi
         )}
 
         {activeTab === 'CONTRACTS' && (
-          <HrmContracts contracts={MOCK_HR_CONTRACTS} lang={lang} />
+          <HrmContracts 
+            contracts={contracts} 
+            setContracts={setContracts} 
+            users={users}
+            candidates={candidates}
+            lang={lang} 
+          />
         )}
 
         {activeTab === 'CPD_TRAINING' && (

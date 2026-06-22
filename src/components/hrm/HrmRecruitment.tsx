@@ -4,23 +4,58 @@ import { RecruitmentJob, Candidate } from '../../types';
 
 interface HrmRecruitmentProps {
   jobs: RecruitmentJob[];
-  candidates: Candidate[];
+  candidates: any[];
+  setCandidates: (c: any[]) => void;
   lang: string;
 }
 
-export default function HrmRecruitment({ jobs, candidates, lang }: HrmRecruitmentProps) {
+export default function HrmRecruitment({ jobs, candidates, setCandidates, lang }: HrmRecruitmentProps) {
   const [activeJobId, setActiveJobId] = useState<string>('ALL');
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newCandidate, setNewCandidate] = useState({ name: '', email: '', phone: '', jobId: '' });
 
   const filteredCandidates = activeJobId === 'ALL' 
     ? candidates 
     : candidates.filter(c => c.jobId === activeJobId);
 
+  const handleAddCandidate = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCandidate.name || !newCandidate.jobId) return;
+    const job = jobs.find(j => j.id === newCandidate.jobId);
+    
+    const candidate = {
+      id: `can_${Date.now()}`,
+      jobId: newCandidate.jobId,
+      jobPosition: job?.position || 'Ứng viên tự do',
+      name: newCandidate.name,
+      email: newCandidate.email,
+      phone: newCandidate.phone,
+      source: 'Website',
+      status: 'NEW',
+      appliedDate: new Date().toISOString().split('T')[0]
+    };
+    
+    setCandidates([candidate, ...candidates]);
+    setShowAddForm(false);
+    setNewCandidate({ name: '', email: '', phone: '', jobId: '' });
+  };
+
+  const updateCandidateStatus = (id: string, newStatus: string) => {
+    setCandidates(candidates.map(c => c.id === id ? { ...c, status: newStatus } : c));
+  };
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start animate-fade-in">
       {/* Vị trí tuyển dụng */}
       <div className="lg:col-span-4 space-y-4">
-        <h3 className="font-display font-extrabold text-slate-900 dark:text-white text-xs uppercase tracking-wide font-mono border-b pb-2">
-          Vị trí tuyển dụng
+        <h3 className="font-display font-extrabold text-slate-900 dark:text-white text-xs uppercase tracking-wide font-mono border-b pb-2 flex justify-between items-center">
+          <span>Vị trí tuyển dụng</span>
+          <button 
+            onClick={() => setShowAddForm(true)}
+            className="px-2 py-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[10px] rounded-lg"
+          >
+            + Thêm Ứng viên
+          </button>
         </h3>
         <button 
           onClick={() => setActiveJobId('ALL')}
@@ -61,6 +96,26 @@ export default function HrmRecruitment({ jobs, candidates, lang }: HrmRecruitmen
           <span>Danh sách Ứng viên</span>
           <span className="text-indigo-600">{filteredCandidates.length} ứng viên</span>
         </h3>
+        
+        {showAddForm && (
+          <form onSubmit={handleAddCandidate} className="bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 space-y-3 mb-4">
+            <h4 className="text-xs font-bold text-slate-900 dark:text-white">Thêm Ứng viên mới</h4>
+            <div className="grid grid-cols-2 gap-3">
+              <input type="text" placeholder="Họ và tên" className="p-2 text-xs rounded border w-full" value={newCandidate.name} onChange={e => setNewCandidate({...newCandidate, name: e.target.value})} required />
+              <select className="p-2 text-xs rounded border w-full" value={newCandidate.jobId} onChange={e => setNewCandidate({...newCandidate, jobId: e.target.value})} required>
+                <option value="">-- Chọn Vị trí --</option>
+                {jobs.map(j => <option key={j.id} value={j.id}>{j.position}</option>)}
+              </select>
+              <input type="email" placeholder="Email" className="p-2 text-xs rounded border w-full" value={newCandidate.email} onChange={e => setNewCandidate({...newCandidate, email: e.target.value})} />
+              <input type="text" placeholder="Số điện thoại" className="p-2 text-xs rounded border w-full" value={newCandidate.phone} onChange={e => setNewCandidate({...newCandidate, phone: e.target.value})} />
+            </div>
+            <div className="flex justify-end gap-2 mt-2">
+              <button type="button" onClick={() => setShowAddForm(false)} className="px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-200 rounded">Hủy</button>
+              <button type="submit" className="px-3 py-1.5 text-xs text-white bg-indigo-600 hover:bg-indigo-700 rounded font-bold">Lưu Ứng viên</button>
+            </div>
+          </form>
+        )}
+
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {filteredCandidates.map(can => (
             <div key={can.id} className="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl space-y-3">
@@ -72,7 +127,7 @@ export default function HrmRecruitment({ jobs, candidates, lang }: HrmRecruitmen
                 <span className={`px-2 py-0.5 rounded border text-[9px] font-black uppercase ${
                   can.status === 'NEW' ? 'bg-blue-50 text-blue-700 border-blue-200' :
                   can.status === 'INTERVIEW' ? 'bg-amber-50 text-amber-700 border-amber-200' :
-                  can.status === 'TRIAL' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' :
+                  can.status === 'HIRED' || can.status === 'TRIAL' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' :
                   'bg-slate-50 text-slate-700 border-slate-200'
                 }`}>{can.status}</span>
               </div>
@@ -88,12 +143,16 @@ export default function HrmRecruitment({ jobs, candidates, lang }: HrmRecruitmen
                 </div>
               )}
               <div className="flex gap-2 mt-2 pt-2 border-t border-slate-100 dark:border-slate-800">
-                <button className="flex-1 py-1 text-[10px] font-bold bg-indigo-50 text-indigo-700 rounded hover:bg-indigo-100 flex items-center justify-center gap-1">
-                  <CheckCircle className="w-3 h-3" /> Cập nhật
-                </button>
-                <button className="flex-1 py-1 text-[10px] font-bold bg-rose-50 text-rose-700 rounded hover:bg-rose-100 flex items-center justify-center gap-1">
-                  <XCircle className="w-3 h-3" /> Loại
-                </button>
+                {can.status !== 'HIRED' && (
+                  <button onClick={() => updateCandidateStatus(can.id, 'HIRED')} className="flex-1 py-1 text-[10px] font-bold bg-indigo-50 text-indigo-700 rounded hover:bg-indigo-100 flex items-center justify-center gap-1">
+                    <CheckCircle className="w-3 h-3" /> Nhận việc
+                  </button>
+                )}
+                {can.status !== 'REJECTED' && (
+                  <button onClick={() => updateCandidateStatus(can.id, 'REJECTED')} className="flex-1 py-1 text-[10px] font-bold bg-rose-50 text-rose-700 rounded hover:bg-rose-100 flex items-center justify-center gap-1">
+                    <XCircle className="w-3 h-3" /> Loại
+                  </button>
+                )}
               </div>
             </div>
           ))}
