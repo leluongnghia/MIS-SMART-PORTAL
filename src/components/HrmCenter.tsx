@@ -303,7 +303,7 @@ export default function HrmCenter({ currentUser, users, onUpdateUsers, hasCapabi
   };
 
   return (
-    <div className="w-full space-y-6 animate-fade-in" id="hrm-center-root">
+    <div className="w-full max-w-[1400px] mx-auto space-y-6 animate-fade-in" id="hrm-center-root">
       
       {/* Header Banner */}
       <div className="bg-gradient-to-r from-indigo-900 via-indigo-950 to-slate-900 rounded-3xl p-6 md:p-8 text-white relative overflow-hidden border border-indigo-800/30 shadow-lg">
@@ -325,15 +325,15 @@ export default function HrmCenter({ currentUser, users, onUpdateUsers, hasCapabi
       </div>
 
       {/* Tabs list */}
-      <div className="flex border border-slate-200 dark:border-slate-800 gap-1 bg-white dark:bg-slate-900 p-1.5 rounded-2xl shadow-3xs flex-wrap">
+      <div className="flex overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] border border-slate-200 dark:border-slate-800 gap-1 bg-white dark:bg-slate-900 p-1.5 rounded-2xl shadow-3xs">
         {tabs.map(tab => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex-1 md:flex-initial flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            className={`whitespace-nowrap flex-none flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
               activeTab === tab.id 
-                ? 'bg-indigo-600 text-white shadow-sm scale-[1.01]' 
-                : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/40'
+                ? 'bg-indigo-600 text-white shadow-sm' 
+                : 'text-slate-600 dark:text-slate-400 hover:text-indigo-700 dark:hover:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-slate-800/60'
             }`}
           >
             <span>{tab.label}</span>
