@@ -58,7 +58,7 @@ export default function HrmContracts({ contracts, setContracts, users, candidate
         </h3>
         <button 
           onClick={() => setShowAddForm(true)}
-          className="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[10px] rounded-lg"
+          className="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[10px] rounded-lg cursor-pointer transition-colors"
         >
           + Thêm Hợp đồng
         </button>

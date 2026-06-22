@@ -52,7 +52,7 @@ export default function HrmRecruitment({ jobs, candidates, setCandidates, lang }
           <span>Vị trí tuyển dụng</span>
           <button 
             onClick={() => setShowAddForm(true)}
-            className="px-2 py-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[10px] rounded-lg"
+            className="px-2 py-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[10px] rounded-lg cursor-pointer transition-colors"
           >
             + Thêm Ứng viên
           </button>

@@ -137,7 +137,7 @@ export default function HrmCenter({ currentUser, users, onUpdateUsers, hasCapabi
 
   // State: Nghỉ phép
   const [leaves, setLeaves] = useState<LeaveRequest[]>(() => {
-    const saved = serverStorage.getItem('mis_hrm_leaves');
+    const saved = serverStorage.getItem('mis_hrm_leaves_v2');
     if (saved) {
       try { return JSON.parse(saved); } catch (e) {}
     }
@@ -170,12 +170,12 @@ export default function HrmCenter({ currentUser, users, onUpdateUsers, hasCapabi
   });
 
   useEffect(() => {
-    serverStorage.setItem('mis_hrm_leaves', JSON.stringify(leaves));
+    serverStorage.setItem('mis_hrm_leaves_v2', JSON.stringify(leaves));
   }, [leaves]);
 
   // State: Chấm công
   const [attendanceRecords] = useState<AttendanceRecord[]>(() => {
-    const saved = serverStorage.getItem('mis_hrm_attendance');
+    const saved = serverStorage.getItem('mis_hrm_attendance_v2');
     if (saved) {
       try { return JSON.parse(saved); } catch (e) {}
     }
@@ -191,7 +191,7 @@ export default function HrmCenter({ currentUser, users, onUpdateUsers, hasCapabi
 
   // State: Lương
   const [salaryRecords, setSalaryRecords] = useState<SalaryRecord[]>(() => {
-    const saved = serverStorage.getItem('mis_hrm_salary');
+    const saved = serverStorage.getItem('mis_hrm_salary_v2');
     if (saved) {
       try { return JSON.parse(saved); } catch (e) {}
     }
@@ -205,30 +205,30 @@ export default function HrmCenter({ currentUser, users, onUpdateUsers, hasCapabi
   });
 
   useEffect(() => {
-    serverStorage.setItem('mis_hrm_salary', JSON.stringify(salaryRecords));
+    serverStorage.setItem('mis_hrm_salary_v2', JSON.stringify(salaryRecords));
   }, [salaryRecords]);
 
   // State: Tuyển dụng, Onboarding, Hợp đồng (For MVP flow)
   const [candidates, setCandidates] = useState<any[]>(() => {
-    const saved = serverStorage.getItem('mis_hrm_candidates');
+    const saved = serverStorage.getItem('mis_hrm_candidates_v2');
     if (saved) try { return JSON.parse(saved); } catch (e) {}
     return MOCK_CANDIDATES;
   });
-  useEffect(() => { serverStorage.setItem('mis_hrm_candidates', JSON.stringify(candidates)); }, [candidates]);
+  useEffect(() => { serverStorage.setItem('mis_hrm_candidates_v2', JSON.stringify(candidates)); }, [candidates]);
 
   const [onboardingTasks, setOnboardingTasks] = useState<any[]>(() => {
-    const saved = serverStorage.getItem('mis_hrm_onboarding');
+    const saved = serverStorage.getItem('mis_hrm_onboarding_v2');
     if (saved) try { return JSON.parse(saved); } catch (e) {}
     return MOCK_ONBOARDING_TASKS;
   });
-  useEffect(() => { serverStorage.setItem('mis_hrm_onboarding', JSON.stringify(onboardingTasks)); }, [onboardingTasks]);
+  useEffect(() => { serverStorage.setItem('mis_hrm_onboarding_v2', JSON.stringify(onboardingTasks)); }, [onboardingTasks]);
 
   const [contracts, setContracts] = useState<any[]>(() => {
-    const saved = serverStorage.getItem('mis_hrm_contracts');
+    const saved = serverStorage.getItem('mis_hrm_contracts_v2');
     if (saved) try { return JSON.parse(saved); } catch (e) {}
     return MOCK_HR_CONTRACTS;
   });
-  useEffect(() => { serverStorage.setItem('mis_hrm_contracts', JSON.stringify(contracts)); }, [contracts]);
+  useEffect(() => { serverStorage.setItem('mis_hrm_contracts_v2', JSON.stringify(contracts)); }, [contracts]);
 
   // Selected Profile
   const [selectedProfileUser, setSelectedProfileUser] = useState<UserProfile | null>(null);
