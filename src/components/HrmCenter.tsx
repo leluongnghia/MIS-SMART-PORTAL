@@ -40,7 +40,7 @@ interface HrmCenterProps {
   hasCapability: (capability: string, action?: string, resourceOwnerId?: string) => boolean;
 }
 
-interface LeaveRequest {
+export interface LeaveRequest {
   id: string;
   teacherId: string;
   teacherName: string;

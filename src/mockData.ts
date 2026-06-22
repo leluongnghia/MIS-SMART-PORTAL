@@ -2367,7 +2367,7 @@ export const INITIAL_TASKS: Task[] = [
   }
 ];
 
-export const MOCK_ASSETS: AssetItem[] = [
+export const MOCK_ASSETS: any[] = [
   { id: 'ast_1', code: 'TS-CNTT-001', name: 'Laptop Dell Vostro 3520 (Lab AI)', category: 'CNTT', location: 'Phòng Lab AI 1', status: 'DANG_SU_DUNG', condition: 'MOI', purchaseDate: '2025-08-15', assignedTo: 'user_nam', assignedName: 'Thầy Trần Hoàng Nam' },
   { id: 'ast_2', code: 'TS-CNTT-002', name: 'Máy chiếu Epson EH-TW7000', category: 'THIET_BI_GIANG_DAY', location: 'Phòng học 302', status: 'SAN_SANG', condition: 'TOT', purchaseDate: '2024-05-10', lastMaintenanceDate: '2026-01-15' },
   { id: 'ast_3', code: 'TS-NT-001', name: 'Bàn giáo viên cao cấp gỗ Sồi', category: 'NOI_THAT', location: 'Phòng học 405', status: 'DANG_SU_DUNG', condition: 'KHA', purchaseDate: '2023-12-01' },
@@ -2380,30 +2380,30 @@ export const MOCK_ASSETS: AssetItem[] = [
   { id: 'ast_10', code: 'TS-CNTT-010', name: 'Máy in Canon LBP2900', category: 'CNTT', location: 'Văn phòng Hành chính', status: 'THANH_LY', condition: 'HONG', purchaseDate: '2021-02-20' }
 ];
 
-export const MOCK_ASSET_HANDOVERS: AssetHandover[] = [
+export const MOCK_ASSET_HANDOVERS: any[] = [
   { id: 'ho_1', assetId: 'ast_1', assetCode: 'TS-CNTT-001', assetName: 'Laptop Dell Vostro 3520 (Lab AI)', receiverId: 'user_nam', receiverName: 'Thầy Trần Hoàng Nam', receiverRole: 'TEACHER', location: 'Phòng Lab AI 1', handoverDate: '2025-09-05', conditionAtHandover: 'Mới 100%, kèm sạc', status: 'DA_BAN_GIAO', approvedBy: 'user_kha' },
   { id: 'ho_2', assetId: 'ast_6', assetCode: 'TS-CNTT-006', assetName: 'Màn hình tương tác ViewSonic 75"', receiverId: 'user_nhan', receiverName: 'Cô Lê Thị Thanh Nhàn', receiverRole: 'MANAGER', location: 'Phòng học 301', handoverDate: '2026-06-15', conditionAtHandover: 'Mới, đủ phụ kiện', status: 'CHO_DUYET', notes: 'Giáo viên yêu cầu mượn dùng thi giáo viên giỏi' }
 ];
 
-export const MOCK_ASSET_TRANSFERS: AssetTransfer[] = [
+export const MOCK_ASSET_TRANSFERS: any[] = [
   { id: 'tr_1', assetId: 'ast_2', assetCode: 'TS-CNTT-002', assetName: 'Máy chiếu Epson EH-TW7000', fromLocation: 'Phòng học 301', toLocation: 'Phòng học 302', requestDate: '2026-05-10', transferDate: '2026-05-11', status: 'DA_CHUYEN', requestedBy: 'user_dat', requestorName: 'Thầy Vũ Tiến Đạt', approvedBy: 'user_kha', reason: 'Phòng 301 sửa chữa trần nhà' },
   { id: 'tr_2', assetId: 'ast_3', assetCode: 'TS-NT-001', assetName: 'Bàn giáo viên cao cấp gỗ Sồi', fromLocation: 'Phòng học 405', toLocation: 'Phòng học 101', requestDate: '2026-06-20', status: 'CHO_DUYET', requestedBy: 'user_nhung', requestorName: 'Cô Phạm Hồng Nhung', reason: 'Phòng 101 bị hỏng bàn giáo viên' }
 ];
 
-export const MOCK_MAINTENANCE_REPORTS: MaintenanceReport[] = [
+export const MOCK_MAINTENANCE_REPORTS: any[] = [
   { id: 'mr_1', assetId: 'ast_5', assetCode: 'TS-CNTT-005', assetName: 'Tivi Sony 4K 65 inch', reportedBy: 'user_hoa', reporterName: 'Cô Trịnh Thúy Hoa', reportDate: '2026-06-18', issueDescription: 'Màn hình bị sọc ngang, không lên hình khi cắm HDMI', priority: 'CAO', status: 'DANG_SUA', assignedTechnician: 'user_son' },
   { id: 'mr_2', assetId: 'ast_9', assetCode: 'TS-KHAC-001', assetName: 'Máy điều hòa Daikin 18000BTU', reportedBy: 'user_binh_mgr', reporterName: 'Cô Hoàng Trúc Liên', reportDate: '2026-05-25', issueDescription: 'Điều hòa không mát, kêu to', priority: 'TRUNG_BINH', status: 'DA_HOAN_THANH', assignedTechnician: 'user_son', completionDate: '2026-05-26', resolutionNotes: 'Đã bơm thêm gas và vệ sinh cục nóng' },
   { id: 'mr_3', assetId: 'ast_10', assetCode: 'TS-CNTT-010', assetName: 'Máy in Canon LBP2900', reportedBy: 'user_binh', reporterName: 'Thầy Phạm Thanh Bình', reportDate: '2026-06-21', issueDescription: 'Kẹt giấy liên tục, in bị lem mực', priority: 'CAO', status: 'CHO_TIEP_NHAN' }
 ];
 
-export const MOCK_INVENTORY_ITEMS: InventoryItem[] = [
+export const MOCK_INVENTORY_ITEMS: any[] = [
   { id: 'inv_1', code: 'VT-VPP-001', name: 'Giấy in A4 Double A 70gsm', category: 'VAN_PHONG_PHAM', unit: 'Ram', currentStock: 45, minStockLevel: 20, location: 'Kho Hành chính' },
   { id: 'inv_2', code: 'VT-VPP-002', name: 'Bút dạ quang viết bảng (Xanh/Đỏ/Đen)', category: 'VAN_PHONG_PHAM', unit: 'Hộp', currentStock: 15, minStockLevel: 10, location: 'Kho Hành chính' },
   { id: 'inv_3', code: 'VT-VS-001', name: 'Nước lau sàn Sunlight 3.8kg', category: 'VE_SINH', unit: 'Can', currentStock: 8, minStockLevel: 5, location: 'Kho Vật tư Vệ sinh' },
   { id: 'inv_4', code: 'VT-YT-001', name: 'Cồn y tế 70 độ 500ml', category: 'Y_TE', unit: 'Chai', currentStock: 2, minStockLevel: 10, location: 'Phòng Y tế' }
 ];
 
-export const MOCK_INVENTORY_TRANSACTIONS: InventoryTransaction[] = [
+export const MOCK_INVENTORY_TRANSACTIONS: any[] = [
   { id: 'tx_1', itemId: 'inv_1', itemName: 'Giấy in A4 Double A 70gsm', type: 'NHAP', quantity: 50, date: '2026-06-01', performerName: 'Thầy Lâm Vĩnh Thuận', notes: 'Nhập kho đầu tháng' },
   { id: 'tx_2', itemId: 'inv_1', itemName: 'Giấy in A4 Double A 70gsm', type: 'XUAT', quantity: 5, date: '2026-06-15', performerName: 'Cô Hoàng Trúc Liên', notes: 'Cấp phát cho Tổ Toán - Tin' },
   { id: 'tx_3', itemId: 'inv_4', itemName: 'Cồn y tế 70 độ 500ml', type: 'XUAT', quantity: 3, date: '2026-06-20', performerName: 'Cô Mai Phương Dũng', notes: 'Sử dụng phòng Y tế' }

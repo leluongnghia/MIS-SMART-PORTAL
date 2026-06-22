@@ -29,11 +29,6 @@ interface AppSidebarProps {
   isSidebarOpen: boolean;
   setIsSidebarOpen: (val: boolean) => void;
   sidebarSearchQuery: string;
-
-interface AppSidebarProps {
-  isSidebarOpen: boolean;
-  setIsSidebarOpen: (val: boolean) => void;
-  sidebarSearchQuery: string;
   setSidebarSearchQuery: (val: string) => void;
   overviewTab: string;
   setOverviewTab: (val: any) => void;
@@ -473,6 +468,27 @@ export default function AppSidebar({
                   )}
 
                   {canDisplayTab('STUDENT_SUCCESS') && matchesSearch('STUDENT_SUCCESS') && (
+                    <button 
+                      onClick={() => { setOverviewTab('STUDENT_SUCCESS'); setIsSidebarOpen(false); }}
+                      aria-current={overviewTab === 'STUDENT_SUCCESS' ? 'page' : undefined}
+                      className={getTabClass('STUDENT_SUCCESS', 'business')}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <GraduationCap className={`w-4 h-4 transition-colors ${getIconClass('STUDENT_SUCCESS', 'business')}`} />
+                        <span>Học vụ &amp; Điểm số</span>
+                      </div>
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* User Progress Footer */}
+        <div className="mt-auto p-4 border-t border-slate-200/80 dark:border-slate-800/80 bg-slate-50 dark:bg-slate-900/50">
+          <div className="flex justify-between items-center mb-2 text-xs font-medium">
+            <span className="text-slate-600 dark:text-slate-300">Tiến độ công việc</span>
             <span className="font-bold text-indigo-650 dark:text-indigo-400">{completionRate}%</span>
           </div>
           <div className="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200/40 dark:border-slate-700/40 h-1.5 rounded-full overflow-hidden">
