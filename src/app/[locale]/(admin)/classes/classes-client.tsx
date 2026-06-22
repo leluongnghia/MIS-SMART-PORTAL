@@ -4,25 +4,66 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/src/components/ui/card';
 import { Button } from '@/src/components/ui/button';
 import { Badge } from '@/src/components/ui/badge';
-import { Users, GraduationCap, Settings } from 'lucide-react';
+import { Users, GraduationCap, Settings, Plus, Edit3, Trash2 } from 'lucide-react';
 import { Dialog } from '@/src/components/ui/dialog';
+import { createClass, deleteClass, updateClass } from './actions';
 
 import Drawer from '@/src/components/ui/Drawer';
 import StudentQuickProfile from '@/src/components/students/student-quick-profile';
 
 export default function ClassesClient({ initialData }: { initialData: any }) {
-  const { classes = [], students = [] } = initialData;
+  const [classes, setClasses] = useState<any[]>(initialData.classes || []);
+  const [students, setStudents] = useState<any[]>(initialData.students || []);
   const defaultClass = classes.find((c: any) => students.some((s: any) => s.className === c.name)) || classes[0];
   const [selectedClassId, setSelectedClassId] = useState<string>(defaultClass?.id || '');
   const [isListDrawerOpen, setIsListDrawerOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
 
   const [hienTuyChinh, setHienTuyChinh] = useState(false);
+  const [classDialogMode, setClassDialogMode] = useState<'create' | 'edit' | null>(null);
+  const [classForm, setClassForm] = useState<any>({ name: '', code: '', gradeLevel: '', capacity: 30, status: 'ACTIVE' });
   const [tuyChinhAnSiSo, setTuyChinhAnSiSo] = useState(false);
   const [tuyChinhAnTrangThai, setTuyChinhAnTrangThai] = useState(false);
 
   const selectedClass = classes.find((c: any) => c.id === selectedClassId);
   const classStudents = students.filter((s: any) => s.className === selectedClass?.name);
+  const openClassCreate = () => {
+    setClassForm({ name: '', code: '', gradeLevel: '', capacity: 30, status: 'ACTIVE' });
+    setClassDialogMode('create');
+  };
+  const openClassEdit = () => {
+    if (!selectedClass) return;
+    setClassForm({ name: selectedClass.name || '', code: selectedClass.code || '', gradeLevel: selectedClass.gradeLevel || '', capacity: selectedClass.capacity || 30, status: selectedClass.status || 'ACTIVE' });
+    setClassDialogMode('edit');
+  };
+  const submitClassForm = async () => {
+    const result = classDialogMode === 'edit' ? await updateClass(selectedClass.id, classForm) : await createClass(classForm);
+    if (!result.success || !result.data) {
+      alert(result.error || 'Lưu lớp thất bại.');
+      return;
+    }
+    if (classDialogMode === 'edit') {
+      setClasses(prev => prev.map(item => item.id === result.data.id ? result.data : item));
+      if (selectedClass.name !== result.data.name) {
+        setStudents(prev => prev.map(student => student.className === selectedClass.name ? { ...student, className: result.data.name } : student));
+      }
+    } else {
+      setClasses(prev => [result.data, ...prev]);
+      setSelectedClassId(result.data.id);
+    }
+    setClassDialogMode(null);
+  };
+  const removeSelectedClass = async () => {
+    if (!selectedClass || !confirm(`Xóa lớp "${selectedClass.name}"?`)) return;
+    const result = await deleteClass(selectedClass.id);
+    if (!result.success) {
+      alert(result.error || 'Xóa lớp thất bại.');
+      return;
+    }
+    const next = classes.filter(item => item.id !== selectedClass.id);
+    setClasses(next);
+    setSelectedClassId(next[0]?.id || '');
+  };
 
   return (
     <div className="space-y-6">
@@ -42,6 +83,15 @@ export default function ClassesClient({ initialData }: { initialData: any }) {
           </select>
           <Button variant="outline" className="gap-2 font-bold" onClick={() => setHienTuyChinh(true)}>
             <Settings className="h-4 w-4" /> Tùy chỉnh
+          </Button>
+          <Button variant="outline" className="gap-2 font-bold" onClick={openClassEdit} disabled={!selectedClass}>
+            <Edit3 className="h-4 w-4" /> Sửa lớp
+          </Button>
+          <Button variant="destructive" className="gap-2 font-bold" onClick={removeSelectedClass} disabled={!selectedClass || classStudents.length > 0}>
+            <Trash2 className="h-4 w-4" /> Xóa
+          </Button>
+          <Button className="gap-2 font-bold" onClick={openClassCreate}>
+            <Plus className="h-4 w-4" /> Thêm lớp
           </Button>
         </div>
       </div>
@@ -180,6 +230,30 @@ export default function ClassesClient({ initialData }: { initialData: any }) {
             </span>
             <input type="checkbox" checked={tuyChinhAnTrangThai} onChange={(e) => setTuyChinhAnTrangThai(e.target.checked)} className="h-4 w-4" />
           </label>
+        </div>
+      </Dialog>
+
+      <Dialog
+        open={!!classDialogMode}
+        onOpenChange={(open) => !open && setClassDialogMode(null)}
+        title={classDialogMode === 'edit' ? 'Sửa lớp học' : 'Thêm lớp học'}
+        description="Dữ liệu được lưu vào bảng classes."
+        className="max-w-xl"
+      >
+        <div className="grid gap-3 md:grid-cols-2">
+          <input className="rounded-lg border p-2 text-sm dark:bg-slate-900" placeholder="Tên lớp" value={classForm.name} onChange={e => setClassForm({ ...classForm, name: e.target.value })} />
+          <input className="rounded-lg border p-2 text-sm dark:bg-slate-900" placeholder="Mã lớp" value={classForm.code} onChange={e => setClassForm({ ...classForm, code: e.target.value })} />
+          <input className="rounded-lg border p-2 text-sm dark:bg-slate-900" placeholder="Khối" value={classForm.gradeLevel} onChange={e => setClassForm({ ...classForm, gradeLevel: e.target.value })} />
+          <input type="number" className="rounded-lg border p-2 text-sm dark:bg-slate-900" placeholder="Sức chứa" value={classForm.capacity} onChange={e => setClassForm({ ...classForm, capacity: Number(e.target.value) })} />
+          <select className="rounded-lg border p-2 text-sm dark:bg-slate-900 md:col-span-2" value={classForm.status} onChange={e => setClassForm({ ...classForm, status: e.target.value })}>
+            <option value="ACTIVE">ACTIVE</option>
+            <option value="INACTIVE">INACTIVE</option>
+            <option value="ARCHIVED">ARCHIVED</option>
+          </select>
+          <div className="flex justify-end gap-2 md:col-span-2">
+            <Button variant="outline" onClick={() => setClassDialogMode(null)}>Hủy</Button>
+            <Button onClick={submitClassForm} disabled={!classForm.name.trim()}>Lưu lớp</Button>
+          </div>
         </div>
       </Dialog>
     </div>

@@ -2,7 +2,7 @@
 
 import { Dialog } from '@/src/components/ui/dialog';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useTransition } from 'react';
 import {
   ShieldAlert,
   Eye,
@@ -23,12 +23,14 @@ import {
   FileText,
   X,
   Sliders,
-  TrendingDown
+  TrendingDown,
+  Plus
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/src/components/ui/card';
 import { Badge } from '@/src/components/ui/badge';
 import { Button } from '@/src/components/ui/button';
 import { cn } from '@/src/lib/utils';
+import { createRisk, deleteRisk, updateRiskProgress } from './actions';
 
 // Matrix colors lookup
 const cellClasses: Record<string, string> = {
@@ -103,6 +105,19 @@ export default function RiskDashboard({ initialData }: { initialData?: any }) {
 
   // Customize & Popup States
   const [isCustomizeOpen, setIsCustomizeOpen] = useState(false);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [notice, setNotice] = useState('');
+  const [isPending, startTransition] = useTransition();
+  const [createForm, setCreateForm] = useState({
+    title: '',
+    category: 'Hoạt động',
+    owner: '',
+    ownerRole: '',
+    plan: '',
+    impact: 3,
+    likelihood: 3,
+    date: '',
+  });
   const [targetCompliance, setTargetCompliance] = useState(86);
   const [maxRiskTolerance, setMaxRiskTolerance] = useState(15);
   const [isAllOutstandingOpen, setIsAllOutstandingOpen] = useState(false);
@@ -149,6 +164,49 @@ export default function RiskDashboard({ initialData }: { initialData?: any }) {
     return risks.filter((r: any) => r.score >= maxRiskTolerance);
   }, [risks, maxRiskTolerance]);
 
+  const submitCreateRisk = () => {
+    startTransition(async () => {
+      const result = await createRisk(createForm);
+      if (result.success) {
+        setNotice('Đã tạo rủi ro mới.');
+        window.setTimeout(() => window.location.reload(), 650);
+      } else {
+        setNotice(result.error || 'Tạo rủi ro thất bại.');
+      }
+    });
+  };
+
+  const submitProgressUpdate = () => {
+    if (!selectedRisk) return;
+    startTransition(async () => {
+      const result = await updateRiskProgress(selectedRisk.id, {
+        status: 'monitoring',
+        plan: selectedRisk.plan,
+        note: 'Cập nhật tiến độ từ dashboard rủi ro',
+      });
+      if (result.success) {
+        setNotice(`Đã cập nhật tiến độ rủi ro ${selectedRisk.id}.`);
+        window.setTimeout(() => window.location.reload(), 650);
+      } else {
+        setNotice(result.error || 'Cập nhật tiến độ thất bại.');
+      }
+    });
+  };
+
+  const submitDeleteRisk = () => {
+    if (!selectedRisk || !confirm(`Xóa rủi ro "${selectedRisk.title}"?`)) return;
+    startTransition(async () => {
+      const result = await deleteRisk(selectedRisk.id);
+      if (result.success) {
+        setNotice(`Đã xóa rủi ro ${selectedRisk.id}.`);
+        setSelectedRiskId(null);
+        window.setTimeout(() => window.location.reload(), 650);
+      } else {
+        setNotice(result.error || 'Xóa rủi ro thất bại.');
+      }
+    });
+  };
+
   return (
     <div className="space-y-6 relative">
       {/* Header */}
@@ -162,6 +220,9 @@ export default function RiskDashboard({ initialData }: { initialData?: any }) {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <Button onClick={() => setIsCreateOpen(true)} className="gap-2 bg-blue-600 hover:bg-blue-700">
+            <Plus className="h-4 w-4" /> Thêm rủi ro
+          </Button>
           <select className="block w-48 rounded-md border-0 py-1.5 pl-3 pr-10 text-slate-900 ring-1 ring-inset ring-slate-200 focus:ring-2 focus:ring-blue-600 sm:text-sm sm:leading-6 dark:bg-slate-900 dark:text-slate-100 dark:ring-slate-700">
             <option>Năm học 2025-2026</option>
           </select>
@@ -170,6 +231,33 @@ export default function RiskDashboard({ initialData }: { initialData?: any }) {
           </Button>
         </div>
       </div>
+
+      {notice && <div className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm font-bold text-blue-700">{notice}</div>}
+
+      <Dialog
+        open={isCreateOpen}
+        onOpenChange={setIsCreateOpen}
+        title="Thêm rủi ro"
+        description="Ghi nhận rủi ro mới vào sổ rủi ro hệ thống."
+        className="max-w-2xl"
+      >
+        <div className="grid gap-3 md:grid-cols-2">
+          <input className="rounded-lg border p-2 text-sm dark:border-slate-800 dark:bg-slate-950 md:col-span-2" placeholder="Tiêu đề rủi ro" value={createForm.title} onChange={e => setCreateForm({ ...createForm, title: e.target.value })} />
+          <select className="rounded-lg border p-2 text-sm dark:border-slate-800 dark:bg-slate-950" value={createForm.category} onChange={e => setCreateForm({ ...createForm, category: e.target.value })}>
+            {['Hoạt động', 'Tài chính', 'Nhân sự', 'Tuân thủ', 'Danh tiếng', 'An toàn dữ liệu', 'Cơ sở vật chất', 'An toàn học đường'].map(cat => <option key={cat}>{cat}</option>)}
+          </select>
+          <input className="rounded-lg border p-2 text-sm dark:border-slate-800 dark:bg-slate-950" placeholder="Chủ sở hữu" value={createForm.owner} onChange={e => setCreateForm({ ...createForm, owner: e.target.value })} />
+          <input className="rounded-lg border p-2 text-sm dark:border-slate-800 dark:bg-slate-950" placeholder="Vai trò phụ trách" value={createForm.ownerRole} onChange={e => setCreateForm({ ...createForm, ownerRole: e.target.value })} />
+          <input type="date" className="rounded-lg border p-2 text-sm dark:border-slate-800 dark:bg-slate-950" value={createForm.date} onChange={e => setCreateForm({ ...createForm, date: e.target.value })} />
+          <label className="text-xs font-bold text-slate-500">Ảnh hưởng: {createForm.impact}<input type="range" min="1" max="5" value={createForm.impact} onChange={e => setCreateForm({ ...createForm, impact: Number(e.target.value) })} className="w-full accent-red-600" /></label>
+          <label className="text-xs font-bold text-slate-500">Khả năng: {createForm.likelihood}<input type="range" min="1" max="5" value={createForm.likelihood} onChange={e => setCreateForm({ ...createForm, likelihood: Number(e.target.value) })} className="w-full accent-orange-500" /></label>
+          <textarea className="min-h-[90px] rounded-lg border p-2 text-sm dark:border-slate-800 dark:bg-slate-950 md:col-span-2" placeholder="Kế hoạch giảm thiểu" value={createForm.plan} onChange={e => setCreateForm({ ...createForm, plan: e.target.value })} />
+          <div className="flex justify-end gap-2 md:col-span-2">
+            <Button variant="outline" onClick={() => setIsCreateOpen(false)}>Hủy</Button>
+            <Button onClick={submitCreateRisk} disabled={isPending || !createForm.title.trim()}>Lưu rủi ro</Button>
+          </div>
+        </div>
+      </Dialog>
 
       {/* Top Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -656,14 +744,20 @@ export default function RiskDashboard({ initialData }: { initialData?: any }) {
               >
                 Đóng
               </Button>
+              <Button
+                variant="destructive"
+                onClick={submitDeleteRisk}
+                disabled={isPending}
+                className="flex-1"
+              >
+                Xóa
+              </Button>
               <Button 
                 className="flex-1 bg-blue-600 hover:bg-blue-700"
-                onClick={() => {
-                  alert(`Đã gửi yêu cầu cập nhật tiến độ rủi ro ${selectedRisk.id} đến ${selectedRisk.owner}`);
-                  setSelectedRiskId(null);
-                }}
+                onClick={submitProgressUpdate}
+                disabled={isPending}
               >
-                Cập nhật tiến độ
+                {isPending ? 'Đang cập nhật...' : 'Cập nhật tiến độ'}
               </Button>
             </div>
           </div>

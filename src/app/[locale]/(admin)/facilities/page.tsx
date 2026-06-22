@@ -24,11 +24,12 @@ export default async function FacilitiesPage({ params }: { params: Promise<{ loc
 
   const [
     locationsRes, assetsRes, repairsRes,
-    suppliesRes, suppliersRes, safetyChecksRes, bookingsRes, renovationsRes, inventoryRes
+    purchasesRes, suppliesRes, suppliersRes, safetyChecksRes, bookingsRes, renovationsRes, inventoryRes
   ] = await Promise.all([
     getLocations(),
     getAssets(),
     getRepairRequests(),
+    getPurchaseRequests(),
     getSupplies(),
     getSuppliers(),
     getSafetyChecks(),
@@ -40,6 +41,7 @@ export default async function FacilitiesPage({ params }: { params: Promise<{ loc
   const locations = locationsRes.success ? locationsRes.data : [];
   const assets = assetsRes.success ? assetsRes.data : [];
   const repairRequests = repairsRes.success ? repairsRes.data : [];
+  const purchaseRequests = purchasesRes.success ? purchasesRes.data : [];
   const supplies = suppliesRes.success ? suppliesRes.data : [];
   const suppliers = suppliersRes.success ? suppliersRes.data : [];
   const safetyChecks = safetyChecksRes.success ? safetyChecksRes.data : [];
@@ -61,6 +63,7 @@ export default async function FacilitiesPage({ params }: { params: Promise<{ loc
         initialLocations={locations} 
         initialAssets={assets} 
         initialRepairRequests={repairRequests} 
+        initialPurchaseRequests={purchaseRequests}
         initialSupplies={supplies}
         initialSuppliers={suppliers}
         initialSafetyChecks={safetyChecks}

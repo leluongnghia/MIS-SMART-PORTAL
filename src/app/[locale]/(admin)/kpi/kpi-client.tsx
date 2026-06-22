@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { Dialog } from '@/src/components/ui/dialog';
 import { CheckCircle2, AlertTriangle, 
@@ -36,6 +36,7 @@ import {
   Pie,
   Cell
 } from 'recharts';
+import { saveKpiSettings, saveKpiSnapshot } from './actions';
 
 export default function KpiDashboard({ initialData }: { initialData?: any }) {
   const router = useRouter();
@@ -47,6 +48,9 @@ export default function KpiDashboard({ initialData }: { initialData?: any }) {
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
   const [advGroupFilter, setAdvGroupFilter] = useState('all');
   const [advStatusFilter, setAdvStatusFilter] = useState('all');
+  const [isSaving, startSaving] = useTransition();
+  const [kpiSettings, setKpiSettings] = useState(initialData?.kpiSettings || { targetAdmission: 600, targetAttendance: 92, targetEfficiency: 80, targetTeacherPerformance: 85 });
+  const [snapshotCount, setSnapshotCount] = useState(initialData?.snapshots?.length || 0);
 
   const stats = initialData?.stats || {
     schoolEfficiency: '78.6%',
@@ -210,6 +214,37 @@ export default function KpiDashboard({ initialData }: { initialData?: any }) {
     window.print();
   };
 
+  const handleSaveSnapshot = () => {
+    startSaving(async () => {
+      const result = await saveKpiSnapshot({
+        selectedYear,
+        selectedFacility,
+        selectedDept,
+        stats: scaledStats,
+        totalKPIs,
+        filters: { advGroupFilter, advStatusFilter },
+      });
+      if (result.success) {
+        setSnapshotCount((count: number) => count + 1);
+        alert('Đã lưu snapshot KPI vào DB.');
+      } else {
+        alert(result.error || 'Lưu snapshot KPI thất bại.');
+      }
+    });
+  };
+
+  const handleSaveTargets = () => {
+    startSaving(async () => {
+      const result = await saveKpiSettings(kpiSettings);
+      if (result.success) {
+        alert('Đã lưu mục tiêu KPI vào DB.');
+        setIsAdvancedOpen(false);
+      } else {
+        alert(result.error || 'Lưu mục tiêu KPI thất bại.');
+      }
+    });
+  };
+
   return (
     <div className="space-y-6">
       {/* Header controls */}
@@ -274,6 +309,14 @@ export default function KpiDashboard({ initialData }: { initialData?: any }) {
             className="text-red-600 border-red-200 bg-red-50 hover:bg-red-100 dark:bg-red-900/30 dark:border-red-800 gap-2"
           >
             <FileText className="h-4 w-4" /> Xuất PDF
+          </Button>
+          <Button
+            onClick={handleSaveSnapshot}
+            disabled={isSaving}
+            variant="outline"
+            className="text-blue-600 border-blue-200 bg-blue-50 hover:bg-blue-100 gap-2"
+          >
+            <FileText className="h-4 w-4" /> Lưu snapshot ({snapshotCount})
           </Button>
         </div>
       </div>
@@ -635,12 +678,35 @@ export default function KpiDashboard({ initialData }: { initialData?: any }) {
             </select>
           </div>
 
+          <div className="grid grid-cols-2 gap-3 rounded-xl border border-slate-100 p-3 dark:border-slate-800">
+            <label className="space-y-1 text-xs font-bold">Target tuyển sinh
+              <input type="number" className="w-full rounded-lg border p-2 dark:bg-slate-900" value={kpiSettings.targetAdmission} onChange={e => setKpiSettings({ ...kpiSettings, targetAdmission: Number(e.target.value) })} />
+            </label>
+            <label className="space-y-1 text-xs font-bold">Target chuyên cần (%)
+              <input type="number" className="w-full rounded-lg border p-2 dark:bg-slate-900" value={kpiSettings.targetAttendance} onChange={e => setKpiSettings({ ...kpiSettings, targetAttendance: Number(e.target.value) })} />
+            </label>
+            <label className="space-y-1 text-xs font-bold">Target vận hành (%)
+              <input type="number" className="w-full rounded-lg border p-2 dark:bg-slate-900" value={kpiSettings.targetEfficiency} onChange={e => setKpiSettings({ ...kpiSettings, targetEfficiency: Number(e.target.value) })} />
+            </label>
+            <label className="space-y-1 text-xs font-bold">Target giáo viên (%)
+              <input type="number" className="w-full rounded-lg border p-2 dark:bg-slate-900" value={kpiSettings.targetTeacherPerformance} onChange={e => setKpiSettings({ ...kpiSettings, targetTeacherPerformance: Number(e.target.value) })} />
+            </label>
+          </div>
+
           <div className="flex gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
             <Button
               onClick={() => setIsAdvancedOpen(false)}
               className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold border-0 text-xs h-9 rounded-xl shadow-md"
             >
               Áp dụng bộ lọc
+            </Button>
+            <Button
+              onClick={handleSaveTargets}
+              disabled={isSaving}
+              variant="outline"
+              className="flex-1 text-blue-600 hover:bg-blue-50 text-xs h-9 rounded-xl"
+            >
+              Lưu mục tiêu
             </Button>
             <Button
               onClick={() => {

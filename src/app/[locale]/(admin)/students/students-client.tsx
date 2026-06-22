@@ -20,7 +20,9 @@ import { CheckCircle2,
   ShieldCheck,
   HeartPulse,
   SettingsIcon,
-  LineChart as LineChartIcon
+  LineChart as LineChartIcon,
+  Plus,
+  Trash2
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/src/components/ui/card';
 import { Badge } from '@/src/components/ui/badge';
@@ -38,6 +40,7 @@ import {
   Pie,
   Cell
 } from 'recharts';
+import { addStudentTimeline, createStudent, deleteStudent, updateStudent } from './actions';
 
 const trendData = [
   { term: 'HK1 2023-2024', student: 7.8, class: 7.2 },
@@ -46,6 +49,7 @@ const trendData = [
   { term: 'HK2 2024-2025', student: 8.4, class: 7.6 },
 ];
 export default function Student360Dashboard({ initialData }: { initialData?: any }) {
+  const [students, setStudents] = useState<any[]>(initialData?.students || []);
   const [selectedStudentId, setSelectedStudentId] = useState<string>(() => {
     return initialData?.students?.[0]?.id || '';
   });
@@ -53,6 +57,8 @@ export default function Student360Dashboard({ initialData }: { initialData?: any
   const [selectedClass, setSelectedClass] = useState<string>('all');
   const [hienTimelineDialog, setHienTimelineDialog] = useState(false);
   const [hienTuyChinh, setHienTuyChinh] = useState(false);
+  const [studentDialogMode, setStudentDialogMode] = useState<'create' | 'edit' | null>(null);
+  const [studentForm, setStudentForm] = useState<any>({ name: '', code: '', className: '', gender: 'Nam', gpa: 8, parentName: '', parentPhone: '', parentEmail: '', status: 'Đang học' });
   const [tuyChinhAnLop, setTuyChinhAnLop] = useState(false);
   const [tuyChinhAnGPA, setTuyChinhAnGPA] = useState(false);
   const { success: toastSuccess, error: toastError } = useToast();
@@ -67,7 +73,6 @@ export default function Student360Dashboard({ initialData }: { initialData?: any
   });
 
   const studentsByClass = useMemo(() => {
-    const students = initialData?.students || [];
     const grouped: Record<string, any[]> = {};
     students.forEach((student: any) => {
       const className = student.className || 'Chưa phân lớp';
@@ -75,7 +80,7 @@ export default function Student360Dashboard({ initialData }: { initialData?: any
       grouped[className].push(student);
     });
     return Object.entries(grouped).sort(([a], [b]) => a.localeCompare(b, 'vi', { numeric: true }));
-  }, [initialData]);
+  }, [students]);
 
   const officialClassOptions = useMemo(() => {
     const classDistribution = initialData?.officialStats?.classDistribution || [];
@@ -86,10 +91,9 @@ export default function Student360Dashboard({ initialData }: { initialData?: any
   }, [initialData, studentsByClass]);
 
   const filteredStudents = useMemo(() => {
-    const students = initialData?.students || [];
     if (selectedClass === 'all') return students;
     return students.filter((student: any) => (student.className || 'Chưa phân lớp') === selectedClass);
-  }, [initialData, selectedClass]);
+  }, [students, selectedClass]);
 
   const displayStudents = useMemo(() => {
     if (filteredStudents.length || selectedClass === 'all') return filteredStudents;
@@ -131,8 +135,8 @@ export default function Student360Dashboard({ initialData }: { initialData?: any
   }, [displayStudents, selectedStudentId]);
 
   const currentStudent = useMemo(() => {
-    return displayStudents.find((s: any) => s.id === selectedStudentId) || displayStudents[0] || initialData?.students?.[0];
-  }, [displayStudents, initialData, selectedStudentId]);
+    return displayStudents.find((s: any) => s.id === selectedStudentId) || displayStudents[0] || students[0];
+  }, [displayStudents, students, selectedStudentId]);
 
   const studentGrades = useMemo(() => {
     if (!currentStudent) return [];
@@ -197,7 +201,7 @@ export default function Student360Dashboard({ initialData }: { initialData?: any
     });
   };
 
-  const handleActionSubmit = () => {
+  const handleActionSubmit = async () => {
     const msg = actionDialog.inputValue.trim();
     if (!msg) return;
 
@@ -235,6 +239,14 @@ export default function Student360Dashboard({ initialData }: { initialData?: any
     }
 
     if (newActivity) {
+      const result = await addStudentTimeline(currentStudent.id, { type: actionDialog.type as any, text: msg });
+      if (!result.success) {
+        toastError(result.error || 'Lưu hoạt động thất bại!');
+        return;
+      }
+      if (result.data) {
+        setStudents(prev => prev.map(student => student.id === currentStudent.id ? result.data : student));
+      }
       setLocalTimelines(prev => ({
         ...prev,
         [currentStudent.id]: [newActivity, ...(prev[currentStudent.id] || [])]
@@ -246,6 +258,58 @@ export default function Student360Dashboard({ initialData }: { initialData?: any
       type: null,
       inputValue: ''
     });
+  };
+
+  const openCreateStudent = () => {
+    setStudentForm({ name: '', code: '', className: selectedClass === 'all' ? '' : selectedClass, gender: 'Nam', gpa: 8, parentName: '', parentPhone: '', parentEmail: '', status: 'Đang học' });
+    setStudentDialogMode('create');
+  };
+
+  const openEditStudent = () => {
+    const parent = currentStudent?.payload?.parents?.[0] || {};
+    setStudentForm({
+      name: currentStudent.name || '',
+      code: currentStudent.code || '',
+      className: currentStudent.className || '',
+      gender: currentStudent.payload?.gender || 'Nam',
+      gpa: currentStudent.payload?.gpa || 8,
+      parentName: currentStudent.parentName || parent.name || '',
+      parentPhone: currentStudent.parentPhone || parent.phone || '',
+      parentEmail: currentStudent.parentEmail || parent.email || '',
+      status: currentStudent.payload?.status || 'Đang học',
+    });
+    setStudentDialogMode('edit');
+  };
+
+  const submitStudentForm = async () => {
+    const result = studentDialogMode === 'edit'
+      ? await updateStudent(currentStudent.id, studentForm)
+      : await createStudent(studentForm);
+    if (!result.success || !result.data) {
+      toastError(result.error || 'Lưu học sinh thất bại!');
+      return;
+    }
+    if (studentDialogMode === 'edit') {
+      setStudents(prev => prev.map(student => student.id === result.data.id ? result.data : student));
+    } else {
+      setStudents(prev => [result.data, ...prev]);
+      setSelectedStudentId(result.data.id);
+    }
+    setStudentDialogMode(null);
+    toastSuccess('Đã lưu hồ sơ học sinh vào DB.');
+  };
+
+  const removeCurrentStudent = async () => {
+    if (!currentStudent || !confirm(`Xóa học sinh "${currentStudent.name}"?`)) return;
+    const result = await deleteStudent(currentStudent.id);
+    if (!result.success) {
+      toastError(result.error || 'Xóa học sinh thất bại!');
+      return;
+    }
+    const next = students.filter(student => student.id !== currentStudent.id);
+    setStudents(next);
+    setSelectedStudentId(next[0]?.id || '');
+    toastSuccess('Đã xóa học sinh khỏi DB.');
   };
 
   const payload = currentStudent.payload || {};
@@ -286,7 +350,7 @@ export default function Student360Dashboard({ initialData }: { initialData?: any
             }}
             className="block w-44 rounded-md border-0 py-1.5 pl-3 pr-10 text-slate-900 ring-1 ring-inset ring-slate-200 focus:ring-2 focus:ring-blue-600 sm:text-sm sm:leading-6 dark:bg-slate-900 dark:text-slate-100 dark:ring-slate-700 font-bold bg-white"
           >
-            <option value="all">Tất cả lớp ({initialData?.officialStats?.totalStudents?.toLocaleString('vi-VN') || initialData?.students?.length || 0})</option>
+            <option value="all">Tất cả lớp ({initialData?.officialStats?.totalStudents?.toLocaleString('vi-VN') || students.length || 0})</option>
             {officialClassOptions.map(([className, total]) => (
               <option key={className} value={className}>{className} ({total})</option>
             ))}
@@ -318,6 +382,9 @@ export default function Student360Dashboard({ initialData }: { initialData?: any
           </select>
           <Button variant="outline" className="gap-2 font-bold" onClick={() => setHienTuyChinh(true)}>
             <SettingsIcon className="h-4 w-4" /> Tùy chỉnh
+          </Button>
+          <Button className="gap-2 font-bold" onClick={openCreateStudent}>
+            <Plus className="h-4 w-4" /> Thêm HS
           </Button>
         </div>
       </div>
@@ -531,6 +598,10 @@ export default function Student360Dashboard({ initialData }: { initialData?: any
               <img src={`https://i.pravatar.cc/150?u=${currentStudent.id}`} className="w-24 h-24 rounded-full object-cover mb-4 ring-4 ring-white dark:ring-slate-950 mx-auto" alt="" />
               <h3 className="text-lg font-black text-slate-900 dark:text-white">{currentStudent.name}</h3>
               <p className="text-xs text-slate-500 mt-1">Mã HS: {currentStudent.code}</p>
+              <div className="mt-3 flex justify-center gap-2">
+                <Button size="sm" variant="outline" className="gap-1" onClick={openEditStudent}><Edit3 className="h-3 w-3" /> Sửa</Button>
+                <Button size="sm" variant="destructive" className="gap-1" onClick={removeCurrentStudent}><Trash2 className="h-3 w-3" /> Xóa</Button>
+              </div>
             </CardHeader>
             <CardContent className="p-4 pt-4 space-y-3 text-xs">
               <div className="grid grid-cols-3 gap-2">
@@ -1091,6 +1162,39 @@ export default function Student360Dashboard({ initialData }: { initialData?: any
             >
               Xác nhận
             </Button>
+          </div>
+        </div>
+      </Dialog>
+
+      <Dialog
+        open={!!studentDialogMode}
+        onOpenChange={(open) => !open && setStudentDialogMode(null)}
+        title={studentDialogMode === 'edit' ? 'Sửa hồ sơ học sinh' : 'Thêm học sinh'}
+        description="Dữ liệu được lưu vào student_directory."
+        className="max-w-2xl"
+      >
+        <div className="grid gap-3 md:grid-cols-2">
+          <input className="rounded-lg border p-2 text-sm dark:bg-slate-900" placeholder="Họ tên" value={studentForm.name} onChange={e => setStudentForm({ ...studentForm, name: e.target.value })} />
+          <input className="rounded-lg border p-2 text-sm dark:bg-slate-900" placeholder="Mã học sinh" value={studentForm.code} onChange={e => setStudentForm({ ...studentForm, code: e.target.value })} />
+          <input className="rounded-lg border p-2 text-sm dark:bg-slate-900" placeholder="Lớp" value={studentForm.className} onChange={e => setStudentForm({ ...studentForm, className: e.target.value })} />
+          <select className="rounded-lg border p-2 text-sm dark:bg-slate-900" value={studentForm.gender} onChange={e => setStudentForm({ ...studentForm, gender: e.target.value })}>
+            <option>Nam</option>
+            <option>Nữ</option>
+            <option>Khác</option>
+          </select>
+          <input type="number" step="0.1" className="rounded-lg border p-2 text-sm dark:bg-slate-900" placeholder="GPA" value={studentForm.gpa} onChange={e => setStudentForm({ ...studentForm, gpa: Number(e.target.value) })} />
+          <select className="rounded-lg border p-2 text-sm dark:bg-slate-900" value={studentForm.status} onChange={e => setStudentForm({ ...studentForm, status: e.target.value })}>
+            <option>Đang học</option>
+            <option>Tạm nghỉ</option>
+            <option>Chuyển trường</option>
+            <option>Đã tốt nghiệp</option>
+          </select>
+          <input className="rounded-lg border p-2 text-sm dark:bg-slate-900" placeholder="Tên phụ huynh" value={studentForm.parentName} onChange={e => setStudentForm({ ...studentForm, parentName: e.target.value })} />
+          <input className="rounded-lg border p-2 text-sm dark:bg-slate-900" placeholder="SĐT phụ huynh" value={studentForm.parentPhone} onChange={e => setStudentForm({ ...studentForm, parentPhone: e.target.value })} />
+          <input className="rounded-lg border p-2 text-sm dark:bg-slate-900 md:col-span-2" placeholder="Email phụ huynh" value={studentForm.parentEmail} onChange={e => setStudentForm({ ...studentForm, parentEmail: e.target.value })} />
+          <div className="flex justify-end gap-2 md:col-span-2">
+            <Button variant="outline" onClick={() => setStudentDialogMode(null)}>Hủy</Button>
+            <Button onClick={submitStudentForm} disabled={!studentForm.name.trim()}>Lưu hồ sơ</Button>
           </div>
         </div>
       </Dialog>

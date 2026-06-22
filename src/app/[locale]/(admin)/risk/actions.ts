@@ -2,6 +2,16 @@
 
 import { db, schema } from "@/src/libs/server/db";
 import { eq, sql } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
+import { getCurrentActor, isAdminTruong, isTruongPhong, writeAuditLog } from "@/src/libs/server/auth-helper";
+
+function canManageRisk(actor: Awaited<ReturnType<typeof getCurrentActor>>) {
+  return !!actor && (isAdminTruong(actor) || isTruongPhong(actor) || actor.workspaceId === 'BGH');
+}
+
+function riskChanged() {
+  revalidatePath('/[locale]/risk', 'layout');
+}
 
 export async function getInitialData() {
   try {
@@ -149,5 +159,100 @@ export async function getInitialData() {
       mitigations: [],
       incidents: []
     };
+  }
+}
+
+export async function createRisk(input: {
+  title: string;
+  category: string;
+  owner?: string;
+  ownerRole?: string;
+  plan?: string;
+  impact?: number;
+  likelihood?: number;
+  date?: string;
+}) {
+  try {
+    const actor = await getCurrentActor();
+    if (!canManageRisk(actor)) return { success: false, error: 'Unauthorized' };
+    const title = input.title.trim();
+    if (!title) return { success: false, error: 'Tiêu đề rủi ro bắt buộc.' };
+
+    const id = `risk_${Date.now()}`;
+    await db.insert(schema.risks).values({
+      id,
+      title,
+      severity: String((Number(input.impact) || 3) * (Number(input.likelihood) || 3)),
+      status: 'open',
+      payload: {
+        category: input.category || 'Hoạt động',
+        owner: input.owner || actor?.name || 'Chưa phân công',
+        ownerRole: input.ownerRole || actor?.title || 'N/A',
+        plan: input.plan || 'Đang lập kế hoạch giảm thiểu',
+        impact: Number(input.impact) || 3,
+        likelihood: Number(input.likelihood) || 3,
+        probability: (Number(input.likelihood) || 3) >= 4 ? 'Cao' : (Number(input.likelihood) || 3) <= 2 ? 'Thấp' : 'Trung bình',
+        date: input.date || new Date().toLocaleDateString('vi-VN'),
+        progressHistory: [],
+      },
+    });
+    await writeAuditLog(actor?.id || null, 'create', 'risk', id, { after: { title }, module: 'risk' });
+    riskChanged();
+    return { success: true, id };
+  } catch (e: any) {
+    console.error("Create risk failed:", e);
+    return { success: false, error: e.message };
+  }
+}
+
+export async function updateRiskProgress(id: string, input: { status?: string; plan?: string; note?: string }) {
+  try {
+    const actor = await getCurrentActor();
+    if (!canManageRisk(actor)) return { success: false, error: 'Unauthorized' };
+
+    const [row] = await db.select().from(schema.risks).where(eq(schema.risks.id, id)).limit(1);
+    if (!row) return { success: false, error: 'Không tìm thấy rủi ro.' };
+    const payload = (row.payload || {}) as Record<string, any>;
+    const nextPayload = {
+      ...payload,
+      plan: input.plan?.trim() || payload.plan,
+      progressHistory: [
+        ...(payload.progressHistory || []),
+        {
+          at: new Date().toISOString(),
+          actorId: actor?.id,
+          actorName: actor?.name,
+          note: input.note || 'Cập nhật tiến độ',
+          status: input.status || 'monitoring',
+        },
+      ],
+    };
+    const nextStatus = input.status || 'monitoring';
+
+    const [updated] = await db.update(schema.risks)
+      .set({ status: nextStatus, payload: nextPayload, updatedAt: new Date() })
+      .where(eq(schema.risks.id, id))
+      .returning();
+    await writeAuditLog(actor?.id || null, 'update_progress', 'risk', id, { before: row, after: updated, module: 'risk' });
+    riskChanged();
+    return { success: true, data: updated };
+  } catch (e: any) {
+    console.error("Update risk progress failed:", e);
+    return { success: false, error: e.message };
+  }
+}
+
+export async function deleteRisk(id: string) {
+  try {
+    const actor = await getCurrentActor();
+    if (!canManageRisk(actor)) return { success: false, error: 'Unauthorized' };
+
+    const [deleted] = await db.delete(schema.risks).where(eq(schema.risks.id, id)).returning();
+    await writeAuditLog(actor?.id || null, 'delete', 'risk', id, { before: deleted, module: 'risk' });
+    riskChanged();
+    return { success: true };
+  } catch (e: any) {
+    console.error("Delete risk failed:", e);
+    return { success: false, error: e.message };
   }
 }

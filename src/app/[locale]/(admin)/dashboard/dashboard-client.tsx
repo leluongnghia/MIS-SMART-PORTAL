@@ -33,6 +33,7 @@ import {
   Line,
   ComposedChart
 } from 'recharts';
+import { saveDashboardSettings } from './actions';
 
 // Data mock for chart
 const performanceData = [
@@ -48,6 +49,14 @@ export default function DashboardClient({ tab, initialData }: { tab?: string, in
   const [currentUser, setCurrentUser] = React.useState<any>(null);
   const [isReady, setIsReady] = React.useState(false);
   const [showSettingsModal, setShowSettingsModal] = React.useState(false);
+  const [isSavingSettings, startSavingSettings] = React.useTransition();
+  const [dashboardSettings, setDashboardSettings] = React.useState(initialData?.dashboardSettings || {
+    showAlerts: true,
+    showOkrKpi: true,
+    showActionCenter: true,
+    showCharts: true,
+    showActivities: true,
+  });
   const params = useParams();
   const locale = (params?.locale as string) || 'vi';
   const router = useRouter();
@@ -68,6 +77,16 @@ export default function DashboardClient({ tab, initialData }: { tab?: string, in
   const recentActivities: any[] = initialData?.recentActivities || [];
   const risks: any[] = initialData?.risks || [];
   const priorityTasks: any[] = initialData?.actionCenter?.priorityTasks || [];
+  const updateDashboardSetting = (key: keyof typeof dashboardSettings, value: boolean) => {
+    setDashboardSettings((prev: any) => ({ ...prev, [key]: value }));
+  };
+  const persistDashboardSettings = () => {
+    startSavingSettings(async () => {
+      const result = await saveDashboardSettings(dashboardSettings);
+      if (result.success) setShowSettingsModal(false);
+      else alert(result.error || 'Lưu tùy chỉnh thất bại.');
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -107,20 +126,28 @@ export default function DashboardClient({ tab, initialData }: { tab?: string, in
                 <div className="space-y-2">
                   <div className="flex items-center justify-between p-2 rounded-lg border border-slate-100 bg-slate-50">
                     <span className="text-sm font-medium">Top Alerts (Cảnh báo)</span>
-                    <input type="checkbox" defaultChecked className="h-4 w-4" />
+                    <input type="checkbox" checked={dashboardSettings.showAlerts} onChange={e => updateDashboardSetting('showAlerts', e.target.checked)} className="h-4 w-4" />
                   </div>
                   <div className="flex items-center justify-between p-2 rounded-lg border border-slate-100 bg-slate-50">
                     <span className="text-sm font-medium">OKRs & KPI</span>
-                    <input type="checkbox" defaultChecked className="h-4 w-4" />
+                    <input type="checkbox" checked={dashboardSettings.showOkrKpi} onChange={e => updateDashboardSetting('showOkrKpi', e.target.checked)} className="h-4 w-4" />
                   </div>
                   <div className="flex items-center justify-between p-2 rounded-lg border border-slate-100 bg-slate-50">
                     <span className="text-sm font-medium">Action Center</span>
-                    <input type="checkbox" defaultChecked className="h-4 w-4" />
+                    <input type="checkbox" checked={dashboardSettings.showActionCenter} onChange={e => updateDashboardSetting('showActionCenter', e.target.checked)} className="h-4 w-4" />
+                  </div>
+                  <div className="flex items-center justify-between p-2 rounded-lg border border-slate-100 bg-slate-50">
+                    <span className="text-sm font-medium">Biểu đồ phân tích</span>
+                    <input type="checkbox" checked={dashboardSettings.showCharts} onChange={e => updateDashboardSetting('showCharts', e.target.checked)} className="h-4 w-4" />
+                  </div>
+                  <div className="flex items-center justify-between p-2 rounded-lg border border-slate-100 bg-slate-50">
+                    <span className="text-sm font-medium">Hoạt động gần đây</span>
+                    <input type="checkbox" checked={dashboardSettings.showActivities} onChange={e => updateDashboardSetting('showActivities', e.target.checked)} className="h-4 w-4" />
                   </div>
                 </div>
                 <div className="pt-4 flex justify-end gap-2">
                   <Button variant="outline" onClick={() => setShowSettingsModal(false)}>Hủy</Button>
-                  <Button onClick={() => setShowSettingsModal(false)} className="bg-blue-600">Lưu thay đổi</Button>
+                  <Button onClick={persistDashboardSettings} disabled={isSavingSettings} className="bg-blue-600">{isSavingSettings ? 'Đang lưu...' : 'Lưu thay đổi'}</Button>
                 </div>
               </div>
             </CardContent>
@@ -129,7 +156,7 @@ export default function DashboardClient({ tab, initialData }: { tab?: string, in
       )}
 
       {/* Top Alerts */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className={cn("grid grid-cols-1 md:grid-cols-3 gap-4", !dashboardSettings.showAlerts && "hidden")}>
         <Card className="border-red-100 bg-red-50/50 dark:border-red-900/30 dark:bg-red-950/20">
           <CardContent className="p-4 flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -186,7 +213,7 @@ export default function DashboardClient({ tab, initialData }: { tab?: string, in
       </div>
 
       {/* OKRs */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className={cn("grid grid-cols-1 md:grid-cols-4 gap-4", !dashboardSettings.showOkrKpi && "hidden")}>
         {[
           { title: 'Tuyển sinh năm học tới', val: 72, target: '150 HS mới', actual: 'Đang tuyển mùa hè', color: 'text-blue-600', status: 'Đang tốt', statusColor: 'text-emerald-500', href: 'leads' },
           { title: 'Đào tạo', val: 68, target: '95%', actual: '64.6%', color: 'text-blue-500', status: 'Đang tốt', statusColor: 'text-emerald-500', href: 'reports' },
@@ -246,7 +273,7 @@ export default function DashboardClient({ tab, initialData }: { tab?: string, in
       </div>
 
       {/* KPI mini stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className={cn("grid grid-cols-1 md:grid-cols-4 gap-4", !dashboardSettings.showOkrKpi && "hidden")}>
         {[
           { title: 'KPI toàn trường', val: '83.4', suffix: '/100', up: '6.2 điểm so với tháng trước', icon: LineChart, color: 'bg-blue-600' },
           { title: 'Tuyển sinh năm học tới', val: '150', suffix: 'HS', up: 'pipeline mùa hè, chưa cộng vào sĩ số', icon: Users, color: 'bg-indigo-500' },
@@ -276,7 +303,7 @@ export default function DashboardClient({ tab, initialData }: { tab?: string, in
 
       <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
         {/* Action Center */}
-        <Card className="xl:col-span-1">
+        <Card className={cn("xl:col-span-1", !dashboardSettings.showActionCenter && "hidden")}>
           <CardHeader className="p-4 pb-2 border-b border-slate-100 dark:border-slate-800">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base font-bold">Action Center <span className="ml-1 rounded-full bg-red-100 px-2 py-0.5 text-xs text-red-600">8</span></CardTitle>
@@ -341,7 +368,7 @@ export default function DashboardClient({ tab, initialData }: { tab?: string, in
         </Card>
 
         {/* Charts Section */}
-        <div className="xl:col-span-2 space-y-6">
+        <div className={cn("xl:col-span-2 space-y-6", !dashboardSettings.showCharts && "hidden")}>
           <Card>
             <CardHeader className="p-4 pb-2">
               <div className="flex justify-between items-center">
@@ -398,7 +425,7 @@ export default function DashboardClient({ tab, initialData }: { tab?: string, in
         </div>
 
         {/* Activity Timeline */}
-        <Card className="xl:col-span-1">
+        <Card className={cn("xl:col-span-1", !dashboardSettings.showActivities && "hidden")}>
           <CardHeader className="p-4 pb-2 border-b border-slate-100 dark:border-slate-800">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base font-bold">Hoạt động gần đây</CardTitle>

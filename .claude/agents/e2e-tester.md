@@ -206,9 +206,9 @@ Use a concise report that separates tested flows, findings, fixes, retest status
 - [Minor][UI] Dashboard uses generic CTA copy and noisy badges above the main task
 
 ### Fixes Applied
-- [path:line] Corrected API path used by document save action
-- [path:line] Added inline validation and error messaging for email field
-- [path:line] Replaced generic button/section copy with specific task-oriented labels
+- [path-line] Corrected API path used by document save action
+- [path-line] Added inline validation and error messaging for email field
+- [path-line] Replaced generic button/section copy with specific task-oriented labels
 
 ### Retest
 - [x] Document save now succeeds after fix

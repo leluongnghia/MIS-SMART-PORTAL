@@ -1292,3 +1292,22 @@ export const classes = pgTable('classes', {
   payload: jsonb('payload').notNull().default({}),
   ...timestamps,
 });
+
+export const timetableSlots = pgTable('timetable_slots', {
+  id: text('id').primaryKey(),
+  day: integer('day').notNull(),
+  period: integer('period').notNull(),
+  subject: text('subject').notNull(),
+  className: text('class_name').notNull(),
+  teacherId: text('teacher_id').references(() => users.id, { onDelete: 'set null' }),
+  teacherName: text('teacher_name'),
+  room: text('room').notNull(),
+  academicYearId: text('academic_year_id').references(() => academicYears.id, { onDelete: 'set null' }),
+  status: text('status').notNull().default('ACTIVE'),
+  payload: jsonb('payload').notNull().default({}),
+  ...timestamps,
+}, table => [
+  index('timetable_slots_day_period_idx').on(table.day, table.period),
+  index('timetable_slots_class_idx').on(table.className),
+  index('timetable_slots_teacher_idx').on(table.teacherId),
+]);

@@ -2,6 +2,22 @@
 
 import { db, schema } from '@/src/libs/server/db';
 import { desc, eq, ne, sql } from 'drizzle-orm';
+import { revalidatePath } from 'next/cache';
+import { getCurrentActor, isAdminTruong, isTruongPhong, writeAuditLog } from '@/src/libs/server/auth-helper';
+import { getJsonSetting, setJsonSetting } from '@/src/libs/server/module-settings';
+
+const DASHBOARD_SETTINGS_KEY = 'dashboard:widget_settings';
+const defaultDashboardSettings = {
+  showAlerts: true,
+  showOkrKpi: true,
+  showActionCenter: true,
+  showCharts: true,
+  showActivities: true,
+};
+
+function canManageDashboard(actor: Awaited<ReturnType<typeof getCurrentActor>>) {
+  return !!actor && (isAdminTruong(actor) || isTruongPhong(actor) || actor.workspaceId === 'BGH');
+}
 
 const emptyDashboardStats = {
   funnel: [
@@ -107,6 +123,7 @@ export async function getDashboardStats() {
     });
 
     return {
+      dashboardSettings: await getJsonSetting(DASHBOARD_SETTINGS_KEY, defaultDashboardSettings),
       funnel,
       heatmapData,
       alerts: {
@@ -138,6 +155,26 @@ export async function getDashboardStats() {
     };
   } catch (error) {
     console.error('Dashboard stats failed:', error);
-    return emptyDashboardStats;
+    return { ...emptyDashboardStats, dashboardSettings: defaultDashboardSettings };
+  }
+}
+
+export async function saveDashboardSettings(settings: typeof defaultDashboardSettings) {
+  try {
+    const actor = await getCurrentActor();
+    if (!canManageDashboard(actor)) return { success: false, error: 'Unauthorized' };
+    const next = { ...defaultDashboardSettings, ...settings };
+    await setJsonSetting(DASHBOARD_SETTINGS_KEY, next, {
+      group: 'dashboard',
+      label: 'Dashboard widget settings',
+      description: 'Widget visibility for executive dashboard',
+      updatedBy: actor?.id,
+    });
+    await writeAuditLog(actor?.id || null, 'save_dashboard_settings', 'dashboard', DASHBOARD_SETTINGS_KEY, { after: next, module: 'dashboard' });
+    revalidatePath('/[locale]/dashboard', 'layout');
+    return { success: true, data: next };
+  } catch (error: any) {
+    console.error('Save dashboard settings failed:', error);
+    return { success: false, error: error.message };
   }
 }

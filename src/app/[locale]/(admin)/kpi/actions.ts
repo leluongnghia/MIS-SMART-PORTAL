@@ -2,6 +2,17 @@
 
 import { db, schema } from "@/src/libs/server/db";
 import { eq, sql } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
+import { getCurrentActor, isAdminTruong, isTruongPhong, writeAuditLog } from "@/src/libs/server/auth-helper";
+import { getJsonSetting, setJsonSetting } from "@/src/libs/server/module-settings";
+
+const KPI_SETTINGS_KEY = 'analytics:kpi_settings';
+const KPI_SNAPSHOTS_KEY = 'analytics:kpi_snapshots';
+const defaultKpiSettings = { targetAdmission: 600, targetAttendance: 92, targetEfficiency: 80, targetTeacherPerformance: 85 };
+
+function canManageKpi(actor: Awaited<ReturnType<typeof getCurrentActor>>) {
+  return !!actor && (isAdminTruong(actor) || isTruongPhong(actor) || actor.workspaceId === 'BGH');
+}
 
 export async function getInitialData() {
   try {
@@ -9,6 +20,8 @@ export async function getInitialData() {
     const allLeads = await db.select().from(schema.leads);
     const allAttendance = await db.select().from(schema.attendanceRecords);
     const allUsers = await db.select().from(schema.users);
+    const kpiSettings = await getJsonSetting(KPI_SETTINGS_KEY, defaultKpiSettings);
+    const snapshots = await getJsonSetting<any[]>(KPI_SNAPSHOTS_KEY, []);
     
     // 1. Task stats
     const totalTasks = allTasks.length;
@@ -63,10 +76,10 @@ export async function getInitialData() {
 
     // 8. Detailed KPI Table
     const kpis = [
-      { name: 'Tỷ lệ tuyển sinh đạt chỉ tiêu', group: 'Tuyển sinh', cur: `${totalLeads} / 600`, prev: '580', trend: '6.2%', up: true, status: totalLeads >= 600 ? 'Hoàn thành' : 'Đang thực hiện', statCol: totalLeads >= 600 ? 'text-emerald-600 border-emerald-200 bg-emerald-50' : 'text-orange-600 border-orange-200 bg-orange-50' },
-      { name: 'Tỷ lệ chuyên cần học sinh', group: 'Học sinh', cur: `${attendanceRate}%`, prev: '89.2%', trend: '2.9%', up: attendanceRate >= 89.2, status: 'Hoàn thành', statCol: 'text-emerald-600 border-emerald-200 bg-emerald-50' },
-      { name: 'Hiệu suất hoàn thành công việc', group: 'Vận hành', cur: `${schoolEfficiency}%`, prev: '75.4%', trend: '3.2%', up: schoolEfficiency >= 75.4, status: 'Hoàn thành', statCol: 'text-emerald-600 border-emerald-200 bg-emerald-50' },
-      { name: 'Hiệu suất giảng dạy của giáo viên', group: 'Nhân sự', cur: `${teacherPerformance}%`, prev: '81.3%', trend: '7.3%', up: teacherPerformance >= 81.3, status: 'Hoàn thành', statCol: 'text-emerald-600 border-emerald-200 bg-emerald-50' },
+      { name: 'Tỷ lệ tuyển sinh đạt chỉ tiêu', group: 'Tuyển sinh', cur: `${totalLeads} / ${kpiSettings.targetAdmission}`, prev: '580', trend: '6.2%', up: true, status: totalLeads >= kpiSettings.targetAdmission ? 'Hoàn thành' : 'Đang thực hiện', statCol: totalLeads >= kpiSettings.targetAdmission ? 'text-emerald-600 border-emerald-200 bg-emerald-50' : 'text-orange-600 border-orange-200 bg-orange-50' },
+      { name: 'Tỷ lệ chuyên cần học sinh', group: 'Học sinh', cur: `${attendanceRate}%`, prev: '89.2%', trend: '2.9%', up: attendanceRate >= kpiSettings.targetAttendance, status: attendanceRate >= kpiSettings.targetAttendance ? 'Hoàn thành' : 'Đang thực hiện', statCol: attendanceRate >= kpiSettings.targetAttendance ? 'text-emerald-600 border-emerald-200 bg-emerald-50' : 'text-orange-600 border-orange-200 bg-orange-50' },
+      { name: 'Hiệu suất hoàn thành công việc', group: 'Vận hành', cur: `${schoolEfficiency}%`, prev: '75.4%', trend: '3.2%', up: schoolEfficiency >= kpiSettings.targetEfficiency, status: schoolEfficiency >= kpiSettings.targetEfficiency ? 'Hoàn thành' : 'Đang thực hiện', statCol: schoolEfficiency >= kpiSettings.targetEfficiency ? 'text-emerald-600 border-emerald-200 bg-emerald-50' : 'text-orange-600 border-orange-200 bg-orange-50' },
+      { name: 'Hiệu suất giảng dạy của giáo viên', group: 'Nhân sự', cur: `${teacherPerformance}%`, prev: '81.3%', trend: '7.3%', up: teacherPerformance >= kpiSettings.targetTeacherPerformance, status: teacherPerformance >= kpiSettings.targetTeacherPerformance ? 'Hoàn thành' : 'Đang thực hiện', statCol: teacherPerformance >= kpiSettings.targetTeacherPerformance ? 'text-emerald-600 border-emerald-200 bg-emerald-50' : 'text-orange-600 border-orange-200 bg-orange-50' },
       { name: 'Mức độ hài lòng của PHHS', group: 'Khảo sát', cur: '4.35/5', prev: '4.17/5', trend: '0.18', up: true, status: 'Hoàn thành', statCol: 'text-emerald-600 border-emerald-200 bg-emerald-50' },
       { name: 'Tỷ lệ tiết dạy đúng kế hoạch', group: 'Giảng dạy', cur: '95.2%', prev: '93.0%', trend: '2.2%', up: true, status: 'Hoàn thành', statCol: 'text-emerald-600 border-emerald-200 bg-emerald-50' },
       { name: 'Tỷ lệ giải quyết đơn thư/yêu cầu', group: 'Hành chính', cur: '96.8%', prev: '94.1%', trend: '2.7%', up: true, status: 'Hoàn thành', statCol: 'text-emerald-600 border-emerald-200 bg-emerald-50' },
@@ -84,6 +97,8 @@ export async function getInitialData() {
       facilityData,
       completionData,
       kpis,
+      kpiSettings,
+      snapshots,
     };
   } catch (e) {
     console.error("Error fetching KPI initial data:", e);
@@ -93,6 +108,38 @@ export async function getInitialData() {
       facilityData: [],
       completionData: [],
       kpis: [],
+      kpiSettings: defaultKpiSettings,
+      snapshots: [],
     };
+  }
+}
+
+export async function saveKpiSettings(settings: typeof defaultKpiSettings) {
+  try {
+    const actor = await getCurrentActor();
+    if (!canManageKpi(actor)) return { success: false, error: 'Unauthorized' };
+    const next = { ...defaultKpiSettings, ...settings };
+    await setJsonSetting(KPI_SETTINGS_KEY, next, { group: 'analytics', label: 'KPI targets', updatedBy: actor?.id });
+    await writeAuditLog(actor?.id || null, 'save_kpi_settings', 'kpi', KPI_SETTINGS_KEY, { after: next, module: 'kpi' });
+    revalidatePath('/[locale]/kpi', 'layout');
+    return { success: true, data: next };
+  } catch (e: any) {
+    return { success: false, error: e.message };
+  }
+}
+
+export async function saveKpiSnapshot(snapshot: any) {
+  try {
+    const actor = await getCurrentActor();
+    if (!canManageKpi(actor)) return { success: false, error: 'Unauthorized' };
+    const current = await getJsonSetting<any[]>(KPI_SNAPSHOTS_KEY, []);
+    const nextSnapshot = { id: `kpi_snapshot_${Date.now()}`, createdAt: new Date().toISOString(), actorId: actor?.id, actorName: actor?.name, ...snapshot };
+    const next = [nextSnapshot, ...current].slice(0, 24);
+    await setJsonSetting(KPI_SNAPSHOTS_KEY, next, { group: 'analytics', label: 'KPI snapshots', updatedBy: actor?.id });
+    await writeAuditLog(actor?.id || null, 'save_kpi_snapshot', 'kpi', nextSnapshot.id, { after: nextSnapshot, module: 'kpi' });
+    revalidatePath('/[locale]/kpi', 'layout');
+    return { success: true, data: nextSnapshot };
+  } catch (e: any) {
+    return { success: false, error: e.message };
   }
 }

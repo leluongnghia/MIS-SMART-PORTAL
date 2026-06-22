@@ -1,6 +1,7 @@
 import { DataService } from './data-service';
 import { db, schema } from './db';
 import { eq } from 'drizzle-orm';
+import { RoleCode, WorkspaceCode } from '../../utils/constants';
 
 class StudentService extends DataService<'studentDirectory'> {
   constructor() {
@@ -26,7 +27,7 @@ class StudentService extends DataService<'studentDirectory'> {
 
     const oldStatus = student.payload?.status || 'Đang học';
     
-    if (actor.role === 'ADMIN' || actor.workspaceId === 'BGH') {
+    if (actor.role === RoleCode.ADMIN || actor.workspaceId === WorkspaceCode.BGH) {
       // Direct update for admin/BGH
       const newPayload = { ...student.payload, status: newStatus };
       const updated = await this.update(id, { payload: newPayload });
@@ -48,7 +49,7 @@ class StudentService extends DataService<'studentDirectory'> {
         entityId: id,
         title: `Yêu cầu cập nhật trạng thái học sinh: ${student.name}`,
         description: `Lý do: ${reason}. Trạng thái cũ: ${oldStatus}. Trạng thái mới: ${newStatus}.`,
-        approverWorkspaceId: 'BGH', // Requires BGH approval
+        approverWorkspaceId: WorkspaceCode.BGH, // Requires BGH approval
         payload: { oldStatus, newStatus, reason }
       }, actor);
 

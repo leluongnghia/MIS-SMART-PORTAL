@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useTransition } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/src/components/ui/card';
 import { Badge } from '@/src/components/ui/badge';
 import { Button } from '@/src/components/ui/button';
 import { Input } from '@/src/components/ui/input';
 import { TrendingUp, Info, HelpCircle, ArrowRight, Settings, BarChart2, CalendarDays } from 'lucide-react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
+import { saveForecastScenario } from './actions';
 
 type MetricType = 'admissions' | 'tuition' | 'attendance' | 'turnover';
 
@@ -43,12 +44,14 @@ const METRIC_DETAILS = {
 
 export default function ForecastPage({ initialData }: { initialData?: any }) {
   const [activeTab, setActiveTab] = useState<MetricType>('admissions');
+  const [isSaving, startSaving] = useTransition();
+  const [scenarioCount, setScenarioCount] = useState(initialData?.scenarios?.length || 0);
   
   // Simulator parameters
-  const [admissionsGrowth, setAdmissionsGrowth] = useState(12); // percent growth modifier
-  const [tuitionReminderRate, setTuitionReminderRate] = useState(85); // reminder efficiency target
-  const [attendanceHealthRate, setAttendanceHealthRate] = useState(96); // health awareness target
-  const [turnoverRetentionRate, setTurnoverRetentionRate] = useState(90); // retention effort score
+  const [admissionsGrowth, setAdmissionsGrowth] = useState(initialData?.params?.admissionsGrowth ?? 12); // percent growth modifier
+  const [tuitionReminderRate, setTuitionReminderRate] = useState(initialData?.params?.tuitionReminderRate ?? 85); // reminder efficiency target
+  const [attendanceHealthRate, setAttendanceHealthRate] = useState(initialData?.params?.attendanceHealthRate ?? 96); // health awareness target
+  const [turnoverRetentionRate, setTurnoverRetentionRate] = useState(initialData?.params?.turnoverRetentionRate ?? 90); // retention effort score
 
   // Generate dynamic data based on parameters
   const getChartData = () => {
@@ -166,6 +169,18 @@ export default function ForecastPage({ initialData }: { initialData?: any }) {
   };
 
   const kpi = getKpiSummary();
+  const currentParams = { admissionsGrowth, tuitionReminderRate, attendanceHealthRate, turnoverRetentionRate };
+  const persistForecastScenario = () => {
+    startSaving(async () => {
+      const result = await saveForecastScenario({ metric: activeTab, params: currentParams, summary: kpi });
+      if (result.success) {
+        setScenarioCount((count: number) => count + 1);
+        alert('Đã lưu kịch bản dự báo vào DB.');
+      } else {
+        alert(result.error || 'Lưu kịch bản thất bại.');
+      }
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -173,6 +188,11 @@ export default function ForecastPage({ initialData }: { initialData?: any }) {
       <div>
         <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Phân tích & Dự báo</h2>
         <p className="text-sm text-slate-500">Mô hình AI dự báo các chỉ số quan trọng và kiểm thử kịch bản giả lập vận hành</p>
+        <div className="mt-3">
+          <Button onClick={persistForecastScenario} disabled={isSaving} variant="outline" className="gap-2">
+            <CalendarDays className="h-4 w-4" /> {isSaving ? 'Đang lưu...' : `Lưu kịch bản (${scenarioCount})`}
+          </Button>
+        </div>
       </div>
 
       {/* Tabs list */}

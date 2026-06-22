@@ -3,6 +3,7 @@
 import { db, schema } from "@/src/libs/server/db";
 import { eq, isNull } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { getCurrentActor, isAdminTruong, isTruongPhong } from "@/src/libs/server/auth-helper";
 
 type DirectivePayload = {
   description?: string;
@@ -13,6 +14,10 @@ type DirectivePayload = {
   checklist?: Array<{ text: string; done: boolean }>;
   attachments?: Array<{ name: string; size: string }>;
 };
+
+function canManageDirectives(actor: Awaited<ReturnType<typeof getCurrentActor>>) {
+  return !!actor && (isAdminTruong(actor) || isTruongPhong(actor) || actor.workspaceId === 'BGH');
+}
 
 const nowText = () => new Intl.DateTimeFormat('vi-VN', {
   dateStyle: 'short', timeStyle: 'short', timeZone: 'Asia/Ho_Chi_Minh'
@@ -122,36 +127,47 @@ export async function addDirectiveResponse(input: { directiveId: string; userId:
   }
 }
 
-async function createDirective(formData: { title: string; category: string; urgency: string; description: string; deadline: string }) {
+export async function createDirective(formData: { title: string; category: string; urgency: string; description: string; deadline: string; attachments?: Array<{ name: string; size?: string }> }) {
   try {
+    const actor = await getCurrentActor();
+    if (!canManageDirectives(actor)) return { success: false, error: 'Unauthorized' };
+    const title = formData.title.trim();
+    if (!title) return { success: false, error: 'Tiêu đề chỉ đạo bắt buộc.' };
     const id = 'dir_' + Math.random().toString(36).substring(2, 11);
     await db.insert(schema.directives).values({
       id,
-      title: formData.title,
+      title,
       category: formData.category,
       urgency: formData.urgency,
-      senderId: 'user_triet',
+      senderId: actor?.id,
       payload: {
         description: formData.description,
         deadline: formData.deadline,
         status: 'Chờ phản hồi',
         assignee: formData.category,
-        comments: []
+        comments: [],
+        attachments: formData.attachments?.filter(file => file.name.trim()).map(file => ({
+          name: file.name.trim(),
+          size: file.size || 'metadata',
+        })) || []
       } satisfies DirectivePayload
     });
-    await writeAudit(id, 'create', 'user_triet', { title: formData.title });
+    await writeAudit(id, 'create', actor?.id || null, { title });
     revalidatePath('/[locale]/directives', 'layout');
-    return { success: true };
+    return { success: true, id };
   } catch (e: any) {
     console.error("Create directive failed:", e);
     return { success: false, error: e.message };
   }
 }
 
-async function deleteDirective(id: string) {
+export async function deleteDirective(id: string) {
   try {
-    await db.update(schema.directives).set({ deletedAt: new Date(), deletedBy: 'user_triet', updatedAt: new Date() }).where(eq(schema.directives.id, id));
-    await writeAudit(id, 'soft_delete', 'user_triet', {});
+    const actor = await getCurrentActor();
+    if (!canManageDirectives(actor)) return { success: false, error: 'Unauthorized' };
+
+    await db.update(schema.directives).set({ deletedAt: new Date(), deletedBy: actor?.id, updatedAt: new Date() }).where(eq(schema.directives.id, id));
+    await writeAudit(id, 'soft_delete', actor?.id || null, {});
     revalidatePath('/[locale]/directives', 'layout');
     return { success: true };
   } catch (e: any) {

@@ -29,6 +29,7 @@ import {
 import { SuppliesTab } from './components/supplies-tab';
 import { BookingsTab } from './components/bookings-tab';
 import { InventoryTab } from './components/inventory-tab';
+import { createAsset, createLocation, createMaintenanceLog, createPurchaseRequest, createRepairRequest } from './actions';
 
 type Props = {
   initialLocations?: any[];
@@ -40,6 +41,7 @@ type Props = {
   initialBookings?: any[];
   initialRenovationProjects?: any[];
   initialInventoryChecks?: any[];
+  initialPurchaseRequests?: any[];
 };
 
 type PurchaseRequest = {
@@ -180,7 +182,7 @@ function StatCard({ title, value, desc, tone, icon: Icon, trend }: any) {
   );
 }
 
-export default function FacilitiesClient({ initialLocations = [], initialAssets = [], initialRepairRequests = [], initialSupplies = [], initialBookings = [], initialInventoryChecks = [] }: Props) {
+export default function FacilitiesClient({ initialLocations = [], initialAssets = [], initialRepairRequests = [], initialSupplies = [], initialBookings = [], initialInventoryChecks = [], initialPurchaseRequests = [] }: Props) {
   const [activeTab, setActiveTab] = useState('overview');
 
   // React local states for full CRUD mock interaction
@@ -188,7 +190,7 @@ export default function FacilitiesClient({ initialLocations = [], initialAssets 
   const [assets, setAssets] = useState<FacilityAsset[]>(initialAssets.length ? initialAssets : MOCK_ASSETS);
   const [repairRequests, setRepairRequests] = useState<FacilityRepairRequest[]>(initialRepairRequests.length ? initialRepairRequests : [...MOCK_REPAIR_REQUESTS, ...extraRepairs]);
   const [maintenanceLogs, setMaintenanceLogs] = useState<FacilityMaintenanceLog[]>(maintenanceSeed);
-  const [purchaseRequestsList, setPurchaseRequestsList] = useState<any[]>(purchaseRequests);
+  const [purchaseRequestsList, setPurchaseRequestsList] = useState<any[]>(initialPurchaseRequests.length ? initialPurchaseRequests : purchaseRequests);
   const supplies = initialSupplies.length ? initialSupplies : lowStockSupplies;
 
   const [selectedRow, setSelectedRow] = useState<any | null>(null);
@@ -231,6 +233,36 @@ export default function FacilitiesClient({ initialLocations = [], initialAssets 
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  const addLocationRecord = async (item: any) => {
+    const result = await createLocation(item);
+    if (result.success && result.data) setLocations(prev => [result.data as unknown as FacilityLocation, ...prev]);
+    return result;
+  };
+
+  const addAssetRecord = async (item: any) => {
+    const result = await createAsset(item);
+    if (result.success && result.data) setAssets(prev => [result.data as unknown as FacilityAsset, ...prev]);
+    return result;
+  };
+
+  const addRepairRecord = async (item: any) => {
+    const result = await createRepairRequest(item);
+    if (result.success && result.data) setRepairRequests(prev => [result.data as unknown as FacilityRepairRequest, ...prev]);
+    return result;
+  };
+
+  const addMaintenanceRecord = async (item: any) => {
+    const result = await createMaintenanceLog(item);
+    if (result.success && result.data) setMaintenanceLogs(prev => [result.data as unknown as FacilityMaintenanceLog, ...prev]);
+    return result;
+  };
+
+  const addPurchaseRecord = async (item: any) => {
+    const result = await createPurchaseRequest(item, []);
+    if (result.success && result.data) setPurchaseRequestsList(prev => [result.data, ...prev]);
+    return result;
   };
 
   return <div className="space-y-4">
@@ -363,11 +395,11 @@ export default function FacilitiesClient({ initialLocations = [], initialAssets 
         </div>
       </TabsContent>
 
-      <TabsContent value="locations" activeValue={activeTab} className="m-0"><DataTable title="Phòng & Khu vực" desc="Quản lý phòng học, phòng chức năng và khu vực chung" rows={locations} columns={['code','name','type','building','floor','status']} labels={['Mã','Tên phòng','Loại','Tòa','Tầng','Trạng thái']} statusMap={FACILITY_LOCATION_STATUS} onAdd={(item: any) => setLocations([item, ...locations])} onViewDetails={(row: any, t: string) => { setSelectedRow(row); setSelectedRowTitle(t); }} /></TabsContent>
-      <TabsContent value="assets" activeValue={activeTab} className="m-0"><DataTable title="Thiết bị & Tài sản" desc="Danh mục tài sản, trạng thái và vị trí sử dụng" rows={assets} columns={['code','name','category','locationName','responsibleUserName','status']} labels={['Mã TB','Tên thiết bị','Danh mục','Vị trí','Phụ trách','Trạng thái']} statusMap={FACILITY_ASSET_STATUS} onAdd={(item: any) => setAssets([item, ...assets])} onViewDetails={(row: any, t: string) => { setSelectedRow(row); setSelectedRowTitle(t); }} /></TabsContent>
-      <TabsContent value="repairs" activeValue={activeTab} className="m-0"><DataTable title="Yêu cầu sửa chữa" desc="Theo dõi SLA và xử lý báo hỏng" rows={repairRequests.map(r => ({...r, sla: getSlaStatus(r)}))} columns={['title','locationName','priority','status','assignedToName','dueDate','sla']} labels={['Sự cố','Vị trí','Ưu tiên','Trạng thái','Người xử lý','Hạn xử lý','SLA']} statusMap={{...REPAIR_STATUS, ...REPAIR_PRIORITY}} onAdd={(item: any) => setRepairRequests([item, ...repairRequests])} onViewDetails={(row: any, t: string) => { setSelectedRow(row); setSelectedRowTitle(t); }} /></TabsContent>
-      <TabsContent value="maintenance" activeValue={activeTab} className="m-0"><DataTable title="Bảo trì" desc="Lịch bảo trì định kỳ và kiểm tra thiết bị" rows={maintenanceLogs} columns={['assetName','note','scheduledDate','responsibleUserName','status']} labels={['Thiết bị','Loại bảo trì','Ngày dự kiến','Phụ trách','Trạng thái']} statusMap={MAINTENANCE_STATUS} onAdd={(item: any) => setMaintenanceLogs([item, ...maintenanceLogs])} onViewDetails={(row: any, t: string) => { setSelectedRow(row); setSelectedRowTitle(t); }} /></TabsContent>
-      <TabsContent value="purchases" activeValue={activeTab} className="m-0"><DataTable title="Đề xuất mua sắm" desc="Quản lý đề xuất mua mới, thay thế, bổ sung vật tư" rows={purchaseRequestsList} columns={['title','requestedByName','department','itemCount','priority','status','neededByDate']} labels={['Đề xuất','Người đề xuất','Khu vực','SL mặt hàng','Ưu tiên','Trạng thái','Hạn cần có']} statusMap={REPAIR_PRIORITY} onAdd={(item: any) => setPurchaseRequestsList([item, ...purchaseRequestsList])} onViewDetails={(row: any, t: string) => { setSelectedRow(row); setSelectedRowTitle(t); }} /></TabsContent>
+      <TabsContent value="locations" activeValue={activeTab} className="m-0"><DataTable title="Phòng & Khu vực" desc="Quản lý phòng học, phòng chức năng và khu vực chung" rows={locations} columns={['code','name','type','building','floor','status']} labels={['Mã','Tên phòng','Loại','Tòa','Tầng','Trạng thái']} statusMap={FACILITY_LOCATION_STATUS} onAdd={addLocationRecord} onViewDetails={(row: any, t: string) => { setSelectedRow(row); setSelectedRowTitle(t); }} /></TabsContent>
+      <TabsContent value="assets" activeValue={activeTab} className="m-0"><DataTable title="Thiết bị & Tài sản" desc="Danh mục tài sản, trạng thái và vị trí sử dụng" rows={assets} columns={['code','name','category','locationName','responsibleUserName','status']} labels={['Mã TB','Tên thiết bị','Danh mục','Vị trí','Phụ trách','Trạng thái']} statusMap={FACILITY_ASSET_STATUS} onAdd={addAssetRecord} onViewDetails={(row: any, t: string) => { setSelectedRow(row); setSelectedRowTitle(t); }} /></TabsContent>
+      <TabsContent value="repairs" activeValue={activeTab} className="m-0"><DataTable title="Yêu cầu sửa chữa" desc="Theo dõi SLA và xử lý báo hỏng" rows={repairRequests.map(r => ({...r, sla: getSlaStatus(r)}))} columns={['title','locationName','priority','status','assignedToName','dueDate','sla']} labels={['Sự cố','Vị trí','Ưu tiên','Trạng thái','Người xử lý','Hạn xử lý','SLA']} statusMap={{...REPAIR_STATUS, ...REPAIR_PRIORITY}} onAdd={addRepairRecord} onViewDetails={(row: any, t: string) => { setSelectedRow(row); setSelectedRowTitle(t); }} /></TabsContent>
+      <TabsContent value="maintenance" activeValue={activeTab} className="m-0"><DataTable title="Bảo trì" desc="Lịch bảo trì định kỳ và kiểm tra thiết bị" rows={maintenanceLogs} columns={['assetName','note','scheduledDate','responsibleUserName','status']} labels={['Thiết bị','Loại bảo trì','Ngày dự kiến','Phụ trách','Trạng thái']} statusMap={MAINTENANCE_STATUS} onAdd={addMaintenanceRecord} onViewDetails={(row: any, t: string) => { setSelectedRow(row); setSelectedRowTitle(t); }} /></TabsContent>
+      <TabsContent value="purchases" activeValue={activeTab} className="m-0"><DataTable title="Đề xuất mua sắm" desc="Quản lý đề xuất mua mới, thay thế, bổ sung vật tư" rows={purchaseRequestsList} columns={['title','requestedByName','department','itemCount','priority','status','neededByDate']} labels={['Đề xuất','Người đề xuất','Khu vực','SL mặt hàng','Ưu tiên','Trạng thái','Hạn cần có']} statusMap={REPAIR_PRIORITY} onAdd={addPurchaseRecord} onViewDetails={(row: any, t: string) => { setSelectedRow(row); setSelectedRowTitle(t); }} /></TabsContent>
       <TabsContent value="supplies" activeValue={activeTab} className="m-0"><SuppliesTab initialSupplies={supplies} /></TabsContent>
       <TabsContent value="handover" activeValue={activeTab} className="m-0"><BookingsTab initialBookings={initialBookings} /></TabsContent>
       <TabsContent value="inventory" activeValue={activeTab} className="m-0"><InventoryTab initialChecks={initialInventoryChecks} /></TabsContent>
@@ -447,12 +479,14 @@ export default function FacilitiesClient({ initialLocations = [], initialAssets 
 
 function DataTable({ title, desc, rows, columns, labels, statusMap, onAdd, onViewDetails }: any) {
   const [isAdding, setIsAdding] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState<Record<string, string>>({});
 
   const inputColumns = columns.filter((col: string) => !['status', 'sla', 'itemCount'].includes(col));
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    setIsSaving(true);
     const newItem: Record<string, any> = {
       id: `ID-${Date.now().toString().slice(-4)}`,
       createdAt: new Date().toISOString()
@@ -471,10 +505,16 @@ function DataTable({ title, desc, rows, columns, labels, statusMap, onAdd, onVie
     });
 
     if (onAdd) {
-      onAdd(newItem);
+      const result = await onAdd(newItem);
+      if (result && !result.success) {
+        setIsSaving(false);
+        alert(result.error || `Không thể thêm bản ghi vào "${title}".`);
+        return;
+      }
     }
     setFormData({});
     setIsAdding(false);
+    setIsSaving(false);
     alert(`Đã thêm mới bản ghi vào "${title}" thành công!`);
   };
 
@@ -509,7 +549,7 @@ function DataTable({ title, desc, rows, columns, labels, statusMap, onAdd, onVie
                 </div>
               );
             })}
-            <Button type="submit" className="w-full">Xác nhận thêm</Button>
+            <Button type="submit" disabled={isSaving} className="w-full">{isSaving ? 'Đang lưu...' : 'Xác nhận thêm'}</Button>
           </form>
         )}
         <div className="overflow-x-auto rounded-xl border">

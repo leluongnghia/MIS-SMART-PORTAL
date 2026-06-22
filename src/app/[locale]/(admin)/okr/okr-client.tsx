@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useTransition } from 'react';
 import { AlertCircle, AlertTriangle, CheckCircle2, GitBranch, Info, Plus, Settings, Target } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/src/components/ui/card';
@@ -8,6 +8,7 @@ import { Badge } from '@/src/components/ui/badge';
 import { Button } from '@/src/components/ui/button';
 import { Dialog } from '@/src/components/ui/dialog';
 import { cn } from '@/src/lib/utils';
+import { saveOkrSettings } from './actions';
 
 type OkrData = {
   stats: { total: number; done: number; inProgress: number; notStarted: number; risk: number; progress: number; onTrack: number; linkedKpis: number };
@@ -15,14 +16,17 @@ type OkrData = {
   alerts: Array<{ id: string; title: string; workspaceId: string; deadline?: string; type: string; description?: string; }>;
   followUps: Array<{ id: string; title: string; assignedName?: string; deadline?: string; urgent: boolean; workspaceId?: string; description?: string; }>;
   workspaces: Array<{ id: string; name: string }>;
+  okrSettings?: { defaultWorkspace: string; defaultPillar: string; showAlerts: boolean; showFollowUps: boolean; confidenceThreshold: number };
 };
 
 export default function OkrDashboard({ initialData }: { initialData?: OkrData }) {
   const router = useRouter();
   const pathname = usePathname();
   const data = initialData || { stats: { total: 0, done: 0, inProgress: 0, notStarted: 0, risk: 0, progress: 0, onTrack: 0, linkedKpis: 0 }, pillars: [], alerts: [], followUps: [], workspaces: [] };
-  const [workspace, setWorkspace] = useState('ALL');
-  const [pillarFilter, setPillarFilter] = useState('ALL');
+  const [isSavingSettings, startSavingSettings] = useTransition();
+  const [okrSettings, setOkrSettings] = useState(data.okrSettings || { defaultWorkspace: 'ALL', defaultPillar: 'ALL', showAlerts: true, showFollowUps: true, confidenceThreshold: 6 });
+  const [workspace, setWorkspace] = useState(okrSettings.defaultWorkspace || 'ALL');
+  const [pillarFilter, setPillarFilter] = useState(okrSettings.defaultPillar || 'ALL');
   const [showSettings, setShowSettings] = useState(false);
   const [showAllAlerts, setShowAllAlerts] = useState(false);
   const [showAllFollowUps, setShowAllFollowUps] = useState(false);
@@ -30,6 +34,18 @@ export default function OkrDashboard({ initialData }: { initialData?: OkrData })
   // States cho modal chi tiết
   const [selectedAlert, setSelectedAlert] = useState<OkrData['alerts'][0] | null>(null);
   const [selectedFollowUp, setSelectedFollowUp] = useState<OkrData['followUps'][0] | null>(null);
+  const persistOkrSettings = () => {
+    startSavingSettings(async () => {
+      const next = { ...okrSettings, defaultWorkspace: workspace, defaultPillar: pillarFilter };
+      const result = await saveOkrSettings(next);
+      if (result.success) {
+        setOkrSettings(next);
+        setShowSettings(false);
+      } else {
+        alert(result.error || 'Lưu tùy chỉnh OKR thất bại.');
+      }
+    });
+  };
 
   const pillars = useMemo(() => {
     let result = data.pillars;
@@ -43,20 +59,22 @@ export default function OkrDashboard({ initialData }: { initialData?: OkrData })
   }, [data.pillars, pillarFilter, workspace]);
 
   const alerts = useMemo(() => {
+    if (!okrSettings.showAlerts) return [];
     let result = data.alerts;
     if (workspace !== 'ALL') {
       result = result.filter(a => a.workspaceId === workspace);
     }
     return showAllAlerts ? result : result.slice(0, 3);
-  }, [data.alerts, workspace, showAllAlerts]);
+  }, [data.alerts, workspace, showAllAlerts, okrSettings.showAlerts]);
 
   const followUps = useMemo(() => {
+    if (!okrSettings.showFollowUps) return [];
     let result = data.followUps;
     if (workspace !== 'ALL') {
       result = result.filter(f => f.workspaceId === workspace);
     }
     return showAllFollowUps ? result : result.slice(0, 5);
-  }, [data.followUps, workspace, showAllFollowUps]);
+  }, [data.followUps, workspace, showAllFollowUps, okrSettings.showFollowUps]);
 
   return (
     <div className="space-y-6">
@@ -73,7 +91,26 @@ export default function OkrDashboard({ initialData }: { initialData?: OkrData })
         </div>
       </div>
 
-      {showSettings && <Card className="border-blue-100 bg-blue-50/50"><CardContent className="p-4 text-sm font-semibold text-blue-700">Bảng tùy chỉnh đang hoạt động: lọc trụ cột/bộ phận, cảnh báo và việc theo dõi đều lấy từ DB.</CardContent></Card>}
+      {showSettings && <Card className="border-blue-100 bg-blue-50/50">
+        <CardContent className="grid gap-3 p-4 text-sm md:grid-cols-2">
+          <label className="flex items-center justify-between rounded-lg border bg-white p-3">
+            <span className="font-semibold">Hiện cảnh báo mục tiêu</span>
+            <input type="checkbox" checked={okrSettings.showAlerts} onChange={e => setOkrSettings({ ...okrSettings, showAlerts: e.target.checked })} />
+          </label>
+          <label className="flex items-center justify-between rounded-lg border bg-white p-3">
+            <span className="font-semibold">Hiện việc cần theo dõi</span>
+            <input type="checkbox" checked={okrSettings.showFollowUps} onChange={e => setOkrSettings({ ...okrSettings, showFollowUps: e.target.checked })} />
+          </label>
+          <label className="space-y-1 rounded-lg border bg-white p-3 md:col-span-2">
+            <div className="flex justify-between font-semibold"><span>Ngưỡng confidence cảnh báo</span><b>{okrSettings.confidenceThreshold}/10</b></div>
+            <input type="range" min="1" max="10" value={okrSettings.confidenceThreshold} onChange={e => setOkrSettings({ ...okrSettings, confidenceThreshold: Number(e.target.value) })} className="w-full accent-blue-600" />
+          </label>
+          <div className="flex justify-end gap-2 md:col-span-2">
+            <Button variant="outline" onClick={() => setShowSettings(false)}>Hủy</Button>
+            <Button onClick={persistOkrSettings} disabled={isSavingSettings}>{isSavingSettings ? 'Đang lưu...' : 'Lưu tùy chỉnh'}</Button>
+          </div>
+        </CardContent>
+      </Card>}
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Stat title="Tiến độ OKR toàn trường" value={`${data.stats.progress}%`} sub={`Hoàn thành ${data.stats.done}/${data.stats.total}`} icon={Target} color="blue" />
@@ -209,4 +246,3 @@ function Stat({ title, value, sub, icon: Icon, color }: any) {
   return <Card><CardContent className="flex items-center gap-4 p-4"><div className={cn('flex h-12 w-12 items-center justify-center rounded-xl text-white', colors[color])}><Icon className="h-6 w-6" /></div><div><p className="text-sm font-bold text-slate-600 dark:text-slate-300">{title}</p><h3 className="text-2xl font-black">{value}</h3><p className="text-xs text-slate-500">{sub}</p></div></CardContent></Card>;
 }
 function Empty({ text }: { text: string }) { return <div className="p-4 text-sm text-slate-500"><Info className="mb-2 h-5 w-5" />{text}</div>; }
-

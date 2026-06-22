@@ -14,12 +14,29 @@ import {
 } from '@/src/models/Schema';
 import { eq, desc, and, or, ilike, sql } from 'drizzle-orm';
 import { getCurrentActor, canManageFacilities, canCreatePurchaseRequest, canApprovePurchaseRequest } from '@/src/libs/server/auth-helper';
+import { revalidatePath } from 'next/cache';
 import { 
   facilitiesSupplies, facilitiesSupplyTransactions,
   facilitiesSuppliers, facilitiesWarranties,
   facilitiesSafetyChecks, facilitiesBookingRequests,
   facilitiesRenovationProjects, facilitiesSlaSettings 
 } from '@/src/models/Schema';
+
+function cleanText(value: unknown, fallback = '') {
+  const text = String(value || '').trim();
+  return text && text !== '—' ? text : fallback;
+}
+
+function parseOptionalDate(value: unknown) {
+  const text = cleanText(value);
+  if (!text) return null;
+  const date = new Date(text);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function facilitiesChanged() {
+  revalidatePath('/[locale]/facilities', 'layout');
+}
 
 // ==============================
 // TỔNG QUAN
@@ -61,15 +78,24 @@ export async function getLocations() {
   }
 }
 
-async function createLocation(data: any) {
+export async function createLocation(data: any) {
   const user = await getCurrentActor();
   if (!user || !canManageFacilities(user)) throw new Error('Unauthorized');
 
   try {
     const newLocation = await db.insert(facilitiesLocations).values({
-      ...data,
       id: `LOC-${Date.now()}`,
+      code: cleanText(data.code, `LOC-${Date.now().toString().slice(-6)}`),
+      name: cleanText(data.name, 'Phòng mới'),
+      type: cleanText(data.type, 'OTHER'),
+      building: cleanText(data.building) || null,
+      floor: cleanText(data.floor) || null,
+      capacity: Number(data.capacity) || null,
+      managerName: cleanText(data.managerName) || null,
+      status: cleanText(data.status, 'ACTIVE'),
+      note: cleanText(data.note) || null,
     }).returning();
+    facilitiesChanged();
     return { success: true, data: newLocation[0] };
   } catch (error: any) {
     return { success: false, error: error.message };
@@ -88,15 +114,24 @@ export async function getAssets() {
   }
 }
 
-async function createAsset(data: any) {
+export async function createAsset(data: any) {
   const user = await getCurrentActor();
   if (!user || !canManageFacilities(user)) throw new Error('Unauthorized');
 
   try {
     const newAsset = await db.insert(facilitiesAssets).values({
-      ...data,
       id: `AST-${Date.now()}`,
+      code: cleanText(data.code, `AST-${Date.now().toString().slice(-6)}`),
+      name: cleanText(data.name, 'Thiết bị mới'),
+      category: cleanText(data.category, 'OTHER'),
+      type: cleanText(data.type) || null,
+      locationName: cleanText(data.locationName) || null,
+      responsibleUserName: cleanText(data.responsibleUserName) || null,
+      status: cleanText(data.status, 'ACTIVE'),
+      maintenancePriority: cleanText(data.maintenancePriority) || null,
+      note: cleanText(data.note) || null,
     }).returning();
+    facilitiesChanged();
     return { success: true, data: newAsset[0] };
   } catch (error: any) {
     return { success: false, error: error.message };
@@ -115,24 +150,32 @@ export async function getRepairRequests() {
   }
 }
 
-async function createRepairRequest(data: any) {
+export async function createRepairRequest(data: any) {
   const user = await getCurrentActor();
   if (!user) throw new Error('Unauthorized');
 
   try {
     const newReq = await db.insert(facilitiesRepairRequests).values({
-      ...data,
       id: `REP-${Date.now()}`,
+      title: cleanText(data.title, 'Yêu cầu sửa chữa'),
+      assetName: cleanText(data.assetName) || null,
+      locationName: cleanText(data.locationName) || null,
+      description: cleanText(data.description, cleanText(data.title, 'Chưa có mô tả')),
+      priority: cleanText(data.priority, 'MEDIUM'),
+      status: cleanText(data.status, 'NEW'),
       requestedById: user.id,
       requestedByName: user.name,
+      assignedToName: cleanText(data.assignedToName) || null,
+      dueDate: parseOptionalDate(data.dueDate),
     }).returning();
+    facilitiesChanged();
     return { success: true, data: newReq[0] };
   } catch (error: any) {
     return { success: false, error: error.message };
   }
 }
 
-async function updateRepairStatus(id: string, status: string, resolutionNote?: string) {
+export async function updateRepairStatus(id: string, status: string, resolutionNote?: string) {
   const user = await getCurrentActor();
   if (!user || !canManageFacilities(user)) throw new Error('Unauthorized');
 
@@ -141,7 +184,32 @@ async function updateRepairStatus(id: string, status: string, resolutionNote?: s
       .set({ status, resolutionNote, completedAt: status === 'DONE' ? new Date() : null })
       .where(eq(facilitiesRepairRequests.id, id))
       .returning();
+    facilitiesChanged();
     return { success: true, data: updated[0] };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function createMaintenanceLog(data: any) {
+  const user = await getCurrentActor();
+  if (!user || !canManageFacilities(user)) throw new Error('Unauthorized');
+
+  try {
+    const newLog = await db.insert(facilitiesMaintenanceLogs).values({
+      id: `MNT-${Date.now()}`,
+      assetId: cleanText(data.assetId, `AST-MANUAL-${Date.now().toString().slice(-6)}`),
+      assetName: cleanText(data.assetName, cleanText(data.name, 'Thiết bị bảo trì')),
+      maintenanceType: cleanText(data.maintenanceType || data.note, 'ROUTINE'),
+      scheduledDate: parseOptionalDate(data.scheduledDate) || new Date(),
+      responsibleUserName: cleanText(data.responsibleUserName) || user.name,
+      responsibleUserId: user.id,
+      status: cleanText(data.status, 'SCHEDULED'),
+      note: cleanText(data.note) || null,
+      checklist: {},
+    }).returning();
+    facilitiesChanged();
+    return { success: true, data: newLog[0] };
   } catch (error: any) {
     return { success: false, error: error.message };
   }
@@ -168,16 +236,21 @@ async function getPurchaseItems(purchaseRequestId: string) {
   }
 }
 
-async function createPurchaseRequest(data: any, items: any[]) {
+export async function createPurchaseRequest(data: any, items: any[] = []) {
   const user = await getCurrentActor();
   if (!user || !canCreatePurchaseRequest(user)) throw new Error('Unauthorized');
 
   try {
     const reqId = `PUR-${Date.now()}`;
     const newReq = await db.insert(facilitiesPurchaseRequests).values({
-      ...data,
       id: reqId,
       code: `PRQ-${new Date().getFullYear()}-${Math.floor(Math.random()*10000)}`,
+      title: cleanText(data.title, 'Đề xuất mua sắm'),
+      requestType: cleanText(data.requestType, 'NEW'),
+      reason: cleanText(data.reason, cleanText(data.title)) || null,
+      locationName: cleanText(data.department || data.locationName) || null,
+      priority: cleanText(data.priority, 'MEDIUM'),
+      neededByDate: parseOptionalDate(data.neededByDate),
       requestedById: user.id,
       requestedByName: user.name,
       status: 'SUBMITTED',
@@ -193,13 +266,14 @@ async function createPurchaseRequest(data: any, items: any[]) {
       );
     }
 
-    return { success: true, data: newReq[0] };
+    facilitiesChanged();
+    return { success: true, data: { ...newReq[0], department: cleanText(data.department || data.locationName), itemCount: items.length || Number(data.itemCount) || 1 } };
   } catch (error: any) {
     return { success: false, error: error.message };
   }
 }
 
-async function approvePurchaseRequest(id: string, isApproved: boolean, rejectedReason?: string) {
+export async function approvePurchaseRequest(id: string, isApproved: boolean, rejectedReason?: string) {
   const user = await getCurrentActor();
   if (!user || !canApprovePurchaseRequest(user)) throw new Error('Unauthorized');
 
@@ -214,6 +288,7 @@ async function approvePurchaseRequest(id: string, isApproved: boolean, rejectedR
       })
       .where(eq(facilitiesPurchaseRequests.id, id))
       .returning();
+    facilitiesChanged();
     return { success: true, data: updated[0] };
   } catch (error: any) {
     return { success: false, error: error.message };

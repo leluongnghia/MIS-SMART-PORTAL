@@ -1,6 +1,22 @@
 "use server";
 
 import { db, schema } from "@/src/libs/server/db";
+import { revalidatePath } from "next/cache";
+import { getCurrentActor, isAdminTruong, isTruongPhong, writeAuditLog } from "@/src/libs/server/auth-helper";
+import { getJsonSetting, setJsonSetting } from "@/src/libs/server/module-settings";
+
+const OKR_SETTINGS_KEY = 'okr:customize_settings';
+const defaultOkrSettings = {
+  defaultWorkspace: 'ALL',
+  defaultPillar: 'ALL',
+  showAlerts: true,
+  showFollowUps: true,
+  confidenceThreshold: 6,
+};
+
+function canManageOkr(actor: Awaited<ReturnType<typeof getCurrentActor>>) {
+  return !!actor && (isAdminTruong(actor) || isTruongPhong(actor) || actor.workspaceId === 'BGH');
+}
 
 const pillarMap: Record<string, { name: string; desc: string; color: string }> = {
   TUYEN_SINH_PR: { name: 'Tuyển sinh', desc: 'Mở rộng quy mô - Nâng cao chất lượng đầu vào', color: 'bg-blue-600' },
@@ -80,6 +96,7 @@ export async function getInitialData() {
       .map(task => ({ id: task.id, title: task.title, assignedName: task.assignedName, deadline: task.deadline, urgent: task.priority === 'CAO', workspaceId: task.workspaceId }));
 
     return {
+      okrSettings: await getJsonSetting(OKR_SETTINGS_KEY, defaultOkrSettings),
       stats: {
         total,
         done,
@@ -97,6 +114,26 @@ export async function getInitialData() {
     };
   } catch (e) {
     console.error('OKR getInitialData failed', e);
-    return { stats: { total: 0, done: 0, inProgress: 0, notStarted: 0, risk: 0, progress: 0, onTrack: 0, linkedKpis: 0 }, pillars: [], alerts: [], followUps: [], workspaces: [] };
+    return { okrSettings: defaultOkrSettings, stats: { total: 0, done: 0, inProgress: 0, notStarted: 0, risk: 0, progress: 0, onTrack: 0, linkedKpis: 0 }, pillars: [], alerts: [], followUps: [], workspaces: [] };
+  }
+}
+
+export async function saveOkrSettings(settings: typeof defaultOkrSettings) {
+  try {
+    const actor = await getCurrentActor();
+    if (!canManageOkr(actor)) return { success: false, error: 'Unauthorized' };
+    const next = { ...defaultOkrSettings, ...settings };
+    await setJsonSetting(OKR_SETTINGS_KEY, next, {
+      group: 'okr',
+      label: 'OKR customize settings',
+      description: 'Default OKR filters and widgets',
+      updatedBy: actor?.id,
+    });
+    await writeAuditLog(actor?.id || null, 'save_okr_settings', 'okr', OKR_SETTINGS_KEY, { after: next, module: 'okr' });
+    revalidatePath('/[locale]/okr', 'layout');
+    return { success: true, data: next };
+  } catch (e: any) {
+    console.error('Save OKR settings failed', e);
+    return { success: false, error: e.message };
   }
 }

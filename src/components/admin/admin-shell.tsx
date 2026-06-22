@@ -63,65 +63,62 @@ type NotificationSummary = {
 
 const menuGroups: MenuItemGroup[] = [
   {
-    title: 'ĐIỀU HÀNH CHIẾN LƯỢC',
+    title: 'ĐIỀU HÀNH',
     items: [
       { label: 'Tổng quan điều hành', href: 'dashboard', icon: LayoutDashboard },
-      { label: 'Báo cáo nhanh', href: 'reports', icon: FileBarChart },
       { label: 'Chiến lược & OKRs', href: 'okr', icon: Target },
       { label: 'Kế hoạch hoạt động', href: 'plans', icon: ClipboardCheck },
-      { label: 'Báo cáo & Phân tích KPI', href: 'kpi', icon: LineChart },
+      { label: 'Chỉ đạo BGH', href: 'directives', icon: ClipboardCheck, badgeKey: 'directives' },
+      { label: 'Báo cáo & Phân tích', href: 'reports', icon: FileBarChart },
+      { label: 'KPI điều hành', href: 'kpi', icon: LineChart },
       { label: 'Phân tích & Dự báo', href: 'forecast', icon: TrendingUp },
+      { label: 'Rủi ro & Kiểm soát nội bộ', href: 'risk', icon: ShieldAlert },
     ],
   },
   {
-    title: 'VẬN HÀNH NỘI BỘ',
+    title: 'CÔNG VIỆC & QUY TRÌNH',
     items: [
-      { label: 'Công việc & Quy trình', href: 'tasks', icon: CheckSquare, badgeKey: 'tasks' },
-      { label: 'Phê duyệt', href: 'approvals', icon: UserCheck },
-      { label: 'Lịch & Sự kiện', href: 'events', icon: Calendar },
-      { label: 'Chỉ đạo BGH', href: 'directives', icon: ClipboardCheck, badgeKey: 'directives' },
+      { label: 'Nhiệm vụ & Dự án', href: 'tasks', icon: CheckSquare, badgeKey: 'tasks' },
+      { label: 'Đơn từ & Phê duyệt', href: 'approvals', icon: UserCheck },
       { label: 'Thông báo nội bộ', href: 'announcements', icon: Bell, badgeKey: 'announcements' },
     ],
   },
   {
-    title: 'QUẢN TRỊ NGUỒN LỰC',
+    title: 'NHÂN SỰ & ĐÀO TẠO',
     items: [
-      { label: 'Quản trị Nhân sự HRM', href: 'hrm', icon: Users },
-      { label: 'CSVC, Thiết bị & Mua sắm', href: 'facilities', icon: Building },
-      { label: 'Quản trị Rủi ro', href: 'risk', icon: ShieldAlert },
+      { label: 'Nhân sự trường học', href: 'hrm', icon: Users },
     ],
   },
   {
-    title: 'TUYỂN SINH & HỌC SINH',
+    title: 'HỌC VỤ & HỌC SINH',
     items: [
-      { label: 'Tuyển sinh & CRM', href: 'admissions', icon: Workflow },
+      { label: 'Thời khóa biểu & Giáo án', href: 'schedule', icon: CalendarDays },
       { label: 'Hồ sơ Học sinh 360', href: 'students', icon: GraduationCap },
       { label: 'Quản lý Lớp học', href: 'classes', icon: Users },
-      { label: 'Thời khóa biểu & Giáo án', href: 'schedule', icon: CalendarDays },
     ],
   },
   {
-    title: 'DỮ LIỆU HỆ THỐNG',
+    title: 'TUYỂN SINH & TRUYỀN THÔNG',
     items: [
-      { label: 'Danh mục hệ thống', href: 'system-data/categories', icon: List },
-      { label: 'Trung tâm báo cáo', href: 'system-data/reports', icon: FileBarChart },
-      { label: 'Lưu trữ & Dữ liệu', href: 'system-data/storage', icon: Database },
+      { label: 'Tuyển sinh CRM', href: 'admissions', icon: Workflow },
+      { label: 'Sự kiện & Truyền thông', href: 'events', icon: Calendar },
     ],
   },
   {
-    title: 'QUẢN TRỊ NỀN TẢNG',
+    title: 'CƠ SỞ VẬT CHẤT & DỊCH VỤ',
     items: [
-      { label: 'Quản lý người dùng & phân quyền', href: 'users', icon: Users },
-      { label: 'Cấu hình hệ thống', href: 'system-data/settings', icon: Settings },
+      { label: 'Tài sản, Thiết bị & Thư viện', href: 'facilities', icon: Building },
     ],
   },
 ];
 
 const titleColors: Record<string, { text: string; dot: string; activeBg: string }> = {
-  'ĐIỀU HÀNH CHIẾN LƯỢC': { text: 'text-indigo-600 dark:text-indigo-400', dot: 'bg-indigo-600 dark:bg-indigo-400', activeBg: 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20' },
-  'VẬN HÀNH NỘI BỘ': { text: 'text-amber-600 dark:text-amber-400', dot: 'bg-amber-600 dark:bg-amber-400', activeBg: 'bg-amber-600 text-white shadow-md shadow-amber-500/20' },
-  'QUẢN TRỊ NGUỒN LỰC': { text: 'text-rose-600 dark:text-rose-400', dot: 'bg-rose-600 dark:bg-rose-400', activeBg: 'bg-rose-600 text-white shadow-md shadow-rose-500/20' },
-  'TUYỂN SINH & HỌC SINH': { text: 'text-emerald-600 dark:text-emerald-400', dot: 'bg-emerald-600 dark:bg-emerald-400', activeBg: 'bg-emerald-600 text-white shadow-md shadow-emerald-500/20' },
+  'ĐIỀU HÀNH': { text: 'text-indigo-600 dark:text-indigo-400', dot: 'bg-indigo-600 dark:bg-indigo-400', activeBg: 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20' },
+  'CÔNG VIỆC & QUY TRÌNH': { text: 'text-amber-600 dark:text-amber-400', dot: 'bg-amber-600 dark:bg-amber-400', activeBg: 'bg-amber-600 text-white shadow-md shadow-amber-500/20' },
+  'NHÂN SỰ & ĐÀO TẠO': { text: 'text-rose-600 dark:text-rose-400', dot: 'bg-rose-600 dark:bg-rose-400', activeBg: 'bg-rose-600 text-white shadow-md shadow-rose-500/20' },
+  'HỌC VỤ & HỌC SINH': { text: 'text-emerald-600 dark:text-emerald-400', dot: 'bg-emerald-600 dark:bg-emerald-400', activeBg: 'bg-emerald-600 text-white shadow-md shadow-emerald-500/20' },
+  'TUYỂN SINH & TRUYỀN THÔNG': { text: 'text-cyan-600 dark:text-cyan-400', dot: 'bg-cyan-600 dark:bg-cyan-400', activeBg: 'bg-cyan-600 text-white shadow-md shadow-cyan-500/20' },
+  'CƠ SỞ VẬT CHẤT & DỊCH VỤ': { text: 'text-sky-600 dark:text-sky-400', dot: 'bg-sky-600 dark:bg-sky-400', activeBg: 'bg-sky-600 text-white shadow-md shadow-sky-500/20' },
   'DỮ LIỆU HỆ THỐNG': { text: 'text-sky-600 dark:text-sky-400', dot: 'bg-sky-600 dark:bg-sky-400', activeBg: 'bg-sky-600 text-white shadow-md shadow-sky-500/20' },
   'QUẢN TRỊ NỀN TẢNG': { text: 'text-purple-600 dark:text-purple-400', dot: 'bg-purple-600 dark:bg-purple-400', activeBg: 'bg-purple-600 text-white shadow-md shadow-purple-500/20' },
   'TỔNG QUAN': { text: 'text-slate-500 dark:text-slate-400', dot: 'bg-slate-400', activeBg: 'bg-blue-600 text-white shadow-md shadow-blue-500/20' },
@@ -381,6 +378,9 @@ export default function AdminShell({ locale, children }: { locale: string; child
     currentUser.workspaceId !== 'KHAO_THI' &&
     currentUser.workspaceId !== 'TUYEN_SINH_PR' &&
     currentUser?.role !== 'ADMIN';
+  const usesSchoolOperationsMenu = currentUser?.workspaceId !== 'KHAO_THI' &&
+    currentUser?.workspaceId !== 'TUYEN_SINH_PR' &&
+    !isDepartment;
 
   const departmentMenuGroups: MenuItemGroup[] = [
     {
@@ -514,12 +514,12 @@ export default function AdminShell({ locale, children }: { locale: string; child
 
   const activeMenuGroups = useMemo(() => {
     const mapped = rawMenuGroups.map(group => {
-      const targetTitles = ['VẬN HÀNH', 'VẬN HÀNH NỘI BỘ', 'NGHIỆP VỤ BỘ PHẬN', 'VẬN HÀNH BỘ PHẬN', 'CÀI ĐẶT'];
+      const targetTitles = ['CÔNG VIỆC & QUY TRÌNH', 'VẬN HÀNH', 'VẬN HÀNH NỘI BỘ', 'NGHIỆP VỤ BỘ PHẬN', 'VẬN HÀNH BỘ PHẬN', 'CÀI ĐẶT'];
       if (targetTitles.includes(group.title)) {
         const extraItems: { label: string; href: string; icon: any; badgeKey?: 'tasks' | 'directives' | 'announcements' }[] = [
           { label: 'Chat nội bộ', href: 'chat', icon: MessageSquare }
         ];
-        if (group.title !== 'VẬN HÀNH NỘI BỘ' && (currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER')) {
+        if (!usesSchoolOperationsMenu && group.title !== 'VẬN HÀNH NỘI BỘ' && (currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER')) {
           extraItems.push({ label: 'Quản lý người dùng & phân quyền', href: 'users', icon: Users });
         }
         
@@ -535,7 +535,9 @@ export default function AdminShell({ locale, children }: { locale: string; child
       return group;
     });
 
-    const finalGroups = mapped.filter(g => g.title !== 'DỮ LIỆU HỆ THỐNG' && g.title !== 'DỮ LIỆU & HỆ THỐNG' && g.title !== 'QUẢN TRỊ NỀN TẢNG');
+    const finalGroups = mapped
+      .filter(g => g.title !== 'DỮ LIỆU HỆ THỐNG' && g.title !== 'DỮ LIỆU & HỆ THỐNG' && g.title !== 'QUẢN TRỊ NỀN TẢNG')
+      .map(group => ({ ...group, items: [...group.items] }));
 
     const systemDataItems: any[] = [];
     if (currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER') {
@@ -547,10 +549,17 @@ export default function AdminShell({ locale, children }: { locale: string; child
     }
 
     if (systemDataItems.length > 0) {
+      if (usesSchoolOperationsMenu) {
+        const executiveGroup = finalGroups.find(group => group.title === 'ĐIỀU HÀNH');
+        if (executiveGroup) {
+          executiveGroup.items.push(...systemDataItems);
+        }
+      } else {
       finalGroups.push({
         title: 'DỮ LIỆU HỆ THỐNG',
         items: systemDataItems,
       });
+      }
     }
 
     const platformItems: any[] = [];
@@ -562,14 +571,21 @@ export default function AdminShell({ locale, children }: { locale: string; child
     }
 
     if (platformItems.length > 0) {
+      if (usesSchoolOperationsMenu) {
+        const executiveGroup = finalGroups.find(group => group.title === 'ĐIỀU HÀNH');
+        if (executiveGroup) {
+          executiveGroup.items.push(...platformItems);
+        }
+      } else {
       finalGroups.push({
         title: 'QUẢN TRỊ NỀN TẢNG',
         items: platformItems,
       });
+      }
     }
 
     return finalGroups;
-  }, [rawMenuGroups, currentUser]);
+  }, [rawMenuGroups, currentUser, usesSchoolOperationsMenu]);
 
   if (!isAuthReady) {
     return (

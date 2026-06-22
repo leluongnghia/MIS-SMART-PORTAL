@@ -11,3 +11,5 @@ coverage/
 !.env.example
 scratch/
 *.cjs
+.claude/
+.agent/

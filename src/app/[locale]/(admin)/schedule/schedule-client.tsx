@@ -36,6 +36,7 @@ import { Button } from '@/src/components/ui/button';
 import { cn } from '@/src/lib/utils';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { Dialog } from '@/src/components/ui/dialog';
+import { createLessonPlanTask, createTimetableSlot, deleteTimetableSlot, saveAttendanceTask, updateLessonPlanTaskStatus, updateTimetableSlot } from './actions';
 
 const roomUsageData = [
   { name: 'Đang dùng', value: 28, color: '#2563eb' },
@@ -95,13 +96,14 @@ export default function ScheduleDashboard({ initialData }: { initialData?: any }
   const [timetableData, setTimetableData] = useState<any[]>(timetable);
   const [statsData, setStatsData] = useState(stats);
 
-  const [lessonPlans, setLessonPlans] = useState([
+  const seedLessonPlans = [
     { id: 'lp1', title: 'Bài 6: Truyện ngắn hiện đại (Lão Hạc - Nam Cao)', date: '14/05/2026', subject: 'Ngữ văn', targetClass: '11A2', tag: 'Nháp', tagCol: 'bg-slate-100 text-slate-600 border-slate-200' },
     { id: 'lp2', title: 'Bài 7: Thơ mới 1930-1945 (Vội vàng - Xuân Diệu)', date: '15/05/2026', subject: 'Ngữ văn', targetClass: '12A1', tag: 'Chờ duyệt', tagCol: 'bg-orange-50 text-orange-600 border-orange-200' },
     { id: 'lp3', title: 'Bài 8: Văn nghị luận xã hội nâng cao', date: '10/05/2026', subject: 'Ngữ văn', targetClass: '10A1', tag: 'Đã duyệt', tagCol: 'bg-emerald-50 text-emerald-600 border-emerald-200' },
     { id: 'lp4', title: 'Bài 9: Khảo sát hàm số nâng cao', date: '16/05/2026', subject: 'Toán học', targetClass: '12A1', tag: 'Chờ duyệt', tagCol: 'bg-orange-50 text-orange-600 border-orange-200' },
     { id: 'lp5', title: 'Bài 10: Tích phân và ứng dụng thực tiễn', date: '17/05/2026', subject: 'Toán học', targetClass: '12A2', tag: 'Chờ duyệt', tagCol: 'bg-orange-50 text-orange-600 border-orange-200' },
-  ]);
+  ];
+  const [lessonPlans, setLessonPlans] = useState(initialData?.lessonPlans?.length ? initialData.lessonPlans : seedLessonPlans);
 
   const [conflicts, setConflicts] = useState([
     { id: 'conf_1', day: 3, period: 4, room: 'P.301', title: 'Phòng 301 trùng lịch', desc: 'Vật lý 11A2 & Hóa học 11A2', detail: 'Hai lớp khác nhau cùng đăng ký sử dụng phòng 301 vào tiết 4 thứ 3.', resolved: false },
@@ -119,6 +121,9 @@ export default function ScheduleDashboard({ initialData }: { initialData?: any }
   const [isAddPlanOpen, setIsAddPlanOpen] = useState(false);
   const [isAllPlansOpen, setIsAllPlansOpen] = useState(false);
   const [isCustomizeOpen, setIsCustomizeOpen] = useState(false);
+  const [isSlotDialogOpen, setIsSlotDialogOpen] = useState(false);
+  const [slotMode, setSlotMode] = useState<'create' | 'edit'>('create');
+  const [slotForm, setSlotForm] = useState<any>({ day: 2, period: 1, subject: '', className: '', teacherId: '', teacherName: '', room: '' });
 
   // Form input states for adding lesson plan
   const [newPlanTitle, setNewPlanTitle] = useState('');
@@ -228,43 +233,64 @@ export default function ScheduleDashboard({ initialData }: { initialData?: any }
   };
 
   // Lesson Plan Approver
-  const handleApprovePlan = (id: string) => {
+  const handleApprovePlan = async (id: string) => {
+    const target = lessonPlans.find(p => p.id === id);
+    if (target?.persisted) {
+      const result = await updateLessonPlanTaskStatus(id, 'Đã duyệt');
+      if (!result.success) {
+        triggerToast(result.error || "Phê duyệt giáo án thất bại!", "error");
+        return;
+      }
+    }
     setLessonPlans(prev => prev.map(p => p.id === id ? { ...p, tag: 'Đã duyệt', tagCol: 'bg-emerald-50 text-emerald-600 border-emerald-200' } : p));
     setStatsData(prev => ({ ...prev, pendingPlansCount: Math.max(0, prev.pendingPlansCount - 1) }));
     triggerToast("Phê duyệt giáo án thành công!", "success");
   };
 
-  const handleRejectPlan = (id: string) => {
+  const handleRejectPlan = async (id: string) => {
+    const target = lessonPlans.find(p => p.id === id);
+    if (target?.persisted) {
+      const result = await updateLessonPlanTaskStatus(id, 'Từ chối');
+      if (!result.success) {
+        triggerToast(result.error || "Từ chối giáo án thất bại!", "error");
+        return;
+      }
+    }
     setLessonPlans(prev => prev.map(p => p.id === id ? { ...p, tag: 'Từ chối', tagCol: 'bg-rose-50 text-rose-600 border-rose-200' } : p));
     setStatsData(prev => ({ ...prev, pendingPlansCount: Math.max(0, prev.pendingPlansCount - 1) }));
     triggerToast("Đã từ chối giáo án đề xuất.", "error");
   };
 
   // Attendance Saver
-  const handleSaveAttendance = () => {
+  const handleSaveAttendance = async () => {
     if (!selectedSlot) return;
+    const result = await saveAttendanceTask({ slot: selectedSlot, attendance: attendanceList });
+    if (!result.success) {
+      triggerToast(result.error || "Lưu điểm danh thất bại!", "error");
+      return;
+    }
     triggerToast(`Đã lưu dữ liệu điểm danh lớp ${selectedSlot.className} môn ${selectedSlot.subject}!`, "success");
     setIsAttendanceOpen(false);
   };
 
   // Add Lesson Plan Submitter
-  const handleAddPlanSubmit = (e: React.FormEvent) => {
+  const handleAddPlanSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newPlanTitle.trim()) {
       triggerToast("Vui lòng nhập tiêu đề giáo án!", "error");
       return;
     }
-    const newPlan = {
-      id: 'lp_' + Date.now(),
+    const result = await createLessonPlanTask({
       title: newPlanTitle,
-      date: new Date().toLocaleDateString('vi-VN'),
       subject: newPlanSubject,
       targetClass: newPlanClass,
-      tag: newPlanStatus,
-      tagCol: newPlanStatus === 'Đã duyệt' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' :
-             newPlanStatus === 'Chờ duyệt' ? 'bg-orange-50 text-orange-600 border-orange-200' :
-             'bg-slate-100 text-slate-600 border-slate-200'
-    };
+      status: newPlanStatus,
+    });
+    if (!result.success || !result.data) {
+      triggerToast(result.error || "Thêm giáo án thất bại!", "error");
+      return;
+    }
+    const newPlan = result.data;
     setLessonPlans(prev => [newPlan, ...prev]);
     if (newPlanStatus === 'Chờ duyệt') {
       setStatsData(prev => ({ ...prev, pendingPlansCount: prev.pendingPlansCount + 1 }));
@@ -273,6 +299,65 @@ export default function ScheduleDashboard({ initialData }: { initialData?: any }
     setIsAddPlanOpen(false);
     // Reset fields
     setNewPlanTitle('');
+  };
+
+  const openCreateSlot = () => {
+    setSlotMode('create');
+    setSlotForm({ day: 2, period: 1, subject: '', className: '', teacherId: '', teacherName: '', room: '' });
+    setIsSlotDialogOpen(true);
+  };
+
+  const openEditSlot = () => {
+    if (!selectedSlot) return;
+    setSlotMode('edit');
+    setSlotForm({
+      day: selectedSlot.day,
+      period: selectedSlot.period,
+      subject: selectedSlot.subject,
+      className: selectedSlot.className,
+      teacherId: selectedSlot.teacherId || '',
+      teacherName: selectedSlot.teacherName || '',
+      room: selectedSlot.room || '',
+    });
+    setIsSlotDialogOpen(true);
+  };
+
+  const submitSlot = async () => {
+    const result = slotMode === 'edit' && selectedSlot
+      ? await updateTimetableSlot(selectedSlot.id, slotForm)
+      : await createTimetableSlot(slotForm);
+    if (!result.success || !result.data) {
+      triggerToast(result.error || 'Lưu tiết học thất bại!', 'error');
+      return;
+    }
+    const row: any = result.data;
+    const nextSlot = {
+      id: row.id,
+      day: row.day,
+      period: row.period,
+      subject: row.subject,
+      className: row.className,
+      teacherId: row.teacherId,
+      teacherName: row.teacherName || slotForm.teacherName,
+      room: row.room,
+      avatar: `https://i.pravatar.cc/150?u=${row.teacherId || row.id}`,
+    };
+    setTimetableData(prev => slotMode === 'edit' ? prev.map(slot => slot.id === row.id ? nextSlot : slot) : [nextSlot, ...prev]);
+    setSelectedSlotId(row.id);
+    setIsSlotDialogOpen(false);
+    triggerToast('Đã lưu tiết học vào DB timetable.', 'success');
+  };
+
+  const removeSelectedSlot = async () => {
+    if (!selectedSlot || !confirm(`Xóa tiết ${selectedSlot.subject} - ${selectedSlot.className}?`)) return;
+    const result = await deleteTimetableSlot(selectedSlot.id);
+    if (!result.success) {
+      triggerToast(result.error || 'Xóa tiết học thất bại!', 'error');
+      return;
+    }
+    setTimetableData(prev => prev.filter(slot => slot.id !== selectedSlot.id));
+    setSelectedSlotId(null);
+    triggerToast('Đã xóa tiết học khỏi thời khóa biểu.', 'success');
   };
 
   return (
@@ -297,6 +382,15 @@ export default function ScheduleDashboard({ initialData }: { initialData?: any }
           </div>
           <Button variant="outline" className="gap-2" onClick={() => setIsCustomizeOpen(true)}>
             <SettingsIcon className="h-4 w-4" /> Tùy chỉnh
+          </Button>
+          <Button variant="outline" className="gap-2" onClick={openEditSlot} disabled={!selectedSlot}>
+            <FileText className="h-4 w-4" /> Sửa tiết
+          </Button>
+          <Button variant="destructive" className="gap-2" onClick={removeSelectedSlot} disabled={!selectedSlot}>
+            <Trash2 className="h-4 w-4" /> Xóa tiết
+          </Button>
+          <Button className="gap-2" onClick={openCreateSlot}>
+            <Plus className="h-4 w-4" /> Thêm tiết
           </Button>
         </div>
       </div>
@@ -1355,6 +1449,27 @@ export default function ScheduleDashboard({ initialData }: { initialData?: any }
                 )}
               </tbody>
             </table>
+          </div>
+        </div>
+      </Dialog>
+
+      <Dialog
+        open={isSlotDialogOpen}
+        onOpenChange={setIsSlotDialogOpen}
+        title={slotMode === 'edit' ? 'Sửa tiết học' : 'Thêm tiết học'}
+        description="Dữ liệu được lưu vào bảng timetable_slots."
+        className="max-w-2xl"
+      >
+        <div className="grid gap-3 md:grid-cols-2">
+          <input type="number" min="2" max="8" className="rounded-lg border p-2 text-sm dark:bg-slate-900" placeholder="Thứ" value={slotForm.day} onChange={e => setSlotForm({ ...slotForm, day: Number(e.target.value) })} />
+          <input type="number" min="1" max="10" className="rounded-lg border p-2 text-sm dark:bg-slate-900" placeholder="Tiết" value={slotForm.period} onChange={e => setSlotForm({ ...slotForm, period: Number(e.target.value) })} />
+          <input className="rounded-lg border p-2 text-sm dark:bg-slate-900" placeholder="Môn học" value={slotForm.subject} onChange={e => setSlotForm({ ...slotForm, subject: e.target.value })} />
+          <input className="rounded-lg border p-2 text-sm dark:bg-slate-900" placeholder="Lớp" value={slotForm.className} onChange={e => setSlotForm({ ...slotForm, className: e.target.value })} />
+          <input className="rounded-lg border p-2 text-sm dark:bg-slate-900" placeholder="Tên giáo viên" value={slotForm.teacherName} onChange={e => setSlotForm({ ...slotForm, teacherName: e.target.value })} />
+          <input className="rounded-lg border p-2 text-sm dark:bg-slate-900" placeholder="Phòng" value={slotForm.room} onChange={e => setSlotForm({ ...slotForm, room: e.target.value })} />
+          <div className="flex justify-end gap-2 md:col-span-2">
+            <Button variant="outline" onClick={() => setIsSlotDialogOpen(false)}>Hủy</Button>
+            <Button onClick={submitSlot} disabled={!slotForm.subject.trim() || !slotForm.className.trim()}>Lưu tiết học</Button>
           </div>
         </div>
       </Dialog>

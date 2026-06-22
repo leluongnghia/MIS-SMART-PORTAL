@@ -1,14 +1,14 @@
 'use client';
 
 import { useMemo, useState, useTransition } from 'react';
-import { AlertTriangle, CheckCircle2, Clock, FileText, Filter, MessageSquare, Paperclip, Search, Send, TrendingUp, Users } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Clock, FileText, Filter, MessageSquare, Paperclip, Plus, Search, Send, Trash2, TrendingUp, Users } from 'lucide-react';
 import { Badge } from '@/src/components/ui/badge';
 import { Button } from '@/src/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/src/components/ui/card';
 import { cn } from '@/src/lib/utils';
 import { serverStorage } from '@/src/libs/client/server-storage';
 import { MOCK_USERS, WORKSPACES } from '@/src/mockData';
-import { addDirectiveResponse } from './actions';
+import { addDirectiveResponse, createDirective, deleteDirective } from './actions';
 
 type DirectiveRow = {
   id: string;
@@ -58,6 +58,15 @@ export default function DirectivesDashboard({ initialData }: { initialData?: { d
   const [activeId, setActiveId] = useState(directives[0]?.id || '');
   const [replyText, setReplyText] = useState('');
   const [notice, setNotice] = useState('');
+  const [showCreate, setShowCreate] = useState(false);
+  const [createForm, setCreateForm] = useState({
+    title: '',
+    category: '',
+    urgency: 'Quan trọng',
+    description: '',
+    deadline: '',
+    attachments: '',
+  });
   const [isPending, startTransition] = useTransition();
 
   const currentUser = useMemo(() => {
@@ -66,6 +75,7 @@ export default function DirectivesDashboard({ initialData }: { initialData?: { d
   }, []);
 
   const workspaceName = WORKSPACES.find(workspace => workspace.id === currentUser.workspaceId)?.name || currentUser.workspaceId;
+  const canManage = currentUser.role === 'ADMIN' || currentUser.role === 'MANAGER' || currentUser.workspaceId === 'BGH';
   const active = directives.find(item => item.id === activeId) || directives[0];
   const activePayload = active?.payload || {};
   const activeComments = activePayload.comments || [];
@@ -98,6 +108,37 @@ export default function DirectivesDashboard({ initialData }: { initialData?: { d
     });
   };
 
+  const submitCreate = () => {
+    startTransition(async () => {
+      const result = await createDirective({
+        ...createForm,
+        attachments: createForm.attachments
+          .split(',')
+          .map(name => ({ name: name.trim(), size: 'metadata' }))
+          .filter(file => file.name),
+      });
+      if (result.success) {
+        setNotice('Đã tạo chỉ đạo và ghi audit log.');
+        window.setTimeout(() => window.location.reload(), 650);
+      } else {
+        setNotice(result.error || 'Tạo chỉ đạo thất bại.');
+      }
+    });
+  };
+
+  const submitDelete = () => {
+    if (!active || !confirm(`Xóa chỉ đạo "${active.title}"?`)) return;
+    startTransition(async () => {
+      const result = await deleteDirective(active.id);
+      if (result.success) {
+        setNotice('Đã xóa mềm chỉ đạo và ghi audit log.');
+        window.setTimeout(() => window.location.reload(), 650);
+      } else {
+        setNotice(result.error || 'Xóa chỉ đạo thất bại.');
+      }
+    });
+  };
+
   if (!active) {
     return <Card><CardContent className="p-6 text-sm text-slate-500">Chưa có chỉ đạo. Dữ liệu sẽ được seed khi tải lại.</CardContent></Card>;
   }
@@ -109,10 +150,36 @@ export default function DirectivesDashboard({ initialData }: { initialData?: { d
           <h2 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">Chỉ đạo BGH & Phản hồi</h2>
           <p className="text-sm text-slate-500 dark:text-slate-400">Dữ liệu thật từ DB: phản hồi, trạng thái, audit log theo từng chỉ đạo.</p>
         </div>
-        <Badge className="w-fit bg-emerald-100 text-emerald-700 hover:bg-emerald-100">REAL DB MODE • Audit enabled</Badge>
+        <div className="flex flex-wrap items-center gap-2">
+          {canManage && <Button onClick={() => setShowCreate(prev => !prev)} className="gap-2"><Plus className="h-4 w-4" /> Tạo chỉ đạo</Button>}
+          <Badge className="w-fit bg-emerald-100 text-emerald-700 hover:bg-emerald-100">REAL DB MODE • Audit enabled</Badge>
+        </div>
       </div>
 
       {notice && <div className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm font-bold text-blue-700">{notice}</div>}
+
+      {showCreate && (
+        <Card>
+          <CardHeader className="border-b p-4"><CardTitle className="text-base">Tạo chỉ đạo mới</CardTitle></CardHeader>
+          <CardContent className="grid gap-3 p-4 md:grid-cols-2">
+            <input className="rounded-lg border p-2 text-sm dark:border-slate-800 dark:bg-slate-950" placeholder="Tiêu đề" value={createForm.title} onChange={e => setCreateForm({ ...createForm, title: e.target.value })} />
+            <input className="rounded-lg border p-2 text-sm dark:border-slate-800 dark:bg-slate-950" placeholder="Đơn vị thực hiện" value={createForm.category} onChange={e => setCreateForm({ ...createForm, category: e.target.value })} />
+            <select className="rounded-lg border p-2 text-sm dark:border-slate-800 dark:bg-slate-950" value={createForm.urgency} onChange={e => setCreateForm({ ...createForm, urgency: e.target.value })}>
+              <option>Khẩn cấp</option>
+              <option>Quan trọng</option>
+              <option>Trung bình</option>
+              <option>Thấp</option>
+            </select>
+            <input type="date" className="rounded-lg border p-2 text-sm dark:border-slate-800 dark:bg-slate-950" value={createForm.deadline} onChange={e => setCreateForm({ ...createForm, deadline: e.target.value })} />
+            <textarea className="min-h-[90px] rounded-lg border p-2 text-sm dark:border-slate-800 dark:bg-slate-950 md:col-span-2" placeholder="Nội dung chỉ đạo" value={createForm.description} onChange={e => setCreateForm({ ...createForm, description: e.target.value })} />
+            <input className="rounded-lg border p-2 text-sm dark:border-slate-800 dark:bg-slate-950 md:col-span-2" placeholder="Tệp đính kèm, phân cách bằng dấu phẩy" value={createForm.attachments} onChange={e => setCreateForm({ ...createForm, attachments: e.target.value })} />
+            <div className="flex gap-2 md:col-span-2">
+              <Button onClick={submitCreate} disabled={isPending || !createForm.title.trim()}>Lưu chỉ đạo</Button>
+              <Button variant="outline" onClick={() => setShowCreate(false)}>Hủy</Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
         {[
@@ -159,7 +226,10 @@ export default function DirectivesDashboard({ initialData }: { initialData?: { d
         <div className="lg:col-span-6">
           <Card className="h-[780px] overflow-hidden flex flex-col">
             <CardHeader className="border-b bg-slate-50/70 p-6 dark:bg-slate-900/30">
-              <div className="mb-3 flex items-center gap-2"><Badge className={cn('border', urgencyClass[active.urgency || ''] || 'bg-slate-50')}>{active.urgency}</Badge><span className="text-xs font-semibold text-slate-400">Mã: {active.id}</span></div>
+              <div className="mb-3 flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2"><Badge className={cn('border', urgencyClass[active.urgency || ''] || 'bg-slate-50')}>{active.urgency}</Badge><span className="text-xs font-semibold text-slate-400">Mã: {active.id}</span></div>
+                {canManage && <Button variant="ghost" size="sm" onClick={submitDelete} disabled={isPending} className="gap-2 text-red-600 hover:text-red-700"><Trash2 className="h-4 w-4" /> Xóa</Button>}
+              </div>
               <CardTitle className="text-xl font-black">{active.title}</CardTitle>
             </CardHeader>
             <CardContent className="flex-1 overflow-y-auto p-6 custom-scrollbar space-y-6">

@@ -1,6 +1,7 @@
 import { desc, eq, inArray } from 'drizzle-orm';
 import { db, schema } from './db';
 import { getCurrentActor, writeAuditLog, type Actor } from './auth-helper';
+import { RoleCode, WorkspaceCode } from '../../utils/constants';
 
 type NotificationSeverity = 'INFO' | 'SUCCESS' | 'WARNING' | 'ERROR';
 type NotificationStatus = 'UNREAD' | 'READ' | 'ARCHIVED';
@@ -15,15 +16,15 @@ interface PortalNotification {
 export interface NotificationFilters { status?: 'all' | 'unread' | 'read' | 'archived'; module?: string; severity?: string; q?: string; page?: number; pageSize?: number; }
 export interface CreateNotificationPayload { title: string; message: string; module: NotificationModule; type: NotificationType; severity?: NotificationSeverity; actorId?: string | null; actorName?: string | null; targetUrl?: string | null; sourceType?: string | null; sourceId?: string | null; scopeType?: 'USER' | 'DEPARTMENT' | 'WORKSPACE' | 'SCHOOL' | 'SYSTEM'; scopeId?: string | null; recipientUserIds?: string[]; payload?: Record<string, any>; }
 
-function canSeeSchoolWide(actor: Actor) { return actor.role === 'ADMIN' || actor.workspaceId === 'BGH'; }
+function canSeeSchoolWide(actor: Actor) { return actor.role === RoleCode.ADMIN || actor.workspaceId === WorkspaceCode.BGH; }
 function id(prefix = 'noti') { return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`; }
 
 async function resolveRecipients(input: CreateNotificationPayload): Promise<string[]> {
   if (input.recipientUserIds?.length) return Array.from(new Set(input.recipientUserIds));
   if (input.scopeType === 'USER' && input.scopeId) return [input.scopeId];
   const users = await db.select().from(schema.users);
-  if (input.scopeType === 'DEPARTMENT' || input.scopeType === 'WORKSPACE') return users.filter(u => u.departmentId === input.scopeId || u.workspaceId === input.scopeId || u.role === 'ADMIN' || u.workspaceId === 'BGH').map(u => u.id);
-  return users.filter(u => u.role === 'ADMIN' || u.workspaceId === 'BGH').map(u => u.id);
+  if (input.scopeType === 'DEPARTMENT' || input.scopeType === 'WORKSPACE') return users.filter(u => u.departmentId === input.scopeId || u.workspaceId === input.scopeId || u.role === RoleCode.ADMIN || u.workspaceId === WorkspaceCode.BGH).map(u => u.id);
+  return users.filter(u => u.role === RoleCode.ADMIN || u.workspaceId === WorkspaceCode.BGH).map(u => u.id);
 }
 
 export async function createNotification(input: CreateNotificationPayload, actorOverride?: Actor | null) {
@@ -67,7 +68,7 @@ function demoNotifications(actor: Actor): PortalNotification[] {
     base({ id: 'demo-approval-1', module: 'APPROVALS', type: 'APPROVAL_REQUESTED', severity: 'WARNING', title: 'Có việc cần duyệt', message: 'Một quy trình đang chờ phê duyệt', targetUrl: '/approvals', createdAt: iso(4) }),
     base({ id: 'demo-storage-1', module: 'STORAGE', type: 'FILE_SHARED', title: 'File được chia sẻ', message: 'Tài liệu vận hành mới', targetUrl: '/system-data/storage', createdAt: iso(5) }),
   ];
-  if (canSeeSchoolWide(actor) || actor.workspaceId === 'TUYEN_SINH_PR') items.push(base({ id: 'demo-admission-1', module: 'ADMISSIONS', type: 'ADMISSION_LEAD_ASSIGNED', title: 'Lead tuyển sinh mới', message: 'Hồ sơ TS-2027 cần xử lý', targetUrl: '/admissions', createdAt: iso(6) }));
+  if (canSeeSchoolWide(actor) || actor.workspaceId === WorkspaceCode.TUYEN_SINH_PR) items.push(base({ id: 'demo-admission-1', module: 'ADMISSIONS', type: 'ADMISSION_LEAD_ASSIGNED', title: 'Lead tuyển sinh mới', message: 'Hồ sơ TS-2027 cần xử lý', targetUrl: '/admissions', createdAt: iso(6) }));
   if (canSeeSchoolWide(actor)) items.push(base({ id: 'demo-security-1', module: 'AUDIT_LOGS', type: 'SYSTEM_SECURITY', severity: 'ERROR', title: 'Cảnh báo hệ thống', message: 'Demo switcher đang bật', targetUrl: '/system-data/settings', createdAt: iso(1) }));
   return items;
 }
@@ -93,6 +94,6 @@ export async function markAllNotificationsAsRead() { const actor = await getCurr
 export async function archiveNotification(notificationId: string) { const actor = await getCurrentActor(); if (!actor) throw new Error('UNAUTHORIZED'); const [rec] = await db.select().from(schema.notificationRecipients).where(eq(schema.notificationRecipients.notificationId, notificationId)); if (rec && rec.userId !== actor.id) await Promise.reject(new Error('NOT_FOUND')); if (rec) await db.update(schema.notificationRecipients).set({ status: 'ARCHIVED', archivedAt: new Date(), updatedAt: new Date() }).where(eq(schema.notificationRecipients.id, rec.id)); await writeAuditLog(actor.id, 'ARCHIVE_NOTIFICATION', 'NOTIFICATION', notificationId, { module: 'notifications' }); }
 
 export async function notifyTaskAssigned(task: any, actor?: Actor | null) { return createNotification({ title: 'Bạn có nhiệm vụ được giao', message: task.title || 'Nhiệm vụ mới', module: 'TASKS', type: 'TASK_ASSIGNED', severity: 'INFO', targetUrl: '/tasks', sourceType: 'TASK', sourceId: task.id, scopeType: 'USER', scopeId: task.assignedId, recipientUserIds: task.assignedId ? [task.assignedId] : [] }, actor); }
-export async function notifyApprovalRequested(task: any, actor?: Actor | null) { const managers = await db.select().from(schema.users); return createNotification({ title: 'Có nhiệm vụ chờ duyệt', message: task.title || 'Quy trình cần duyệt', module: 'APPROVALS', type: 'APPROVAL_REQUESTED', severity: 'WARNING', targetUrl: '/approvals', sourceType: 'TASK', sourceId: task.id, recipientUserIds: managers.filter(u => u.role === 'ADMIN' || u.workspaceId === 'BGH' || (u.role === 'MANAGER' && u.workspaceId === task.workspaceId)).map(u => u.id) }, actor); }
-export async function notifyAdmissionLeadAssigned(lead: any, actor?: Actor | null) { const users = await db.select().from(schema.users); return createNotification({ title: 'Lead tuyển sinh mới', message: lead.fullName || lead.studentName || lead.leadCode || 'Lead cần xử lý', module: 'ADMISSIONS', type: 'ADMISSION_LEAD_ASSIGNED', severity: 'INFO', targetUrl: '/admissions', sourceType: 'LEAD', sourceId: lead.id, recipientUserIds: users.filter(u => u.role === 'ADMIN' || u.workspaceId === 'BGH' || u.workspaceId === 'TUYEN_SINH_PR').map(u => u.id) }, actor); }
-export async function notifyAdmissionPaymentUpdated(payment: any, actor?: Actor | null) { const users = await db.select().from(schema.users); return createNotification({ title: 'Thanh toán tuyển sinh cập nhật', message: `${payment.code || payment.id} · ${payment.status || 'updated'}`, module: 'ADMISSIONS', type: 'ADMISSION_PAYMENT_UPDATED', severity: 'SUCCESS', targetUrl: '/admissions?view=payments', sourceType: 'PAYMENT', sourceId: payment.id, recipientUserIds: users.filter(u => u.role === 'ADMIN' || u.workspaceId === 'BGH' || u.workspaceId === 'TUYEN_SINH_PR').map(u => u.id) }, actor); }
+export async function notifyApprovalRequested(task: any, actor?: Actor | null) { const managers = await db.select().from(schema.users); return createNotification({ title: 'Có nhiệm vụ chờ duyệt', message: task.title || 'Quy trình cần duyệt', module: 'APPROVALS', type: 'APPROVAL_REQUESTED', severity: 'WARNING', targetUrl: '/approvals', sourceType: 'TASK', sourceId: task.id, recipientUserIds: managers.filter(u => u.role === RoleCode.ADMIN || u.workspaceId === WorkspaceCode.BGH || (u.role === RoleCode.MANAGER && u.workspaceId === task.workspaceId)).map(u => u.id) }, actor); }
+export async function notifyAdmissionLeadAssigned(lead: any, actor?: Actor | null) { const users = await db.select().from(schema.users); return createNotification({ title: 'Lead tuyển sinh mới', message: lead.fullName || lead.studentName || lead.leadCode || 'Lead cần xử lý', module: 'ADMISSIONS', type: 'ADMISSION_LEAD_ASSIGNED', severity: 'INFO', targetUrl: '/admissions', sourceType: 'LEAD', sourceId: lead.id, recipientUserIds: users.filter(u => u.role === RoleCode.ADMIN || u.workspaceId === WorkspaceCode.BGH || u.workspaceId === WorkspaceCode.TUYEN_SINH_PR).map(u => u.id) }, actor); }
+export async function notifyAdmissionPaymentUpdated(payment: any, actor?: Actor | null) { const users = await db.select().from(schema.users); return createNotification({ title: 'Thanh toán tuyển sinh cập nhật', message: `${payment.code || payment.id} · ${payment.status || 'updated'}`, module: 'ADMISSIONS', type: 'ADMISSION_PAYMENT_UPDATED', severity: 'SUCCESS', targetUrl: '/admissions?view=payments', sourceType: 'PAYMENT', sourceId: payment.id, recipientUserIds: users.filter(u => u.role === RoleCode.ADMIN || u.workspaceId === WorkspaceCode.BGH || u.workspaceId === WorkspaceCode.TUYEN_SINH_PR).map(u => u.id) }, actor); }

@@ -3,6 +3,8 @@
 import { db, schema } from "@/src/libs/server/db";
 import { eq } from "drizzle-orm";
 import { studentService } from "@/src/libs/server/student-service";
+import { revalidatePath } from "next/cache";
+import { getCurrentActor, isAdminTruong, isTruongPhong, writeAuditLog } from "@/src/libs/server/auth-helper";
 
 const STUDENT_SEED = [
   { id: "student_seed_001", code: "HS2025001", name: "Nguyễn Minh Anh", className: "6A1", gpa: 8.7, rank: "3/42", gender: "Nữ" },
@@ -20,6 +22,39 @@ const STUDENT_SEED = [
 ];
 
 const SUBJECTS = ["Toán", "Ngữ văn", "Tiếng Anh", "Khoa học", "Lịch sử", "Tin học"];
+
+function canManageStudents(actor: Awaited<ReturnType<typeof getCurrentActor>>) {
+  return !!actor && (isAdminTruong(actor) || isTruongPhong(actor) || actor.workspaceId === 'BGH');
+}
+
+function studentsChanged() {
+  revalidatePath('/[locale]/students', 'layout');
+  revalidatePath('/[locale]/classes', 'layout');
+}
+
+function buildStudentInputPayload(input: any) {
+  return {
+    gpa: Number(input.gpa) || 0,
+    rank: input.rank || 'N/A',
+    dob: input.dob || '',
+    gender: input.gender || '',
+    location: input.location || '',
+    admissionDate: input.admissionDate || new Date().toISOString().slice(0, 10),
+    status: input.status || 'Đang học',
+    attendanceRate: input.attendanceRate || '0%',
+    attendanceStat: input.attendanceStat || { present: 0, excused: 0, unexcused: 0, late: 0 },
+    conduct: input.conduct || { status: 'Tốt', advantages: [], notes: [] },
+    health: input.health || { status: 'Tốt', height: '', weight: '', bloodType: '', warning: '' },
+    achievements: input.achievements || [],
+    parents: [{
+      name: input.parentName || '',
+      relation: 'Cha/Mẹ',
+      phone: input.parentPhone || '',
+      email: input.parentEmail || '',
+    }].filter(parent => parent.name || parent.phone || parent.email),
+    timeline: input.timeline || [],
+  };
+}
 
 function buildStudentPayload(student: (typeof STUDENT_SEED)[number], index: number) {
   const attendancePresent = 172 + (index % 8);
@@ -163,5 +198,106 @@ export async function getInitialData() {
   } catch (e) {
     console.error("Failed to fetch students data:", e);
     return { students: [], grades: [], tuitionFees: [] };
+  }
+}
+
+export async function createStudent(input: any) {
+  try {
+    const actor = await getCurrentActor();
+    if (!canManageStudents(actor)) return { success: false, error: 'Unauthorized' };
+    const name = String(input.name || '').trim();
+    if (!name) return { success: false, error: 'Họ tên học sinh bắt buộc.' };
+    const id = `student_${Date.now()}`;
+    const code = String(input.code || `HS${Date.now().toString().slice(-7)}`).trim();
+    const payload = buildStudentInputPayload(input);
+    const [student] = await db.insert(schema.studentDirectory).values({
+      id,
+      code,
+      name,
+      className: input.className || null,
+      enrollmentStatus: input.enrollmentStatus || 'active',
+      parentName: input.parentName || null,
+      parentPhone: input.parentPhone || null,
+      parentEmail: input.parentEmail || null,
+      payload,
+    }).returning();
+    await writeAuditLog(actor?.id || null, 'create_student', 'student', id, { after: student, module: 'students' });
+    studentsChanged();
+    return { success: true, data: student };
+  } catch (e: any) {
+    console.error('Create student failed:', e);
+    return { success: false, error: e.message };
+  }
+}
+
+export async function updateStudent(id: string, input: any) {
+  try {
+    const actor = await getCurrentActor();
+    if (!canManageStudents(actor)) return { success: false, error: 'Unauthorized' };
+    const [before] = await db.select().from(schema.studentDirectory).where(eq(schema.studentDirectory.id, id)).limit(1);
+    if (!before) return { success: false, error: 'Không tìm thấy học sinh.' };
+    const payload = { ...((before.payload as any) || {}), ...buildStudentInputPayload(input) };
+    const [student] = await db.update(schema.studentDirectory).set({
+      code: input.code ?? before.code,
+      name: input.name ?? before.name,
+      className: input.className ?? before.className,
+      enrollmentStatus: input.enrollmentStatus ?? before.enrollmentStatus,
+      parentName: input.parentName ?? before.parentName,
+      parentPhone: input.parentPhone ?? before.parentPhone,
+      parentEmail: input.parentEmail ?? before.parentEmail,
+      payload,
+      updatedAt: new Date(),
+    }).where(eq(schema.studentDirectory.id, id)).returning();
+    await writeAuditLog(actor?.id || null, 'update_student', 'student', id, { before, after: student, module: 'students' });
+    studentsChanged();
+    return { success: true, data: student };
+  } catch (e: any) {
+    console.error('Update student failed:', e);
+    return { success: false, error: e.message };
+  }
+}
+
+export async function deleteStudent(id: string) {
+  try {
+    const actor = await getCurrentActor();
+    if (!canManageStudents(actor)) return { success: false, error: 'Unauthorized' };
+    const [deleted] = await db.delete(schema.studentDirectory).where(eq(schema.studentDirectory.id, id)).returning();
+    if (deleted) {
+      await db.delete(schema.sisGrades).where(eq(schema.sisGrades.studentId, id));
+      await db.delete(schema.tuitionFees).where(eq(schema.tuitionFees.studentId, id));
+    }
+    await writeAuditLog(actor?.id || null, 'delete_student', 'student', id, { before: deleted, module: 'students' });
+    studentsChanged();
+    return { success: true };
+  } catch (e: any) {
+    console.error('Delete student failed:', e);
+    return { success: false, error: e.message };
+  }
+}
+
+export async function addStudentTimeline(id: string, input: { type: 'notification' | 'message' | 'note'; text: string }) {
+  try {
+    const actor = await getCurrentActor();
+    if (!canManageStudents(actor)) return { success: false, error: 'Unauthorized' };
+    const text = input.text.trim();
+    if (!text) return { success: false, error: 'Nội dung bắt buộc.' };
+    const [student] = await db.select().from(schema.studentDirectory).where(eq(schema.studentDirectory.id, id)).limit(1);
+    if (!student) return { success: false, error: 'Không tìm thấy học sinh.' };
+    const payload = (student.payload || {}) as Record<string, any>;
+    const item = {
+      date: new Date().toISOString(),
+      title: input.type === 'notification' ? 'Đã gửi thông báo' : input.type === 'message' ? 'Tin nhắn trao đổi' : 'Ghi chú trao đổi',
+      desc: text,
+      user: actor?.name || 'Hệ thống',
+      type: input.type,
+    };
+    const nextPayload = { ...payload, timeline: [item, ...(payload.timeline || [])] };
+    const [updated] = await db.update(schema.studentDirectory).set({ payload: nextPayload, updatedAt: new Date() }).where(eq(schema.studentDirectory.id, id)).returning();
+    await writeAuditLog(actor?.id || null, 'add_student_timeline', 'student', id, { after: item, module: 'students' });
+    studentsChanged();
+    return { success: true, data: updated, timeline: item };
+  } catch (e: any) {
+    console.error('Add student timeline failed:', e);
+    return { success: false, error: e.message };
   }
 }

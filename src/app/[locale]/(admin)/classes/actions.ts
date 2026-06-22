@@ -3,6 +3,18 @@
 import { classService } from "@/src/libs/server/class-service";
 import { studentService } from "@/src/libs/server/student-service";
 import { db, schema } from "@/src/libs/server/db";
+import { eq } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
+import { getCurrentActor, isAdminTruong, isTruongPhong, writeAuditLog } from "@/src/libs/server/auth-helper";
+
+function canManageClasses(actor: Awaited<ReturnType<typeof getCurrentActor>>) {
+  return !!actor && (isAdminTruong(actor) || isTruongPhong(actor) || actor.workspaceId === 'BGH');
+}
+
+function classesChanged() {
+  revalidatePath('/[locale]/classes', 'layout');
+  revalidatePath('/[locale]/students', 'layout');
+}
 
 async function seedClassesIfEmpty() {
   const classes = [
@@ -68,5 +80,84 @@ export async function getInitialData() {
   } catch (e) {
     console.error("Failed to fetch classes data:", e);
     return { classes: [], students: [] };
+  }
+}
+
+export async function createClass(input: any) {
+  try {
+    const actor = await getCurrentActor();
+    if (!canManageClasses(actor)) return { success: false, error: 'Unauthorized' };
+    const name = String(input.name || '').trim();
+    if (!name) return { success: false, error: 'Tên lớp bắt buộc.' };
+    const [row] = await db.insert(schema.classes).values({
+      id: `class_${Date.now()}`,
+      name,
+      code: input.code || name,
+      gradeLevel: input.gradeLevel || String(name.match(/\d+/)?.[0] || ''),
+      capacity: Number(input.capacity) || null,
+      status: input.status || 'ACTIVE',
+      payload: input.payload || {},
+    }).returning();
+    await writeAuditLog(actor?.id || null, 'create_class', 'class', row.id, { after: row, module: 'classes' });
+    classesChanged();
+    return { success: true, data: row };
+  } catch (e: any) {
+    return { success: false, error: e.message };
+  }
+}
+
+export async function updateClass(id: string, input: any) {
+  try {
+    const actor = await getCurrentActor();
+    if (!canManageClasses(actor)) return { success: false, error: 'Unauthorized' };
+    const [before] = await db.select().from(schema.classes).where(eq(schema.classes.id, id)).limit(1);
+    if (!before) return { success: false, error: 'Không tìm thấy lớp.' };
+    const [row] = await db.update(schema.classes).set({
+      name: input.name ?? before.name,
+      code: input.code ?? before.code,
+      gradeLevel: input.gradeLevel ?? before.gradeLevel,
+      capacity: Number(input.capacity) || before.capacity,
+      status: input.status ?? before.status,
+      payload: { ...((before.payload as any) || {}), ...(input.payload || {}) },
+      updatedAt: new Date(),
+    }).where(eq(schema.classes.id, id)).returning();
+    if (before.name !== row.name) {
+      await db.update(schema.studentDirectory).set({ className: row.name, updatedAt: new Date() }).where(eq(schema.studentDirectory.className, before.name));
+    }
+    await writeAuditLog(actor?.id || null, 'update_class', 'class', id, { before, after: row, module: 'classes' });
+    classesChanged();
+    return { success: true, data: row };
+  } catch (e: any) {
+    return { success: false, error: e.message };
+  }
+}
+
+export async function deleteClass(id: string) {
+  try {
+    const actor = await getCurrentActor();
+    if (!canManageClasses(actor)) return { success: false, error: 'Unauthorized' };
+    const [before] = await db.select().from(schema.classes).where(eq(schema.classes.id, id)).limit(1);
+    if (!before) return { success: false, error: 'Không tìm thấy lớp.' };
+    const count = (await db.select().from(schema.studentDirectory).where(eq(schema.studentDirectory.className, before.name))).length;
+    if (count > 0) return { success: false, error: 'Không thể xóa lớp còn học sinh. Chuyển học sinh trước.' };
+    await db.delete(schema.classes).where(eq(schema.classes.id, id));
+    await writeAuditLog(actor?.id || null, 'delete_class', 'class', id, { before, module: 'classes' });
+    classesChanged();
+    return { success: true };
+  } catch (e: any) {
+    return { success: false, error: e.message };
+  }
+}
+
+export async function moveStudentToClass(studentId: string, className: string) {
+  try {
+    const actor = await getCurrentActor();
+    if (!canManageClasses(actor)) return { success: false, error: 'Unauthorized' };
+    const [row] = await db.update(schema.studentDirectory).set({ className, updatedAt: new Date() }).where(eq(schema.studentDirectory.id, studentId)).returning();
+    await writeAuditLog(actor?.id || null, 'move_student_class', 'student', studentId, { after: { className }, module: 'classes' });
+    classesChanged();
+    return { success: true, data: row };
+  } catch (e: any) {
+    return { success: false, error: e.message };
   }
 }

@@ -2,6 +2,7 @@ import { and, desc, eq, inArray, or } from 'drizzle-orm';
 import { db, schema } from './db';
 import { getCurrentActor, writeAuditLog, type Actor } from './auth-helper';
 import { createNotification, type NotificationModule } from './notification-center';
+import { RoleCode, WorkspaceCode } from '../../utils/constants';
 
 export type ApprovalStatus = 'DRAFT' | 'PENDING' | 'APPROVED' | 'REJECTED' | 'NEEDS_REVISION' | 'CANCELLED';
 export type ApprovalAction = 'SUBMITTED' | 'APPROVED' | 'REJECTED' | 'NEEDS_REVISION' | 'CANCELLED' | 'COMMENTED';
@@ -37,7 +38,7 @@ function id(prefix: string) {
 }
 
 function isAdmin(actor: Actor) {
-  return actor.role === 'ADMIN' || actor.workspaceId === 'BGH';
+  return actor.role === RoleCode.ADMIN || actor.workspaceId === WorkspaceCode.BGH;
 }
 
 function typeToNotification(action: ApprovalAction) {
@@ -57,7 +58,7 @@ function statusMessage(status: ApprovalStatus) {
   }
 }
 
-function canActOnApproval(actor: Actor, request: any) {
+export function canActOnApproval(actor: Actor, request: any) {
   if (isAdmin(actor)) return true;
   if (request.approverId && request.approverId === actor.id) return true;
   if (request.approverRole && request.approverRole === actor.role) return true;
@@ -95,7 +96,7 @@ async function notifyApproval(request: any, action: ApprovalAction, actor: Actor
   if (request.requesterId) recipients.add(request.requesterId);
   if (request.approverId) recipients.add(request.approverId);
   for (const user of users) {
-    if (user.role === 'ADMIN' || user.workspaceId === 'BGH') recipients.add(user.id);
+    if (user.role === RoleCode.ADMIN || user.workspaceId === WorkspaceCode.BGH) recipients.add(user.id);
     if (request.approverWorkspaceId && user.workspaceId === request.approverWorkspaceId) recipients.add(user.id);
     if (request.approverDepartmentId && user.departmentId === request.approverDepartmentId) recipients.add(user.id);
     if (request.approverRole && user.role === request.approverRole) recipients.add(user.id);
