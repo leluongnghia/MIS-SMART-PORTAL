@@ -147,11 +147,11 @@ export default function AdmissionsLeadDetail({ lead, onBack }: { lead?: Lead; on
               <div className="flex shrink-0 flex-col gap-2">
                 <div className="flex items-center gap-1.5">
                   {[
-                    { icon: Phone, label: 'Gọi điện', color: 'bg-green-50 text-green-600 border-green-100 hover:bg-green-100' },
-                    { icon: Mail, label: 'Email', color: 'bg-blue-50 text-blue-600 border-blue-100 hover:bg-blue-100' },
-                    { icon: MessageSquare, label: 'Zalo', color: 'bg-cyan-50 text-cyan-600 border-cyan-100 hover:bg-cyan-100' },
+                    { icon: Phone, label: 'Gọi điện', color: 'bg-green-50 text-green-600 border-green-100 hover:bg-green-100', onClick: () => window.open(`tel:${parentPhone}`, '_self') },
+                    { icon: Mail, label: 'Email', color: 'bg-blue-50 text-blue-600 border-blue-100 hover:bg-blue-100', onClick: () => window.open(`mailto:${parentEmail}`, '_self') },
+                    { icon: MessageSquare, label: 'Zalo', color: 'bg-cyan-50 text-cyan-600 border-cyan-100 hover:bg-cyan-100', onClick: () => window.open(`https://zalo.me/${parentPhone.replace(/\\D/g, '')}`, '_blank') },
                   ].map(a => (
-                    <button key={a.label} type="button"
+                    <button key={a.label} type="button" onClick={a.onClick}
                       className={`flex flex-col items-center gap-1 rounded-xl border px-3 py-2 text-[10px] font-bold transition ${a.color}`}>
                       <a.icon className="h-4 w-4" />
                       {a.label}

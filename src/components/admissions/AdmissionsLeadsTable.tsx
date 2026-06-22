@@ -9,9 +9,20 @@ import {
   ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, LayoutGrid, List, Settings2,
   X, Phone, Mail, MapPin, ChevronDown, AlertCircle, CheckCircle2
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { createLead, getAllLeadsForExport, updateLead, type LeadStatus } from '@/src/app/[locale]/(admin)/leads/actions';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type TrangThai = 'Mới' | 'Đang tư vấn' | 'Đăng ký test' | 'Nộp hồ sơ' | 'Giữ chỗ' | 'Nhập học' | 'Không tiếp tục';
+const MAP_STATUS_TO_DB: Record<TrangThai, LeadStatus> = {
+  'Mới': 'received',
+  'Đang tư vấn': 'consulting',
+  'Đăng ký test': 'test_scheduled',
+  'Nộp hồ sơ': 'docs_submitted',
+  'Giữ chỗ': 'seat_reserved',
+  'Nhập học': 'enrolled',
+  'Không tiếp tục': 'cancelled',
+};
 
 export interface Lead {
   id: string;
@@ -189,15 +200,15 @@ function SelectField({ label, field, value, onChange, error, options, required =
   );
 }
 
-// ─── Modal Thêm Lead ────────────────────────────────────────────────────
-export function ModalThemLead({ onDong, onLuu, chuongTrinhList = DS_CHUONG_TRINH }: { onDong: () => void; onLuu: (data: FormThem) => void; chuongTrinhList?: string[] }) {
+// ─── Modal Thêm/Sửa Lead ────────────────────────────────────────────────────
+export function ModalThemLead({ onDong, onLuu, chuongTrinhList = DS_CHUONG_TRINH, leadBanDau }: { onDong: () => void; onLuu: (data: FormThem, isEdit?: boolean) => void; chuongTrinhList?: string[]; leadBanDau?: any }) {
   const [buoc, setBuoc] = useState<1 | 2>(1);
   const [da_luu, setDaLuu] = useState(false);
   const [form, setForm] = useState<FormThem>({
-    hoTenHocSinh: '', ngaySinh: '', gioiTinh: 'Nam', truongHienTai: '',
-    khoi: '', chuongTrinh: '', hoTenPhuHuynh: '', sdtPhuHuynh: '',
-    emailPhuHuynh: '', diaChiPhuHuynh: '', nguonLead: '', chiendich: '',
-    tvv: DS_TVV[1], ghiChu: '',
+    hoTenHocSinh: leadBanDau?.hoTen || '', ngaySinh: '', gioiTinh: 'Nam', truongHienTai: '',
+    khoi: leadBanDau?.khoi || '', chuongTrinh: '', hoTenPhuHuynh: leadBanDau?.hoTenPhuHuynh || '', sdtPhuHuynh: leadBanDau?.sdt || '',
+    emailPhuHuynh: leadBanDau?.email || '', diaChiPhuHuynh: '', nguonLead: leadBanDau?.nguonLead || '', chiendich: '',
+    tvv: leadBanDau?.tvv !== 'Chưa phân công' ? leadBanDau?.tvv : DS_TVV[1], ghiChu: leadBanDau?.ghiChu || '',
   });
   const [loi, setLoi] = useState<Partial<FormThem>>({});
 
@@ -230,7 +241,7 @@ export function ModalThemLead({ onDong, onLuu, chuongTrinhList = DS_CHUONG_TRINH
   const handleLuu = () => {
     if (!kiemTraBuoc2()) return;
     setDaLuu(true);
-    setTimeout(() => { onLuu(form); onDong(); }, 1200);
+    setTimeout(() => { onLuu(form, !!leadBanDau); onDong(); }, 1200);
   };
 
   if (da_luu) {
@@ -240,8 +251,8 @@ export function ModalThemLead({ onDong, onLuu, chuongTrinhList = DS_CHUONG_TRINH
           <CheckCircle2 className="h-8 w-8 text-green-600" />
         </div>
         <div className="text-center">
-          <p className="text-lg font-black text-slate-900">Tạo lead thành công!</p>
-          <p className="mt-1 text-sm text-slate-500">Lead của <strong>{form.hoTenHocSinh}</strong> đã được thêm vào hệ thống.</p>
+          <p className="text-lg font-black text-slate-900">{leadBanDau ? 'Cập nhật thành công!' : 'Tạo lead thành công!'}</p>
+          <p className="mt-1 text-sm text-slate-500">Lead của <strong>{form.hoTenHocSinh}</strong> đã được {leadBanDau ? 'cập nhật' : 'thêm vào'} hệ thống.</p>
         </div>
       </div>
     );
@@ -251,7 +262,7 @@ export function ModalThemLead({ onDong, onLuu, chuongTrinhList = DS_CHUONG_TRINH
     <div className="flex h-full flex-col">
       <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
         <div>
-          <h2 className="text-lg font-black text-slate-900">Thêm lead mới</h2>
+          <h2 className="text-lg font-black text-slate-900">{leadBanDau ? 'Sửa thông tin lead' : 'Thêm lead mới'}</h2>
           <p className="text-xs font-semibold text-slate-500">Nhập thông tin học sinh và phụ huynh</p>
         </div>
         <button type="button" onClick={onDong}
@@ -425,13 +436,13 @@ export function ModalThemLead({ onDong, onLuu, chuongTrinhList = DS_CHUONG_TRINH
             </>
           ) : (
             <>
-              <button type="button" onClick={() => { if (kiemTraBuoc2()) { onLuu(form); onDong(); } }}
+              <button type="button" onClick={() => { if (kiemTraBuoc2()) { onLuu(form, !!leadBanDau); onDong(); } }}
                 className="flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 px-4 text-xs font-bold text-slate-700 hover:bg-slate-50 transition">
-                Lưu & Thêm mới
+                {leadBanDau ? 'Lưu nhanh' : 'Lưu & Thêm mới'}
               </button>
               <button type="button" onClick={handleLuu}
                 className="flex h-9 items-center gap-1.5 rounded-xl bg-blue-600 px-5 text-xs font-bold text-white hover:bg-blue-700 transition shadow-sm">
-                ✓ Lưu lead
+                ✓ {leadBanDau ? 'Lưu thay đổi' : 'Lưu lead'}
               </button>
             </>
           )}
@@ -443,21 +454,25 @@ export function ModalThemLead({ onDong, onLuu, chuongTrinhList = DS_CHUONG_TRINH
 
 // ─── Component chính ─────────────────────────────────────────────────────────
 interface AdmissionsLeadsTableProps {
-  leads: Lead[];
-  setLeads: React.Dispatch<React.SetStateAction<Lead[]>>;
+  initialData?: any;
+  users?: { id: string; name: string }[];
+  filters?: any;
   chuongTrinhList?: string[];
   onViewDetail?: (leadId: string) => void;
 }
 
-export default function AdmissionsLeadsTable({ leads, setLeads, chuongTrinhList, onViewDetail }: AdmissionsLeadsTableProps) {
-  const [timKiem, setTimKiem] = useState('');
-  const [nguon, setNguon] = useState(DS_NGUON[0]);
-  const [tvv, setTvv] = useState(DS_TVV[0]);
-  const [khoi, setKhoi] = useState(DS_KHOI[0]);
-  const [trangThai, setTrangThai] = useState(DS_TRANG_THAI[0]);
+export default function AdmissionsLeadsTable({ initialData, users, filters, chuongTrinhList, onViewDetail }: AdmissionsLeadsTableProps) {
+  const router = useRouter();
+  const leads = initialData?.data || [];
+  
+  const [timKiem, setTimKiem] = useState(filters?.search || '');
+  const [nguon, setNguon] = useState(filters?.source || 'Tất cả nguồn');
+  const [tvv, setTvv] = useState('Tất cả tư vấn viên');
+  const [khoi, setKhoi] = useState(filters?.grade || 'Tất cả khối');
+  const [trangThai, setTrangThai] = useState(filters?.status || 'Tất cả trạng thái');
   const [daChon, setDaChon] = useState<Set<string>>(new Set());
-  const [trang, setTrang] = useState(1);
   const [hienModal, setHienModal] = useState(false);
+  const [leadDangSua, setLeadDangSua] = useState<any>(null);
   const [toast, setToast] = useState('');
 
   // New states for Grid/List layout, Advanced filters, and Rows limit
@@ -466,45 +481,58 @@ export default function AdmissionsLeadsTable({ leads, setLeads, chuongTrinhList,
   const [diemLeadNhoNhat, setDiemLeadNhoNhat] = useState(0);
   const [limitPerPage, setLimitPerPage] = useState(10);
 
-  // ─── Lọc dữ liệu ─────────────────────────────────────────────────────────────
-  const leadsDaLoc = React.useMemo(() => {
-    return leads.filter(lead => {
-      const matchesSearch = 
-        lead.hoTen.toLowerCase().includes(timKiem.toLowerCase()) ||
-        lead.sdt.replace(/\s/g, '').includes(timKiem.replace(/\s/g, '')) ||
-        lead.email.toLowerCase().includes(timKiem.toLowerCase()) ||
-        lead.id.toLowerCase().includes(timKiem.toLowerCase());
+  const tongTrang = initialData?.totalPages || 1;
+  const trang = initialData?.currentPage || 1;
+  const totalItems = initialData?.totalItems || 0;
 
-      const matchesNguon = nguon === 'Tất cả nguồn' || lead.nguonLead === nguon;
-      const matchesTvv = tvv === 'Tất cả tư vấn viên' || lead.tvv === tvv;
-      const matchesKhoi = khoi === 'Tất cả khối' || lead.khoi === khoi;
-      const matchesTrangThai = trangThai === 'Tất cả trạng thái' || lead.trangThai === trangThai;
+  // Sync to URL
+  const handleSearchAndFilters = (newFilters: {
+    search?: string;
+    status?: string;
+    source?: string;
+    grade?: string;
+    page?: number;
+  }) => {
+    const query = new URLSearchParams();
+    const s = newFilters.search !== undefined ? newFilters.search : timKiem;
+    const st = newFilters.status !== undefined ? newFilters.status : trangThai;
+    const src = newFilters.source !== undefined ? newFilters.source : nguon;
+    const gr = newFilters.grade !== undefined ? newFilters.grade : khoi;
+    const p = newFilters.page !== undefined ? newFilters.page : trang;
 
-      const matchesDiem = lead.diemLead >= diemLeadNhoNhat;
+    if (s) query.set('search', s);
+    if (st && st !== 'Tất cả trạng thái') query.set('status', st);
+    if (src && src !== 'Tất cả nguồn') query.set('source', src);
+    if (gr && gr !== 'Tất cả khối') query.set('grade', gr);
+    if (p && p > 1) query.set('page', String(p));
+    // We ignore assignedUserId locally for now as mock filter
 
-      return matchesSearch && matchesNguon && matchesTvv && matchesKhoi && matchesTrangThai && matchesDiem;
-    });
-  }, [leads, timKiem, nguon, tvv, khoi, trangThai, diemLeadNhoNhat]);
+    router.push(`?${query.toString()}`);
+  };
 
-  const tongTrang = Math.ceil(leadsDaLoc.length / limitPerPage) || 1;
-
-  const leadsHienThi = React.useMemo(() => {
-    const start = (trang - 1) * limitPerPage;
-    return leadsDaLoc.slice(start, start + limitPerPage);
-  }, [leadsDaLoc, trang, limitPerPage]);
-
-  React.useEffect(() => {
-    setTrang(1);
-  }, [timKiem, nguon, tvv, khoi, trangThai, diemLeadNhoNhat, limitPerPage]);
+  const leadsHienThi = leads.map((l: any) => ({
+    id: l.id,
+    hoTen: l.fullName,
+    sdt: l.phone,
+    email: l.email || '—',
+    nguonLead: l.source,
+    khoi: l.grade,
+    tvv: users?.find((u: any) => u.id === l.assignedUserId)?.name || 'Chưa phân công',
+    tvvId: l.assignedUserId, // Added for edit form
+    tvvAvatar: ((users?.find((u: any) => u.id === l.assignedUserId)?.name) || 'C P').split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase(),
+    trangThai: Object.keys(MAP_STATUS_TO_DB).find(k => MAP_STATUS_TO_DB[k as TrangThai] === l.status) as TrangThai || 'Mới',
+    diemLead: 50,
+    ngayTao: new Date(l.createdAt).toLocaleDateString('vi-VN', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }),
+    ghiChu: l.notes,
+  })).filter((l: any) => l.diemLead >= diemLeadNhoNhat);
+  const chonTatCa = () => {
+    if (daChon.size === leadsHienThi.length) setDaChon(new Set());
+    else setDaChon(new Set(leadsHienThi.map((l: any) => l.id)));
+  };
 
   const showToast = (msg: string) => {
     setToast(msg);
     setTimeout(() => setToast(''), 2500);
-  };
-
-  const chonTatCa = () => {
-    if (daChon.size === leadsDaLoc.length) setDaChon(new Set());
-    else setDaChon(new Set(leadsDaLoc.map(l => l.id)));
   };
 
   const chonMot = (id: string) => {
@@ -513,21 +541,202 @@ export default function AdmissionsLeadsTable({ leads, setLeads, chuongTrinhList,
     setDaChon(next);
   };
 
-  const handleLuuLead = (data: FormThem) => {
-    const leadMoi: Lead = {
-      id: `l${Date.now()}`,
-      hoTen: data.hoTenHocSinh,
-      sdt: data.sdtPhuHuynh,
-      email: data.emailPhuHuynh || '—',
-      nguonLead: data.nguonLead,
-      khoi: data.khoi,
-      tvv: data.tvv,
-      tvvAvatar: data.tvv.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase(),
-      trangThai: 'Mới',
-      diemLead: 50,
-      ngayTao: new Date().toLocaleDateString('vi-VN', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }),
+  const handleLuuLead = async (data: FormThem, isEdit?: boolean) => {
+    try {
+      const tvvId = users?.find(u => u.name === data.tvv)?.id || data.tvv;
+      
+      if (isEdit && leadDangSua) {
+        const res = await updateLead(leadDangSua.id, {
+          fullName: data.hoTenHocSinh,
+          parentName: data.hoTenPhuHuynh,
+          phone: data.sdtPhuHuynh,
+          email: data.emailPhuHuynh,
+          source: data.nguonLead,
+          grade: data.khoi,
+          notes: data.ghiChu,
+          assignedUserId: tvvId,
+        });
+        if (res.success) {
+          showToast('Cập nhật lead thành công!');
+          router.refresh();
+        }
+      } else {
+        const res = await createLead({
+          fullName: data.hoTenHocSinh,
+          parentName: data.hoTenPhuHuynh,
+          phone: data.sdtPhuHuynh,
+          email: data.emailPhuHuynh,
+          source: data.nguonLead,
+          grade: data.khoi,
+          status: 'received',
+          notes: data.ghiChu,
+          assignedUserId: tvvId,
+        });
+        if (res.success) {
+          showToast('Tạo lead thành công!');
+          router.refresh();
+        }
+      }
+    } catch (err) {
+      showToast('Có lỗi xảy ra khi lưu lead!');
+      console.error(err);
+    }
+  };
+
+  const [isExporting, setIsExporting] = useState(false);
+  const handleExportCSV = async () => {
+    setIsExporting(true);
+    try {
+      const allLeads = await getAllLeadsForExport({
+        search: timKiem || undefined,
+        status: trangThai !== 'Tất cả trạng thái' ? trangThai : undefined,
+        source: nguon !== 'Tất cả nguồn' ? nguon : undefined,
+        grade: khoi !== 'Tất cả khối' ? khoi : undefined,
+      });
+      if (!allLeads.length) {
+        showToast('Không có dữ liệu để xuất');
+        return;
+      }
+
+      const headers = ['Mã Lead', 'Tên Học Sinh', 'Lớp Đăng Ký', 'Nguồn', 'Số Điện Thoại', 'Họ Tên Phụ Huynh', 'Email', 'Trạng Thái', 'Ghi Chú'];
+      const rows = allLeads.map((l: any) => [
+        l.leadCode,
+        l.fullName,
+        l.grade,
+        l.source,
+        l.phone,
+        l.parentName || '',
+        l.email || '',
+        l.status,
+        l.notes || '',
+      ]);
+
+      let csvContent = '\uFEFF'; // UTF-8 BOM
+      csvContent += headers.map(h => `"${h.replace(/"/g, '""')}"`).join(',') + '\n';
+      rows.forEach((row: any[]) => {
+        csvContent += row.map(val => `"${String(val || '').replace(/"/g, '""')}"`).join(',') + '\n';
+      });
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', `MIS_CRM_Leads_Tuyensinh_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showToast(`Đã xuất ${allLeads.length} lead thành công`);
+    } catch (err) {
+      showToast('Xuất thất bại, vui lòng thử lại');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleImportCSV = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const text = event.target?.result as string;
+      if (!text) return;
+
+      const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+      if (lines.length <= 1) {
+        alert('Tệp CSV trống hoặc không có dữ liệu!');
+        return;
+      }
+
+      const parseCsvLine = (line: string) => {
+        const result = [];
+        let current = '';
+        let inQuotes = false;
+        for (let i = 0; i < line.length; i++) {
+          const char = line[i];
+          if (char === '"') {
+            inQuotes = !inQuotes;
+          } else if (char === ',' && !inQuotes) {
+            result.push(current.replace(/^"|"$/g, '').trim());
+            current = '';
+          } else {
+            current += char;
+          }
+        }
+        result.push(current.replace(/^"|"$/g, '').trim());
+        return result;
+      };
+
+      const headers = lines[0].replace(/^\uFEFF/, '').split(',').map(h => h.replace(/^"|"$/g, '').trim());
+      let count = 0;
+      let successCount = 0;
+
+      for (let i = 1; i < lines.length; i++) {
+        const values = parseCsvLine(lines[i]);
+        if (values.length < 3) continue;
+
+        const rowData: any = {};
+        headers.forEach((header, idx) => {
+          rowData[header] = values[idx] || '';
+        });
+
+        const fullNameVal = rowData['Tên Học Sinh'] || rowData['fullName'] || '';
+        const phoneVal = rowData['Số Điện Thoại Phụ Huynh'] || rowData['phone'] || '';
+        const gradeVal = rowData['Lớp Đăng Ký'] || rowData['grade'] || 'Lớp 10';
+        const sourceVal = rowData['Nguồn'] || rowData['source'] || 'Website';
+        const parentNameVal = rowData['Họ Tên Phụ Huynh'] || rowData['parentName'] || '';
+        const emailVal = rowData['Email Phụ Huynh'] || rowData['email'] || '';
+        const notesVal = rowData['Ghi Chú'] || rowData['notes'] || '';
+
+        if (!fullNameVal || !phoneVal) continue;
+
+        count++;
+        try {
+          const res = await createLead({
+            fullName: fullNameVal,
+            parentName: parentNameVal,
+            phone: phoneVal,
+            email: emailVal,
+            source: sourceVal,
+            grade: gradeVal,
+            status: 'received',
+            notes: notesVal,
+          });
+          if (res.success) {
+            successCount++;
+          }
+        } catch (err) {
+          console.error('Error importing row:', err);
+        }
+      }
+
+      alert(`Đã xử lý: ${count} dòng. Nhập thành công: ${successCount} Leads tuyển sinh mới!`);
+      showToast(`Đã xử lý ${count} dòng, thêm được ${successCount} lead mới`);
+      router.refresh();
     };
-    setLeads(prev => [leadMoi, ...prev]);
+
+    reader.readAsText(file, 'utf-8');
+  };
+
+  const handleUpdateStatus = async (leadId: string, oldLead: any, newStatus: TrangThai) => {
+    try {
+      const dbStatus = MAP_STATUS_TO_DB[newStatus];
+      if (!dbStatus) return;
+      const res = await updateLead(leadId, {
+        fullName: oldLead.hoTen,
+        phone: oldLead.sdt,
+        source: oldLead.nguonLead,
+        grade: oldLead.khoi,
+        status: dbStatus,
+      });
+      if (res.success) {
+        showToast(`Cập nhật trạng thái thành ${newStatus}`);
+        router.refresh();
+      }
+    } catch (err) {
+      showToast('Cập nhật trạng thái thất bại');
+      console.error(err);
+    }
   };
 
   return (
@@ -546,17 +755,17 @@ export default function AdmissionsLeadsTable({ leads, setLeads, chuongTrinhList,
             <p className="mt-0.5 text-xs font-medium text-slate-500">Quản lý toàn bộ leads và thí sinh trong quy trình tuyển sinh.</p>
           </div>
           <div className="flex items-center gap-2">
-            <button type="button"
-              className="flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 shadow-xs hover:bg-slate-50 transition">
+            <label className="flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 shadow-xs hover:bg-slate-50 transition cursor-pointer">
               <Upload className="h-3.5 w-3.5" /> Nhập CSV
-            </button>
-            <button type="button"
-              className="flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 shadow-xs hover:bg-slate-50 transition">
-              <Download className="h-3.5 w-3.5" /> Xuất CSV
+              <input type="file" accept=".csv" onChange={handleImportCSV} className="hidden" />
+            </label>
+            <button type="button" disabled={isExporting} onClick={handleExportCSV}
+              className="flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 shadow-xs hover:bg-slate-50 transition disabled:opacity-50">
+              <Download className="h-3.5 w-3.5" /> {isExporting ? 'Đang xuất...' : 'Xuất CSV'}
             </button>
             <button
               type="button"
-              onClick={() => setHienModal(true)}
+              onClick={() => { setLeadDangSua(null); setHienModal(true); }}
               className="flex h-9 items-center gap-1.5 rounded-xl bg-blue-600 px-4 text-xs font-bold text-white shadow-sm hover:bg-blue-700 active:scale-95 transition-all">
               <Plus className="h-3.5 w-3.5" /> Thêm lead mới
             </button>
@@ -568,16 +777,20 @@ export default function AdmissionsLeadsTable({ leads, setLeads, chuongTrinhList,
           <div className="relative flex-1 min-w-[200px]">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <input
-              type="text" value={timKiem} onChange={e => setTimKiem(e.target.value)}
+              type="text" value={timKiem} 
+              onChange={e => {
+                setTimKiem(e.target.value);
+                handleSearchAndFilters({ search: e.target.value, page: 1 });
+              }}
               placeholder="Tìm theo tên, SĐT, email, mã lead..."
               className="h-9 w-full rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-4 text-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
             />
           </div>
           {[
-            { nhan: 'Nguồn', val: nguon, set: setNguon, opts: DS_NGUON },
+            { nhan: 'Nguồn', val: nguon, set: (v: string) => { setNguon(v); handleSearchAndFilters({ source: v, page: 1 }); }, opts: DS_NGUON },
             { nhan: 'TVV', val: tvv, set: setTvv, opts: DS_TVV },
-            { nhan: 'Khối', val: khoi, set: setKhoi, opts: DS_KHOI },
-            { nhan: 'Trạng thái', val: trangThai, set: setTrangThai, opts: DS_TRANG_THAI },
+            { nhan: 'Khối', val: khoi, set: (v: string) => { setKhoi(v); handleSearchAndFilters({ grade: v, page: 1 }); }, opts: DS_KHOI },
+            { nhan: 'Trạng thái', val: trangThai, set: (v: string) => { setTrangThai(v); handleSearchAndFilters({ status: MAP_STATUS_TO_DB[v as TrangThai] || 'all', page: 1 }); }, opts: DS_TRANG_THAI },
           ].map((f, i) => (
             <select key={i} value={f.val} onChange={e => f.set(e.target.value)}
               className="h-9 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100">
@@ -614,7 +827,7 @@ export default function AdmissionsLeadsTable({ leads, setLeads, chuongTrinhList,
           <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-2">
-                <input type="checkbox" checked={daChon.size === leadsDaLoc.length && leadsDaLoc.length > 0} onChange={chonTatCa}
+                <input type="checkbox" checked={daChon.size === leadsHienThi.length && leadsHienThi.length > 0} onChange={chonTatCa}
                   className="h-4 w-4 rounded border-slate-300 text-blue-600" />
                 <span className="text-xs font-semibold text-slate-500">Chọn tất cả</span>
               </div>
@@ -647,8 +860,8 @@ export default function AdmissionsLeadsTable({ leads, setLeads, chuongTrinhList,
 
           {viewType === 'grid' ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 bg-slate-50/50">
-              {leadsHienThi.map((lead) => {
-                const sc = MAU_TRANG_THAI[lead.trangThai];
+              {leadsHienThi.map((lead: any) => {
+                const sc = MAU_TRANG_THAI[lead.trangThai as TrangThai] || MAU_TRANG_THAI['Mới'];
                 return (
                   <div key={lead.id} className="relative bg-white rounded-xl border border-slate-100 p-4 shadow-sm hover:shadow-md hover:border-slate-200 transition duration-150 flex flex-col justify-between h-[210px]">
                     <div>
@@ -659,10 +872,16 @@ export default function AdmissionsLeadsTable({ leads, setLeads, chuongTrinhList,
                             className="h-4 w-4 rounded border-slate-300 text-blue-600" />
                           <span className="text-[10px] text-slate-400 font-bold uppercase">{lead.id}</span>
                         </div>
-                        <span className={`flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[10px] font-bold ${sc.bg} ${sc.text}`}>
-                          <span className={`h-1.5 w-1.5 rounded-full ${sc.dot}`} />
-                          {lead.trangThai}
-                        </span>
+                        <select
+                          value={lead.trangThai}
+                          onClick={(e) => e.stopPropagation()}
+                          onChange={(e) => handleUpdateStatus(lead.id, lead, e.target.value as TrangThai)}
+                          className={`flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[10px] font-bold outline-none cursor-pointer ${sc.bg} ${sc.text}`}
+                        >
+                          {TRANG_THAI_LIST.map(t => (
+                            <option key={t} value={t}>{t}</option>
+                          ))}
+                        </select>
                       </div>
 
                       {/* Lead Name */}
@@ -705,9 +924,9 @@ export default function AdmissionsLeadsTable({ leads, setLeads, chuongTrinhList,
                         <button type="button" onClick={() => onViewDetail ? onViewDetail(lead.id) : showToast(`Xem chi tiết: ${lead.hoTen}`)} className="p-1 rounded text-slate-400 hover:bg-slate-100 hover:text-slate-600">
                           <Eye className="h-3.5 w-3.5" />
                         </button>
-                        <button type="button" onClick={() => showToast(`Chỉnh sửa lead: ${lead.hoTen}`)} className="p-1 rounded text-slate-400 hover:bg-slate-100 hover:text-slate-600">
-                          <Edit2 className="h-3.5 w-3.5" />
-                        </button>
+                          <button type="button" onClick={() => { setLeadDangSua(lead); setHienModal(true); }} className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-blue-600 transition" title="Sửa">
+                            <Edit2 className="h-3.5 w-3.5" />
+                          </button>
                       </div>
                     </div>
                   </div>
@@ -736,8 +955,8 @@ export default function AdmissionsLeadsTable({ leads, setLeads, chuongTrinhList,
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
-                  {leadsHienThi.map((lead) => {
-                    const sc = MAU_TRANG_THAI[lead.trangThai];
+                  {leadsHienThi.map((lead: any) => {
+                    const sc = MAU_TRANG_THAI[lead.trangThai as TrangThai] || MAU_TRANG_THAI['Mới'];
                     return (
                       <tr key={lead.id} className="hover:bg-slate-50/60 cursor-pointer transition-colors">
                         <td className="py-3 pl-4 pr-2">
@@ -776,10 +995,16 @@ export default function AdmissionsLeadsTable({ leads, setLeads, chuongTrinhList,
                           </div>
                         </td>
                         <td className="py-3 px-3">
-                          <span className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-bold w-fit ${sc.bg} ${sc.text}`}>
-                            <span className={`h-1.5 w-1.5 rounded-full ${sc.dot}`} />
-                            {lead.trangThai}
-                          </span>
+                          <select
+                            value={lead.trangThai}
+                            onClick={(e) => e.stopPropagation()}
+                            onChange={(e) => handleUpdateStatus(lead.id, lead, e.target.value as TrangThai)}
+                            className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-bold w-fit outline-none cursor-pointer ${sc.bg} ${sc.text}`}
+                          >
+                            {TRANG_THAI_LIST.map(t => (
+                              <option key={t} value={t}>{t}</option>
+                            ))}
+                          </select>
                         </td>
                         <td className="py-3 px-3 text-center">
                           <div className="flex flex-col items-center">
@@ -822,14 +1047,14 @@ export default function AdmissionsLeadsTable({ leads, setLeads, chuongTrinhList,
           {/* Phân trang */}
           <div className="flex items-center justify-between border-t border-slate-100 px-4 py-3 flex-wrap gap-2">
             <p className="text-xs font-semibold text-slate-500">
-              Hiển thị {leadsDaLoc.length > 0 ? (trang - 1) * limitPerPage + 1 : 0} - {Math.min(trang * limitPerPage, leadsDaLoc.length)} trong tổng số {leadsDaLoc.length} kết quả
+              Hiển thị {totalItems > 0 ? (trang - 1) * limitPerPage + 1 : 0} - {Math.min(trang * limitPerPage, totalItems)} trong tổng số {totalItems} kết quả
             </p>
             <div className="flex items-center gap-1.5 flex-wrap">
               <button 
                 type="button" 
                 className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-40" 
                 disabled={trang === 1} 
-                onClick={() => setTrang(1)}
+                onClick={() => handleSearchAndFilters({ page: 1 })}
               >
                 <ChevronsLeft className="h-3.5 w-3.5" />
               </button>
@@ -837,7 +1062,7 @@ export default function AdmissionsLeadsTable({ leads, setLeads, chuongTrinhList,
                 type="button" 
                 className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-40" 
                 disabled={trang === 1} 
-                onClick={() => setTrang(p => p - 1)}
+                onClick={() => handleSearchAndFilters({ page: trang - 1 })}
               >
                 <ChevronLeft className="h-3.5 w-3.5" />
               </button>
@@ -851,7 +1076,7 @@ export default function AdmissionsLeadsTable({ leads, setLeads, chuongTrinhList,
                     <button 
                       key={p} 
                       type="button" 
-                      onClick={() => setTrang(p)}
+                      onClick={() => handleSearchAndFilters({ page: p })}
                       className={`flex h-8 w-8 items-center justify-center rounded-lg text-xs font-bold transition ${trang === p ? 'bg-blue-600 text-white' : 'border border-slate-200 text-slate-600 hover:bg-slate-50'}`}
                     >
                       {p}
@@ -869,7 +1094,7 @@ export default function AdmissionsLeadsTable({ leads, setLeads, chuongTrinhList,
                 type="button" 
                 className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-40" 
                 disabled={trang === tongTrang} 
-                onClick={() => setTrang(p => p + 1)}
+                onClick={() => handleSearchAndFilters({ page: trang + 1 })}
               >
                 <ChevronRight className="h-3.5 w-3.5" />
               </button>
@@ -877,7 +1102,7 @@ export default function AdmissionsLeadsTable({ leads, setLeads, chuongTrinhList,
                 type="button" 
                 className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-40" 
                 disabled={trang === tongTrang} 
-                onClick={() => setTrang(tongTrang)}
+                onClick={() => handleSearchAndFilters({ page: tongTrang })}
               >
                 <ChevronsRight className="h-3.5 w-3.5" />
               </button>
@@ -909,9 +1134,10 @@ export default function AdmissionsLeadsTable({ leads, setLeads, chuongTrinhList,
           {/* Panel trượt từ bên phải */}
           <div className="relative z-10 flex h-full w-full max-w-xl flex-col border-l border-slate-200 bg-white shadow-2xl">
             <ModalThemLead
-              onDong={() => setHienModal(false)}
+              onDong={() => { setHienModal(false); setLeadDangSua(null); }}
               onLuu={handleLuuLead}
               chuongTrinhList={chuongTrinhList}
+              leadBanDau={leadDangSua}
             />
           </div>
         </div>,
@@ -949,7 +1175,7 @@ export default function AdmissionsLeadsTable({ leads, setLeads, chuongTrinhList,
             <p className="text-xs font-bold text-slate-700">Kết quả lọc hiện tại:</p>
             <div className="flex justify-between text-xs text-slate-600">
               <span>Số lượng lead khớp:</span>
-              <span className="font-bold text-slate-900">{leadsDaLoc.length} / {leads.length}</span>
+              <span className="font-bold text-slate-900">{totalItems}</span>
             </div>
           </div>
 
