@@ -71,7 +71,7 @@ export default function HrmProbation({ evaluations, setEvaluations, users = [], 
                 <select required value={formData.userId} onChange={e => setFormData({...formData, userId: e.target.value})} className="w-full p-2.5 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/30 text-slate-900 dark:text-white font-semibold">
                   <option value="">-- Chọn nhân sự --</option>
                   {users.map(u => (
-                    <option key={u.id} value={u.id}>{u.name} ({u.department})</option>
+                    <option key={u.id} value={u.id}>{u.name}</option>
                   ))}
                 </select>
               </div>
