@@ -14,7 +14,10 @@ export default function HrmDiscipline({ records, lang }: HrmDisciplineProps) {
         <h3 className="font-display font-extrabold text-slate-900 dark:text-white text-xs uppercase tracking-wide font-mono flex items-center gap-2">
           <ShieldAlert className="w-4 h-4 text-rose-500" /> Kỷ luật & Vi phạm
         </h3>
-        <button className="px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white font-bold text-[10px] rounded-lg">
+        <button 
+          onClick={() => alert('Chức năng đang được cập nhật')}
+          className="px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white font-bold text-[10px] rounded-lg cursor-pointer transition-colors"
+        >
           + Ghi nhận sự việc
         </button>
       </div>

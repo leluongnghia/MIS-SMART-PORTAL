@@ -13,6 +13,7 @@ interface HrmContractsProps {
 export default function HrmContracts({ contracts, setContracts, users, candidates, lang }: HrmContractsProps) {
   const [showAddForm, setShowAddForm] = useState(false);
   const [newContract, setNewContract] = useState({ userId: '', contractType: 'Hợp đồng lao động xác định thời hạn (12 tháng)' });
+  const [selectedContract, setSelectedContract] = useState<any | null>(null);
 
   // Lấy danh sách nhân viên và ứng viên đã onboarding/hired
   const eligibleUsers = [
@@ -98,7 +99,7 @@ export default function HrmContracts({ contracts, setContracts, users, candidate
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
             {contracts.map(c => (
-              <tr key={c.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors">
+              <tr key={c.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors cursor-pointer" onClick={() => setSelectedContract(c)}>
                 <td className="px-4 py-3 font-mono font-bold text-slate-700 dark:text-slate-300">
                   <div className="flex items-center gap-1.5">
                     <FileText className="w-3.5 h-3.5 text-slate-400" />
@@ -131,6 +132,57 @@ export default function HrmContracts({ contracts, setContracts, users, candidate
           </tbody>
         </table>
       </div>
+
+      {selectedContract && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl max-w-md w-full p-5 space-y-4 shadow-xl">
+            <h3 className="font-display font-extrabold text-slate-900 dark:text-white text-sm uppercase tracking-wide border-b border-slate-100 dark:border-slate-800 pb-3">
+              Chi tiết Hợp đồng
+            </h3>
+            <div className="space-y-3 text-sm">
+              <div className="flex justify-between border-b border-slate-50 dark:border-slate-800 pb-2">
+                <span className="text-slate-500 text-xs">Số HĐ:</span>
+                <strong className="font-mono text-indigo-600 dark:text-indigo-400">{selectedContract.contractNumber}</strong>
+              </div>
+              <div className="flex justify-between border-b border-slate-50 dark:border-slate-800 pb-2">
+                <span className="text-slate-500 text-xs">Nhân sự:</span>
+                <strong className="text-slate-900 dark:text-white">{selectedContract.userName}</strong>
+              </div>
+              <div className="flex justify-between border-b border-slate-50 dark:border-slate-800 pb-2">
+                <span className="text-slate-500 text-xs">Loại:</span>
+                <span className="text-slate-700 dark:text-slate-300 text-right max-w-[60%]">{selectedContract.contractType}</span>
+              </div>
+              <div className="flex justify-between border-b border-slate-50 dark:border-slate-800 pb-2">
+                <span className="text-slate-500 text-xs">Ngày ký:</span>
+                <span className="font-mono text-slate-700 dark:text-slate-300">{selectedContract.signDate}</span>
+              </div>
+              <div className="flex justify-between border-b border-slate-50 dark:border-slate-800 pb-2">
+                <span className="text-slate-500 text-xs">Hết hạn:</span>
+                <span className="font-mono text-slate-700 dark:text-slate-300">{selectedContract.expirationDate}</span>
+              </div>
+              <div className="flex justify-between pb-2">
+                <span className="text-slate-500 text-xs">Trạng thái:</span>
+                <span className={`inline-flex px-2 py-0.5 rounded text-[10px] font-black uppercase ${
+                  selectedContract.status === 'ACTIVE' ? 'bg-emerald-100 text-emerald-700' :
+                  selectedContract.status === 'EXPIRING' ? 'bg-amber-100 text-amber-700' :
+                  selectedContract.status === 'EXPIRED' ? 'bg-rose-100 text-rose-700' :
+                  'bg-slate-100 text-slate-700'
+                }`}>
+                  {selectedContract.status}
+                </span>
+              </div>
+            </div>
+            <div className="flex justify-end pt-2">
+              <button 
+                onClick={() => setSelectedContract(null)} 
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-bold transition-colors"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

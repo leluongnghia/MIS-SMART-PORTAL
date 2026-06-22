@@ -14,6 +14,12 @@ export default function HrmLeaveManagement({ leaves, lang }: HrmLeaveManagementP
         <h3 className="font-display font-extrabold text-slate-900 dark:text-white text-xs uppercase tracking-wide font-mono flex items-center gap-2">
           <Calendar className="w-4 h-4 text-indigo-600" /> Quản lý Nghỉ phép / Nghỉ việc
         </h3>
+        <button 
+          onClick={() => alert('Chức năng lập đơn đang được cập nhật')}
+          className="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[10px] rounded-lg cursor-pointer transition-colors"
+        >
+          + Lập Đơn xin nghỉ phép
+        </button>
       </div>
 
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xs overflow-hidden">

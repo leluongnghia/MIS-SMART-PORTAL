@@ -15,7 +15,10 @@ export default function HrmTransfers({ records, getWorkspaceName, lang }: HrmTra
         <h3 className="font-display font-extrabold text-slate-900 dark:text-white text-xs uppercase tracking-wide font-mono flex items-center gap-2">
           <ArrowRightLeft className="w-4 h-4 text-indigo-600" /> Thuyên chuyển & Bổ nhiệm
         </h3>
-        <button className="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[10px] rounded-lg">
+        <button 
+          onClick={() => alert('Chức năng đang được cập nhật')}
+          className="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[10px] rounded-lg cursor-pointer transition-colors"
+        >
           + Lập Đề xuất
         </button>
       </div>

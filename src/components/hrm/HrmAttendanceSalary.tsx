@@ -158,7 +158,7 @@ export default function HrmAttendanceSalary({
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
       
       {/* Attendance List */}
-      <div className="lg:col-span-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl shadow-xs space-y-4">
+      <div className="lg:col-span-12 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl shadow-xs space-y-4">
         <h3 className="font-display font-extrabold text-slate-900 dark:text-white text-xs uppercase tracking-wide font-mono">
           Chuyên cần &amp; Check-in Hôm nay
         </h3>
@@ -189,67 +189,6 @@ export default function HrmAttendanceSalary({
         </div>
       </div>
 
-      {/* Payroll Table */}
-      <div className="lg:col-span-7 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl shadow-xs space-y-4">
-        <h3 className="font-display font-extrabold text-slate-900 dark:text-white text-xs uppercase tracking-wide font-mono">
-          Bảng Lương Tháng {salaryRecords[0]?.month || '06-2026'}
-        </h3>
-        <div className="overflow-x-auto rounded-xl border border-slate-100 dark:border-slate-800">
-          <table className="w-full text-xs text-left">
-            <thead className="bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400 text-[10.5px] font-black uppercase font-mono">
-              <tr>
-                <th className="px-3 py-2">Nhân sự</th>
-                <th className="px-3 py-2 text-right">Lương cứng</th>
-                <th className="px-3 py-2 text-right">Thưởng</th>
-                <th className="px-3 py-2 text-right">Khấu trừ</th>
-                <th className="px-3 py-2 text-right">Thực nhận</th>
-                <th className="px-3 py-2 text-center">Trạng thái</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {salaryRecords.map(s => {
-                const hasSensitiveRead = hasCapability('PAYROLL', 'read', s.userId);
-                return (
-                  <tr key={s.id} className="hover:bg-slate-500/5">
-                    <td className="px-3 py-2.5">
-                      <strong className="block font-bold text-slate-800 dark:text-slate-250">{s.staffName}</strong>
-                      <span className="text-[9px] text-slate-400 font-semibold">{s.department}</span>
-                    </td>
-                    <td className="px-3 py-2.5 text-right font-mono font-medium text-slate-700 dark:text-slate-350">
-                      {hasSensitiveRead ? `${fmtSimple(s.baseSalary)}đ` : '***đ'}
-                    </td>
-                    <td className="px-3 py-2.5 text-right text-emerald-600 font-mono font-medium">
-                      {hasSensitiveRead ? `+${fmtSimple(s.teachingBonus + s.kpiBonus)}đ` : '***đ'}
-                    </td>
-                    <td className="px-3 py-2.5 text-right text-rose-500 font-mono font-medium">
-                      {hasSensitiveRead ? `-${fmtSimple(s.deductions)}đ` : '***đ'}
-                    </td>
-                    <td className="px-3 py-2.5 text-right font-mono font-black text-slate-900 dark:text-white">
-                      {hasSensitiveRead ? `${fmtSimple(s.totalSalary)}đ` : '***đ'}
-                    </td>
-                    <td className="px-3 py-2.5 text-center">
-                      <button
-                        disabled={s.paid}
-                        onClick={() => {
-                          const updated = salaryRecords.map(item => item.id === s.id ? { ...item, paid: true } : item);
-                          onUpdateSalaryRecords(updated);
-                        }}
-                        className={`px-2 py-0.5 rounded text-[8.5px] font-black cursor-pointer uppercase ${
-                          s.paid 
-                            ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/20 dark:text-emerald-400' 
-                            : 'bg-amber-50 text-amber-700 hover:bg-amber-100 dark:bg-amber-950/20 dark:text-amber-400'
-                        }`}
-                        type="button"
-                      >
-                        {s.paid ? 'Đã chi' : 'Chi lương'}
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
       </div>
 
     </div>
