@@ -1,14 +1,48 @@
-import React from 'react';
-import { BookOpen, Calendar, Users, Award } from 'lucide-react';
+import React, { useState } from 'react';
+import { BookOpen, Calendar, Users, Award, X, Check } from 'lucide-react';
 import { CpdProgram, CpdParticipant } from '../../types';
 
 interface HrmCpdTrainingProps {
   programs: CpdProgram[];
+  setPrograms?: React.Dispatch<React.SetStateAction<CpdProgram[]>>;
   participants: CpdParticipant[];
   lang: string;
 }
 
-export default function HrmCpdTraining({ programs, participants, lang }: HrmCpdTrainingProps) {
+export default function HrmCpdTraining({ programs, setPrograms, participants, lang }: HrmCpdTrainingProps) {
+  const [showForm, setShowForm] = useState(false);
+  const [formData, setFormData] = useState({
+    code: '',
+    name: '',
+    type: 'INTERNAL' as const,
+    startDate: '',
+    endDate: '',
+    objectives: ''
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!setPrograms) return;
+    
+    const newRecord: CpdProgram = {
+      id: `cpd_${Date.now()}`,
+      code: formData.code,
+      name: formData.name,
+      type: formData.type as 'INTERNAL' | 'EXTERNAL' | 'ONLINE' | 'OFFLINE' | 'SPECIALTY' | 'SKILL' | 'SAFETY' | 'TECH' | 'PROCESS',
+      startDate: formData.startDate,
+      endDate: formData.endDate,
+      objectives: formData.objectives,
+      status: 'PROPOSED',
+      targetAudience: '',
+      manager: '',
+      organizer: ''
+    };
+    
+    setPrograms([newRecord, ...programs]);
+    setFormData({ code: '', name: '', type: 'INTERNAL', startDate: '', endDate: '', objectives: '' });
+    setShowForm(false);
+  };
+
   return (
     <div className="space-y-4 animate-fade-in">
       <div className="flex justify-between items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-xl shadow-xs">
@@ -16,12 +50,63 @@ export default function HrmCpdTraining({ programs, participants, lang }: HrmCpdT
           Chương trình Đào tạo & Bồi dưỡng (CPD)
         </h3>
         <button 
-          onClick={() => alert('Chức năng đang được cập nhật')}
+          onClick={() => setShowForm(true)}
           className="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[10px] rounded-lg cursor-pointer transition-colors"
         >
           + Thêm Chương trình mới
         </button>
       </div>
+
+      {showForm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+            <div className="flex justify-between items-center p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50">
+              <h3 className="font-bold text-slate-900 dark:text-white text-sm">Thêm Chương Trình Đào Tạo</h3>
+              <button onClick={() => setShowForm(false)} className="text-slate-400 hover:text-slate-600 p-1"><X className="w-4 h-4" /></button>
+            </div>
+            <form onSubmit={handleSubmit} className="p-5 space-y-4 text-xs font-sans">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Mã CT</label>
+                  <input type="text" required value={formData.code} placeholder="VD: CPD-26-003" onChange={e => setFormData({...formData, code: e.target.value})} className="w-full p-2.5 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/30 text-slate-900 dark:text-white font-semibold" />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Loại hình</label>
+                  <select required value={formData.type} onChange={e => setFormData({...formData, type: e.target.value as any})} className="w-full p-2.5 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/30 text-slate-900 dark:text-white font-semibold">
+                    <option value="INTERNAL">Nội bộ (INTERNAL)</option>
+                    <option value="EXTERNAL">Bên ngoài (EXTERNAL)</option>
+                    <option value="ONLINE">Trực tuyến (ONLINE)</option>
+                    <option value="SPECIALTY">Chuyên môn sâu (SPECIALTY)</option>
+                    <option value="SKILL">Kỹ năng (SKILL)</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Tên chương trình</label>
+                <input type="text" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full p-2.5 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/30 text-slate-900 dark:text-white font-semibold" />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Từ ngày</label>
+                  <input type="date" required value={formData.startDate} onChange={e => setFormData({...formData, startDate: e.target.value})} className="w-full p-2.5 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/30 text-slate-900 dark:text-white font-semibold" />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Đến ngày</label>
+                  <input type="date" required value={formData.endDate} onChange={e => setFormData({...formData, endDate: e.target.value})} className="w-full p-2.5 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/30 text-slate-900 dark:text-white font-semibold" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Mục tiêu / Nội dung chính</label>
+                <textarea required rows={3} value={formData.objectives} onChange={e => setFormData({...formData, objectives: e.target.value})} className="w-full p-2.5 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/30 text-slate-900 dark:text-white resize-none"></textarea>
+              </div>
+              <div className="pt-2 flex justify-end gap-2">
+                <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 text-slate-600 font-bold hover:bg-slate-100 rounded-lg transition-colors cursor-pointer">Hủy</button>
+                <button type="submit" className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg transition-colors cursor-pointer flex items-center gap-1.5"><Check className="w-3.5 h-3.5" /> Tạo chương trình</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {programs.map(prog => {

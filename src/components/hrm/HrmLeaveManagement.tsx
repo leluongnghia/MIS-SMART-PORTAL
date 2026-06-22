@@ -1,26 +1,120 @@
-import React from 'react';
-import { Calendar, User } from 'lucide-react';
+import React, { useState } from 'react';
+import { Calendar, User, X, Check } from 'lucide-react';
 import { LeaveRequest } from '../HrmCenter';
+import { UserProfile } from '../../types';
 
 interface HrmLeaveManagementProps {
   leaves: LeaveRequest[];
+  setLeaves?: React.Dispatch<React.SetStateAction<LeaveRequest[]>>;
+  currentUser?: UserProfile | null;
   lang: string;
 }
 
-export default function HrmLeaveManagement({ leaves, lang }: HrmLeaveManagementProps) {
+export default function HrmLeaveManagement({ leaves, setLeaves, currentUser, lang }: HrmLeaveManagementProps) {
+  const [showForm, setShowForm] = useState(false);
+  const [newLeave, setNewLeave] = useState({
+    leaveDate: '',
+    slots: '',
+    reason: ''
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!setLeaves || !currentUser) return;
+    
+    const slotsArray = newLeave.slots.split(',').map(s => parseInt(s.replace(/\D/g, ''))).filter(n => !isNaN(n));
+    const newRequest: LeaveRequest = {
+      id: `lv_${Date.now()}`,
+      teacherId: currentUser.id,
+      teacherName: currentUser.name,
+      departmentId: currentUser.workspaceId || 'N/A',
+      leaveDate: newLeave.leaveDate,
+      slots: slotsArray.length > 0 ? slotsArray : [1, 2, 3, 4, 5],
+      reason: newLeave.reason,
+      status: 'PENDING',
+      createdAt: new Date().toISOString()
+    };
+    
+    setLeaves([newRequest, ...leaves]);
+    setNewLeave({ leaveDate: '', slots: '', reason: '' });
+    setShowForm(false);
+  };
+
   return (
     <div className="space-y-4 animate-fade-in">
       <div className="flex justify-between items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-xl shadow-xs">
         <h3 className="font-display font-extrabold text-slate-900 dark:text-white text-xs uppercase tracking-wide font-mono flex items-center gap-2">
-          <Calendar className="w-4 h-4 text-indigo-600" /> Quản lý Nghỉ phép / Nghỉ việc
+          <Calendar className="w-4 h-4 text-indigo-600" /> {lang === 'vi' ? 'Quản lý Nghỉ phép / Nghỉ việc' : 'Leave Management'}
         </h3>
         <button 
-          onClick={() => alert('Chức năng lập đơn đang được cập nhật')}
+          onClick={() => setShowForm(true)}
           className="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[10px] rounded-lg cursor-pointer transition-colors"
         >
-          + Lập Đơn xin nghỉ phép
+          {lang === 'vi' ? '+ Lập Đơn xin nghỉ phép' : '+ New Leave Request'}
         </button>
       </div>
+
+      {showForm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+            <div className="flex justify-between items-center p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50">
+              <h3 className="font-bold text-slate-900 dark:text-white text-sm">
+                {lang === 'vi' ? 'Lập Đơn Xin Nghỉ Phép' : 'Create Leave Request'}
+              </h3>
+              <button onClick={() => setShowForm(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <form onSubmit={handleSubmit} className="p-5 space-y-4 text-xs font-sans">
+              <div>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+                  {lang === 'vi' ? 'Ngày nghỉ' : 'Leave Date'}
+                </label>
+                <input 
+                  type="date" 
+                  required
+                  value={newLeave.leaveDate}
+                  onChange={e => setNewLeave({...newLeave, leaveDate: e.target.value})}
+                  className="w-full p-2.5 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/30 text-slate-900 dark:text-white font-semibold"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+                  {lang === 'vi' ? 'Các tiết nghỉ (Cách nhau bằng dấu phẩy, để trống nếu nghỉ cả ngày)' : 'Slots (Comma separated, empty for full day)'}
+                </label>
+                <input 
+                  type="text" 
+                  placeholder="Ví dụ: Tiết 1, Tiết 2"
+                  value={newLeave.slots}
+                  onChange={e => setNewLeave({...newLeave, slots: e.target.value})}
+                  className="w-full p-2.5 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/30 text-slate-900 dark:text-white font-semibold"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+                  {lang === 'vi' ? 'Lý do xin nghỉ' : 'Reason'}
+                </label>
+                <textarea 
+                  required
+                  rows={3}
+                  value={newLeave.reason}
+                  onChange={e => setNewLeave({...newLeave, reason: e.target.value})}
+                  className="w-full p-2.5 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/30 text-slate-900 dark:text-white resize-none"
+                ></textarea>
+              </div>
+              <div className="pt-2 flex justify-end gap-2">
+                <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 text-slate-600 dark:text-slate-400 font-bold hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer">
+                  {lang === 'vi' ? 'Hủy' : 'Cancel'}
+                </button>
+                <button type="submit" className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg transition-colors cursor-pointer flex items-center gap-1.5">
+                  <Check className="w-3.5 h-3.5" />
+                  {lang === 'vi' ? 'Gửi Đơn' : 'Submit'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xs overflow-hidden">
         <table className="w-full text-xs text-left">

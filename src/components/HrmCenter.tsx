@@ -230,6 +230,27 @@ export default function HrmCenter({ currentUser, users, onUpdateUsers, hasCapabi
   });
   useEffect(() => { serverStorage.setItem('mis_hrm_contracts_v2', JSON.stringify(contracts)); }, [contracts]);
 
+  const [cpdPrograms, setCpdPrograms] = useState<any[]>(() => {
+    const saved = serverStorage.getItem('mis_hrm_cpd_v2');
+    if (saved) try { return JSON.parse(saved); } catch (e) {}
+    return MOCK_CPD_PROGRAMS;
+  });
+  useEffect(() => { serverStorage.setItem('mis_hrm_cpd_v2', JSON.stringify(cpdPrograms)); }, [cpdPrograms]);
+
+  const [disciplinaryRecords, setDisciplinaryRecords] = useState<any[]>(() => {
+    const saved = serverStorage.getItem('mis_hrm_discipline_v2');
+    if (saved) try { return JSON.parse(saved); } catch (e) {}
+    return MOCK_DISCIPLINARY_RECORDS;
+  });
+  useEffect(() => { serverStorage.setItem('mis_hrm_discipline_v2', JSON.stringify(disciplinaryRecords)); }, [disciplinaryRecords]);
+
+  const [transferRecords, setTransferRecords] = useState<any[]>(() => {
+    const saved = serverStorage.getItem('mis_hrm_transfers_v2');
+    if (saved) try { return JSON.parse(saved); } catch (e) {}
+    return MOCK_TRANSFER_RECORDS;
+  });
+  useEffect(() => { serverStorage.setItem('mis_hrm_transfers_v2', JSON.stringify(transferRecords)); }, [transferRecords]);
+
   // Selected Profile
   const [selectedProfileUser, setSelectedProfileUser] = useState<UserProfile | null>(null);
 
@@ -389,19 +410,19 @@ export default function HrmCenter({ currentUser, users, onUpdateUsers, hasCapabi
         )}
 
         {activeTab === 'CPD_TRAINING' && (
-          <HrmCpdTraining programs={MOCK_CPD_PROGRAMS} participants={MOCK_CPD_PARTICIPANTS} lang={lang} />
+          <HrmCpdTraining programs={cpdPrograms} setPrograms={setCpdPrograms} participants={MOCK_CPD_PARTICIPANTS} lang={lang} />
         )}
 
         {activeTab === 'DISCIPLINE' && (
-          <HrmDiscipline records={MOCK_DISCIPLINARY_RECORDS} lang={lang} />
+          <HrmDiscipline records={disciplinaryRecords} setRecords={setDisciplinaryRecords} users={users} lang={lang} />
         )}
 
         {activeTab === 'TRANSFERS' && (
-          <HrmTransfers records={MOCK_TRANSFER_RECORDS} getWorkspaceName={getWorkspaceName} lang={lang} />
+          <HrmTransfers records={transferRecords} setRecords={setTransferRecords} users={users} getWorkspaceName={getWorkspaceName} lang={lang} />
         )}
 
         {activeTab === 'LEAVES_MGMT' && (
-          <HrmLeaveManagement leaves={leaves} lang={lang} />
+          <HrmLeaveManagement leaves={leaves} setLeaves={setLeaves} currentUser={currentUser} lang={lang} />
         )}
 
         {/* TAB: SƠ ĐỒ TỔ CHỨC */}
