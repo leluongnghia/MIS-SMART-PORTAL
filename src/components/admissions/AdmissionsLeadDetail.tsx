@@ -55,22 +55,23 @@ const RELATED_TASKS = [
   { title: 'Gọi nhắc lịch test cho phụ huynh', date: '13/05/2025', by: 'Trần Bảo Ngọc', status: 'Chưa bắt đầu' },
 ];
 
-export default function AdmissionsLeadDetail({ lead, onBack }: { lead?: Lead; onBack?: () => void }) {
+export default function AdmissionsLeadDetail({ lead, onBack, onEdit }: { lead?: Lead; onBack?: () => void; onEdit?: () => void }) {
   const [activeTab, setActiveTab] = useState<Tab>('overview');
 
-  const studentName = lead?.hoTen || 'Nguyễn Hoàng Minh';
-  const studentInitials = lead?.hoTen
-    ? lead.hoTen.split(' ').filter(Boolean).map(w => w[0]).join('').slice(0, 3).toUpperCase()
-    : 'NHM';
+  const studentName = lead?.hoTen || (lead as any)?.fullName || 'Nguyễn Hoàng Minh';
+  const studentInitials = studentName
+    .split(' ').filter(Boolean).map((w: string) => w[0]).join('').slice(0, 3).toUpperCase() || 'NHM';
   const leadCode = lead?.id ? `LD250510-0${lead.id.replace(/\D/g, '')}` : 'LD250510-01284';
-  const ngayTao = lead?.ngayTao || '10/05/2025 09:15';
-  const nguonLead = lead?.nguonLead || 'Website';
-  const tvv = lead?.tvv || 'Trần Bảo Ngọc';
-  const trangThai = lead?.trangThai || 'Mới';
+  const ngayTao = lead?.ngayTao || ((lead as any)?.createdAt ? new Date((lead as any).createdAt).toLocaleDateString('vi-VN', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }) : '10/05/2025 09:15');
+  const nguonLead = lead?.nguonLead || (lead as any)?.source || 'Website';
+  // If it's a DB lead, tvv might be in lead.tvv (if joined) or we can fallback
+  const tvv = lead?.tvv || (lead as any)?.assignedUserId || 'Trần Bảo Ngọc';
+  // DB status is in English ('received' etc), so we might want to map it, but for now just display
+  const trangThai = lead?.trangThai || (lead as any)?.status || 'Mới';
   const diemLead = lead?.diemLead ?? 85;
 
-  const parentName = lead ? `Phụ huynh của ${lead.hoTen}` : 'Nguyễn Thị Hạnh';
-  const parentPhone = lead?.sdt || '0908 123 456';
+  const parentName = (lead as any)?.parentName || (lead ? `Phụ huynh của ${studentName}` : 'Nguyễn Thị Hạnh');
+  const parentPhone = lead?.sdt || (lead as any)?.phone || '0908 123 456';
   const parentEmail = lead?.email || 'hanh.nguyen@example.com';
 
   const TABS: { id: Tab; label: string; icon: React.ElementType }[] = [
@@ -102,7 +103,7 @@ export default function AdmissionsLeadDetail({ lead, onBack }: { lead?: Lead; on
           <button type="button" onClick={onBack} className="flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 px-3 text-xs font-bold text-slate-700 hover:bg-slate-50">
             <ArrowLeft className="h-3.5 w-3.5" /> Quay lại
           </button>
-          <button type="button" className="flex h-9 items-center gap-1.5 rounded-xl bg-blue-600 px-4 text-xs font-bold text-white hover:bg-blue-700">
+          <button type="button" onClick={onEdit} className="flex h-9 items-center gap-1.5 rounded-xl bg-blue-600 px-4 text-xs font-bold text-white hover:bg-blue-700">
             <Edit3 className="h-3.5 w-3.5" /> Chỉnh sửa
           </button>
           <button type="button" className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 text-slate-500 hover:bg-slate-50">

@@ -546,6 +546,7 @@ export default function AdmissionsLeadsTable({ initialData, users, filters, chuo
       const tvvId = users?.find(u => u.name === data.tvv)?.id || data.tvv;
       
       if (isEdit && leadDangSua) {
+        const dbStatus = MAP_STATUS_TO_DB[leadDangSua.trangThai as TrangThai] || MAP_STATUS_TO_DB['Mới'];
         const res = await updateLead(leadDangSua.id, {
           fullName: data.hoTenHocSinh,
           parentName: data.hoTenPhuHuynh,
@@ -553,6 +554,7 @@ export default function AdmissionsLeadsTable({ initialData, users, filters, chuo
           email: data.emailPhuHuynh,
           source: data.nguonLead,
           grade: data.khoi,
+          status: dbStatus,
           notes: data.ghiChu,
           assignedUserId: tvvId,
         });

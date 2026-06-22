@@ -117,6 +117,7 @@ export default function AdmissionsEnterpriseDashboard({
   const [leads, setLeads] = useState<Lead[]>(initialData?.leads || LEADS_MAU);
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const [hienModal, setHienModal] = useState(false);
+  const [leadDangSua, setLeadDangSua] = useState<any>(null);
   const [chuongTrinhList, setChuongTrinhList] = useState<ChuongTrinhHoc[]>(INITIAL_CHUONG_TRINH);
 
   // Sync with prop changes
@@ -124,6 +125,12 @@ export default function AdmissionsEnterpriseDashboard({
     const resolved = LEGACY_MAP[propModule] ?? propModule;
     setInternalModule(resolved);
   }, [propModule]);
+
+  React.useEffect(() => {
+    if (initialData?.leads) {
+      setLeads(initialData.leads);
+    }
+  }, [initialData]);
 
   const handleLuuLead = (data: FormThem) => {
     const leadMoi: Lead = {
@@ -149,7 +156,7 @@ export default function AdmissionsEnterpriseDashboard({
       case 'pipeline':     return <AdmissionsPipelineKanban leads={leads} onViewDetail={(leadId) => { setSelectedLeadId(leadId); setInternalModule('lead_detail'); }} />;
       case 'lead_detail':  {
         const selectedLead = leads.find(l => l.id === selectedLeadId) || leads[0];
-        return <AdmissionsLeadDetail lead={selectedLead} onBack={() => setInternalModule('pipeline')} />;
+        return <AdmissionsLeadDetail lead={selectedLead} onBack={() => setInternalModule('pipeline')} onEdit={() => { setLeadDangSua(selectedLead); setHienModal(true); }} />;
       }
       case 'appointments': return <AdmissionsAppointments />;
       case 'documents':    return <AdmissionsDocuments />;
@@ -244,9 +251,10 @@ export default function AdmissionsEnterpriseDashboard({
           {/* Panel trượt từ bên phải */}
           <div className="relative z-10 flex h-full w-full max-w-xl flex-col border-l border-slate-200 bg-white shadow-2xl">
             <ModalThemLead
-              onDong={() => setHienModal(false)}
+              onDong={() => { setHienModal(false); setLeadDangSua(null); }}
               onLuu={handleLuuLead}
               chuongTrinhList={chuongTrinhList.filter(c => c.hoatDong).map(c => c.ten)}
+              leadBanDau={leadDangSua}
             />
           </div>
         </div>

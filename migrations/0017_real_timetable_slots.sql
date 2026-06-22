@@ -13,7 +13,9 @@ CREATE TABLE IF NOT EXISTS "timetable_slots" (
   "created_at" timestamp with time zone DEFAULT now() NOT NULL,
   "updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
-
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "timetable_slots_day_period_idx" ON "timetable_slots" ("day", "period");
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "timetable_slots_class_idx" ON "timetable_slots" ("class_name");
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "timetable_slots_teacher_idx" ON "timetable_slots" ("teacher_id");
