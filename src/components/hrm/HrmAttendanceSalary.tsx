@@ -188,9 +188,6 @@ export default function HrmAttendanceSalary({
           })}
         </div>
       </div>
-
-      </div>
-
     </div>
   );
 }
