@@ -754,3 +754,39 @@ export interface SchoolSurvey {
   createdBy: string;
   timeline: TimelineEvent[];
 }
+
+export interface DocumentItem {
+  id: string;
+  docCode: string;
+  title: string;
+  docType: 'SOP' | 'FORM' | 'POLICY' | 'GUIDELINE' | 'CHECKLIST' | 'RECORD' | 'REPORT' | 'REFERENCE';
+  category: 'Hành chính - Nhân sự' | 'Kiểm soát nội bộ' | 'Tài sản/Cơ sở vật chất' | 'Đơn từ & Phê duyệt' | 'CSKH Phụ huynh' | 'Truyền thông/Sự kiện' | 'Học vụ' | 'Học sinh' | 'Khác';
+  departmentOwner: string;
+  ownerId: string;
+  version: string;
+  issuedDate?: string;
+  effectiveDate?: string;
+  nextReviewDate?: string;
+  status: 'DRAFT' | 'PENDING_APPROVAL' | 'ACTIVE' | 'NEEDS_REVIEW' | 'EXPIRED' | 'ARCHIVED';
+  relatedModules: string[];
+  tags: string[];
+  description?: string;
+  attachments?: string[];
+  priority: 'Bình thường' | 'Quan trọng' | 'Bắt buộc';
+  targetAudience: string[]; // BGH, HCNS, GV, NV, PH, HS
+  content?: string;
+  internalNote?: string;
+  createdAt: string;
+  updatedAt: string;
+  createdBy: string;
+  timeline: TimelineEvent[];
+  
+  // Specific for SOPs
+  purpose?: string;
+  scope?: string;
+  coordinatingDepartments?: string[];
+  steps?: { stepNumber: number; title: string; description: string; role: string; sla?: string }[];
+  usedForms?: string[]; // links to docCodes of forms
+  approverId?: string;
+  relatedRisks?: string[];
+}
