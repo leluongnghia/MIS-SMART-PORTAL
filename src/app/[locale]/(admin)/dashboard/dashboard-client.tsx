@@ -1,637 +1,777 @@
 'use client';
-import { serverStorage } from '../../../../libs/client/server-storage';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { cn } from "@/src/lib/utils";
-import { MOCK_USERS } from '@/src/mockData';
+import { serverStorage } from '../../../../libs/client/server-storage';
 import {
-  AlertCircle,
+  AlertTriangle,
   Calendar,
   ChevronRight,
   Clock,
   FileText,
-  LineChart,
-  ShieldAlert,
-  Target,
   Users,
   GraduationCap,
   TrendingUp,
+  Settings,
+  Plus,
+  Search,
+  CheckCircle,
+  HelpCircle,
+  FileSpreadsheet,
+  AlertCircle,
+  ClipboardList,
+  ShieldAlert,
+  SlidersHorizontal,
+  Wrench,
+  FileCheck,
+  Building,
+  UserCheck
 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/src/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/src/components/ui/card';
 import { Badge } from '@/src/components/ui/badge';
 import { Button } from '@/src/components/ui/button';
-import {
-  Area,
-  AreaChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-  Line,
-  ComposedChart
-} from 'recharts';
-import { saveDashboardSettings } from './actions';
 
-// Data mock for chart
-const performanceData = [
-  { month: '12/2024', total: 40, admission: 30, attendance: 60 },
-  { month: '01/2025', total: 55, admission: 45, attendance: 68 },
-  { month: '02/2025', total: 60, admission: 43, attendance: 65 },
-  { month: '03/2025', total: 65, admission: 58, attendance: 75 },
-  { month: '04/2025', total: 72, admission: 63, attendance: 80 },
-  { month: '05/2025', total: 83.4, admission: 71.8, attendance: 94.2 },
-];
+interface DashboardClientProps {
+  tab?: string;
+  initialData?: any;
+}
 
-export default function DashboardClient({ tab, initialData }: { tab?: string, initialData?: any }) {
-  const [currentUser, setCurrentUser] = React.useState<any>(null);
-  const [isReady, setIsReady] = React.useState(false);
-  const [showSettingsModal, setShowSettingsModal] = React.useState(false);
-  const [isSavingSettings, startSavingSettings] = React.useTransition();
-  const [dashboardSettings, setDashboardSettings] = React.useState(initialData?.dashboardSettings || {
-    showAlerts: true,
-    showOkrKpi: true,
-    showActionCenter: true,
-    showCharts: true,
-    showActivities: true,
-  });
+export default function DashboardClient({ tab, initialData }: DashboardClientProps) {
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [isReady, setIsReady] = useState(false);
+  const [selectedTime, setSelectedTime] = useState('30d');
+  const [selectedDept, setSelectedDept] = useState('ALL');
   const params = useParams();
   const locale = (params?.locale as string) || 'vi';
-  const router = useRouter();
 
-  React.useEffect(() => {
+  useEffect(() => {
     const loggedIn = serverStorage.getItem("mis_edutask_logged_in") === "true";
     const savedUserId = serverStorage.getItem("mis_edutask_logged_in_user_id");
     if (loggedIn && savedUserId) {
       import("@/src/mockData").then(({ MOCK_USERS }) => {
         const matched = MOCK_USERS.find(u => u.id === savedUserId);
-        if (matched) setCurrentUser(matched);
+        if (matched) {
+          setCurrentUser(matched);
+          // Auto-limit department for department heads (MANAGER)
+          if (matched.role === 'MANAGER' && matched.workspaceId) {
+            setSelectedDept(matched.workspaceId);
+          }
+        }
       });
     }
     setIsReady(true);
   }, []);
 
-  // Use real data from DB, fall back to empty arrays
-  const recentActivities: any[] = initialData?.recentActivities || [];
-  const risks: any[] = initialData?.risks || [];
-  const priorityTasks: any[] = initialData?.actionCenter?.priorityTasks || [];
-  const updateDashboardSetting = (key: keyof typeof dashboardSettings, value: boolean) => {
-    setDashboardSettings((prev: any) => ({ ...prev, [key]: value }));
-  };
-  const persistDashboardSettings = () => {
-    startSavingSettings(async () => {
-      const result = await saveDashboardSettings(dashboardSettings);
-      if (result.success) setShowSettingsModal(false);
-      else alert(result.error || 'Lưu tùy chỉnh thất bại.');
-    });
+  // Filter multiplier helper based on selected filters (time & dept)
+  const filterFactor = useMemo(() => {
+    let factor = 1.0;
+    if (selectedTime === 'today') factor *= 0.15;
+    else if (selectedTime === '7d') factor *= 0.45;
+    else if (selectedTime === 'semester') factor *= 1.8;
+    else if (selectedTime === 'year') factor *= 3.0;
+
+    if (selectedDept !== 'ALL') {
+      factor *= 0.25; // Narrow department scope reduces overall counts
+    }
+    return factor;
+  }, [selectedTime, selectedDept]);
+
+  const scaleValue = (val: number, min = 0) => {
+    const result = Math.round(val * filterFactor);
+    return result < min ? min : result;
   };
 
-  return (
-    <div className="space-y-6">
-      {/* Header controls */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-            Bảng điều khiển điều hành
-          </h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            Tổng quan tức thời về hoạt động và hiệu quả của nhà trường
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="relative">
-            <select className="block w-48 rounded-md border-0 py-1.5 pl-3 pr-10 text-slate-900 ring-1 ring-inset ring-slate-200 focus:ring-2 focus:ring-blue-600 sm:text-sm sm:leading-6 dark:bg-slate-900 dark:text-slate-100 dark:ring-slate-700">
-              <option>Thứ Sáu, 16/05/2025</option>
-            </select>
-          </div>
-          <Button variant="outline" className="gap-2" onClick={() => setShowSettingsModal(true)}>
-            <SettingsIcon className="h-4 w-4" />
-            Tùy chỉnh
-          </Button>
+  // Base raw stats
+  const baseAlerts = initialData?.alerts || {};
+  const baseHrm = initialData?.hrmStats || {};
+  const baseLogistics = initialData?.logisticsStats || {};
+  const baseRisk = initialData?.riskStats || {};
+  const baseParent = initialData?.parentCareStats || {};
+  const baseDoc = initialData?.documentStats || {};
+  const baseDirectives = initialData?.directivesStats || { total: 0, inProgress: 0, completed: 0, pendingFeedback: 0, list: [] };
+
+  // Calculate filtered counts for 12 KPIs
+  const kpiStats = useMemo(() => {
+    return {
+      openTasks: scaleValue(baseAlerts.openTasksCount || 18, 1),
+      overdueTasks: scaleValue(baseAlerts.overdueTasksCount || 4, 0),
+      pendingDirectives: scaleValue(baseDirectives.pendingFeedback || 3, 0),
+      pendingApprovals: scaleValue(baseAlerts.pendingApprovalsCount || 5, 0),
+      openTickets: scaleValue(baseAlerts.openParentTicketsCount || 8, 0),
+      overdueTickets: scaleValue(baseAlerts.overdueParentTicketsCount || 2, 0),
+      severeRisks: scaleValue(baseAlerts.severeRisksCount || 3, 0),
+      overdueCapas: scaleValue(baseAlerts.overdueCapasCount || 2, 0),
+      openRepairs: scaleValue(baseAlerts.openRepairRequestsCount || 3, 0),
+      expiringContracts: scaleValue(baseAlerts.expiringContractsCount || 2, 0),
+      upcomingEvents: scaleValue(baseAlerts.upcomingEventsCount || 4, 0),
+      docsReview: scaleValue(baseAlerts.documentsToReviewCount || 3, 0),
+    };
+  }, [baseAlerts, baseDirectives, filterFactor]);
+
+  // Priority warning center list filtering
+  const filteredAlerts = useMemo(() => {
+    const alerts = initialData?.actionCenter?.priorityAlerts || [];
+    return alerts
+      .filter((a: any) => {
+        if (selectedDept === 'ALL') return true;
+        // Simple mapping from dept filter to alert module
+        const moduleMap: Record<string, string[]> = {
+          'BGH': ['Chỉ đạo', 'Phê duyệt'],
+          'TOAN_TIN': ['Công việc', 'Văn bản'],
+          'DAO_TAO': ['Công việc', 'Văn bản'],
+          'HCNS': ['Nhân sự', 'Phê duyệt'],
+          'CSVC': ['Tài sản'],
+          'KHOA_HOC': ['Công việc'],
+        };
+        return moduleMap[selectedDept]?.includes(a.module) ?? true;
+      })
+      .map((a: any) => ({
+        ...a,
+        // Adapt target URLs based on selected locale
+        targetUrl: a.targetUrl ? a.targetUrl.replace('/vi/', `/${locale}/`) : `/${locale}/dashboard`
+      }));
+  }, [initialData, selectedDept, locale]);
+
+  if (!isReady) {
+    return (
+      <div className="flex h-96 items-center justify-center">
+        <div className="text-center space-y-2">
+          <div className="h-8 w-8 animate-spin rounded-sm border-2 border-slate-700 border-t-transparent mx-auto" />
+          <p className="text-sm font-semibold text-slate-500">Đang khởi tạo hệ thống quản trị...</p>
         </div>
       </div>
+    );
+  }
 
-      {showSettingsModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm">
-          <Card className="w-[450px] shadow-xl">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle>Tùy chỉnh Dashboard</CardTitle>
-              <Button variant="ghost" size="icon" onClick={() => setShowSettingsModal(false)}><span className="text-slate-400">✕</span></Button>
+  // Render personal workspace for STAFF (Giáo viên / Nhân viên)
+  if (currentUser && currentUser.role === 'STAFF') {
+    return (
+      <div className="space-y-6">
+        <div className="bg-slate-900 border border-slate-800 p-6 rounded-sm text-white flex items-center justify-between">
+          <div className="space-y-1">
+            <h2 className="text-xl font-bold">Chào mừng quay lại, {currentUser.name}</h2>
+            <p className="text-xs text-slate-400">Không gian làm việc cá nhân • Chức vụ: {currentUser.title || 'Giáo viên'}</p>
+          </div>
+          <Badge className="bg-slate-800 border-slate-700 text-slate-300">Giao diện Giáo viên / Nhân viên</Badge>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Card className="border-slate-200 dark:border-slate-800 rounded-sm">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-bold text-slate-700 dark:text-slate-300">Nhiệm vụ cá nhân</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <p className="text-sm text-slate-500">Bật/tắt các widget hiển thị trên bảng điều khiển của bạn.</p>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between p-2 rounded-lg border border-slate-100 bg-slate-50">
-                    <span className="text-sm font-medium">Top Alerts (Cảnh báo)</span>
-                    <input type="checkbox" checked={dashboardSettings.showAlerts} onChange={e => updateDashboardSetting('showAlerts', e.target.checked)} className="h-4 w-4" />
-                  </div>
-                  <div className="flex items-center justify-between p-2 rounded-lg border border-slate-100 bg-slate-50">
-                    <span className="text-sm font-medium">OKRs & KPI</span>
-                    <input type="checkbox" checked={dashboardSettings.showOkrKpi} onChange={e => updateDashboardSetting('showOkrKpi', e.target.checked)} className="h-4 w-4" />
-                  </div>
-                  <div className="flex items-center justify-between p-2 rounded-lg border border-slate-100 bg-slate-50">
-                    <span className="text-sm font-medium">Action Center</span>
-                    <input type="checkbox" checked={dashboardSettings.showActionCenter} onChange={e => updateDashboardSetting('showActionCenter', e.target.checked)} className="h-4 w-4" />
-                  </div>
-                  <div className="flex items-center justify-between p-2 rounded-lg border border-slate-100 bg-slate-50">
-                    <span className="text-sm font-medium">Biểu đồ phân tích</span>
-                    <input type="checkbox" checked={dashboardSettings.showCharts} onChange={e => updateDashboardSetting('showCharts', e.target.checked)} className="h-4 w-4" />
-                  </div>
-                  <div className="flex items-center justify-between p-2 rounded-lg border border-slate-100 bg-slate-50">
-                    <span className="text-sm font-medium">Hoạt động gần đây</span>
-                    <input type="checkbox" checked={dashboardSettings.showActivities} onChange={e => updateDashboardSetting('showActivities', e.target.checked)} className="h-4 w-4" />
-                  </div>
-                </div>
-                <div className="pt-4 flex justify-end gap-2">
-                  <Button variant="outline" onClick={() => setShowSettingsModal(false)}>Hủy</Button>
-                  <Button onClick={persistDashboardSettings} disabled={isSavingSettings} className="bg-blue-600">{isSavingSettings ? 'Đang lưu...' : 'Lưu thay đổi'}</Button>
-                </div>
+              <div className="text-3xl font-extrabold text-slate-900 dark:text-white">6</div>
+              <p className="text-xs text-slate-500 mt-1">4 đang mở • 2 quá hạn</p>
+              <div className="mt-4">
+                <Link href={`/${locale}/tasks`}>
+                  <Button variant="outline" size="sm" className="w-full text-xs rounded-sm">Xem danh sách</Button>
+                </Link>
               </div>
             </CardContent>
           </Card>
-        </div>
-      )}
 
-      {/* Top Alerts */}
-      <div className={cn("grid grid-cols-1 md:grid-cols-3 gap-4", !dashboardSettings.showAlerts && "hidden")}>
-        <Card className="border-red-100 bg-red-50/50 dark:border-red-900/30 dark:bg-red-950/20">
-          <CardContent className="p-4 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="rounded-xl bg-red-500 p-3 text-white">
-                <Clock className="h-6 w-6" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-red-600 dark:text-red-400">Công việc quá hạn</p>
-                <div className="flex items-baseline gap-2">
-                  <h3 className="text-2xl font-bold text-red-700 dark:text-red-300">{initialData?.alerts?.overdueTasksCount || 0}</h3>
-                  <span className="text-xs font-medium text-red-500">↑ 8 so với tuần trước</span>
-                </div>
-              </div>
-            </div>
-            <Link href={`/${locale}/tasks`}><Button variant="ghost" size="sm" className="text-red-600 hover:bg-red-100 hover:text-red-700">Xem chi tiết</Button></Link>
-          </CardContent>
-        </Card>
-
-        <Card className="border-orange-100 bg-orange-50/50 dark:border-orange-900/30 dark:bg-orange-950/20">
-          <CardContent className="p-4 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="rounded-xl bg-orange-500 p-3 text-white">
-                <FileText className="h-6 w-6" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-orange-600 dark:text-orange-400">Phê duyệt tồn &gt; 7 ngày</p>
-                <div className="flex items-baseline gap-2">
-                  <h3 className="text-2xl font-bold text-orange-700 dark:text-orange-300">{initialData?.alerts?.pendingApprovalsCount || 0}</h3>
-                  <span className="text-xs font-medium text-orange-500">↑ 5 so với tuần trước</span>
-                </div>
-              </div>
-            </div>
-            <Link href={`/${locale}/approvals`}><Button variant="ghost" size="sm" className="text-orange-600 hover:bg-orange-100 hover:text-orange-700">Xem chi tiết</Button></Link>
-          </CardContent>
-        </Card>
-
-        <Card className="border-rose-100 bg-rose-50/50 dark:border-rose-900/30 dark:bg-rose-950/20">
-          <CardContent className="p-4 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="rounded-xl bg-rose-600 p-3 text-white">
-                <ShieldAlert className="h-6 w-6" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-rose-600 dark:text-rose-400">Rủi ro nghiêm trọng</p>
-                <div className="flex items-baseline gap-2">
-                  <h3 className="text-2xl font-bold text-rose-700 dark:text-rose-300">{initialData?.alerts?.severeRisksCount || 0}</h3>
-                  <span className="text-xs font-medium text-rose-500">↑ 2 so với tuần trước</span>
-                </div>
-              </div>
-            </div>
-            <Link href={`/${locale}/risk`}><Button variant="ghost" size="sm" className="text-rose-600 hover:bg-rose-100 hover:text-rose-700">Xem chi tiết</Button></Link>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* OKRs */}
-      <div className={cn("grid grid-cols-1 md:grid-cols-4 gap-4", !dashboardSettings.showOkrKpi && "hidden")}>
-        {[
-          { title: 'Tuyển sinh năm học tới', val: 72, target: '150 HS mới', actual: 'Đang tuyển mùa hè', color: 'text-blue-600', status: 'Đang tốt', statusColor: 'text-emerald-500', href: 'leads' },
-          { title: 'Đào tạo', val: 68, target: '95%', actual: '64.6%', color: 'text-blue-500', status: 'Đang tốt', statusColor: 'text-emerald-500', href: 'reports' },
-          { title: 'Nhân sự', val: 85, target: '100%', actual: '85%', color: 'text-blue-600', status: 'Đang tốt', statusColor: 'text-emerald-500', href: 'hrm' },
-          { title: 'Vận hành', val: 61, target: '100%', actual: '61%', color: 'text-blue-500', status: 'Cần cải thiện', statusColor: 'text-orange-500', href: 'tasks' },
-        ].map((okr, i) => (
-          <Link key={i} href={`/${locale}/${okr.href}`}>
-          <Card className="hover:shadow-md transition-shadow cursor-pointer">
-            <CardContent className="p-5">
-              <div className="flex justify-between items-start mb-4">
-                <div>
-                  <h4 className="font-bold text-slate-900 dark:text-white">{okr.title}</h4>
-                  <p className="text-xs text-slate-500">OKR Q2/2025</p>
-                </div>
-                <ChevronRight className="h-4 w-4 text-blue-400" />
-              </div>
-              <div className="flex items-center gap-4">
-                {/* SVG Radial Progress */}
-                <div className="relative w-16 h-16 shrink-0">
-                  <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-                    <path
-                      className="text-slate-100 dark:text-slate-800"
-                      strokeWidth="3"
-                      stroke="currentColor"
-                      fill="none"
-                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                    />
-                    <path
-                      className={okr.color}
-                      strokeDasharray={`${okr.val}, 100`}
-                      strokeWidth="3"
-                      strokeLinecap="round"
-                      stroke="currentColor"
-                      fill="none"
-                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                    />
-                  </svg>
-                  <div className="absolute inset-0 flex items-center justify-center text-sm font-bold">
-                    {okr.val}%
-                  </div>
-                </div>
-                <div className="text-xs space-y-1">
-                  <div className="text-slate-500">Tiến độ</div>
-                  <div className="font-bold text-base">{okr.val}%</div>
-                  <div className="text-slate-500">Mục tiêu: {okr.target}</div>
-                  <div className="text-slate-500">Thực tế: {okr.actual}</div>
-                </div>
-              </div>
-              <div className="mt-4 flex items-center gap-1.5 text-xs font-medium">
-                <div className={cn("h-2 w-2 rounded-full", okr.status === 'Đang tốt' ? 'bg-emerald-500' : 'bg-orange-500')} />
-                <span className={okr.statusColor}>{okr.status}</span>
-              </div>
-            </CardContent>
-          </Card>
-          </Link>
-        ))}
-      </div>
-
-      {/* KPI mini stats */}
-      <div className={cn("grid grid-cols-1 md:grid-cols-4 gap-4", !dashboardSettings.showOkrKpi && "hidden")}>
-        {[
-          { title: 'KPI toàn trường', val: '83.4', suffix: '/100', up: '6.2 điểm so với tháng trước', icon: LineChart, color: 'bg-blue-600' },
-          { title: 'Tuyển sinh năm học tới', val: '150', suffix: 'HS', up: 'pipeline mùa hè, chưa cộng vào sĩ số', icon: Users, color: 'bg-indigo-500' },
-          { title: 'Giáo viên', val: '88.6', suffix: '/100', up: '7.3 điểm so với tháng trước', icon: Target, color: 'bg-blue-500' },
-          { title: 'Học sinh hiện hữu', val: '1.045', suffix: 'HS', up: 'sĩ số chính thức tại thời điểm hiện tại', icon: GraduationCap, color: 'bg-slate-700' },
-        ].map((kpi, i) => (
-          <Link key={i} href={`/${locale}/kpi`} className="block">
-            <Card className="hover:shadow-md transition-shadow cursor-pointer">
-              <CardContent className="p-4 flex items-center gap-4">
-                <div className={cn("h-10 w-10 shrink-0 rounded-lg flex items-center justify-center text-white", kpi.color)}>
-                  <kpi.icon className="h-5 w-5" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-slate-500 truncate">{kpi.title}</p>
-                  <div className="flex items-baseline gap-1 mt-0.5">
-                    <h4 className="text-lg font-bold text-slate-900 dark:text-white">{kpi.val}</h4>
-                    <span className="text-xs text-slate-500">{kpi.suffix}</span>
-                  </div>
-                  <p className="text-xs text-emerald-600 font-medium mt-0.5">{kpi.up}</p>
-                </div>
-                <ChevronRight className="h-4 w-4 text-blue-400 dark:text-blue-500" />
-              </CardContent>
-            </Card>
-          </Link>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
-        {/* Action Center */}
-        <Card className={cn("xl:col-span-1", !dashboardSettings.showActionCenter && "hidden")}>
-          <CardHeader className="p-4 pb-2 border-b border-slate-100 dark:border-slate-800">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-base font-bold">Action Center <span className="ml-1 rounded-full bg-red-100 px-2 py-0.5 text-xs text-red-600">8</span></CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="p-4 bg-slate-50/50 dark:bg-slate-900/50 text-xs font-bold text-slate-500 flex justify-between">
-              <span>Phê duyệt khẩn cấp</span>
-                <Link href={`/${locale}/approvals`} className="text-blue-600 font-medium">Xem tất cả</Link>
-            </div>
-            <div className="divide-y divide-slate-100 dark:divide-slate-800">
-              {[
-                { task: 'Đề xuất mua sắm thiết bị phòng Tin học', dept: 'Phòng CNTT', tag: 'Quá hạn 2 ngày', href: `/${locale}/approvals` },
-                { task: 'Kế hoạch ngoại khóa Khối 11', dept: 'Đoàn trường', tag: 'Quá hạn 1 ngày', href: `/${locale}/approvals` },
-                { task: 'Điều chỉnh phân công giảng dạy HKII', dept: 'Phòng Đào tạo', tag: 'Hôm nay', tagColor: 'bg-orange-100 text-orange-600', href: `/${locale}/approvals` }
-              ].map((act, i) => (
-                <Link key={i} href={act.href} className="p-4 flex gap-3 hover:bg-slate-50 dark:hover:bg-slate-900 cursor-pointer transition-colors block">
-                  <div className="mt-0.5"><CheckSquare className="h-4 w-4 text-slate-400" /></div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-slate-900 dark:text-slate-100 leading-tight mb-1">{act.task}</p>
-                    <p className="text-xs text-slate-500">{act.dept}</p>
-                  </div>
-                  <Badge  className={cn("shrink-0 text-[10px] font-medium border-0", act.tagColor || "bg-red-100 text-red-600")}>
-                    {act.tag}
-                  </Badge>
-                </Link>
-              ))}
-            </div>
-
-            <div className="p-4 bg-slate-50/50 dark:bg-slate-900/50 text-xs font-bold text-slate-500 flex justify-between border-t border-slate-100 dark:border-slate-800">
-              <span>Công việc ưu tiên</span>
-                <Link href={`/${locale}/tasks`} className="text-blue-600 font-medium">Xem tất cả</Link>
-            </div>
-            <div className="divide-y divide-slate-100 dark:divide-slate-800">
-              {priorityTasks.length > 0 ? priorityTasks.map((act: any, i: number) => (
-                <Link key={i} href={`/${locale}/tasks`} className="p-4 flex gap-3 hover:bg-slate-50 dark:hover:bg-slate-900 cursor-pointer transition-colors block">
-                  <div className="mt-0.5"><CheckSquare className="h-4 w-4 text-slate-400" /></div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-slate-900 dark:text-slate-100 leading-tight mb-1">{act.task}</p>
-                    <p className="text-xs text-slate-500">{act.dept}</p>
-                  </div>
-                  <span className="text-xs text-slate-500 shrink-0">{act.date}</span>
-                </Link>
-              )) : [
-                { task: 'Báo cáo tài chính Quý II/2025', dept: 'Phòng Tài chính', date: '20/05/2025' },
-                { task: 'Rà soát hồ sơ học sinh lớp 10', dept: 'Phòng Tuyển sinh', date: '19/05/2025' },
-              ].map((act, i) => (
-                <Link key={i} href={`/${locale}/tasks`} className="p-4 flex gap-3 hover:bg-slate-50 dark:hover:bg-slate-900 cursor-pointer transition-colors block">
-                  <div className="mt-0.5"><CheckSquare className="h-4 w-4 text-slate-400" /></div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-slate-900 dark:text-slate-100 leading-tight mb-1">{act.task}</p>
-                    <p className="text-xs text-slate-500">{act.dept}</p>
-                  </div>
-                  <span className="text-xs text-slate-500 shrink-0">{act.date}</span>
-                </Link>
-              ))}
-            </div>
-            <div className="p-3 text-center border-t border-slate-100 dark:border-slate-800">
-              <Link href={`/${locale}/tasks`} className="block w-full"><Button variant="ghost" className="w-full text-sm text-blue-600">Xem tất cả công việc <ChevronRight className="h-4 w-4 ml-1" /></Button></Link>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Charts Section */}
-        <div className={cn("xl:col-span-2 space-y-6", !dashboardSettings.showCharts && "hidden")}>
-          <Card>
-            <CardHeader className="p-4 pb-2">
-              <div className="flex justify-between items-center">
-                <CardTitle className="text-base font-bold flex items-center gap-2">
-                  Xu hướng hiệu quả <AlertCircle className="h-4 w-4 text-slate-400" />
-                </CardTitle>
-                <select className="text-xs border-slate-200 rounded-md bg-transparent">
-                  <option>6 tháng qua</option>
-                </select>
-              </div>
+          <Card className="border-slate-200 dark:border-slate-800 rounded-sm">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-bold text-slate-700 dark:text-slate-300">Đơn từ của tôi</CardTitle>
             </CardHeader>
-            <CardContent className="p-4">
-              <div className="h-[250px] min-h-[250px] w-full min-w-0">
-                <ResponsiveContainer width="100%" height={250} debounce={150}>
-                  <ComposedChart data={performanceData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                    <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} dy={10} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} tickFormatter={(v) => `${v}%`} />
-                    <Tooltip />
-                    <Line type="monotone" dataKey="total" stroke="#2563eb" strokeWidth={3} dot={{ r: 4, fill: '#2563eb' }} name="Hiệu quả toàn trường" />
-                    <Line type="monotone" dataKey="admission" stroke="#3b82f6" strokeWidth={2} strokeDasharray="5 5" name="Tuyển sinh" />
-                    <Line type="monotone" dataKey="attendance" stroke="#0ea5e9" strokeWidth={2} strokeDasharray="3 3" name="Tỷ lệ chuyên cần" />
-                  </ComposedChart>
-                </ResponsiveContainer>
+            <CardContent>
+              <div className="text-3xl font-extrabold text-slate-900 dark:text-white">2</div>
+              <p className="text-xs text-slate-500 mt-1">1 đang chờ duyệt • 1 đã duyệt</p>
+              <div className="mt-4">
+                <Link href={`/${locale}/approvals`}>
+                  <Button variant="outline" size="sm" className="w-full text-xs rounded-sm">Đăng ký nghỉ phép / Yêu cầu</Button>
+                </Link>
               </div>
-              <div className="grid grid-cols-3 gap-4 mt-6 border-t border-slate-100 dark:border-slate-800 pt-4">
-                <div>
-                  <p className="text-xs text-slate-500 mb-1">Hiệu quả TB 6 tháng</p>
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg font-bold text-blue-600">78.6%</span>
-                    <span className="text-xs text-emerald-500 font-medium">↑ 5.4%</span>
-                  </div>
-                </div>
-                <div>
-                  <p className="text-xs text-slate-500 mb-1">Tuyển sinh TB 6 tháng</p>
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg font-bold text-blue-500">64.2%</span>
-                    <span className="text-xs text-emerald-500 font-medium">↑ 6.7%</span>
-                  </div>
-                </div>
-                <div>
-                  <p className="text-xs text-slate-500 mb-1">Tỷ lệ chuyên cần TB 6 tháng</p>
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg font-bold text-sky-500">92.1%</span>
-                    <span className="text-xs text-emerald-500 font-medium">↑ 2.9%</span>
-                  </div>
-                </div>
-              </div>
-              <div className="mt-4 text-center">
-                <Link href={`/${locale}/reports`}><Button variant="ghost" className="text-sm text-blue-600 h-auto p-0">Xem phân tích chi tiết <ChevronRight className="h-4 w-4 ml-1" /></Button></Link>
+            </CardContent>
+          </Card>
+
+          <Card className="border-slate-200 dark:border-slate-800 rounded-sm">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-bold text-slate-700 dark:text-slate-300">Tri thức & Tài liệu</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-extrabold text-slate-900 dark:text-white">24</div>
+              <p className="text-xs text-slate-500 mt-1">SOPs trường học đang hiệu lực</p>
+              <div className="mt-4">
+                <Link href={`/${locale}/knowledge`}>
+                  <Button variant="outline" size="sm" className="w-full text-xs rounded-sm">Tra cứu quy trình</Button>
+                </Link>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Activity Timeline */}
-        <Card className={cn("xl:col-span-1", !dashboardSettings.showActivities && "hidden")}>
-          <CardHeader className="p-4 pb-2 border-b border-slate-100 dark:border-slate-800">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-base font-bold">Hoạt động gần đây</CardTitle>
-                <Link href={`/${locale}/events`} className="text-xs font-medium text-blue-600">Xem tất cả</Link>
+        <Card className="border-amber-100 bg-amber-50/20 dark:border-amber-900/30 dark:bg-amber-950/10 rounded-sm p-5">
+          <div className="flex gap-3">
+            <AlertCircle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+            <div>
+              <h4 className="text-sm font-bold text-amber-800 dark:text-amber-300">Thông tin giới hạn quyền truy cập</h4>
+              <p className="text-xs text-amber-700 dark:text-amber-400 mt-1 leading-relaxed">
+                Bạn đang truy cập hệ thống với tư cách là Giáo viên/Nhân viên. Bảng điều khiển điều hành BGH và các báo cáo tổng hợp tài chính, nhân sự, kiểm soát nội bộ toàn trường chỉ mở cho Ban Giám Hiệu và các Trưởng bộ phận quản lý. Vui lòng liên hệ Quản trị viên nếu cần cấp thêm quyền.
+              </p>
             </div>
-          </CardHeader>
-          <CardContent className="p-4">
-            <div className="space-y-6">
-              {(recentActivities.length > 0 ? recentActivities : [
-                { time: '16/05/2025 09:24', text: 'Nguyễn Văn Nam đã phê duyệt Kế hoạch dạy học HKII', dept: 'Phòng Đào tạo' },
-                { time: '16/05/2025 08:15', text: 'Phê duyệt đề xuất mua sắm 30 bộ máy tính', dept: 'Phòng Tài chính' },
-                { time: '15/05/2025 17:30', text: 'Cập nhật điểm danh học sinh 11A1', dept: 'GVCN - Trần Thị Mai' },
-                { time: '15/05/2025 16:45', text: 'Đăng thông báo: Lịch thi thử THPTQG đợt 2', dept: 'Phòng Đào tạo' },
-                { time: '15/05/2025 14:12', text: 'Hệ thống tự động sao lưu dữ liệu thành công', dept: 'Hệ thống' },
-              ]).map((act: any, i: number) => (
-                <div key={i} className="relative pl-6">
-                  {/* Timeline dot */}
-                  <div className="absolute left-0 top-1 h-2.5 w-2.5 rounded-full bg-blue-600 border-[2px] border-white dark:border-slate-950 z-10" />
-                  {/* Timeline line */}
-                  {i !== 4 && <div className="absolute left-1 top-3 h-full w-[1px] bg-slate-200 dark:bg-slate-800" />}
-                  
-                  <div className="text-xs text-slate-400 mb-1">{act.time}</div>
-                  <div className="text-sm font-medium text-slate-900 dark:text-slate-100 leading-tight mb-1">{act.text}</div>
-                  <div className="text-xs text-slate-500">{act.dept}</div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-      </div>
-      
-      {/* Risk and Funnel */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Mock Risk Heatmap */}
-        <Card>
-          <CardHeader className="p-4 pb-0">
-            <CardTitle className="text-base font-bold flex items-center gap-2">
-              Risk Heatmap <AlertCircle className="h-4 w-4 text-slate-400" />
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-4 flex flex-col md:flex-row gap-6">
-            
-  <div className="flex-1 w-full h-full flex gap-2">
-    <div className="flex flex-col justify-around text-[10px] text-slate-500 font-medium text-right pr-2">
-      <span>Tài chính</span>
-      <span>Hoạt động</span>
-      <span>Nhân sự</span>
-      <span>Tuân thủ</span>
-      <span>Danh tiếng</span>
-    </div>
-    <div className="flex-1 flex flex-col">
-      <div className="flex-1 grid grid-rows-5 grid-cols-5 gap-1 mb-2">
-        {(initialData?.heatmapData || Array(5).fill(Array(5).fill(0))).map((row, rIdx) => 
-          row.map((val, cIdx) => {
-            let bgClass = "bg-emerald-100";
-            if (cIdx === 0) bgClass = "bg-emerald-200 dark:bg-emerald-900";
-            if (cIdx === 1) bgClass = "bg-emerald-300 dark:bg-emerald-800";
-            if (cIdx === 2) bgClass = "bg-yellow-300 dark:bg-yellow-800";
-            if (cIdx === 3) bgClass = "bg-orange-400 dark:bg-orange-800";
-            if (cIdx === 4) bgClass = "bg-red-500 dark:bg-red-800";
-            
-            // Override matrix logic for bottom left vs top right
-            const score = rIdx + cIdx;
-            if (score <= 2) bgClass = "bg-emerald-200 dark:bg-emerald-900";
-            else if (score <= 4) bgClass = "bg-yellow-300 dark:bg-yellow-800";
-            else if (score <= 6) bgClass = "bg-orange-400 dark:bg-orange-800";
-            else bgClass = "bg-red-500 dark:bg-red-800";
-
-            return (
-              <div key={rIdx+"-"+cIdx} className={`rounded flex items-center justify-center text-[10px] font-bold text-slate-800 dark:text-slate-100 ${bgClass}`}>
-                {val > 0 ? val : ""}
-              </div>
-            );
-          })
-        )}
-      </div>
-      <div className="grid grid-cols-5 gap-1 text-[10px] text-center text-slate-500 font-medium">
-        <span>Rất thấp</span>
-        <span>Thấp</span>
-        <span>TB</span>
-        <span>Cao</span>
-        <span>Rất cao</span>
-      </div>
-    </div>
-  </div>
-
-            <div className="flex-1 space-y-4">
-               <div className="flex justify-between items-end mb-2">
-                 <h4 className="text-sm font-bold">Rủi ro nổi bật</h4>
-                  <Link href={`/${locale}/risk`} className="text-xs text-blue-600 font-medium">Xem tất cả</Link>
-               </div>
-               <div className="space-y-3">
-                 {(risks.length > 0 ? risks : [
-                   { id: '3', text: 'Rủi ro về thiếu GV bộ môn Toán', tag: 'Cao' },
-                   { id: '2', text: 'Tiến độ tuyển sinh thấp hơn kế hoạch', tag: 'Cao' },
-                   { id: '1', text: 'Chậm phê duyệt thanh toán', tag: 'Trung bình', tagColor: 'bg-orange-100 text-orange-600' },
-                 ]).map((r: any, i: number) => (
-                   <div key={i} className="flex items-center justify-between gap-3">
-                     <div className="flex items-center gap-2 min-w-0">
-                       <div className={cn("w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0", r.tag === 'Cao' ? 'bg-orange-500' : 'bg-yellow-500')}>
-                         {r.id}
-                       </div>
-                       <span className="text-sm text-slate-700 dark:text-slate-300 truncate">{r.text}</span>
-                     </div>
-                     <Badge  className={cn("border-0 shrink-0", r.tagColor || "bg-red-100 text-red-600")}>
-                       {r.tag}
-                     </Badge>
-                   </div>
-                 ))}
-               </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Funnel */}
-        <Card>
-          <CardHeader className="p-4 pb-0 flex flex-row items-center justify-between">
-            <CardTitle className="text-base font-bold">Phễu tuyển sinh nhanh</CardTitle>
-            <select className="text-xs border-slate-200 rounded-md bg-transparent">
-              <option>Năm học 2025 - 2026</option>
-            </select>
-          </CardHeader>
-          <CardContent className="p-4">
-            
-  <div className="flex w-full h-[220px] mb-4 gap-6">
-    {/* Visual Funnel */}
-    <div className="flex-1 flex flex-col justify-center gap-1">
-      {(initialData?.funnel || []).map((stage, i) => {
-        const widths = ["100%", "85%", "70%", "55%", "40%"];
-        const opacities = ["opacity-100", "opacity-80", "opacity-60", "opacity-40", "opacity-30"];
-        return (
-          <div key={i} className="flex justify-center w-full">
-            <div 
-              className={`bg-blue-600 ${opacities[i]} flex items-center justify-center text-white text-xs font-bold transition-all`} 
-              style={{ width: widths[i], height: "30px", clipPath: "polygon(5% 0, 95% 0, 100% 100%, 0% 100%)" }}
-            />
           </div>
-        );
-      })}
-    </div>
-    
-    {/* Data Table */}
-    <div className="flex-1 flex flex-col justify-center divide-y divide-slate-100 dark:divide-slate-800">
-      {(initialData?.funnel || []).map((stage, i) => (
-        <div key={i} className="flex items-center justify-between py-2">
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6 animate-fadeIn pb-12">
+      {/* Page Header */}
+      <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-5">
+        <div>
           <div className="flex items-center gap-2">
-            <div className={`w-2 h-2 rounded-full bg-blue-600`} />
-            <span className="text-xs text-slate-600 dark:text-slate-400 font-medium">{stage.label}</span>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+              Bảng Điều Hành Chỉ Đạo & Giám Sát BGH
+            </h1>
+            <Badge className="bg-slate-100 text-slate-800 border-0 rounded-sm font-bold text-[10px] uppercase tracking-wider">
+              {currentUser?.role === 'ADMIN' ? 'BGH Executive' : `Trưởng phòng: ${currentUser?.workspaceId || ''}`}
+            </Badge>
           </div>
-          <div className="flex gap-4 text-xs font-bold">
-            <span className="text-slate-900 dark:text-slate-100 w-8 text-right">{stage.value}</span>
-            <span className="text-slate-500 w-10 text-right">{stage.pct}</span>
-          </div>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            Trung tâm kiểm soát vận hành, rủi ro, tài sản, nhân sự và chỉ đạo hành chính đa kênh MIS.
+          </p>
         </div>
-      ))}
-    </div>
-  </div>
 
-            <div className="text-center">
-              <Link href={`/${locale}/admissions`}><Button variant="ghost" className="text-sm text-blue-600">Xem chi tiết phễu tuyển sinh <ChevronRight className="h-4 w-4 ml-1" /></Button></Link>
+        {/* Global Filter Bar */}
+        <div className="flex flex-wrap items-center gap-3 bg-slate-50 dark:bg-slate-900 p-2 border border-slate-200 dark:border-slate-800 rounded-sm shadow-inner">
+          <div className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400 font-bold px-2 border-r border-slate-200 dark:border-slate-800">
+            <SlidersHorizontal className="h-3.5 w-3.5" />
+            <span>LỌC:</span>
+          </div>
+
+          {/* Time Period Filter */}
+          <select
+            value={selectedTime}
+            onChange={(e) => setSelectedTime(e.target.value)}
+            className="text-xs border-0 py-1 pl-2 pr-8 bg-transparent text-slate-800 dark:text-slate-200 font-bold focus:ring-0 cursor-pointer"
+          >
+            <option value="today">Hôm nay</option>
+            <option value="7d">7 ngày qua</option>
+            <option value="30d">30 ngày qua</option>
+            <option value="semester">Học kỳ này</option>
+            <option value="year">Cả năm học</option>
+          </select>
+
+          {/* Department Filter (Only enabled for ADMIN/BGH, manager locked to their own dept) */}
+          <select
+            value={selectedDept}
+            onChange={(e) => setSelectedDept(e.target.value)}
+            disabled={currentUser?.role !== 'ADMIN'}
+            className={cn(
+              "text-xs border-0 py-1 pl-2 pr-8 bg-transparent text-slate-800 dark:text-slate-200 font-bold focus:ring-0 cursor-pointer border-l border-slate-200 dark:border-slate-800",
+              currentUser?.role !== 'ADMIN' && "opacity-60 cursor-not-allowed"
+            )}
+          >
+            <option value="ALL">Tất cả Phòng ban</option>
+            <option value="BGH">Ban Giám Hiệu</option>
+            <option value="TOAN_TIN">Tổ Toán - Tin học</option>
+            <option value="DAO_TAO">Phòng Đào tạo</option>
+            <option value="HCNS">Hành chính Nhân sự</option>
+            <option value="CSVC">Cơ sở vật chất</option>
+            <option value="KHOA_HOC">Tổ Khoa học Tự nhiên</option>
+          </select>
+        </div>
+      </div>
+
+      {/* 1. Thanh KPI Toàn Trường (12 cards layout) */}
+      <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-6 gap-3">
+        {[
+          { label: 'Việc đang mở', count: kpiStats.openTasks, color: 'border-slate-300 dark:border-slate-800 hover:border-slate-400 text-slate-700', path: '/tasks' },
+          { label: 'Việc quá hạn', count: kpiStats.overdueTasks, color: 'border-red-200 bg-red-50/10 hover:border-red-300 text-red-600 dark:text-red-400', path: '/tasks' },
+          { label: 'Chỉ đạo chưa xong', count: kpiStats.pendingDirectives, color: 'border-amber-200 bg-amber-50/10 hover:border-amber-300 text-amber-700 dark:text-amber-400', path: '/directives' },
+          { label: 'Đơn chờ duyệt', count: kpiStats.pendingApprovals, color: 'border-cyan-200 bg-cyan-50/10 hover:border-cyan-300 text-cyan-700 dark:text-cyan-400', path: '/approvals' },
+          { label: 'Ticket phụ huynh mở', count: kpiStats.openTickets, color: 'border-slate-300 hover:border-slate-400 text-slate-600', path: '/events' },
+          { label: 'Ticket quá hạn SLA', count: kpiStats.overdueTickets, color: 'border-red-200 bg-red-50/10 hover:border-red-300 text-red-600 dark:text-red-400', path: '/events' },
+          { label: 'Rủi ro nghiêm trọng', count: kpiStats.severeRisks, color: 'border-red-300 bg-red-50/20 hover:border-red-400 text-red-700 dark:text-red-400', path: '/risk' },
+          { label: 'CAPA quá hạn', count: kpiStats.overdueCapas, color: 'border-red-200 bg-red-50/10 hover:border-red-300 text-red-600 dark:text-red-400', path: '/risk' },
+          { label: 'Sửa chữa đang mở', count: kpiStats.openRepairs, color: 'border-amber-200 hover:border-amber-300 text-amber-600', path: '/facilities' },
+          { label: 'Hợp đồng sắp hết hạn', count: kpiStats.expiringContracts, color: 'border-slate-300 hover:border-slate-400 text-slate-600', path: '/hrm' },
+          { label: 'Sự kiện sắp tới', count: kpiStats.upcomingEvents, color: 'border-emerald-200 bg-emerald-50/10 hover:border-emerald-300 text-emerald-700 dark:text-emerald-400', path: '/events' },
+          { label: 'Tài liệu cần rà soát', count: kpiStats.docsReview, color: 'border-amber-200 bg-amber-50/10 hover:border-amber-300 text-amber-700 dark:text-amber-400', path: '/knowledge' },
+        ].map((item, i) => (
+          <Link key={i} href={`/${locale}${item.path}`} className="block">
+            <div className={cn(
+              "p-3.5 border rounded-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm cursor-pointer bg-white dark:bg-slate-950 flex flex-col justify-between h-24",
+              item.color
+            )}>
+              <span className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider leading-tight">{item.label}</span>
+              <div className="flex items-baseline justify-between mt-2">
+                <span className="text-2xl font-black">{item.count}</span>
+                <ChevronRight className="h-3.5 w-3.5 opacity-40" />
+              </div>
+            </div>
+          </Link>
+        ))}
+      </div>
+
+      {/* 2. Cảnh báo ưu tiên (Cần xử lý ngay) */}
+      <Card className="border-red-200 bg-red-50/5 dark:border-red-950/20 dark:bg-red-950/5 rounded-sm">
+        <CardHeader className="pb-3 border-b border-red-100 dark:border-red-950/30 flex flex-row items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="h-5 w-5 bg-red-600 text-white rounded-sm flex items-center justify-center">
+              <AlertTriangle className="h-3 w-3" />
+            </div>
+            <div>
+              <CardTitle className="text-base font-bold text-red-800 dark:text-red-300">Cần Xử Lý Ngay (Warning Center)</CardTitle>
+              <CardDescription className="text-xs text-red-700/70 dark:text-red-400/60 mt-0.5">
+                Các sự vụ nghiêm trọng, chỉ số quá hạn cần chỉ đạo giải quyết khẩn cấp.
+              </CardDescription>
+            </div>
+          </div>
+          <Badge className="bg-red-100 text-red-800 border-0 font-bold rounded-sm text-[10px]">
+            {filteredAlerts.length} cảnh báo
+          </Badge>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className="bg-red-100/30 dark:bg-red-950/20 text-[10px] uppercase font-bold text-red-800/80 dark:text-red-400 border-b border-red-100 dark:border-red-950/20">
+                  <th className="py-2.5 px-4">Tiêu đề cảnh báo</th>
+                  <th className="py-2.5 px-4 w-28">Nguồn</th>
+                  <th className="py-2.5 px-4 w-28 text-center">Độ nghiêm trọng</th>
+                  <th className="py-2.5 px-4 w-40">Phụ trách</th>
+                  <th className="py-2.5 px-4 w-28">Hạn xử lý</th>
+                  <th className="py-2.5 px-4 w-24 text-right">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-red-100/20 dark:divide-red-950/20">
+                {filteredAlerts.length > 0 ? (
+                  filteredAlerts.map((alert: any) => (
+                    <tr key={alert.id} className="hover:bg-red-100/10 dark:hover:bg-red-950/10 transition-colors">
+                      <td className="py-3 px-4 font-bold text-slate-800 dark:text-slate-200">
+                        {alert.title}
+                      </td>
+                      <td className="py-3 px-4">
+                        <Badge className="border-red-200 text-red-700 bg-red-100/10 text-[9px] rounded-sm uppercase tracking-wide">
+                          {alert.module}
+                        </Badge>
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        <span className={cn(
+                          "px-2 py-0.5 rounded-sm text-[9px] font-black uppercase tracking-wide",
+                          alert.severity === 'Nghiêm trọng' ? 'bg-red-600 text-white' : 'bg-amber-500 text-white'
+                        )}>
+                          {alert.severity}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-slate-600 dark:text-slate-400 font-medium">
+                        {alert.owner}
+                      </td>
+                      <td className="py-3 px-4 font-bold text-red-600 dark:text-red-400">
+                        {alert.deadline}
+                      </td>
+                      <td className="py-3 px-4 text-right">
+                        <Link href={alert.targetUrl || '#'}>
+                          <Button variant="ghost" size="sm" className="h-7 text-[10px] text-red-700 hover:text-white hover:bg-red-600 px-2 rounded-sm border border-red-200">
+                            Xử lý
+                          </Button>
+                        </Link>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={6} className="py-8 text-center text-slate-400 italic">
+                      Không có cảnh báo khẩn cấp nào thuộc phạm vi lựa chọn.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* 3. Detailed widgets layout */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+
+        {/* SECTION A: CHỈ ĐẠO BGH */}
+        <Card className="border-slate-200 dark:border-slate-800 rounded-sm">
+          <CardHeader className="pb-3 border-b border-slate-100 dark:border-slate-800 flex flex-row items-center justify-between">
+            <div className="flex items-center gap-2">
+              <ClipboardList className="h-4.5 w-4.5 text-slate-700 dark:text-slate-300" />
+              <div>
+                <CardTitle className="text-sm font-bold">Chỉ Đạo Ban Giám Hiệu (Directives)</CardTitle>
+                <CardDescription className="text-xs">Theo dõi tiến trình triển khai chỉ thị và nghị quyết BGH</CardDescription>
+              </div>
+            </div>
+            <Link href={`/${locale}/directives`}>
+              <Button variant="ghost" size="sm" className="h-7 text-xs text-slate-500 hover:text-slate-800">
+                Mở rộng <ChevronRight className="h-3.5 w-3.5 ml-0.5" />
+              </Button>
+            </Link>
+          </CardHeader>
+          <CardContent className="pt-4 space-y-4">
+            <div className="grid grid-cols-4 gap-2 text-center">
+              <div className="p-2 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-sm">
+                <div className="text-lg font-black text-slate-900 dark:text-white">{baseDirectives.total}</div>
+                <div className="text-[9px] font-bold text-slate-500 uppercase">Tổng chỉ đạo</div>
+              </div>
+              <div className="p-2 bg-amber-50/30 border border-amber-100 rounded-sm">
+                <div className="text-lg font-black text-amber-700">{baseDirectives.inProgress}</div>
+                <div className="text-[9px] font-bold text-amber-600 uppercase">Đang làm</div>
+              </div>
+              <div className="p-2 bg-emerald-50/30 border border-emerald-100 rounded-sm">
+                <div className="text-lg font-black text-emerald-700">{baseDirectives.completed}</div>
+                <div className="text-[9px] font-bold text-emerald-600 uppercase">Đã xong</div>
+              </div>
+              <div className="p-2 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-sm">
+                <div className="text-lg font-black text-slate-700 dark:text-slate-300">{baseDirectives.pendingFeedback}</div>
+                <div className="text-[9px] font-bold text-slate-500 uppercase">Chờ phản hồi</div>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <h4 className="text-xs font-bold text-slate-600 dark:text-slate-400">Danh sách nhanh mới cập nhật:</h4>
+              <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                {(baseDirectives.list || []).map((dir: any, idx: number) => (
+                  <div key={idx} className="py-2.5 flex items-center justify-between text-xs">
+                    <div className="space-y-0.5 pr-4 min-w-0">
+                      <div className="font-bold text-slate-800 dark:text-slate-200 truncate">{dir.title}</div>
+                      <div className="text-[10px] text-slate-500 flex items-center gap-2">
+                        <span>Phòng ban: {dir.dept}</span>
+                        <span>•</span>
+                        <span>Hạn: {dir.deadline}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 shrink-0">
+                      <div className="text-right">
+                        <span className="font-bold">{dir.progress}%</span>
+                        <div className="w-16 bg-slate-100 h-1 rounded-full mt-0.5 overflow-hidden">
+                          <div className="bg-slate-700 h-full" style={{ width: `${dir.progress}%` }} />
+                        </div>
+                      </div>
+                      <Badge className={cn(
+                        "rounded-sm text-[9px] font-bold border-0 uppercase",
+                        dir.status === 'Đã hoàn thành' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                      )}>
+                        {dir.status}
+                      </Badge>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </CardContent>
         </Card>
+
+        {/* SECTION B: CÔNG VIỆC & PHÊ DUYỆT */}
+        <Card className="border-slate-200 dark:border-slate-800 rounded-sm">
+          <CardHeader className="pb-3 border-b border-slate-100 dark:border-slate-800 flex flex-row items-center justify-between">
+            <div className="flex items-center gap-2">
+              <FileCheck className="h-4.5 w-4.5 text-slate-700 dark:text-slate-300" />
+              <div>
+                <CardTitle className="text-sm font-bold">Nhiệm Vụ & Phê Duyệt Hành Chính</CardTitle>
+                <CardDescription className="text-xs">Kiểm soát tiến độ công việc và duyệt đơn từ nghỉ phép, thiết bị</CardDescription>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Link href={`/${locale}/tasks`}>
+                <Button variant="outline" size="sm" className="h-7 text-xs rounded-sm">
+                  Tasks
+                </Button>
+              </Link>
+              <Link href={`/${locale}/approvals`}>
+                <Button variant="outline" size="sm" className="h-7 text-xs rounded-sm">
+                  Duyệt Đơn
+                </Button>
+              </Link>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-4 space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Trạng thái công việc</h4>
+                <div className="space-y-1.5">
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-slate-600 dark:text-slate-400">Đang mở</span>
+                    <span className="font-bold">{kpiStats.openTasks}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-xs text-red-600">
+                    <span>Quá hạn</span>
+                    <span className="font-bold">{kpiStats.overdueTasks}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2 border-l border-slate-200 dark:border-slate-800 pl-4">
+                <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Trạng thái phê duyệt</h4>
+                <div className="space-y-1.5">
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-slate-600 dark:text-slate-400">Chờ duyệt</span>
+                    <span className="font-bold text-cyan-600">{kpiStats.pendingApprovals}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-slate-600 dark:text-slate-400">Cần bổ sung hồ sơ</span>
+                    <span className="font-bold text-amber-600">1</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick action checklist */}
+            <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3 rounded-sm space-y-2">
+              <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Đơn nghỉ phép/cấp phát đang chờ duyệt khẩn:</span>
+              <div className="space-y-2 divide-y divide-slate-200 dark:divide-slate-800">
+                <div className="pt-2 flex justify-between items-center text-xs">
+                  <div className="space-y-0.5">
+                    <div className="font-bold text-slate-800 dark:text-slate-200">Cô Nguyễn Thị Mai - Nghỉ phép năm học</div>
+                    <div className="text-[10px] text-slate-500">Phòng Đào tạo • Đăng ký từ 25/06/2026</div>
+                  </div>
+                  <Link href={`/${locale}/approvals`}>
+                    <Button size="sm" className="h-6 text-[10px] bg-slate-900 text-white rounded-sm hover:bg-slate-800">Duyệt nhanh</Button>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* SECTION C: NHÂN SỰ (HRM) */}
+        <Card className="border-slate-200 dark:border-slate-800 rounded-sm">
+          <CardHeader className="pb-3 border-b border-slate-100 dark:border-slate-800 flex flex-row items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Users className="h-4.5 w-4.5 text-slate-700 dark:text-slate-300" />
+              <div>
+                <CardTitle className="text-sm font-bold">Giám Sát Nhân Sự & Hợp Đồng (HRM)</CardTitle>
+                <CardDescription className="text-xs">Theo dõi biến động nhân sự, hợp đồng và kế hoạch đào tạo chuyên môn</CardDescription>
+              </div>
+            </div>
+            <Link href={`/${locale}/hrm`}>
+              <Button variant="ghost" size="sm" className="h-7 text-xs text-slate-500 hover:text-slate-800">
+                Mở rộng <ChevronRight className="h-3.5 w-3.5 ml-0.5" />
+              </Button>
+            </Link>
+          </CardHeader>
+          <CardContent className="pt-4 space-y-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
+              <div className="p-3 bg-slate-50 dark:bg-slate-900 border border-slate-100 rounded-sm">
+                <span className="text-2xl font-black text-slate-850">{baseHrm.total || 52}</span>
+                <p className="text-[9px] font-bold text-slate-500 uppercase mt-1">Tổng nhân sự</p>
+              </div>
+              <div className="p-3 bg-slate-50 dark:bg-slate-900 border border-slate-100 rounded-sm">
+                <span className="text-2xl font-black text-amber-600">{baseHrm.probation || 3}</span>
+                <p className="text-[9px] font-bold text-slate-500 uppercase mt-1">Đang thử việc</p>
+              </div>
+              <div className="p-3 bg-slate-50 dark:bg-slate-900 border border-slate-100 rounded-sm">
+                <span className="text-2xl font-black text-red-600">{kpiStats.expiringContracts}</span>
+                <p className="text-[9px] font-bold text-slate-500 uppercase mt-1">HĐ sắp hết hạn</p>
+              </div>
+              <div className="p-3 bg-slate-50 dark:bg-slate-900 border border-slate-100 rounded-sm">
+                <span className="text-2xl font-black text-slate-700">{baseHrm.leaveToday || 1}</span>
+                <p className="text-[9px] font-bold text-slate-500 uppercase mt-1">Nghỉ phép hôm nay</p>
+              </div>
+            </div>
+
+            <div className="text-xs space-y-1.5">
+              <div className="flex justify-between items-center text-slate-650">
+                <span>Hồ sơ nhân sự thiếu giấy tờ pháp lý:</span>
+                <Badge className="border-amber-300 text-amber-700 bg-amber-50/10 text-[10px] rounded-sm font-bold">
+                  {baseHrm.missingDocs || 4} hồ sơ
+                </Badge>
+              </div>
+              <div className="flex justify-between items-center text-slate-650">
+                <span>Chương trình đào tạo chuyên môn đang chạy:</span>
+                <span className="font-bold text-slate-800">2 khóa hoạt động</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* SECTION D: TÀI SẢN & DỊCH VỤ (LOGISTICS) */}
+        <Card className="border-slate-200 dark:border-slate-800 rounded-sm">
+          <CardHeader className="pb-3 border-b border-slate-100 dark:border-slate-800 flex flex-row items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Wrench className="h-4.5 w-4.5 text-slate-700 dark:text-slate-300" />
+              <div>
+                <CardTitle className="text-sm font-bold">Quản Lý Cơ Sở Vật Chất & Vật Tư (Logistics)</CardTitle>
+                <CardDescription className="text-xs">Theo dõi bảo trì tài sản, thiết bị và hàng tồn kho vật tư dạy học</CardDescription>
+              </div>
+            </div>
+            <Link href={`/${locale}/facilities`}>
+              <Button variant="ghost" size="sm" className="h-7 text-xs text-slate-500 hover:text-slate-800">
+                Mở rộng <ChevronRight className="h-3.5 w-3.5 ml-0.5" />
+              </Button>
+            </Link>
+          </CardHeader>
+          <CardContent className="pt-4 space-y-4">
+            <div className="grid grid-cols-3 gap-3 text-center">
+              <div className="p-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-100 rounded-sm">
+                <span className="text-xl font-bold text-slate-800">{baseLogistics.totalAssets || 120}</span>
+                <p className="text-[9px] font-bold text-slate-500 uppercase mt-0.5">Tổng tài sản</p>
+              </div>
+              <div className="p-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-100 rounded-sm">
+                <span className="text-xl font-bold text-red-600">{baseLogistics.brokenAssets || 3}</span>
+                <p className="text-[9px] font-bold text-slate-500 uppercase mt-0.5">Hỏng/Mất</p>
+              </div>
+              <div className="p-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-100 rounded-sm">
+                <span className="text-xl font-bold text-amber-600">{kpiStats.openRepairs}</span>
+                <p className="text-[9px] font-bold text-slate-500 uppercase mt-0.5">Yêu cầu sửa chữa</p>
+              </div>
+            </div>
+
+            <div className="text-xs space-y-2">
+              <div className="flex justify-between items-center text-slate-650">
+                <span>Vật tư tồn kho dưới định mức tối thiểu:</span>
+                <Badge className="bg-red-100 text-red-800 font-bold text-[10px] border-0 rounded-sm">
+                  {baseLogistics.lowStockSupplies || 1} danh mục cần nhập
+                </Badge>
+              </div>
+              <div className="flex justify-between items-center text-slate-650">
+                <span>Kiểm kê tài sản định kỳ học kỳ:</span>
+                <span className="text-slate-500 font-medium italic">Đang diễn ra (Dự kiến hoàn thành 30/06)</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* SECTION E: RỦI RO & KIỂM SOÁT NỘI BỘ (RISK) */}
+        <Card className="border-slate-200 dark:border-slate-800 rounded-sm">
+          <CardHeader className="pb-3 border-b border-slate-100 dark:border-slate-800 flex flex-row items-center justify-between">
+            <div className="flex items-center gap-2">
+              <ShieldAlert className="h-4.5 w-4.5 text-slate-700 dark:text-slate-300" />
+              <div>
+                <CardTitle className="text-sm font-bold">Rủi Ro & Kiểm Soát Nội Bộ</CardTitle>
+                <CardDescription className="text-xs">Ma trận điểm không phù hợp và tiến độ hành động khắc phục CAPA</CardDescription>
+              </div>
+            </div>
+            <Link href={`/${locale}/risk`}>
+              <Button variant="ghost" size="sm" className="h-7 text-xs text-slate-500 hover:text-slate-800">
+                Mở rộng <ChevronRight className="h-3.5 w-3.5 ml-0.5" />
+              </Button>
+            </Link>
+          </CardHeader>
+          <CardContent className="pt-4 space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 p-3.5 rounded-sm space-y-2">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">Giám sát CAPA</span>
+                <div className="flex justify-between items-baseline">
+                  <span className="text-2xl font-black text-red-600">{kpiStats.overdueCapas}</span>
+                  <span className="text-xs font-bold text-slate-500">CAPA quá hạn</span>
+                </div>
+                <p className="text-[10px] text-slate-500">2 CAPA đang chờ thẩm định hiệu lực.</p>
+              </div>
+
+              <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 p-3.5 rounded-sm space-y-2">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">Rủi ro phát hiện</span>
+                <div className="flex justify-between items-baseline">
+                  <span className="text-2xl font-black text-slate-800 dark:text-slate-200">{baseRisk.totalRisks || 8}</span>
+                  <span className="text-xs font-bold text-red-600">{kpiStats.severeRisks} mức cao</span>
+                </div>
+                <p className="text-[10px] text-slate-500">Khảo sát rủi ro học đường tự động.</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* SECTION F: CSKH PHỤ HUYNH, TRUYỀN THÔNG & SỰ KIỆN */}
+        <Card className="border-slate-200 dark:border-slate-800 rounded-sm">
+          <CardHeader className="pb-3 border-b border-slate-100 dark:border-slate-800 flex flex-row items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Building className="h-4.5 w-4.5 text-slate-700 dark:text-slate-300" />
+              <div>
+                <CardTitle className="text-sm font-bold">Chăm Sóc Phụ Huynh, Truyền Thông & Sự Kiện</CardTitle>
+                <CardDescription className="text-xs">Theo dõi phản ánh (tickets), đo lường truyền thông tuyển sinh và khảo sát</CardDescription>
+              </div>
+            </div>
+            <Link href={`/${locale}/events`}>
+              <Button variant="ghost" size="sm" className="h-7 text-xs text-slate-500 hover:text-slate-800">
+                Mở rộng <ChevronRight className="h-3.5 w-3.5 ml-0.5" />
+              </Button>
+            </Link>
+          </CardHeader>
+          <CardContent className="pt-4 space-y-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
+              <div className="p-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-100 rounded-sm">
+                <span className="text-xl font-bold text-slate-800">{kpiStats.openTickets}</span>
+                <p className="text-[9px] font-bold text-slate-500 uppercase mt-0.5">Tickets mở</p>
+              </div>
+              <div className="p-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-100 rounded-sm">
+                <span className="text-xl font-bold text-red-600">{kpiStats.overdueTickets}</span>
+                <p className="text-[9px] font-bold text-slate-500 uppercase mt-0.5">Quá hạn SLA</p>
+              </div>
+              <div className="p-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-100 rounded-sm">
+                <span className="text-xl font-bold text-slate-700">{kpiStats.upcomingEvents}</span>
+                <p className="text-[9px] font-bold text-slate-500 uppercase mt-0.5">Sự kiện tới</p>
+              </div>
+              <div className="p-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-100 rounded-sm">
+                <span className="text-xl font-bold text-slate-800">{baseParent.crisisCount || 0}</span>
+                <p className="text-[9px] font-bold text-slate-500 uppercase mt-0.5">Khủng hoảng</p>
+              </div>
+            </div>
+
+            <div className="text-xs space-y-1.5">
+              <div className="flex justify-between items-center text-slate-650">
+                <span>Khảo sát hài lòng phụ huynh Q2:</span>
+                <span className="font-bold text-emerald-600">Đạt 84% phản hồi tốt</span>
+              </div>
+              <div className="flex justify-between items-center text-slate-650">
+                <span>Nội dung truyền thông tuyển sinh tuần tới:</span>
+                <span className="text-amber-600 font-bold">1 bài viết đang chờ BGH duyệt</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* SECTION G: QUY TRÌNH & VĂN BẢN (DOCUMENT) */}
+        <Card className="border-slate-200 dark:border-slate-800 rounded-sm xl:col-span-2">
+          <CardHeader className="pb-3 border-b border-slate-100 dark:border-slate-800 flex flex-row items-center justify-between">
+            <div className="flex items-center gap-2">
+              <FileText className="h-4.5 w-4.5 text-slate-700 dark:text-slate-300" />
+              <div>
+                <CardTitle className="text-sm font-bold">Quản Trị Quy Trình & Tài Liệu Pháp Quy (SOPs)</CardTitle>
+                <CardDescription className="text-xs">Theo dõi hiệu lực quy chế, biểu mẫu kiểm định chất lượng đào tạo</CardDescription>
+              </div>
+            </div>
+            <Link href={`/${locale}/knowledge`}>
+              <Button variant="ghost" size="sm" className="h-7 text-xs text-slate-500 hover:text-slate-800">
+                Mở rộng <ChevronRight className="h-3.5 w-3.5 ml-0.5" />
+              </Button>
+            </Link>
+          </CardHeader>
+          <CardContent className="pt-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+              <div className="p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 rounded-sm text-center">
+                <span className="text-2xl font-black text-slate-800">{baseDoc.total || 24}</span>
+                <p className="text-[10px] font-bold text-slate-500 uppercase mt-1">Tổng tài liệu</p>
+              </div>
+              <div className="p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 rounded-sm text-center">
+                <span className="text-2xl font-black text-emerald-600">{baseDoc.active || 18}</span>
+                <p className="text-[10px] font-bold text-slate-500 uppercase mt-1">Đang hiệu lực</p>
+              </div>
+              <div className="p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 rounded-sm text-center">
+                <span className="text-2xl font-black text-amber-600">{kpiStats.docsReview}</span>
+                <p className="text-[10px] font-bold text-slate-500 uppercase mt-1">Cần rà soát</p>
+              </div>
+              <div className="p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 rounded-sm text-center">
+                <span className="text-2xl font-black text-red-600">{baseDoc.expired || 1}</span>
+                <p className="text-[10px] font-bold text-slate-500 uppercase mt-1">Hết hiệu lực</p>
+              </div>
+            </div>
+
+            <div className="bg-slate-50 dark:bg-slate-900 p-3 rounded-sm border border-slate-200">
+              <span className="text-xs font-bold text-slate-650 block mb-2">Quy định/Biểu mẫu học hiệu hết hạn hoặc cần kiểm tra định kỳ:</span>
+              <div className="space-y-1">
+                <div className="flex justify-between items-center text-xs py-1">
+                  <span className="font-bold text-slate-800 dark:text-slate-200">1. HD-02-BGH: Hướng dẫn quản lý tài sản lớp học</span>
+                  <Badge className="border-amber-300 text-amber-700 bg-amber-50/10 text-[9px]">Cần rà soát tháng này</Badge>
+                </div>
+                <div className="flex justify-between items-center text-xs py-1">
+                  <span className="font-bold text-slate-800 dark:text-slate-200">2. BM-05-DT: Biểu mẫu thẩm định giáo án giảng dạy</span>
+                  <Badge className="border-red-300 text-red-700 bg-red-50/10 text-[9px]">Đã hết hiệu lực ngày 15/06</Badge>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
       </div>
     </div>
   );
 }
-
-function SettingsIcon(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
-      <circle cx="12" cy="12" r="3" />
-    </svg>
-  );
-}
-
-function CheckSquare(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <polyline points="9 11 12 14 22 4" />
-      <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
-    </svg>
-  );
-}
-

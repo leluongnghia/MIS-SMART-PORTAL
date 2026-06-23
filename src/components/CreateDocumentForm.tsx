@@ -135,9 +135,11 @@ export default function CreateDocumentForm({ onClose, onSubmitSuccess, initialDa
         <div>
           <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
             <FileText className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-            Tạo tài liệu mới
+            {initialData ? 'Chỉnh sửa tài liệu' : 'Tạo tài liệu mới'}
           </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Kho quy trình, văn bản, biểu mẫu & tri thức</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            {initialData ? 'Cập nhật quy trình, văn bản, biểu mẫu & tri thức' : 'Kho quy trình, văn bản, biểu mẫu & tri thức'}
+          </p>
         </div>
         <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
           <X className="w-5 h-5" />

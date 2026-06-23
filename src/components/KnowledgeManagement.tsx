@@ -5,7 +5,7 @@ import {
   FileText, Search, Filter, Plus, BookOpen, 
   Settings, CheckCircle2, Clock, AlertTriangle, 
   MoreVertical, BookMarked, Tags, Layers,
-  ChevronRight, Building2, UserCircle, Calendar, Link as LinkIcon, X
+  ChevronRight, Building2, UserCircle, Calendar, Link as LinkIcon, X, Edit, Trash2, Archive
 } from 'lucide-react';
 import { DocumentItem } from '../types';
 import CreateDocumentForm from './CreateDocumentForm';
@@ -161,9 +161,12 @@ const mockDocuments: DocumentItem[] = [
 interface DocumentDetailDrawerProps {
   document: DocumentItem | null;
   onClose: () => void;
+  onEdit: (doc: DocumentItem) => void;
+  onArchive: (docId: string) => void;
+  onDelete: (docId: string) => void;
 }
 
-function DocumentDetailDrawer({ document, onClose }: DocumentDetailDrawerProps) {
+function DocumentDetailDrawer({ document, onClose, onEdit, onArchive, onDelete }: DocumentDetailDrawerProps) {
   if (!document) return null;
 
   // Custom step generator for SOPs if steps are not defined
@@ -431,13 +434,41 @@ function DocumentDetailDrawer({ document, onClose }: DocumentDetailDrawerProps) 
         </div>
 
         {/* Footer actions */}
-        <div className="shrink-0 p-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 sticky bottom-0 z-10 flex items-center justify-end gap-3">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors border border-slate-200 dark:border-slate-700"
-          >
-            Đóng
-          </button>
+        <div className="shrink-0 p-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 sticky bottom-0 z-10 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => onArchive(document.id)}
+              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/30 dark:text-amber-300 rounded-lg transition-colors border border-amber-200 dark:border-amber-900/50"
+              title="Lưu trữ tài liệu này"
+            >
+              <Archive className="w-3.5 h-3.5" />
+              Lưu trữ
+            </button>
+            <button
+              onClick={() => onDelete(document.id)}
+              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/30 dark:text-rose-300 rounded-lg transition-colors border border-rose-200 dark:border-rose-900/50"
+              title="Xóa tài liệu này"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              Xóa
+            </button>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => onEdit(document)}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/30 dark:text-indigo-300 rounded-lg transition-colors border border-indigo-200 dark:border-indigo-900/50"
+            >
+              <Edit className="w-3.5 h-3.5" />
+              Chỉnh sửa
+            </button>
+            <button
+              onClick={onClose}
+              className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors border border-slate-200 dark:border-slate-700"
+            >
+              Đóng
+            </button>
+          </div>
         </div>
 
       </div>
@@ -451,7 +482,28 @@ export default function KnowledgeManagement() {
   const [filterCategory, setFilterCategory] = useState<string>('ALL');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [selectedDoc, setSelectedDoc] = useState<DocumentItem | null>(null);
+  const [editingDoc, setEditingDoc] = useState<DocumentItem | null>(null);
   const [documents, setDocuments] = useState<DocumentItem[]>(mockDocuments);
+
+  const handleArchiveDoc = (docId: string) => {
+    setDocuments(docs => docs.map(d => d.id === docId ? { ...d, status: 'ARCHIVED' } : d));
+    if (selectedDoc?.id === docId) {
+      setSelectedDoc(prev => prev ? { ...prev, status: 'ARCHIVED' } : null);
+    }
+  };
+
+  const handleDeleteDoc = (docId: string) => {
+    if (window.confirm('Bạn có chắc chắn muốn xóa tài liệu này?')) {
+      setDocuments(docs => docs.filter(d => d.id !== docId));
+      if (selectedDoc?.id === docId) {
+        setSelectedDoc(null);
+      }
+    }
+  };
+
+  const handleEditDoc = (doc: DocumentItem) => {
+    setEditingDoc(doc);
+  };
 
   // Statistics
   const stats = useMemo(() => {
@@ -758,10 +810,30 @@ export default function KnowledgeManagement() {
                       <td className="px-4 py-3">
                         {getStatusBadge(doc.status)}
                       </td>
-                      <td className="px-4 py-3 text-right">
-                        <button className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded transition-colors">
-                          <MoreVertical className="w-4 h-4" />
-                        </button>
+                      <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex justify-end gap-1">
+                          <button 
+                            onClick={() => handleEditDoc(doc)}
+                            className="p-1 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded transition-colors"
+                            title="Chỉnh sửa"
+                          >
+                            <Edit className="w-3.5 h-3.5" />
+                          </button>
+                          <button 
+                            onClick={() => handleArchiveDoc(doc.id)}
+                            className="p-1 text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/30 rounded transition-colors"
+                            title="Lưu trữ"
+                          >
+                            <Archive className="w-3.5 h-3.5" />
+                          </button>
+                          <button 
+                            onClick={() => handleDeleteDoc(doc.id)}
+                            className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 rounded transition-colors"
+                            title="Xóa"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   )) : (
@@ -809,7 +881,38 @@ export default function KnowledgeManagement() {
         <DocumentDetailDrawer 
           document={selectedDoc} 
           onClose={() => setSelectedDoc(null)} 
+          onEdit={handleEditDoc}
+          onArchive={handleArchiveDoc}
+          onDelete={handleDeleteDoc}
         />
+      )}
+
+      {/* EDIT DOCUMENT DRAWER */}
+      {editingDoc && (
+        <div className="fixed inset-0 z-50 flex justify-end">
+          <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={() => setEditingDoc(null)} />
+          <div className="relative w-full max-w-3xl bg-white dark:bg-slate-900 h-full shadow-2xl animate-in slide-in-from-right duration-200">
+            <CreateDocumentForm 
+              onClose={() => setEditingDoc(null)}
+              initialData={editingDoc}
+              onSubmitSuccess={(data) => {
+                setDocuments(docs => docs.map(d => d.id === editingDoc.id ? {
+                  ...d,
+                  ...data,
+                  updatedAt: new Date().toISOString()
+                } : d));
+                if (selectedDoc?.id === editingDoc.id) {
+                  setSelectedDoc(prev => prev ? {
+                    ...prev,
+                    ...data,
+                    updatedAt: new Date().toISOString()
+                  } : null);
+                }
+                setEditingDoc(null);
+              }}
+            />
+          </div>
+        </div>
       )}
     </div>
   );
