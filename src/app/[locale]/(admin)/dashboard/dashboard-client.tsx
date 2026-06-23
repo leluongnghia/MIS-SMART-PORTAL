@@ -259,7 +259,7 @@ export default function DashboardClient({ tab, initialData }: DashboardClientPro
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-              Bảng Điều Hành Chỉ Đạo & Giám Sát BGH
+              Bảng Điều Hành Chỉ Đạo
             </h1>
             <Badge className="bg-slate-100 text-slate-800 border-0 rounded-sm font-bold text-[10px] uppercase tracking-wider">
               {currentUser?.role === 'ADMIN' ? 'BGH Executive' : `Trưởng phòng: ${currentUser?.workspaceId || ''}`}
