@@ -388,12 +388,12 @@ export async function getReportsData() {
     documentsData.allDocsList = files.map(f => ({
       id: f.id,
       displayName: f.displayName || f.fileName,
-      docCode: f.docCode || f.id.slice(0, 8).toUpperCase(),
+      docCode: f.id.slice(0, 8).toUpperCase(),
       category: f.category || 'Chung',
       status: f.status,
       uploadedByName: f.uploadedByName || 'Quản trị viên',
-      effectiveDate: f.effectiveDate || '',
-      docType: f.docType || 'Tài liệu',
+      effectiveDate: '',
+      docType: f.documentType || 'Tài liệu',
     }));
   } catch (e) {
     console.error('Reports actions - Documents query failed:', e);
