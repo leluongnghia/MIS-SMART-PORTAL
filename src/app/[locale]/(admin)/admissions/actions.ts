@@ -28,6 +28,13 @@ export async function getAdmissionsData() {
   };
 }
 
+export async function getAdmissionDocuments() {
+  return await db
+    .select()
+    .from(schema.documents)
+    .orderBy(desc(schema.documents.createdAt));
+}
+
 export async function updateAdmissionLeadFields(
   leadId: string,
   data: {
@@ -73,6 +80,41 @@ export async function updateAdmissionLeadFields(
   });
 
   revalidatePath('/[locale]/admissions', 'page');
+  revalidatePath(`/[locale]/leads/${leadId}`, 'page');
+  return { success: true };
+}
+
+export async function updateAdmissionAppointment(
+  leadId: string,
+  data: {
+    testDate?: string | null;
+    testTime?: string | null;
+    status?: LeadStatus;
+    note?: string;
+  }
+) {
+  const updateData: Partial<typeof schema.leads.$inferInsert> = {
+    updatedAt: new Date(),
+  };
+
+  if ('testDate' in data) updateData.testDate = data.testDate ? new Date(data.testDate) : null;
+  if ('testTime' in data) updateData.testTime = data.testTime || null;
+  if ('status' in data && data.status) updateData.status = data.status;
+
+  await db.update(schema.leads).set(updateData).where(eq(schema.leads.id, leadId));
+
+  await db.insert(schema.leadActivities).values({
+    id: `act_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    leadId,
+    type: 'appointment',
+    title: 'Cập nhật lịch test tuyển sinh',
+    description: data.note || 'Lịch test/phỏng vấn tuyển sinh được cập nhật.',
+    activityAt: new Date(),
+    payload: { testDate: data.testDate, testTime: data.testTime, status: data.status },
+  });
+
+  revalidatePath('/[locale]/admissions', 'page');
+  revalidatePath('/[locale]/leads', 'page');
   revalidatePath(`/[locale]/leads/${leadId}`, 'page');
   return { success: true };
 }
@@ -130,6 +172,62 @@ export async function updateAdmissionDocumentStatus(
       payload: {},
     });
   }
+
+  revalidatePath('/[locale]/admissions', 'page');
+  revalidatePath(`/[locale]/leads/${leadId}`, 'page');
+  return { success: true };
+}
+
+export async function updateAdmissionDocumentFile(
+  leadId: string,
+  docType: string,
+  data: {
+    fileName: string;
+    status?: 'submitted' | 'pending' | 'rejected';
+    note?: string;
+  }
+) {
+  const existing = await db
+    .select()
+    .from(schema.documents)
+    .where(and(eq(schema.documents.leadId, leadId), eq(schema.documents.type, docType)))
+    .limit(1);
+
+  const payload = { fileName: data.fileName, note: data.note || '' };
+  if (existing[0]) {
+    await db
+      .update(schema.documents)
+      .set({
+        name: docType,
+        status: data.status || 'submitted',
+        fileUrl: data.fileName,
+        uploadedAt: new Date(),
+        payload,
+        updatedAt: new Date(),
+      })
+      .where(eq(schema.documents.id, existing[0].id));
+  } else {
+    await db.insert(schema.documents).values({
+      id: `doc_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+      leadId,
+      type: docType,
+      name: docType,
+      status: data.status || 'submitted',
+      fileUrl: data.fileName,
+      uploadedAt: new Date(),
+      payload,
+    });
+  }
+
+  await db.insert(schema.leadActivities).values({
+    id: `act_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    leadId,
+    type: 'document',
+    title: 'Cập nhật tài liệu tuyển sinh',
+    description: `Đã cập nhật tài liệu: ${docType}`,
+    activityAt: new Date(),
+    payload,
+  });
 
   revalidatePath('/[locale]/admissions', 'page');
   revalidatePath(`/[locale]/leads/${leadId}`, 'page');

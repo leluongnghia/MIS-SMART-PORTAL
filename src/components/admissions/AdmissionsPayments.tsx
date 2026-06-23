@@ -160,19 +160,161 @@ function ModalVietQR({ giaoDich, onClose }: { giaoDich: GiaoDich; onClose: () =>
   );
 }
 
+function ModalBienLai({ giaoDich, onClose }: { giaoDich: GiaoDich; onClose: () => void }) {
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative z-10 w-full max-w-md rounded-2xl bg-white shadow-2xl">
+        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+          <h3 className="font-black text-slate-900">Biên lai thanh toán</h3>
+          <button type="button" onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100"><X className="h-4 w-4" /></button>
+        </div>
+        <div className="space-y-3 p-5 text-sm">
+          {[
+            ['Mã giao dịch', giaoDich.maGD],
+            ['Học sinh', giaoDich.hoTen],
+            ['Mã lead', giaoDich.maLead],
+            ['Loại thu', giaoDich.loai],
+            ['Số tiền', fSoTien(giaoDich.soTien)],
+            ['Trạng thái', giaoDich.trangThai],
+            ['Ngày thanh toán', giaoDich.ngayThanhToan || 'Chưa thanh toán'],
+          ].map(([label, value]) => (
+            <div key={label} className="flex justify-between gap-3 border-b border-slate-50 pb-2">
+              <span className="text-slate-500">{label}</span>
+              <span className="font-bold text-slate-900">{value}</span>
+            </div>
+          ))}
+          <button type="button" onClick={() => window.print()} className="mt-2 w-full rounded-xl bg-slate-950 py-2.5 text-xs font-bold text-white hover:bg-slate-800">
+            In biên lai
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
+function ModalTaoPhieuThu({
+  leads,
+  onClose,
+  onCreate,
+}: {
+  leads: AdmissionLead[];
+  onClose: () => void;
+  onCreate: (lead: AdmissionLead, loai: LoaiTT, amount: number) => Promise<void>;
+}) {
+  const [leadId, setLeadId] = useState(leads[0]?.id || '');
+  const [loai, setLoai] = useState<LoaiTT>('Giữ chỗ');
+  const [amount, setAmount] = useState(10000000);
+  const [saving, setSaving] = useState(false);
+  const selectedLead = leads.find(lead => lead.id === leadId) || leads[0];
+
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative z-10 w-full max-w-md rounded-2xl bg-white shadow-2xl">
+        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+          <h3 className="font-black text-slate-900">Tạo phiếu thu</h3>
+          <button type="button" onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100"><X className="h-4 w-4" /></button>
+        </div>
+        <div className="space-y-4 p-5">
+          <label className="block space-y-1.5">
+            <span className="text-xs font-bold text-slate-700">Lead / học sinh</span>
+            <select value={leadId} onChange={e => setLeadId(e.target.value)} className="h-10 w-full rounded-xl border border-slate-200 px-3 text-sm">
+              {leads.map(lead => <option key={lead.id} value={lead.id}>{lead.hoTen} · {lead.khoi}</option>)}
+            </select>
+          </label>
+          <label className="block space-y-1.5">
+            <span className="text-xs font-bold text-slate-700">Loại thu</span>
+            <select value={loai} onChange={e => setLoai(e.target.value as LoaiTT)} className="h-10 w-full rounded-xl border border-slate-200 px-3 text-sm">
+              {Object.keys(UI_TO_PAYMENT_TYPE).map(type => <option key={type} value={type}>{type}</option>)}
+            </select>
+          </label>
+          <label className="block space-y-1.5">
+            <span className="text-xs font-bold text-slate-700">Số tiền</span>
+            <input type="number" min={1000} value={amount} onChange={e => setAmount(Number(e.target.value))} className="h-10 w-full rounded-xl border border-slate-200 px-3 text-sm" />
+          </label>
+          <button
+            type="button"
+            disabled={!selectedLead || saving || amount <= 0}
+            onClick={async () => {
+              if (!selectedLead) return;
+              setSaving(true);
+              await onCreate(selectedLead, loai, amount);
+              setSaving(false);
+            }}
+            className="w-full rounded-xl bg-emerald-600 py-2.5 text-xs font-bold text-white hover:bg-emerald-700 disabled:opacity-40"
+          >
+            {saving ? 'Đang tạo...' : 'Tạo phiếu thu'}
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
 // ─── Component chính ─────────────────────────────────────────────────────────
-export default function AdmissionsPayments() {
+export default function AdmissionsPayments({ leads = [], initialPayments = [] }: { leads?: AdmissionLead[]; initialPayments?: any[] }) {
   const [locTrangThai, setLocTrangThai] = useState('Tất cả');
   const [timKiem, setTimKiem] = useState('');
   const [qrGD, setQrGD] = useState<GiaoDich | null>(null);
-  const [giaoDichList, setGiaoDichList] = useState<GiaoDich[]>(GIAO_DICH_MAU);
+  const [receiptGD, setReceiptGD] = useState<GiaoDich | null>(null);
+  const [hienTaoPhieu, setHienTaoPhieu] = useState(false);
+  const [giaoDichList, setGiaoDichList] = useState<GiaoDich[]>(() => (
+    initialPayments.length ? initialPayments.map(mapDbPaymentToGiaoDich) : GIAO_DICH_MAU
+  ));
   const [toast, setToast] = useState('');
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 2500); };
 
-  const xacNhanGD = (id: string) => {
-    setGiaoDichList(prev => prev.map(g => g.id === id ? { ...g, trangThai: 'Đã thanh toán' as const, ngayThanhToan: new Date().toLocaleDateString('vi-VN'), phuongThuc: 'Chuyển khoản' as const } : g));
-    showToast('✓ Xác nhận thanh toán thành công!');
+  React.useEffect(() => {
+    if (initialPayments.length) {
+      setGiaoDichList(initialPayments.map(mapDbPaymentToGiaoDich));
+    }
+  }, [initialPayments]);
+
+  const xacNhanGD = async (id: string) => {
+    try {
+      if (!id.startsWith('tt')) {
+        await confirmPayment(id);
+      }
+      setGiaoDichList(prev => prev.map(g => g.id === id ? { ...g, trangThai: 'Đã thanh toán' as const, ngayThanhToan: new Date().toLocaleDateString('vi-VN'), phuongThuc: 'Chuyển khoản' as const } : g));
+      showToast('✓ Xác nhận thanh toán thành công!');
+    } catch {
+      showToast('Xác nhận thanh toán thất bại');
+    }
+  };
+
+  const taoPhieuThu = async (lead: AdmissionLead, loai: LoaiTT, amount: number) => {
+    try {
+      const result = await createPayment({ leadId: lead.id, type: UI_TO_PAYMENT_TYPE[loai], amount });
+      const newPayment: GiaoDich = {
+        id: result.paymentId || `pay_${Date.now()}`,
+        maGD: `${loai === 'Giữ chỗ' ? 'SEAT' : loai === 'Học phí' ? 'ENROLL' : 'ADMISSION'}-${lead.id}`,
+        hoTen: lead.hoTen,
+        maLead: lead.id,
+        loai,
+        soTien: amount,
+        ngayHanChot: new Date().toLocaleDateString('vi-VN'),
+        trangThai: 'Chờ xác nhận',
+      };
+      setGiaoDichList(prev => [newPayment, ...prev]);
+      setHienTaoPhieu(false);
+      setQrGD(newPayment);
+      showToast('✓ Đã tạo phiếu thu và VietQR');
+    } catch {
+      showToast('Tạo phiếu thu thất bại');
+    }
+  };
+
+  const handleExportStatement = () => {
+    downloadCsv(
+      `MIS_Sao_Ke_Tuyen_Sinh_${new Date().toISOString().slice(0, 10)}.csv`,
+      ['Mã giao dịch', 'Học sinh', 'Mã lead', 'Loại', 'Số tiền', 'Hạn thanh toán', 'Ngày thanh toán', 'Phương thức', 'Trạng thái'],
+      dsLoc.map(gd => [gd.maGD, gd.hoTen, gd.maLead, gd.loai, gd.soTien, gd.ngayHanChot, gd.ngayThanhToan || '', gd.phuongThuc || '', gd.trangThai])
+    );
+    showToast(`Đã xuất ${dsLoc.length} giao dịch`);
   };
 
   const dsLoc = giaoDichList.filter(gd =>
@@ -199,10 +341,10 @@ export default function AdmissionsPayments() {
             <p className="mt-0.5 text-xs font-medium text-slate-500">Theo dõi thanh toán giữ chỗ, học phí và đối soát giao dịch</p>
           </div>
           <div className="flex items-center gap-2">
-            <button type="button" className="flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 shadow-xs hover:bg-slate-50">
+            <button type="button" onClick={handleExportStatement} className="flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 shadow-xs hover:bg-slate-50">
               <Download className="h-3.5 w-3.5" /> Xuất sao kê
             </button>
-            <button type="button" className="flex h-9 items-center gap-1.5 rounded-xl bg-emerald-600 px-4 text-xs font-bold text-white hover:bg-emerald-700">
+            <button type="button" onClick={() => setHienTaoPhieu(true)} disabled={!leads.length} className="flex h-9 items-center gap-1.5 rounded-xl bg-emerald-600 px-4 text-xs font-bold text-white hover:bg-emerald-700 disabled:opacity-40">
               <Plus className="h-3.5 w-3.5" /> Tạo phiếu thu
             </button>
           </div>
@@ -269,7 +411,7 @@ export default function AdmissionsPayments() {
               <div className="text-xs font-semibold text-slate-500">
                 <Calendar className="inline h-3 w-3 mr-1" /> 05/2025
               </div>
-              <button type="button" className="flex h-8 items-center gap-1 rounded-xl border border-slate-200 px-2 text-xs font-bold text-slate-700 hover:bg-slate-50">
+              <button type="button" onClick={() => { setLocTrangThai('Tất cả'); setTimKiem(''); showToast('Đã đặt lại bộ lọc thanh toán'); }} className="flex h-8 items-center gap-1 rounded-xl border border-slate-200 px-2 text-xs font-bold text-slate-700 hover:bg-slate-50">
                 <Filter className="h-3.5 w-3.5" /> Bộ lọc
               </button>
             </div>
@@ -346,7 +488,7 @@ export default function AdmissionsPayments() {
                               <CheckCircle2 className="h-3 w-3" /> Xác nhận
                             </button>
                           )}
-                          <button type="button" className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100">
+                          <button type="button" onClick={() => setReceiptGD(gd)} className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100">
                             <Receipt className="h-3.5 w-3.5" />
                           </button>
                         </div>
@@ -365,6 +507,8 @@ export default function AdmissionsPayments() {
       </div>
 
       {qrGD && <ModalVietQR giaoDich={qrGD} onClose={() => setQrGD(null)} />}
+      {receiptGD && <ModalBienLai giaoDich={receiptGD} onClose={() => setReceiptGD(null)} />}
+      {hienTaoPhieu && <ModalTaoPhieuThu leads={leads} onClose={() => setHienTaoPhieu(false)} onCreate={taoPhieuThu} />}
     </>
   );
 }

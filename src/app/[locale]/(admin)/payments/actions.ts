@@ -92,6 +92,7 @@ export async function createPayment({
   });
 
   revalidatePath('/[locale]/payments', 'page');
+  revalidatePath('/[locale]/admissions', 'page');
   revalidatePath(`/[locale]/leads/${leadId}`, 'page');
   return { success: true, paymentId };
 }
@@ -175,6 +176,7 @@ export async function confirmPayment(paymentId: string) {
   }
 
   revalidatePath('/[locale]/payments', 'page');
+  revalidatePath('/[locale]/admissions', 'page');
   if (lead) {
     revalidatePath(`/[locale]/leads/${lead.id}`, 'page');
   }

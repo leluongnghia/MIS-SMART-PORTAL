@@ -1,5 +1,7 @@
 import AdmissionsEnterpriseDashboard, { type AdmissionsModule } from '@/src/components/AdmissionsEnterpriseDashboard';
+import { getAdmissionDocuments } from './actions';
 import { getLeads, getUsers } from '../leads/actions';
+import { getPayments } from '../payments/actions';
 
 const viewToModule = (view?: string): AdmissionsModule => {
   const allowed: AdmissionsModule[] = [
@@ -55,7 +57,11 @@ export default async function AdmissionsPage({
     limit: 10,
   });
 
-  const dbUsers = await getUsers();
+  const [dbUsers, payments, documents] = await Promise.all([
+    getUsers(),
+    getPayments(),
+    getAdmissionDocuments(),
+  ]);
   const users = dbUsers.map(u => ({
     id: u.id,
     name: u.name,
@@ -67,6 +73,8 @@ export default async function AdmissionsPage({
       initialData={initialData}
       users={users}
       filters={filters}
+      payments={payments}
+      documents={documents}
     />
   );
 }

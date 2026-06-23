@@ -36,6 +36,8 @@ export interface Lead {
   trangThai: TrangThai;
   diemLead: number;
   ngayTao: string;
+  testDate?: string | null;
+  testTime?: string | null;
 }
 
 export interface FormThem {

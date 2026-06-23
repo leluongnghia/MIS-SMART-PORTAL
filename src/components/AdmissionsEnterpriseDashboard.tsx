@@ -82,6 +82,8 @@ type DbLead = {
   status: LeadStatus;
   assignedUserId?: string | null;
   createdAt?: Date | string | null;
+  testDate?: Date | string | null;
+  testTime?: string | null;
 };
 
 const DB_STATUS_TO_UI: Record<LeadStatus, Lead['trangThai']> = {
@@ -139,6 +141,8 @@ function mapDbLeadToAdmissionLead(lead: DbLead, users: { id: string; name: strin
     tvvAvatar: initials(advisorName),
     trangThai: DB_STATUS_TO_UI[lead.status] || 'Mới',
     diemLead: scoreFromStatus(lead.status),
+    testDate: lead.testDate ? new Date(lead.testDate).toISOString().slice(0, 10) : null,
+    testTime: lead.testTime || null,
     ngayTao: lead.createdAt
       ? new Date(lead.createdAt).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
       : new Date().toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
@@ -180,11 +184,15 @@ export default function AdmissionsEnterpriseDashboard({
   initialData,
   users = [],
   filters,
+  payments = [],
+  documents = [],
 }: {
   activeModule?: AdmissionsModule;
   initialData?: any;
   users?: { id: string; name: string }[];
   filters?: any;
+  payments?: any[];
+  documents?: any[];
 }) {
   const router = useRouter();
   // Resolve legacy module IDs
@@ -274,15 +282,15 @@ export default function AdmissionsEnterpriseDashboard({
   const renderModule = () => {
     switch (internalModule) {
       case 'dashboard':    return <AdmissionsDashboard onNavigate={(tab) => setInternalModule(tab as AdmissionsModule)} />;
-      case 'leads':        return <AdmissionsLeadsTable initialData={initialData} leads={leads} users={users} filters={filters} chuongTrinhList={chuongTrinhList.filter(c => c.hoatDong).map(c => c.ten)} onViewDetail={(leadId) => { setSelectedLeadId(leadId); setInternalModule('lead_detail'); }} onEditLead={(lead) => { setLeadDangSua(lead); setHienModal(true); }} />;
+      case 'leads':        return <AdmissionsLeadsTable initialData={initialData} users={users} filters={filters} chuongTrinhList={chuongTrinhList.filter(c => c.hoatDong).map(c => c.ten)} onViewDetail={(leadId) => { setSelectedLeadId(leadId); setInternalModule('lead_detail'); }} />;
       case 'pipeline':     return <AdmissionsPipelineKanban leads={leads} onViewDetail={(leadId) => { setSelectedLeadId(leadId); setInternalModule('lead_detail'); }} />;
       case 'lead_detail':  {
         const selectedLead = leads.find(l => l.id === selectedLeadId) || leads[0];
         return <AdmissionsLeadDetail lead={selectedLead} onBack={() => setInternalModule('pipeline')} onEdit={() => { setLeadDangSua(selectedLead); setHienModal(true); }} />;
       }
-      case 'appointments': return <AdmissionsAppointments />;
-      case 'documents':    return <AdmissionsDocuments />;
-      case 'payments':     return <AdmissionsPayments />;
+      case 'appointments': return <AdmissionsAppointments leads={leads} />;
+      case 'documents':    return <AdmissionsDocuments leads={leads} documents={documents} />;
+      case 'payments':     return <AdmissionsPayments leads={leads} initialPayments={payments} />;
       case 'reports':      return <AdmissionsReports />;
       case 'campaigns':    return <AdmissionsCampaigns />;
       case 'settings':     return <AdmissionsSettings chuongTrinhList={chuongTrinhList} setChuongTrinhList={setChuongTrinhList} />;

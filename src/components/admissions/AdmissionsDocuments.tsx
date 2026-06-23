@@ -8,6 +8,8 @@ import {
   Plus, AlertTriangle, Clock, FileText, Filter, Search,
   RefreshCw, ChevronDown, X, Image, File, Check, Send
 } from 'lucide-react';
+import { updateAdmissionDocumentFile } from '@/src/app/[locale]/(admin)/admissions/actions';
+import type { Lead as AdmissionLead } from './AdmissionsLeadsTable';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type TrangThaiHoSo = 'Đã nộp' | 'Chờ xác minh' | 'Thiếu' | 'Không hợp lệ';
@@ -35,6 +37,17 @@ interface HoSoHocSinh {
   tongTaiLieu: number;
   daNop: number;
   trangThai: 'Đang xử lý' | 'Thiếu giấy tờ' | 'Hoàn thành' | 'Chờ xác minh';
+}
+
+interface AdmissionDocumentRecord {
+  id: string;
+  leadId: string | null;
+  type: string;
+  name: string;
+  status: string;
+  fileUrl?: string | null;
+  uploadedAt?: Date | string | null;
+  payload?: any;
 }
 
 // ─── Dữ liệu mẫu ─────────────────────────────────────────────────────────────
@@ -179,12 +192,19 @@ function mapLeadToHoSo(lead: AdmissionLead): HoSoHocSinh {
   };
 }
 
+function mapDbDocumentStatus(status: string): TrangThaiHoSo {
+  if (status === 'submitted' || status === 'approved') return 'Đã nộp';
+  if (status === 'rejected') return 'Không hợp lệ';
+  if (status === 'pending') return 'Chờ xác minh';
+  return 'Thiếu';
+}
+
 // ─── Component chính ─────────────────────────────────────────────────────────
-export default function AdmissionsDocuments({ leads = [] }: { leads?: Lead[] }) {
+export default function AdmissionsDocuments({ leads = [], documents = [] }: { leads?: AdmissionLead[]; documents?: AdmissionDocumentRecord[] }) {
   const [tab, setTab] = useState<'danh_sach' | 'chi_tiet'>('danh_sach');
   const hoSoList = React.useMemo(() => leads.length ? leads.map(mapLeadToHoSo) : HO_SO_DANH_SACH, [leads]);
   const [hoSoChon, setHoSoChon] = useState<HoSoHocSinh | null>(hoSoList[0]);
-  const [taiLieuList, setTaiLieuList] = useState<TaiLieu[]>(DANH_SACH_TAI_LIEU);
+  const [documentRecords, setDocumentRecords] = useState<AdmissionDocumentRecord[]>(documents);
   const [uploadTaiLieu, setUploadTaiLieu] = useState<TaiLieu | null>(null);
   const [timKiem, setTimKiem] = useState('');
   const [locTrangThai, setLocTrangThai] = useState('Tất cả');
@@ -192,6 +212,10 @@ export default function AdmissionsDocuments({ leads = [] }: { leads?: Lead[] }) 
   const [hienConfirmNhac, setHienConfirmNhac] = useState(false);
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 2500); };
+
+  React.useEffect(() => {
+    setDocumentRecords(documents);
+  }, [documents]);
 
   React.useEffect(() => {
     setHoSoChon(current => current && hoSoList.some(item => item.id === current.id) ? current : hoSoList[0] || null);
@@ -217,6 +241,20 @@ export default function AdmissionsDocuments({ leads = [] }: { leads?: Lead[] }) 
   const targetsNhac = hoSoList.filter(h => h.trangThai === 'Thiếu giấy tờ');
 
   const NHOM: NhomHoSo[] = ['Bắt buộc', 'Bổ sung', 'Ưu tiên'];
+  const taiLieuList = React.useMemo(() => {
+    if (!leads.length || !hoSoChon) return DANH_SACH_TAI_LIEU;
+    return DANH_SACH_TAI_LIEU.map(tl => {
+      const record = documentRecords.find(doc => doc.leadId === hoSoChon.id && (doc.type === tl.ten || doc.name === tl.ten));
+      if (!record) return { ...tl, trangThai: tl.batBuoc ? 'Thiếu' as TrangThaiHoSo : null, file: undefined, ngayNop: undefined, ghiChu: '' };
+      return {
+        ...tl,
+        trangThai: mapDbDocumentStatus(record.status),
+        file: record.fileUrl || record.payload?.fileName || undefined,
+        ngayNop: record.uploadedAt ? new Date(record.uploadedAt).toLocaleDateString('vi-VN') : undefined,
+        ghiChu: record.payload?.note || '',
+      };
+    });
+  }, [documentRecords, hoSoChon, leads.length]);
   const daNop = taiLieuList.filter(d => d.trangThai === 'Đã nộp').length;
   const tongTaiLieu = taiLieuList.filter(d => d.batBuoc).length;
 

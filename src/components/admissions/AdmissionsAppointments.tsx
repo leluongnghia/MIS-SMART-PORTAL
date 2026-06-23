@@ -7,6 +7,9 @@ import {
   Clock, Eye, MoreHorizontal, Edit2, ChevronLeft, ChevronRight,
   ChevronsLeft, ChevronsRight, Phone, MessageSquare, Send, Plus
 } from 'lucide-react';
+import { updateAdmissionAppointment } from '@/src/app/[locale]/(admin)/admissions/actions';
+import type { LeadStatus } from '@/src/app/[locale]/(admin)/leads/actions';
+import type { Lead as AdmissionLead } from './AdmissionsLeadsTable';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type ApptStatus = 'Đã xác nhận' | 'Chờ xác nhận' | 'Đã hoàn thành' | 'Đã gửi nhắc' | 'Chưa gửi nhắc';
@@ -24,6 +27,8 @@ interface Appointment {
   format: string;
   advisor: string;
   status: ApptStatus;
+  testDate?: string | null;
+  testTime?: string | null;
 }
 
 interface TestResult {
@@ -114,8 +119,74 @@ const quickActions = [
   { icon: Upload, label: 'Tải kết quả', sub: 'Upload kết quả test', color: 'border-orange-200 bg-orange-50 hover:bg-orange-100' },
 ];
 
-export default function AdmissionsAppointments() {
-  const [appointmentsList, setAppointmentsList] = useState<Appointment[]>(() => generateMockAppointments(30));
+const APPT_STATUS_BY_LEAD_STATUS: Partial<Record<AdmissionLead['trangThai'], ApptStatus>> = {
+  'Mới': 'Chưa gửi nhắc',
+  'Đang tư vấn': 'Chờ xác nhận',
+  'Đăng ký test': 'Đã xác nhận',
+  'Nộp hồ sơ': 'Đã hoàn thành',
+  'Giữ chỗ': 'Đã hoàn thành',
+  'Nhập học': 'Đã hoàn thành',
+};
+
+const APPT_STATUS_TO_LEAD_STATUS: Partial<Record<ApptStatus, LeadStatus>> = {
+  'Chưa gửi nhắc': 'consulting',
+  'Đã gửi nhắc': 'test_scheduled',
+  'Chờ xác nhận': 'test_scheduled',
+  'Đã xác nhận': 'test_scheduled',
+  'Đã hoàn thành': 'test_participated',
+};
+
+function formatAppointmentTime(dateISO?: string | null, time?: string | null, index = 0) {
+  const fallbackDay = 14 + (index % 10);
+  const fallbackHour = 9 + (index % 6);
+  if (!dateISO) return `${String(fallbackDay).padStart(2, '0')}/05/2025 ${String(fallbackHour).padStart(2, '0')}:00 - ${String(fallbackHour + 1).padStart(2, '0')}:30`;
+  const date = new Date(dateISO);
+  const dateText = Number.isNaN(date.getTime())
+    ? `${String(fallbackDay).padStart(2, '0')}/05/2025`
+    : date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  const start = time || `${String(fallbackHour).padStart(2, '0')}:00`;
+  const endHour = Math.min(23, Number(start.slice(0, 2) || fallbackHour) + 1);
+  return `${dateText} ${start} - ${String(endHour).padStart(2, '0')}:${start.slice(3, 5) || '00'}`;
+}
+
+function mapLeadToAppointment(lead: AdmissionLead, index: number): Appointment {
+  const parts = lead.hoTen.split(' ').filter(Boolean);
+  return {
+    id: lead.id,
+    student: lead.hoTen,
+    studentCode: lead.id,
+    avatarInitials: parts.slice(-2).map(part => part[0]).join('').toUpperCase() || 'HS',
+    targetGrade: lead.khoi,
+    time: formatAppointmentTime(lead.testDate, lead.testTime, index),
+    location: index % 3 === 1 ? 'Online' : 'Cơ sở Nguyễn Văn Linh',
+    format: index % 3 === 1 ? 'Test trực tuyến' : 'Test tại trường',
+    advisor: lead.tvv || 'Chưa phân công',
+    status: APPT_STATUS_BY_LEAD_STATUS[lead.trangThai] || 'Chờ xác nhận',
+    testDate: lead.testDate || null,
+    testTime: lead.testTime || null,
+  };
+}
+
+function downloadCsv(filename: string, headers: string[], rows: Array<Array<string | number>>) {
+  const csv = '\uFEFF' + [
+    headers.map(h => `"${h.replace(/"/g, '""')}"`).join(','),
+    ...rows.map(row => row.map(value => `"${String(value ?? '').replace(/"/g, '""')}"`).join(',')),
+  ].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+export default function AdmissionsAppointments({ leads = [] }: { leads?: AdmissionLead[] }) {
+  const [appointmentsList, setAppointmentsList] = useState<Appointment[]>(() => (
+    leads.length ? leads.map(mapLeadToAppointment) : generateMockAppointments(30)
+  ));
   const [activeTab, setActiveTab] = useState<ApptTab>('appointments');
   const [page, setPage] = useState(1);
   const [toast, setToast] = useState('');
@@ -131,11 +202,20 @@ export default function AdmissionsAppointments() {
   const [editAppt, setEditAppt] = useState<Appointment | null>(null);
   const [tempAdvisor, setTempAdvisor] = useState('');
   const [tempStatus, setTempStatus] = useState<ApptStatus>('Đã xác nhận');
+  const [tempDate, setTempDate] = useState('');
+  const [tempTime, setTempTime] = useState('');
 
   // Rows limit config
   const limitPerPage = 5;
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 2500); };
+  const isDbLeadAppointment = (id: string) => leads.some(lead => lead.id === id);
+
+  React.useEffect(() => {
+    if (leads.length) {
+      setAppointmentsList(leads.map(mapLeadToAppointment));
+    }
+  }, [leads]);
 
   // Filtered appointments list
   const apptsDaLoc = React.useMemo(() => {
@@ -157,6 +237,70 @@ export default function AdmissionsAppointments() {
   React.useEffect(() => {
     setPage(1);
   }, [locGrade, locFormat, locStatus]);
+
+  const handleExportCSV = () => {
+    downloadCsv(
+      `MIS_Lich_Test_${new Date().toISOString().slice(0, 10)}.csv`,
+      ['Học sinh', 'Mã lead', 'Lớp mục tiêu', 'Thời gian', 'Địa điểm', 'Hình thức', 'Tư vấn viên', 'Trạng thái'],
+      apptsDaLoc.map(appt => [appt.student, appt.studentCode, appt.targetGrade, appt.time, appt.location, appt.format, appt.advisor, appt.status])
+    );
+    showToast(`Đã xuất ${apptsDaLoc.length} lịch hẹn`);
+  };
+
+  const handleQuickAction = (label: string) => {
+    if (label === 'Đặt lịch test mới') {
+      const sourceLead = leads.find(lead => !appointmentsList.some(appt => appt.id === lead.id)) || leads[0];
+      const draft = sourceLead ? mapLeadToAppointment(sourceLead, appointmentsList.length + 1) : generateMockAppointments(1)[0];
+      if (!draft) return;
+      const newDraft = { ...draft, id: `appt_${Date.now()}`, status: 'Chờ xác nhận' as const };
+      setAppointmentsList(prev => [newDraft, ...prev]);
+      setEditAppt(newDraft);
+      setTempAdvisor(newDraft.advisor);
+      setTempStatus(newDraft.status);
+      setTempDate(newDraft.testDate || new Date().toISOString().slice(0, 10));
+      setTempTime(newDraft.testTime || '09:00');
+      if (sourceLead) {
+        updateAdmissionAppointment(sourceLead.id, {
+          testDate: newDraft.testDate || new Date().toISOString().slice(0, 10),
+          testTime: newDraft.testTime || '09:00',
+          status: 'test_scheduled',
+          note: `Tạo lịch test nháp cho ${sourceLead.hoTen}`,
+        }).catch(() => showToast('Lưu lịch test thất bại'));
+      }
+      showToast(`Đã tạo lịch nháp cho ${newDraft.student}`);
+      return;
+    }
+
+    if (label === 'Xác nhận tham dự') {
+      const target = appointmentsList.find(appt => appt.status === 'Chờ xác nhận') || appointmentsList[0];
+      if (!target) return;
+      setAppointmentsList(prev => prev.map(appt => appt.id === target.id ? { ...appt, status: 'Đã xác nhận' } : appt));
+      if (isDbLeadAppointment(target.id)) updateAdmissionAppointment(target.id, {
+        testDate: target.testDate || new Date().toISOString().slice(0, 10),
+        testTime: target.testTime || '09:00',
+        status: 'test_scheduled',
+        note: `Xác nhận tham dự test: ${target.student}`,
+      }).catch(() => showToast('Lưu xác nhận tham dự thất bại'));
+      showToast(`Đã xác nhận tham dự: ${target.student}`);
+      return;
+    }
+
+    if (label === 'Gửi nhắc lịch') {
+      const targets = appointmentsList.filter(appt => appt.status === 'Chưa gửi nhắc' || appt.status === 'Chờ xác nhận');
+      setAppointmentsList(prev => prev.map(appt => targets.some(target => target.id === appt.id) ? { ...appt, status: 'Đã gửi nhắc' } : appt));
+      Promise.all(targets.filter(target => isDbLeadAppointment(target.id)).map(target => updateAdmissionAppointment(target.id, {
+        testDate: target.testDate || new Date().toISOString().slice(0, 10),
+        testTime: target.testTime || '09:00',
+        status: 'test_scheduled',
+        note: `Gửi nhắc lịch test: ${target.student}`,
+      }))).catch(() => showToast('Lưu trạng thái nhắc lịch thất bại'));
+      showToast(`Đã gửi nhắc lịch cho ${targets.length} học sinh`);
+      return;
+    }
+
+    setActiveTab('results');
+    showToast('Mở tab kết quả test');
+  };
 
   const TABS: { id: ApptTab; label: string }[] = [
     { id: 'appointments', label: 'Lịch hẹn' },
@@ -185,10 +329,7 @@ export default function AdmissionsAppointments() {
           <button type="button" onClick={() => setHienBoLoc(true)} className="flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 shadow-xs hover:bg-slate-50">
             <Filter className="h-3.5 w-3.5" /> Bộ lọc
           </button>
-          <button type="button" onClick={() => {
-            showToast("Đang kết xuất dữ liệu lịch hẹn...");
-            setTimeout(() => showToast("Đã xuất file Excel thành công!"), 1200);
-          }} className="flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 shadow-xs hover:bg-slate-50">
+          <button type="button" onClick={handleExportCSV} className="flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 shadow-xs hover:bg-slate-50">
             <Download className="h-3.5 w-3.5" /> Xuất Excel
           </button>
         </div>
@@ -199,7 +340,7 @@ export default function AdmissionsAppointments() {
         {quickActions.map(a => {
           const Icon = a.icon;
           return (
-            <button key={a.label} type="button"
+            <button key={a.label} type="button" onClick={() => handleQuickAction(a.label)}
               className={`flex items-center gap-3 rounded-2xl border p-4 text-left transition ${a.color}`}>
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm">
                 <Icon className="h-5 w-5 text-slate-600" />
@@ -280,7 +421,7 @@ export default function AdmissionsAppointments() {
                       <td className="py-3 px-3">
                         <div className="flex items-center justify-center gap-1">
                           <button type="button" onClick={() => setSelectedAppt(appt)} className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:bg-blue-50 hover:text-blue-600"><Eye className="h-3.5 w-3.5" /></button>
-                          <button type="button" onClick={() => { setEditAppt(appt); setTempAdvisor(appt.advisor); setTempStatus(appt.status); }} className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:bg-amber-50 hover:text-amber-600"><Edit2 className="h-3.5 w-3.5" /></button>
+                          <button type="button" onClick={() => { setEditAppt(appt); setTempAdvisor(appt.advisor); setTempStatus(appt.status); setTempDate(appt.testDate || new Date().toISOString().slice(0, 10)); setTempTime(appt.testTime || '09:00'); }} className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:bg-amber-50 hover:text-amber-600"><Edit2 className="h-3.5 w-3.5" /></button>
                           <button type="button" onClick={() => showToast(`Thao tác nâng cao: ${appt.student}`)} className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100"><MoreHorizontal className="h-3.5 w-3.5" /></button>
                         </div>
                       </td>
@@ -597,6 +738,27 @@ export default function AdmissionsAppointments() {
               />
             </div>
 
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-700">Ngày test</label>
+                <input
+                  type="date"
+                  value={tempDate}
+                  onChange={(e) => setTempDate(e.target.value)}
+                  className="w-full h-9 rounded-xl border border-slate-200 px-3 text-xs focus:outline-none focus:ring-2 focus:ring-blue-100"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-700">Giờ test</label>
+                <input
+                  type="time"
+                  value={tempTime}
+                  onChange={(e) => setTempTime(e.target.value)}
+                  className="w-full h-9 rounded-xl border border-slate-200 px-3 text-xs focus:outline-none focus:ring-2 focus:ring-blue-100"
+                />
+              </div>
+            </div>
+
             <div className="space-y-2">
               <label className="text-xs font-bold text-slate-700">Trạng thái lịch hẹn</label>
               <select 
@@ -620,10 +782,24 @@ export default function AdmissionsAppointments() {
               </button>
               <button 
                 type="button" 
-                onClick={() => {
-                  setAppointmentsList(prev => prev.map(a => a.id === editAppt.id ? { ...a, advisor: tempAdvisor, status: tempStatus } : a));
+                onClick={async () => {
+                  const nextTime = formatAppointmentTime(tempDate, tempTime);
+                  const nextStatus = APPT_STATUS_TO_LEAD_STATUS[tempStatus] || 'test_scheduled';
+                  setAppointmentsList(prev => prev.map(a => a.id === editAppt.id ? { ...a, advisor: tempAdvisor, status: tempStatus, testDate: tempDate, testTime: tempTime, time: nextTime } : a));
+                  try {
+                    if (isDbLeadAppointment(editAppt.id)) {
+                      await updateAdmissionAppointment(editAppt.id, {
+                        testDate: tempDate,
+                        testTime: tempTime,
+                        status: nextStatus,
+                        note: `Cập nhật lịch test ${editAppt.student}: ${nextTime} · ${tempStatus}`,
+                      });
+                    }
+                    showToast(`✓ Cập nhật lịch hẹn học sinh ${editAppt.student} thành công!`);
+                  } catch {
+                    showToast('Lưu lịch hẹn thất bại');
+                  }
                   setEditAppt(null);
-                  showToast(`✓ Cập nhật lịch hẹn học sinh ${editAppt.student} thành công!`);
                 }}
                 className="px-5 py-2 text-xs font-bold rounded-xl bg-blue-600 text-white hover:bg-blue-700 shadow-sm transition"
               >
