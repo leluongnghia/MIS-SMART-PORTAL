@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { RiskItem } from './RiskMockData';
-import { Plus, Search, Filter, AlertTriangle, ShieldAlert } from 'lucide-react';
+import { RiskItem, RiskLevel } from './RiskMockData';
+import { Plus, Search, Filter, AlertTriangle, ShieldAlert, X } from 'lucide-react';
+import { useToast } from '@/src/components/ui/Toast';
 
 const PROB_LABELS = ['', 'Hiếm (1)', 'Ít khi (2)', 'Đôi khi (3)', 'Thường xuyên (4)', 'Chắc chắn (5)'];
 const IMPACT_LABELS = ['', 'Không đáng kể (1)', 'Nhỏ (2)', 'Trung bình (3)', 'Nghiêm trọng (4)', 'Thảm họa (5)'];
@@ -27,15 +28,86 @@ const getStatusStyle = (status: RiskItem['status']) => {
   }
 };
 
-export default function RiskRegister({ risks }: { risks: RiskItem[] }) {
+export default function RiskRegister({ risks, onAddRisk }: { risks: RiskItem[]; onAddRisk: (newRisk: RiskItem) => void }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterLevel, setFilterLevel] = useState<RiskItem['level'] | 'ALL'>('ALL');
   const [viewMode, setViewMode] = useState<'LIST' | 'MATRIX'>('LIST');
+  const { success: toastSuccess } = useToast();
+
+  // Form states
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    category: 'SAFETY' as any,
+    department: '',
+    owner: '',
+    probability: 3 as 1 | 2 | 3 | 4 | 5,
+    impact: 3 as 1 | 2 | 3 | 4 | 5,
+    currentControl: '',
+    mitigationAction: '',
+    deadline: '',
+  });
 
   const filteredRisks = risks.filter(r => 
     (filterLevel === 'ALL' || r.level === filterLevel) &&
     (r.title.toLowerCase().includes(searchTerm.toLowerCase()) || r.code.toLowerCase().includes(searchTerm.toLowerCase()))
   );
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.title || !formData.department || !formData.owner) return;
+
+    const score = formData.probability * formData.impact;
+    let level: RiskLevel = 'LOW';
+    if (score >= 16) level = 'CRITICAL';
+    else if (score >= 10) level = 'HIGH';
+    else if (score >= 5) level = 'MEDIUM';
+
+    const newCode = `RSK-${2600 + risks.length + 1}`;
+
+    const newRisk: RiskItem = {
+      id: `r_${Date.now()}`,
+      code: newCode,
+      category: formData.category,
+      title: formData.title,
+      description: formData.description,
+      level,
+      department: formData.department,
+      probability: formData.probability,
+      impact: formData.impact,
+      owner: formData.owner,
+      status: 'NEW',
+      currentControl: formData.currentControl || 'Chưa thiết lập',
+      mitigationAction: formData.mitigationAction || 'Chưa thiết lập',
+      deadline: formData.deadline || new Date().toISOString().split('T')[0],
+      timeline: [
+        {
+          id: `tl_${Date.now()}`,
+          action: 'Ghi nhận rủi ro mới',
+          by: 'BGH / KSNB',
+          at: new Date().toISOString()
+        }
+      ]
+    };
+
+    onAddRisk(newRisk);
+    setIsModalOpen(false);
+    // Reset form
+    setFormData({
+      title: '',
+      description: '',
+      category: 'SAFETY',
+      department: '',
+      owner: '',
+      probability: 3,
+      impact: 3,
+      currentControl: '',
+      mitigationAction: '',
+      deadline: '',
+    });
+    toastSuccess('Ghi nhận rủi ro thành công', `Đã ghi nhận rủi ro ${newCode} vào hệ thống.`);
+  };
 
   return (
     <div className="space-y-4">
@@ -65,10 +137,13 @@ export default function RiskRegister({ risks }: { risks: RiskItem[] }) {
         </div>
         <div className="flex gap-2">
           <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
-            <button onClick={() => setViewMode('LIST')} className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors ${viewMode === 'LIST' ? 'bg-white dark:bg-slate-900 shadow-sm text-rose-600' : 'text-slate-500 hover:text-slate-700'}`}>Danh sách</button>
-            <button onClick={() => setViewMode('MATRIX')} className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors ${viewMode === 'MATRIX' ? 'bg-white dark:bg-slate-900 shadow-sm text-rose-600' : 'text-slate-500 hover:text-slate-700'}`}>Ma trận</button>
+            <button onClick={() => setViewMode('LIST')} className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors ${viewMode === 'LIST' ? 'bg-white dark:bg-slate-900 shadow-sm text-rose-650' : 'text-slate-500 hover:text-slate-750'}`}>Danh sách</button>
+            <button onClick={() => setViewMode('MATRIX')} className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors ${viewMode === 'MATRIX' ? 'bg-white dark:bg-slate-900 shadow-sm text-rose-650' : 'text-slate-500 hover:text-slate-750'}`}>Ma trận</button>
           </div>
-          <button className="flex items-center gap-1.5 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition-colors shadow-sm">
+          <button 
+            onClick={() => setIsModalOpen(true)}
+            className="flex items-center gap-1.5 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition-colors shadow-sm animate-pulse-subtle"
+          >
             <Plus className="w-4 h-4" /> Ghi nhận
           </button>
         </div>
@@ -164,6 +239,165 @@ export default function RiskRegister({ risks }: { risks: RiskItem[] }) {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* Modal Form */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-[1050] flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 overflow-y-auto">
+          <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-xl w-full shadow-2xl p-6 relative animate-slide-in">
+            <button 
+              type="button" 
+              onClick={() => setIsModalOpen(false)}
+              className="absolute right-4 top-4 h-8 w-8 rounded-full flex items-center justify-center text-slate-450 hover:bg-slate-100 dark:hover:bg-slate-900"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <h3 className="text-sm font-black text-slate-900 dark:text-white mb-4 uppercase tracking-wider text-rose-700">Ghi nhận Rủi ro mới</h3>
+
+            <form onSubmit={handleSubmit} className="space-y-4 text-xs">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="col-span-2">
+                  <label className="block text-slate-500 font-bold mb-1">Tên rủi ro *</label>
+                  <input 
+                    type="text" 
+                    required 
+                    value={formData.title} 
+                    onChange={e => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                    placeholder="Mô tả ngắn sự vụ/rủi ro tiềm ẩn"
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:bg-white focus:outline-none focus:ring-1 focus:ring-rose-500 dark:text-white"
+                  />
+                </div>
+
+                <div className="col-span-2">
+                  <label className="block text-slate-500 font-bold mb-1">Mô tả chi tiết</label>
+                  <textarea 
+                    value={formData.description} 
+                    onChange={e => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                    placeholder="Nhập thông tin chi tiết về các yếu tố cấu thành rủi ro"
+                    rows={2}
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:bg-white focus:outline-none focus:ring-1 focus:ring-rose-500 dark:text-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-500 font-bold mb-1">Danh mục</label>
+                  <select 
+                    value={formData.category} 
+                    onChange={e => setFormData(prev => ({ ...prev, category: e.target.value as any }))}
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl dark:text-white"
+                  >
+                    <option value="SAFETY">An toàn trường học</option>
+                    <option value="OPERATIONAL">Vận hành nội bộ</option>
+                    <option value="DATA">Bảo mật dữ liệu</option>
+                    <option value="HR">Nhân sự đào tạo</option>
+                    <option value="FACILITY">Cơ sở vật chất</option>
+                    <option value="ADMISSION">Tuyển sinh & CRM</option>
+                    <option value="PARENT_SERVICE">Dịch vụ & CSKH</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-slate-500 font-bold mb-1">Bộ phận liên quan *</label>
+                  <input 
+                    type="text" 
+                    required 
+                    value={formData.department} 
+                    onChange={e => setFormData(prev => ({ ...prev, department: e.target.value }))}
+                    placeholder="Ví dụ: Phòng CSVC, IT, Bảo vệ"
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:bg-white focus:outline-none focus:ring-1 focus:ring-rose-500 dark:text-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-500 font-bold mb-1">Người chịu trách nhiệm *</label>
+                  <input 
+                    type="text" 
+                    required 
+                    value={formData.owner} 
+                    onChange={e => setFormData(prev => ({ ...prev, owner: e.target.value }))}
+                    placeholder="Tên người phụ trách chính"
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:bg-white focus:outline-none focus:ring-1 focus:ring-rose-500 dark:text-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-500 font-bold mb-1">Hạn xử lý khắc phục</label>
+                  <input 
+                    type="date" 
+                    value={formData.deadline} 
+                    onChange={e => setFormData(prev => ({ ...prev, deadline: e.target.value }))}
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl dark:text-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-500 font-bold mb-1">Khả năng xảy ra (1-5)</label>
+                  <select 
+                    value={formData.probability} 
+                    onChange={e => setFormData(prev => ({ ...prev, probability: Number(e.target.value) as any }))}
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl dark:text-white"
+                  >
+                    {[1,2,3,4,5].map(num => (
+                      <option key={num} value={num}>{PROB_LABELS[num]}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-slate-500 font-bold mb-1">Mức độ tác động (1-5)</label>
+                  <select 
+                    value={formData.impact} 
+                    onChange={e => setFormData(prev => ({ ...prev, impact: Number(e.target.value) as any }))}
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl dark:text-white"
+                  >
+                    {[1,2,3,4,5].map(num => (
+                      <option key={num} value={num}>{IMPACT_LABELS[num]}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="col-span-2">
+                  <label className="block text-slate-500 font-bold mb-1">Biện pháp kiểm soát hiện tại</label>
+                  <input 
+                    type="text" 
+                    value={formData.currentControl} 
+                    onChange={e => setFormData(prev => ({ ...prev, currentControl: e.target.value }))}
+                    placeholder="Chốt kiểm soát đang áp dụng hiện thời"
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:bg-white focus:outline-none focus:ring-1 focus:ring-rose-500 dark:text-white"
+                  />
+                </div>
+
+                <div className="col-span-2">
+                  <label className="block text-slate-500 font-bold mb-1">Hành động khắc phục đề xuất</label>
+                  <input 
+                    type="text" 
+                    value={formData.mitigationAction} 
+                    onChange={e => setFormData(prev => ({ ...prev, mitigationAction: e.target.value }))}
+                    placeholder="Hành động cụ thể giảm thiểu rủi ro"
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:bg-white focus:outline-none focus:ring-1 focus:ring-rose-500 dark:text-white"
+                  />
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-2">
+                <button 
+                  type="button" 
+                  onClick={() => setIsModalOpen(false)}
+                  className="px-4 py-2 bg-slate-150 text-slate-600 hover:bg-slate-200 rounded-xl font-bold transition-colors dark:bg-slate-800 dark:text-slate-300"
+                >
+                  Hủy bỏ
+                </button>
+                <button 
+                  type="submit" 
+                  className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold transition-colors shadow-sm"
+                >
+                  Lưu & Ghi nhận
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>

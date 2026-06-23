@@ -15,13 +15,21 @@ type Tab = 'DASHBOARD' | 'REGISTER' | 'AUDIT' | 'NC' | 'CAPA' | 'REVIEW' | 'INCI
 
 export default function RiskManagementCenter() {
   const [activeTab, setActiveTab] = useState<Tab>('DASHBOARD');
+  
+  // Local states for interactivity
+  const [risks, setRisks] = useState(MOCK_RISKS);
+  const [plans, setPlans] = useState(MOCK_AUDIT_PLANS);
+  const [ncs, setNcs] = useState(MOCK_NCS);
+  const [capas, setCapas] = useState(MOCK_CAPAS);
+  const [reviews, setReviews] = useState(MOCK_REVIEWS);
+  const [incidents, setIncidents] = useState(MOCK_INCIDENTS);
 
   const tabs: { key: Tab; label: string; icon: React.ReactNode; count?: number; countColor?: string }[] = [
     { key: 'DASHBOARD', label: 'Tổng quan', icon: <TrendingUp className="w-3.5 h-3.5" /> },
-    { key: 'REGISTER', label: 'Sổ rủi ro', icon: <ShieldAlert className="w-3.5 h-3.5" />, count: MOCK_RISKS.filter(r => r.status !== 'CLOSED').length, countColor: 'bg-rose-100 text-rose-700' },
+    { key: 'REGISTER', label: 'Sổ rủi ro', icon: <ShieldAlert className="w-3.5 h-3.5" />, count: risks.filter(r => r.status !== 'CLOSED').length, countColor: 'bg-rose-100 text-rose-700' },
     { key: 'AUDIT', label: 'Đánh giá nội bộ', icon: <CheckSquare className="w-3.5 h-3.5" /> },
-    { key: 'NC', label: 'Điểm không phù hợp', icon: <FileWarning className="w-3.5 h-3.5" />, count: MOCK_NCS.filter(r => r.status !== 'CLOSED').length, countColor: 'bg-amber-100 text-amber-700' },
-    { key: 'CAPA', label: 'Hành động KP/PN (CAPA)', icon: <XCircle className="w-3.5 h-3.5" />, count: MOCK_CAPAS.filter(r => r.status === 'OVERDUE').length, countColor: 'bg-rose-500 text-white animate-pulse' },
+    { key: 'NC', label: 'Điểm không phù hợp', icon: <FileWarning className="w-3.5 h-3.5" />, count: ncs.filter(r => r.status !== 'CLOSED').length, countColor: 'bg-amber-100 text-amber-700' },
+    { key: 'CAPA', label: 'Hành động KP/PN (CAPA)', icon: <XCircle className="w-3.5 h-3.5" />, count: capas.filter(r => r.status === 'OVERDUE').length, countColor: 'bg-rose-500 text-white animate-pulse' },
     { key: 'REVIEW', label: 'Xem xét lãnh đạo', icon: <Search className="w-3.5 h-3.5" /> },
     { key: 'INCIDENT', label: 'Sự cố & Phản ánh', icon: <AlertTriangle className="w-3.5 h-3.5" /> },
   ];
@@ -67,12 +75,12 @@ export default function RiskManagementCenter() {
       {/* Content Area */}
       <div className="min-h-[500px]">
         {activeTab === 'DASHBOARD' && <RiskDashboard />}
-        {activeTab === 'REGISTER' && <RiskRegister risks={MOCK_RISKS} />}
-        {activeTab === 'AUDIT' && <AuditPlans plans={MOCK_AUDIT_PLANS} />}
-        {activeTab === 'NC' && <NonConformities ncs={MOCK_NCS} />}
-        {activeTab === 'CAPA' && <CapaManagement capas={MOCK_CAPAS} />}
-        {activeTab === 'REVIEW' && <ManagementReview reviews={MOCK_REVIEWS} />}
-        {activeTab === 'INCIDENT' && <Incidents incidents={MOCK_INCIDENTS} />}
+        {activeTab === 'REGISTER' && <RiskRegister risks={risks} onAddRisk={(newRisk) => setRisks(prev => [newRisk, ...prev])} />}
+        {activeTab === 'AUDIT' && <AuditPlans plans={plans} onAddPlan={(newPlan) => setPlans(prev => [newPlan, ...prev])} onUpdatePlan={(id, updated) => setPlans(prev => prev.map(p => p.id === id ? { ...p, ...updated } : p))} onAddNC={(newNC) => setNcs(prev => [newNC, ...prev])} />}
+        {activeTab === 'NC' && <NonConformities ncs={ncs} onAddNC={(newNC) => setNcs(prev => [newNC, ...prev])} onAddCapa={(newCapa) => setCapas(prev => [newCapa, ...prev])} onUpdateNCStatus={(id, status) => setNcs(prev => prev.map(nc => nc.id === id ? { ...nc, status } : nc))} />}
+        {activeTab === 'CAPA' && <CapaManagement capas={capas} ncs={ncs} onAddCapa={(newCapa) => setCapas(prev => [newCapa, ...prev])} onUpdateCapaStatus={(id, status, extra) => setCapas(prev => prev.map(c => c.id === id ? { ...c, status, ...extra } : c))} />}
+        {activeTab === 'REVIEW' && <ManagementReview reviews={reviews} onAddReview={(newReview) => setReviews(prev => [newReview, ...prev])} />}
+        {activeTab === 'INCIDENT' && <Incidents incidents={incidents} onAddIncident={(newIncident) => setIncidents(prev => [newIncident, ...prev])} onConvertToNC={(newNC) => setNcs(prev => [newNC, ...prev])} onUpdateIncidentStatus={(id, status) => setIncidents(prev => prev.map(inc => inc.id === id ? { ...inc, status } : inc))} />}
       </div>
     </div>
   );
