@@ -1,7 +1,5 @@
-import RiskClient from "./risk-client";
-import { getInitialData } from "./actions";
+import RiskManagementCenter from "@/src/components/RiskManagementCenter";
 
-export default async function RiskPage() {
-  const data = await getInitialData();
-  return <RiskClient initialData={data} />;
+export default function RiskPage() {
+  return <RiskManagementCenter />;
 }
