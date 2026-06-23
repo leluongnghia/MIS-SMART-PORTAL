@@ -809,88 +809,171 @@ export default function ReportsClient({ locale, data }: ReportsClientProps) {
         )}
 
         {/* TAB 7: DOCUMENTS & SOPS */}
-        {activeTab === 'docs' && (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card className="border-slate-200 dark:border-slate-800 rounded-sm">
-                <CardHeader>
-                  <CardTitle className="text-sm font-bold">Trạng thái quy trình & biểu mẫu hiệu lực</CardTitle>
-                </CardHeader>
-                <CardContent className="h-72 text-xs">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={scaleDataArray(baseDoc.statusBreakdown || [])}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={50}
-                        outerRadius={70}
-                        paddingAngle={3}
-                        dataKey="value"
-                      >
-                        {(baseDoc.statusBreakdown || []).map((entry: any, index: number) => (
-                          <Cell key={`cell-${index}`} fill={PALETTE[index % PALETTE.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                      <Legend />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
+        {activeTab === 'docs' && (() => {
+          const allDocs: any[] = baseDoc.allDocsList || [];
+          const filtered = allDocs.filter((d: any) => {
+            if (!searchQuery) return true;
+            const q = searchQuery.toLowerCase();
+            return (
+              (d.displayName || '').toLowerCase().includes(q) ||
+              (d.docCode || '').toLowerCase().includes(q) ||
+              (d.category || '').toLowerCase().includes(q) ||
+              (d.uploadedByName || '').toLowerCase().includes(q)
+            );
+          });
 
+          const statusBadge = (status: string) => {
+            const map: Record<string, { label: string; cls: string }> = {
+              ACTIVE: { label: 'Hiệu lực', cls: 'bg-emerald-100 text-emerald-800' },
+              NEEDS_REVIEW: { label: 'Cần rà soát', cls: 'bg-amber-100 text-amber-800' },
+              DRAFT: { label: 'Bản nháp', cls: 'bg-slate-100 text-slate-600' },
+              PENDING_APPROVAL: { label: 'Chờ duyệt', cls: 'bg-sky-100 text-sky-800' },
+              EXPIRED: { label: 'Hết hiệu lực', cls: 'bg-red-100 text-red-700' },
+              ARCHIVED: { label: 'Lưu trữ', cls: 'bg-slate-100 text-slate-500' },
+            };
+            const s = map[status] || { label: status, cls: 'bg-slate-100 text-slate-500' };
+            return <span className={`px-2 py-0.5 rounded-sm text-[9px] font-bold uppercase ${s.cls}`}>{s.label}</span>;
+          };
+
+          return (
+            <div className="space-y-6">
+              {/* KPI Summary Cards */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <Card className="border-slate-200 dark:border-slate-800 rounded-sm">
+                  <CardHeader className="pb-2">
+                    <span className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wide">Tổng tài liệu</span>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-3xl font-black text-slate-800 dark:text-white">{baseDoc.totalDocs || allDocs.length}</div>
+                    <p className="text-[10px] text-slate-500 mt-1">Trong kho quy trình & tri thức</p>
+                  </CardContent>
+                </Card>
+                <Card className="border-slate-200 dark:border-slate-800 rounded-sm">
+                  <CardHeader className="pb-2">
+                    <span className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wide">Đang hiệu lực</span>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-3xl font-black text-emerald-600">{baseDoc.activeCount || allDocs.filter((d: any) => d.status === 'ACTIVE').length}</div>
+                    <p className="text-[10px] text-slate-500 mt-1">Tài liệu đã phê duyệt & ban hành</p>
+                  </CardContent>
+                </Card>
+                <Card className="border-slate-200 dark:border-slate-800 rounded-sm">
+                  <CardHeader className="pb-2">
+                    <span className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wide">Cần rà soát</span>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-3xl font-black text-amber-600">{kpis.docsReview}</div>
+                    <p className="text-[10px] text-slate-500 mt-1">Đã quá hạn xem xét định kỳ</p>
+                  </CardContent>
+                </Card>
+                <Card className="border-slate-200 dark:border-slate-800 rounded-sm">
+                  <CardHeader className="pb-2">
+                    <span className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wide">Chờ phê duyệt</span>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-3xl font-black text-sky-600">{baseDoc.pendingCount || allDocs.filter((d: any) => d.status === 'PENDING_APPROVAL').length}</div>
+                    <p className="text-[10px] text-slate-500 mt-1">Phiên bản mới đang chờ ban hành</p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Charts row */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card className="border-slate-200 dark:border-slate-800 rounded-sm">
+                  <CardHeader>
+                    <CardTitle className="text-sm font-bold">Trạng thái quy trình & biểu mẫu hiệu lực</CardTitle>
+                  </CardHeader>
+                  <CardContent className="h-64 text-xs">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={scaleDataArray(baseDoc.statusBreakdown || [])}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={50}
+                          outerRadius={70}
+                          paddingAngle={3}
+                          dataKey="value"
+                        >
+                          {(baseDoc.statusBreakdown || []).map((entry: any, index: number) => (
+                            <Cell key={`cell-${index}`} fill={PALETTE[index % PALETTE.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                        <Legend />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-slate-200 dark:border-slate-800 rounded-sm">
+                  <CardHeader>
+                    <CardTitle className="text-sm font-bold">Tài liệu pháp quy theo lĩnh vực nghiệp vụ</CardTitle>
+                  </CardHeader>
+                  <CardContent className="h-64 text-xs">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={scaleDataArray(baseDoc.categoryBreakdown || [])}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                        <XAxis dataKey="name" />
+                        <YAxis />
+                        <Tooltip />
+                        <Bar dataKey="value" fill="#0ea5e9" radius={[2, 2, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Full document list */}
               <Card className="border-slate-200 dark:border-slate-800 rounded-sm">
-                <CardHeader>
-                  <CardTitle className="text-sm font-bold">Tài liệu pháp quy theo lĩnh vực nghiệp vụ</CardTitle>
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <div>
+                    <CardTitle className="text-sm font-bold">Toàn bộ tài liệu — Kho Quy trình & Tri thức</CardTitle>
+                    <CardDescription className="text-xs mt-1">
+                      {filtered.length} / {allDocs.length} tài liệu
+                      {searchQuery && ` · Kết quả tìm kiếm: "${searchQuery}"`}
+                    </CardDescription>
+                  </div>
                 </CardHeader>
-                <CardContent className="h-72 text-xs">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={scaleDataArray(baseDoc.categoryBreakdown || [])}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                      <XAxis dataKey="name" />
-                      <YAxis />
-                      <Tooltip />
-                      <Bar dataKey="value" fill="#0ea5e9" radius={[2, 2, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
+                <CardContent className="p-0">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 font-bold">
+                        <th className="p-3">Mã hiệu</th>
+                        <th className="p-3">Tên tài liệu</th>
+                        <th className="p-3">Loại</th>
+                        <th className="p-3">Lĩnh vực</th>
+                        <th className="p-3">Người đăng tải</th>
+                        <th className="p-3">Ngày hiệu lực</th>
+                        <th className="p-3 text-right">Trạng thái</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filtered.length === 0 ? (
+                        <tr>
+                          <td colSpan={7} className="p-6 text-center text-slate-400">
+                            {searchQuery ? `Không tìm thấy tài liệu phù hợp với "${searchQuery}"` : 'Chưa có tài liệu nào trong kho'}
+                          </td>
+                        </tr>
+                      ) : filtered.map((d: any) => (
+                        <tr key={d.id} className="border-b border-slate-100 hover:bg-slate-50/50 transition-colors">
+                          <td className="p-3 font-mono font-bold text-slate-500 text-[10px]">{d.docCode}</td>
+                          <td className="p-3 font-semibold text-slate-800 dark:text-white max-w-xs">{d.displayName}</td>
+                          <td className="p-3 text-slate-500">{d.docType}</td>
+                          <td className="p-3 text-slate-600">{d.category}</td>
+                          <td className="p-3 text-slate-500">{d.uploadedByName}</td>
+                          <td className="p-3 text-slate-500">{d.effectiveDate || '—'}</td>
+                          <td className="p-3 text-right">{statusBadge(d.status)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </CardContent>
               </Card>
             </div>
+          );
+        })()}
 
-            {/* List of documents needing review */}
-            <Card className="border-slate-200 dark:border-slate-800 rounded-sm">
-              <CardHeader>
-                <CardTitle className="text-sm font-bold">Danh sách văn bản / quy trình cần rà soát cập nhật</CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                <table className="w-full text-left text-xs border-collapse">
-                  <thead>
-                    <tr className="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 font-bold">
-                      <th className="p-3">Tên tài liệu</th>
-                      <th className="p-3">Mã hiệu</th>
-                      <th className="p-3">Người đăng tải</th>
-                      <th className="p-3 text-right">Trạng thái</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(baseDoc.needsReviewList || []).map((d: any) => (
-                      <tr key={d.id} className="border-b border-slate-100 hover:bg-slate-50/50">
-                        <td className="p-3 font-semibold">{d.displayName || d.fileName}</td>
-                        <td className="p-3 font-bold text-slate-500">{d.id.slice(0, 8).toUpperCase()}</td>
-                        <td className="p-3 text-slate-650">{d.uploadedByName || 'Ban Kiểm Soát'}</td>
-                        <td className="p-3 text-right">
-                          <span className="px-2 py-0.5 rounded-sm text-[9px] font-bold bg-amber-100 text-amber-800 uppercase">
-                            Cần rà soát
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </CardContent>
-            </Card>
-          </div>
-        )}
 
       </div>
     </div>

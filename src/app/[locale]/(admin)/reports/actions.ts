@@ -86,6 +86,11 @@ export async function getReportsData() {
     statusBreakdown: [] as any[],
     categoryBreakdown: [] as any[],
     needsReviewList: [] as any[],
+    allDocsList: [] as any[],
+    totalDocs: 0,
+    activeCount: 0,
+    draftCount: 0,
+    pendingCount: 0,
   };
 
   // Run all aggregates with try-catch blocks
@@ -370,12 +375,26 @@ export async function getReportsData() {
     });
 
     kpiStats.docsReview = needsReview;
+    documentsData.totalDocs = totalDocs;
+    documentsData.activeCount = fileStatusCounts['ACTIVE'] || 0;
+    documentsData.draftCount = fileStatusCounts['DRAFT'] || 0;
+    documentsData.pendingCount = fileStatusCounts['PENDING_APPROVAL'] || 0;
     documentsData.statusBreakdown = Object.entries(fileStatusCounts).map(([name, value]) => ({
-      name: name === 'ACTIVE' ? 'Đang hiệu lực' : name === 'NEEDS_REVIEW' ? 'Cần rà soát' : name === 'EXPIRED' ? 'Hết hiệu lực' : name,
+      name: name === 'ACTIVE' ? 'Đang hiệu lực' : name === 'NEEDS_REVIEW' ? 'Cần rà soát' : name === 'EXPIRED' ? 'Hết hiệu lực' : name === 'DRAFT' ? 'Bản nháp' : name === 'PENDING_APPROVAL' ? 'Chờ phê duyệt' : name,
       value
     }));
     documentsData.categoryBreakdown = Object.entries(fileCategoryCounts).map(([name, value]) => ({ name, value }));
     documentsData.needsReviewList = files.filter(f => f.status === 'NEEDS_REVIEW' || f.status === 'REVIEW').slice(0, 10);
+    documentsData.allDocsList = files.map(f => ({
+      id: f.id,
+      displayName: f.displayName || f.fileName,
+      docCode: f.docCode || f.id.slice(0, 8).toUpperCase(),
+      category: f.category || 'Chung',
+      status: f.status,
+      uploadedByName: f.uploadedByName || 'Quản trị viên',
+      effectiveDate: f.effectiveDate || '',
+      docType: f.docType || 'Tài liệu',
+    }));
   } catch (e) {
     console.error('Reports actions - Documents query failed:', e);
   }
