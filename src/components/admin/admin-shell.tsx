@@ -40,6 +40,7 @@ import {
   MessageSquare,
   Building,
   BookOpen,
+  AlertTriangle,
 } from 'lucide-react';
 import { Button } from '@/src/components/ui/button';
 import { cn } from '@/src/lib/utils';
@@ -164,7 +165,44 @@ export default function AdminShell({ locale, children }: { locale: string; child
   });
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [toastNotice, setToastNotice] = useState<string>('');
+  const [sopAlert, setSopAlert] = useState<{
+    id: string;
+    title: string;
+    module: string;
+    severity: string;
+    owner: string;
+    deadline: string;
+  } | null>(null);
+  const [sopCompletedSteps, setSopCompletedSteps] = useState<number[]>([]);
   const [switcherAllowed, setSwitcherAllowed] = useState(false);
+
+  useEffect(() => {
+    const handleUrlParams = () => {
+      const params = new URLSearchParams(window.location.search);
+      const sopAlertId = params.get('sopAlertId');
+      if (sopAlertId) {
+        setSopAlert({
+          id: sopAlertId,
+          title: params.get('sopTitle') || 'Cảnh báo',
+          module: params.get('sopModule') || 'Tổng hợp',
+          severity: params.get('sopSeverity') || 'Cao',
+          owner: params.get('sopOwner') || 'Chưa rõ',
+          deadline: params.get('sopDeadline') || 'Trong ngày',
+        });
+      } else {
+        setSopAlert(null);
+      }
+    };
+
+    handleUrlParams();
+    
+    window.addEventListener('popstate', handleUrlParams);
+    window.addEventListener('click', () => setTimeout(handleUrlParams, 150));
+    return () => {
+      window.removeEventListener('popstate', handleUrlParams);
+      window.removeEventListener('click', handleUrlParams);
+    };
+  }, [pathname]);
   const [switcherPolicy, setSwitcherPolicy] = useState<any>(null);
   const switcherRef = useRef<HTMLDivElement | null>(null);
   const userMenuRef = useRef<HTMLDivElement | null>(null);
@@ -696,6 +734,18 @@ export default function AdminShell({ locale, children }: { locale: string; child
     </aside>
   );
 
+  const removeSopParams = () => {
+    const url = new URL(window.location.href);
+    url.searchParams.delete('sopAlertId');
+    url.searchParams.delete('sopTitle');
+    url.searchParams.delete('sopModule');
+    url.searchParams.delete('sopSeverity');
+    url.searchParams.delete('sopOwner');
+    url.searchParams.delete('sopDeadline');
+    window.history.pushState({}, '', url.toString());
+    setSopAlert(null);
+  };
+
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-950 dark:bg-slate-950 dark:text-slate-50">
       <div className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:block">{Sidebar}</div>
@@ -863,6 +913,191 @@ export default function AdminShell({ locale, children }: { locale: string; child
         summaryItems={notificationSummary.latest}
         onChanged={refreshNotificationSummary}
       />
+
+      {/* SOP Regulatory Handling Drawer */}
+      {sopAlert && (
+        <div className="fixed inset-0 z-[999] flex justify-end bg-black/45 backdrop-blur-xs">
+          <button 
+            type="button" 
+            onClick={removeSopParams} 
+            className="absolute inset-0 w-full h-full cursor-default bg-transparent border-0"
+            aria-label="Đóng ngăn kéo"
+          />
+          <div className="relative w-[480px] max-w-full h-full bg-white dark:bg-slate-950 shadow-2xl flex flex-col border-l border-slate-200 dark:border-slate-800 animate-slide-in">
+            {/* Drawer Header */}
+            <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+              <div>
+                <span className="text-[10px] font-extrabold text-red-600 dark:text-red-400 uppercase tracking-widest block mb-1">
+                  Quy trình chuẩn SOP
+                </span>
+                <h3 className="text-base font-bold text-slate-900 dark:text-white leading-tight">
+                  {sopAlert.title}
+                </h3>
+              </div>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={removeSopParams}
+                className="h-8 w-8 rounded-full text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900"
+              >
+                ✕
+              </Button>
+            </div>
+
+            {/* Drawer Content */}
+            <div className="flex-1 overflow-y-auto p-5 space-y-6">
+              {/* Alert Meta Info */}
+              <div className="bg-slate-50 dark:bg-slate-900/50 p-4 border border-slate-200 dark:border-slate-800 rounded-sm grid grid-cols-2 gap-3 text-xs">
+                <div>
+                  <span className="text-slate-400 block">Nguồn sự vụ:</span>
+                  <span className="font-bold text-slate-800 dark:text-slate-200">{sopAlert.module}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block">Độ nghiêm trọng:</span>
+                  <span className="font-bold text-red-650">{sopAlert.severity}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block">Phụ trách xử lý:</span>
+                  <span className="font-bold text-slate-800 dark:text-slate-200">{sopAlert.owner}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block">Hạn giải quyết:</span>
+                  <span className="font-bold text-red-650">{sopAlert.deadline}</span>
+                </div>
+              </div>
+
+              {/* Timeline Steps (SOP Timeline) */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide">Các bước xử lý theo quy định</h4>
+                  <span className="text-[10px] font-bold text-slate-500">
+                    {sopCompletedSteps.length}/4 hoàn thành
+                  </span>
+                </div>
+
+                <div className="relative pl-6 space-y-5 border-l border-slate-200 dark:border-slate-800 ml-3">
+                  {[
+                    ...(sopAlert.module === 'Phê duyệt' ? [
+                      { step: 1, name: 'Kiểm tra thông tin & lịch trình', desc: 'Rà soát lý do nghỉ phép, kế hoạch giảng dạy hoặc báo cáo đề xuất thiết bị để đảm bảo tính hợp lý.' },
+                      { step: 2, name: 'Kiểm tra định mức phép còn lại', desc: 'Xem xét số ngày phép năm còn lại của nhân sự hoặc định mức ngân sách của phòng ban đề xuất.' },
+                      { step: 3, name: 'Xác nhận ý kiến Trưởng bộ phận', desc: 'Đảm bảo Trưởng phòng ban đã phê duyệt sơ bộ trước khi trình BGH ký duyệt cuối cùng.' },
+                      { step: 4, name: 'Ký duyệt & Cập nhật hệ thống', desc: 'Sử dụng các tính năng phê duyệt trên trang để hoàn tất quy trình phê duyệt.' }
+                    ] : []),
+                    ...(sopAlert.module === 'Rủi ro' ? [
+                      { step: 1, name: 'Xác minh hiện trạng rủi ro', desc: 'Khảo sát thực tế, đánh giá mức độ nghiêm trọng và khả năng tác động tiêu cực đến vận hành trường.' },
+                      { step: 2, name: 'Thiết lập chốt kiểm soát khẩn cấp', desc: 'Áp dụng ngay các chốt chặn tạm thời để ngăn chặn rủi ro phát sinh hoặc lan rộng thêm.' },
+                      { step: 3, name: 'Ban hành kế hoạch khắc phục CAPA', desc: 'Chỉ định nhân viên phụ trách trực tiếp và thời hạn hoàn thành biện pháp khắc phục triệt để.' },
+                      { step: 4, name: 'Thẩm định hiệu lực chốt kiểm soát', desc: 'Tổ chức đoàn rà soát độc lập để nghiệm thu và kiểm tra định kỳ tính ổn định.' }
+                    ] : []),
+                    ...(sopAlert.module === 'Tài sản' ? [
+                      { step: 1, name: 'Tiếp nhận & Xác minh lỗi kỹ thuật', desc: 'Kỹ thuật viên phòng CSVC kiểm tra trực tiếp hiện trạng thiết bị báo hỏng.' },
+                      { step: 2, name: 'Lập phương án sửa chữa / thay thế', desc: 'Đánh giá chi phí khắc phục. Nếu chi phí vượt 50% giá trị thiết bị mới, lập đề xuất thanh lý và mua sắm.' },
+                      { step: 3, name: 'Thực hiện bảo trì & Sửa chữa phần cứng', desc: 'Kỹ thuật viên hoặc đơn vị dịch vụ bên ngoài tiến hành sửa chữa theo phê duyệt.' },
+                      { step: 4, name: 'Nghiệm thu bàn giao & Cập nhật mã QR', desc: 'Kiểm tra vận hành thực tế tại phòng học, dán lại mã QR và ký biên bản bàn giao.' }
+                    ] : []),
+                    ...(sopAlert.module === 'Nhân sự' ? [
+                      { step: 1, name: 'Đánh giá hiệu quả công việc', desc: 'Xem xét kết quả KPI, thái độ và đóng góp của nhân viên trong chu kỳ hợp đồng hiện tại.' },
+                      { step: 2, name: 'Tổ chức phỏng vấn tái ký hợp đồng', desc: 'Trưởng bộ phận trao đổi về nguyện vọng gắn bó và định hướng phát triển của nhân sự.' },
+                      { step: 3, name: 'Thống nhất điều khoản hợp đồng mới', desc: 'Phòng HCNS soạn thảo phụ lục, điều chỉnh mức lương/thưởng theo quy định mới.' },
+                      { step: 4, name: 'Ký kết và cập nhật hồ sơ lưu trữ', desc: 'BGH ký duyệt hợp đồng chính thức, lưu trữ hồ sơ giấy và cập nhật dữ liệu trên module HRM.' }
+                    ] : []),
+                    ...(sopAlert.module === 'Văn bản' ? [
+                      { step: 1, name: 'Thu thập thông tin thay đổi thực tế', desc: 'Thu thập ý kiến đóng góp từ các bộ phận trực tiếp áp dụng quy trình/biểu mẫu để phát hiện điểm bất cập.' },
+                      { step: 2, name: 'Soạn thảo bản cập nhật quy trình (SOP)', desc: 'Cập nhật nội dung, rút ngắn các bước rườm rà, điều chỉnh thời gian hoàn thành (SLA) phù hợp thực tế.' },
+                      { step: 3, name: 'Trình thẩm định & Phê duyệt pháp lý', desc: 'Ban kiểm soát kiểm tra tính tuân thủ quy chế hoạt động của trường trước khi trình BGH.' },
+                      { step: 4, name: 'Truyền thông và tổ chức tập huấn', desc: 'Ban hành văn bản mới, lưu trữ văn bản cũ vào kho Archive và tổ chức tập huấn áp dụng cho toàn trường.' }
+                    ] : []),
+                    ...(!['Phê duyệt', 'Rủi ro', 'Tài sản', 'Nhân sự', 'Văn bản'].includes(sopAlert.module) ? [
+                      { step: 1, name: 'Xác minh thông tin sự việc', desc: 'Liên hệ các bên liên quan để nắm rõ thông tin chi tiết và nguyên nhân sự vụ.' },
+                      { step: 2, name: 'Đề xuất phương án xử lý lên BGH', desc: 'Tham mưu các phương án giải quyết tối ưu theo quy chế và tiền lệ xử lý của nhà trường.' },
+                      { step: 3, name: 'Thực hiện phương án được phê duyệt', desc: 'Bộ phận chuyên môn triển khai giải pháp xử lý theo đúng chỉ đạo.' },
+                      { step: 4, name: 'Lưu trữ hồ sơ và rút kinh nghiệm', desc: 'Cập nhật báo cáo kết quả xử lý và ghi nhận chốt kiểm soát ngăn ngừa tái phát.' }
+                    ] : [])
+                  ].map((s) => {
+                    const isCompleted = sopCompletedSteps.includes(s.step);
+                    return (
+                      <div key={s.step} className="relative">
+                        <div 
+                          className={cn(
+                            "absolute -left-[30px] top-0.5 h-4.5 w-4.5 rounded-full border flex items-center justify-center text-[10px] font-bold transition-all z-10 bg-white dark:bg-slate-950",
+                            isCompleted 
+                              ? "bg-slate-900 border-slate-900 text-white dark:bg-slate-100 dark:border-slate-100 dark:text-slate-950" 
+                              : "border-slate-300 text-slate-500"
+                          )}
+                        >
+                          {s.step}
+                        </div>
+                        
+                        <div className="flex items-start gap-3">
+                          <input 
+                            type="checkbox"
+                            checked={isCompleted}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSopCompletedSteps(prev => [...prev, s.step]);
+                              } else {
+                                setSopCompletedSteps(prev => prev.filter(x => x !== s.step));
+                              }
+                            }}
+                            className="mt-1 h-3.5 w-3.5 rounded border-slate-300 text-slate-900 focus:ring-slate-900 shrink-0"
+                          />
+                          <div className="space-y-0.5 min-w-0">
+                            <label className={cn(
+                              "text-xs font-bold block cursor-pointer transition-colors",
+                              isCompleted ? "text-slate-500 line-through" : "text-slate-800 dark:text-slate-200"
+                            )}>
+                              {s.name}
+                            </label>
+                            <p className="text-[10px] text-slate-500 leading-normal">
+                              {s.desc}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* Drawer Footer */}
+            <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 flex flex-col gap-2">
+              <Button 
+                onClick={() => {
+                  const dismissedStr = serverStorage.getItem('mis_dismissed_alerts') || '[]';
+                  let dismissed: string[] = [];
+                  try {
+                    dismissed = JSON.parse(dismissedStr);
+                  } catch (e) {}
+                  
+                  if (!dismissed.includes(sopAlert.id)) {
+                    dismissed.push(sopAlert.id);
+                    serverStorage.setItem('mis_dismissed_alerts', JSON.stringify(dismissed));
+                  }
+
+                  removeSopParams();
+                  
+                  setToastNotice('Đã xử lý sự vụ thành công. Hệ thống đã ghi nhận hoàn thành quy trình SOP.');
+                  window.setTimeout(() => setToastNotice(''), 4000);
+                  
+                  window.dispatchEvent(new Event('sop-dismissed'));
+                }}
+                disabled={sopCompletedSteps.length < 4}
+                className="w-full bg-slate-900 text-white rounded-sm hover:bg-slate-800 text-xs font-bold py-2.5 transition-colors duration-150"
+              >
+                Hoàn tất xử lý & Đóng cảnh báo
+              </Button>
+              <Button 
+                variant="ghost" 
+                onClick={removeSopParams}
+                className="text-xs text-slate-500 hover:text-slate-700"
+              >
+                Hủy bỏ
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

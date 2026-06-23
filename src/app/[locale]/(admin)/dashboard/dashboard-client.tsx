@@ -32,6 +32,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/src/components/ui/card';
 import { Badge } from '@/src/components/ui/badge';
 import { Button } from '@/src/components/ui/button';
+import { useToast } from '@/src/components/ui/Toast';
 
 interface DashboardClientProps {
   tab?: string;
@@ -45,6 +46,10 @@ export default function DashboardClient({ tab, initialData }: DashboardClientPro
   const [selectedDept, setSelectedDept] = useState('ALL');
   const params = useParams();
   const locale = (params?.locale as string) || 'vi';
+  const router = useRouter();
+
+  const [activeAlerts, setActiveAlerts] = useState<any[]>([]);
+  const { success: toastSuccess } = useToast();
 
   useEffect(() => {
     const loggedIn = serverStorage.getItem("mis_edutask_logged_in") === "true";
@@ -110,9 +115,33 @@ export default function DashboardClient({ tab, initialData }: DashboardClientPro
     };
   }, [baseAlerts, baseDirectives, filterFactor]);
 
+  useEffect(() => {
+    const handleSopDismissed = () => {
+      const dismissedStr = serverStorage.getItem('mis_dismissed_alerts') || '[]';
+      let dismissed: string[] = [];
+      try {
+        dismissed = JSON.parse(dismissedStr);
+      } catch (e) {}
+      
+      if (initialData?.actionCenter?.priorityAlerts) {
+        const filtered = initialData.actionCenter.priorityAlerts.filter(
+          (a: any) => !dismissed.includes(a.id)
+        );
+        setActiveAlerts(filtered);
+      }
+    };
+
+    window.addEventListener('sop-dismissed', handleSopDismissed);
+    handleSopDismissed(); // Run initially
+
+    return () => {
+      window.removeEventListener('sop-dismissed', handleSopDismissed);
+    };
+  }, [initialData]);
+
   // Priority warning center list filtering
   const filteredAlerts = useMemo(() => {
-    const alerts = initialData?.actionCenter?.priorityAlerts || [];
+    const alerts = activeAlerts || [];
     return alerts
       .filter((a: any) => {
         if (selectedDept === 'ALL') return true;
@@ -132,7 +161,7 @@ export default function DashboardClient({ tab, initialData }: DashboardClientPro
         // Adapt target URLs based on selected locale
         targetUrl: a.targetUrl ? a.targetUrl.replace('/vi/', `/${locale}/`) : `/${locale}/dashboard`
       }));
-  }, [initialData, selectedDept, locale]);
+  }, [activeAlerts, selectedDept, locale]);
 
   if (!isReady) {
     return (
@@ -367,11 +396,18 @@ export default function DashboardClient({ tab, initialData }: DashboardClientPro
                         {alert.deadline}
                       </td>
                       <td className="py-3 px-4 text-right">
-                        <Link href={alert.targetUrl || '#'}>
-                          <Button variant="ghost" size="sm" className="h-7 text-[10px] text-red-700 hover:text-white hover:bg-red-600 px-2 rounded-sm border border-red-200">
-                            Xử lý
-                          </Button>
-                        </Link>
+                        <Button 
+                          onClick={() => {
+                            const target = alert.targetUrl || `/${locale}/dashboard`;
+                            const url = `${target}${target.includes('?') ? '&' : '?'}sopAlertId=${alert.id}&sopTitle=${encodeURIComponent(alert.title)}&sopModule=${encodeURIComponent(alert.module)}&sopSeverity=${encodeURIComponent(alert.severity)}&sopOwner=${encodeURIComponent(alert.owner)}&sopDeadline=${encodeURIComponent(alert.deadline)}`;
+                            router.push(url);
+                          }}
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-7 text-[10px] text-red-700 hover:text-white hover:bg-red-600 px-2 rounded-sm border border-red-200"
+                        >
+                          Xử lý
+                        </Button>
                       </td>
                     </tr>
                   ))
@@ -772,6 +808,7 @@ export default function DashboardClient({ tab, initialData }: DashboardClientPro
         </Card>
 
       </div>
+
     </div>
   );
 }
