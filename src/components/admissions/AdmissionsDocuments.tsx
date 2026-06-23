@@ -483,15 +483,37 @@ export default function AdmissionsDocuments({ leads = [], documents = [] }: { le
       </div>
 
       {/* Modal upload */}
-      {uploadTaiLieu && <UploaderTaiLieu taiLieu={uploadTaiLieu} onClose={() => setUploadTaiLieu(null)} onUploaded={(fileName) => {
-        setTaiLieuList(prev => prev.map(tl => tl.id === uploadTaiLieu.id ? {
-          ...tl,
-          trangThai: 'Đã nộp',
-          file: fileName,
-          ngayNop: new Date().toLocaleDateString('vi-VN'),
-          ghiChu: '',
-        } : tl));
-        showToast(`Đã tải lên ${fileName}`);
+      {uploadTaiLieu && <UploaderTaiLieu taiLieu={uploadTaiLieu} onClose={() => setUploadTaiLieu(null)} onUploaded={async (fileName) => {
+        if (!hoSoChon) return;
+        const uploadedAt = new Date();
+        setDocumentRecords(prev => {
+          const existing = prev.find(doc => doc.leadId === hoSoChon.id && (doc.type === uploadTaiLieu.ten || doc.name === uploadTaiLieu.ten));
+          if (existing) {
+            return prev.map(doc => doc.id === existing.id ? {
+              ...doc,
+              status: 'submitted',
+              fileUrl: fileName,
+              uploadedAt,
+              payload: { ...(doc.payload || {}), fileName },
+            } : doc);
+          }
+          return [{
+            id: `doc_tmp_${Date.now()}`,
+            leadId: hoSoChon.id,
+            type: uploadTaiLieu.ten,
+            name: uploadTaiLieu.ten,
+            status: 'submitted',
+            fileUrl: fileName,
+            uploadedAt,
+            payload: { fileName },
+          }, ...prev];
+        });
+        try {
+          await updateAdmissionDocumentFile(hoSoChon.id, uploadTaiLieu.ten, { fileName, status: 'submitted' });
+          showToast(`Đã tải lên ${fileName}`);
+        } catch {
+          showToast('Lưu tài liệu thất bại');
+        }
       }} />}
 
       {/* Modal nhắc nộp hồ sơ */}
