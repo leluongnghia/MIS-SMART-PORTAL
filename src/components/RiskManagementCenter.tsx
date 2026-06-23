@@ -1,3 +1,4 @@
+'use client';
 import React, { useState } from 'react';
 import { ShieldAlert, AlertTriangle, TrendingUp, CheckSquare, Search, FileText, XCircle, FileWarning } from 'lucide-react';
 import { MOCK_RISKS, MOCK_AUDIT_PLANS, MOCK_NCS, MOCK_CAPAS, MOCK_REVIEWS, MOCK_INCIDENTS } from './risk/RiskMockData';
