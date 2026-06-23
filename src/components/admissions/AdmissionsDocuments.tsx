@@ -79,7 +79,7 @@ const KPI_HO_SO = [
 ];
 
 // ─── Component upload tài liệu ────────────────────────────────────────────────
-function UploaderTaiLieu({ taiLieu, onClose }: { taiLieu: TaiLieu; onClose: () => void }) {
+function UploaderTaiLieu({ taiLieu, onClose, onUploaded }: { taiLieu: TaiLieu; onClose: () => void; onUploaded?: (fileName: string) => void }) {
   const [keoVao, setKeoVao] = useState(false);
   const [daTai, setDaTai] = useState(false);
   const [tenFile, setTenFile] = useState('');
@@ -132,7 +132,7 @@ function UploaderTaiLieu({ taiLieu, onClose }: { taiLieu: TaiLieu; onClose: () =
           </div>
           <div className="flex gap-2">
             <button type="button" onClick={onClose} className="flex-1 rounded-xl border border-slate-200 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-50">Huỷ</button>
-            <button type="button" onClick={() => { setDaTai(true); setTimeout(onClose, 800); }}
+            <button type="button" onClick={() => { setDaTai(true); onUploaded?.(tenFile); setTimeout(onClose, 800); }}
               disabled={!tenFile}
               className="flex-1 rounded-xl bg-blue-600 py-2.5 text-sm font-bold text-white hover:bg-blue-700 disabled:opacity-40">
               {daTai ? '✓ Đã tải lên' : 'Tải lên'}
@@ -146,10 +146,45 @@ function UploaderTaiLieu({ taiLieu, onClose }: { taiLieu: TaiLieu; onClose: () =
   );
 }
 
+// ─── Utility ──────────────────────────────────────────────────────────────────
+const downloadTextFile = (filename: string, content: string) => {
+  const blob = new Blob([content], { type: 'text/plain;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(link.href);
+};
+
+function mapLeadToHoSo(lead: AdmissionLead): HoSoHocSinh {
+  const statusToProgress: Record<AdmissionLead['trangThai'], Pick<HoSoHocSinh, 'tienDo' | 'daNop' | 'trangThai'>> = {
+    'Mới': { tienDo: 14, daNop: 1, trangThai: 'Thiếu giấy tờ' },
+    'Đang tư vấn': { tienDo: 29, daNop: 2, trangThai: 'Đang xử lý' },
+    'Đăng ký test': { tienDo: 43, daNop: 3, trangThai: 'Đang xử lý' },
+    'Nộp hồ sơ': { tienDo: 71, daNop: 5, trangThai: 'Chờ xác minh' },
+    'Giữ chỗ': { tienDo: 86, daNop: 6, trangThai: 'Chờ xác minh' },
+    'Nhập học': { tienDo: 100, daNop: 7, trangThai: 'Hoàn thành' },
+    'Không tiếp tục': { tienDo: 14, daNop: 1, trangThai: 'Thiếu giấy tờ' },
+  };
+  const mapped = statusToProgress[lead.trangThai] || statusToProgress['Mới'];
+  return {
+    id: lead.id,
+    hoTen: lead.hoTen,
+    maLead: lead.id,
+    khoi: lead.khoi,
+    tiepNhan: lead.tvv || 'Chưa phân công',
+    tiepNhanAvatar: lead.tvvAvatar || 'CP',
+    tongTaiLieu: 7,
+    ...mapped,
+  };
+}
+
 // ─── Component chính ─────────────────────────────────────────────────────────
-export default function AdmissionsDocuments() {
+export default function AdmissionsDocuments({ leads = [] }: { leads?: Lead[] }) {
   const [tab, setTab] = useState<'danh_sach' | 'chi_tiet'>('danh_sach');
-  const [hoSoChon, setHoSoChon] = useState<HoSoHocSinh | null>(HO_SO_DANH_SACH[0]);
+  const hoSoList = React.useMemo(() => leads.length ? leads.map(mapLeadToHoSo) : HO_SO_DANH_SACH, [leads]);
+  const [hoSoChon, setHoSoChon] = useState<HoSoHocSinh | null>(hoSoList[0]);
+  const [taiLieuList, setTaiLieuList] = useState<TaiLieu[]>(DANH_SACH_TAI_LIEU);
   const [uploadTaiLieu, setUploadTaiLieu] = useState<TaiLieu | null>(null);
   const [timKiem, setTimKiem] = useState('');
   const [locTrangThai, setLocTrangThai] = useState('Tất cả');
