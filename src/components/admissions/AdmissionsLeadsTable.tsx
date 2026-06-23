@@ -514,21 +514,24 @@ export default function AdmissionsLeadsTable({ initialData, leads: externalLeads
     router.push(`?${query.toString()}`);
   };
 
-  const leadsHienThi = leads.map((l: any) => ({
-    id: l.id,
-    hoTen: l.fullName,
-    sdt: l.phone,
-    email: l.email || '—',
-    nguonLead: l.source,
-    khoi: l.grade,
-    tvv: users?.find((u: any) => u.id === l.assignedUserId)?.name || 'Chưa phân công',
-    tvvId: l.assignedUserId, // Added for edit form
-    tvvAvatar: ((users?.find((u: any) => u.id === l.assignedUserId)?.name) || 'C P').split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase(),
-    trangThai: Object.keys(MAP_STATUS_TO_DB).find(k => MAP_STATUS_TO_DB[k as TrangThai] === l.status) as TrangThai || 'Mới',
-    diemLead: 50,
-    ngayTao: new Date(l.createdAt).toLocaleDateString('vi-VN', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }),
-    ghiChu: l.notes,
-  })).filter((l: any) => l.diemLead >= diemLeadNhoNhat);
+  const leadsHienThi = leads.map((l: any) => {
+    const isMapped = l.hoTen !== undefined;
+    return {
+      id: l.id,
+      hoTen: isMapped ? l.hoTen : l.fullName,
+      sdt: isMapped ? l.sdt : l.phone,
+      email: (isMapped ? l.email : l.email) || '—',
+      nguonLead: isMapped ? l.nguonLead : l.source,
+      khoi: isMapped ? l.khoi : l.grade,
+      tvv: isMapped ? l.tvv : (users?.find((u: any) => u.id === l.assignedUserId)?.name || 'Chưa phân công'),
+      tvvId: isMapped ? l.tvvId : l.assignedUserId,
+      tvvAvatar: isMapped ? l.tvvAvatar : (((users?.find((u: any) => u.id === l.assignedUserId)?.name) || 'C P').split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()),
+      trangThai: isMapped ? l.trangThai : (Object.keys(MAP_STATUS_TO_DB).find(k => MAP_STATUS_TO_DB[k as TrangThai] === l.status) as TrangThai || 'Mới'),
+      diemLead: isMapped ? l.diemLead : 50,
+      ngayTao: isMapped ? l.ngayTao : (l.createdAt ? new Date(l.createdAt).toLocaleDateString('vi-VN', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }) : new Date().toLocaleDateString('vi-VN')),
+      ghiChu: isMapped ? l.ghiChu : l.notes,
+    };
+  }).filter((l: any) => l.diemLead >= diemLeadNhoNhat);
   const chonTatCa = () => {
     if (daChon.size === leadsHienThi.length) setDaChon(new Set());
     else setDaChon(new Set(leadsHienThi.map((l: any) => l.id)));

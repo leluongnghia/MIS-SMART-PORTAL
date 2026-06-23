@@ -379,31 +379,49 @@ export default function AdmissionsPipelineKanban({
 
   // Sync leads from parent
   React.useEffect(() => {
+    console.log('AdmissionsPipelineKanban sync leads:', leads);
     if (leads && leads.length > 0) {
       const mapped = leads.map(l => {
+        const isMapped = l.hoTen !== undefined;
         let gd: GiaiDoan = 'Tiếp nhận mới';
-        if (l.trangThai === 'Mới') gd = 'Tiếp nhận mới';
-        else if (l.trangThai === 'Đang tư vấn') gd = 'Đang tư vấn';
-        else if (l.trangThai === 'Đăng ký test') gd = 'Đặt lịch test';
-        else if (l.trangThai === 'Nộp hồ sơ') gd = 'Nộp hồ sơ';
-        else if (l.trangThai === 'Giữ chỗ') gd = 'Giữ chỗ';
-        else if (l.trangThai === 'Nhập học') gd = 'Nhập học';
-        else if (l.trangThai === 'Không tiếp tục') gd = 'Không tiếp tục';
+        
+        if (isMapped) {
+          if (l.trangThai === 'Mới') gd = 'Tiếp nhận mới';
+          else if (l.trangThai === 'Đang tư vấn') gd = 'Đang tư vấn';
+          else if (l.trangThai === 'Đăng ký test') gd = 'Đặt lịch test';
+          else if (l.trangThai === 'Nộp hồ sơ') gd = 'Nộp hồ sơ';
+          else if (l.trangThai === 'Giữ chỗ') gd = 'Giữ chỗ';
+          else if (l.trangThai === 'Nhập học') gd = 'Nhập học';
+          else if (l.trangThai === 'Không tiếp tục') gd = 'Không tiếp tục';
+        } else {
+          // l is DbLead
+          if (l.status === 'received') gd = 'Tiếp nhận mới';
+          else if (l.status === 'consulting') gd = 'Đang tư vấn';
+          else if (l.status === 'test_scheduled') gd = 'Đặt lịch test';
+          else if (l.status === 'test_participated') gd = 'Đã thi test';
+          else if (l.status === 'docs_submitted') gd = 'Nộp hồ sơ';
+          else if (l.status === 'seat_reserved') gd = 'Giữ chỗ';
+          else if (l.status === 'enrolled') gd = 'Nhập học';
+          else if (l.status === 'cancelled') gd = 'Không tiếp tục';
+        }
+
+        const score = isMapped ? l.diemLead : (l.status === 'enrolled' ? 95 : l.status === 'seat_reserved' ? 88 : l.status === 'docs_submitted' ? 78 : l.status === 'test_participated' ? 72 : l.status === 'test_scheduled' ? 66 : l.status === 'consulting' ? 58 : l.status === 'cancelled' ? 20 : 45);
 
         return {
           id: l.id,
-          hoTen: l.hoTen,
-          khoi: l.khoi,
-          nguon: l.nguonLead,
-          tvv: l.tvv,
-          tvvKyHieu: l.tvvAvatar,
-          diemLead: l.diemLead,
-          doUuTien: l.diemLead >= 80 ? 'Cao' : l.diemLead >= 60 ? 'Trung bình' : 'Thấp',
+          hoTen: isMapped ? l.hoTen : l.fullName,
+          khoi: isMapped ? l.khoi : l.grade,
+          nguon: isMapped ? l.nguonLead : l.source,
+          tvv: isMapped ? l.tvv : 'Chưa phân công',
+          tvvKyHieu: isMapped ? l.tvvAvatar : 'CP',
+          diemLead: score,
+          doUuTien: score >= 80 ? 'Cao' : score >= 60 ? 'Trung bình' : 'Thấp',
           giaiDoan: gd,
-          hoatDongCuoi: l.ngayTao,
+          hoatDongCuoi: isMapped ? l.ngayTao : (l.createdAt ? new Date(l.createdAt).toLocaleDateString('vi-VN', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }) : new Date().toLocaleDateString('vi-VN')),
           buocTiep: 'Cập nhật trạng thái'
         } as TheKanban;
       });
+      console.log('AdmissionsPipelineKanban mapped cards:', mapped);
       setDanhSachThe(mapped);
     }
   }, [leads]);
