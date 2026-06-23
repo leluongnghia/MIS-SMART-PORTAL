@@ -497,60 +497,79 @@ export interface TransferRecord {
   status: 'PENDING' | 'APPROVED' | 'REJECTED';
 }
 
+export interface TimelineEvent {
+  id: string;
+  at: string;
+  actorId: string;
+  action: string;
+  fromStatus?: string;
+  toStatus?: string;
+  note?: string;
+  visibleToParent?: boolean;
+}
+
 export type ParentSupportTicket = {
   id: string;
   ticketCode: string;
   receivedAt: string;
   channel: string;
   receivedBy: string;
-
   parentName: string;
   parentPhone: string;
   parentEmail?: string;
   relationship: string;
   preferredContactMethod?: string;
-
   studentId?: string;
   studentName?: string;
   className?: string;
   homeroomTeacher?: string;
-
   title: string;
   description: string;
   expectedResolution?: string;
-  attachments?: string[];
-
+  isSensitive: boolean;
   category: string;
   priority: 'low' | 'medium' | 'high' | 'critical';
-  status: string;
-  slaDueAt: string;
-  isSensitive: boolean;
-  riskFlag: boolean;
-  visibleToParent: boolean;
-
   departmentOwner: string;
   assigneeId?: string;
   watchers?: string[];
   internalNote?: string;
+  status: 'DRAFT' | 'NEW' | 'ASSIGNED' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED' | 'ESCALATED';
+  createdAt: string;
+  updatedAt: string;
+  slaDueAt?: string;
+  riskFlag: boolean;
+  visibleToParent: boolean;
+  createdBy: string;
+  timeline: TimelineEvent[];
+};
 
+export type CommunicationContent = {
+  id: string;
+  contentCode: string;
+  title: string;
+  contentGroup: string;
+  priority: 'normal' | 'important' | 'urgent';
+  ownerDepartment: string;
+  summary: string;
+  body: string;
+  channels: string[];
+  relatedEventId?: string;
+  plannedPublishAt?: string;
+  authorId: string;
+  approverId?: string;
+  approvalDeadline?: string;
+  audience: string[];
+  gradeIds?: string[];
+  classIds?: string[];
+  visibleToParent: boolean;
+  attachments?: string[];
+  reviewNote?: string;
+  internalNote?: string;
+  status: 'DRAFT' | 'PENDING_APPROVAL' | 'NEEDS_REVISION' | 'APPROVED' | 'PUBLISHED' | 'POSTPONED' | 'CANCELLED';
   createdAt: string;
   updatedAt: string;
   createdBy: string;
-
-  relatedTaskId?: string;
-  relatedRiskId?: string;
-  relatedCapaId?: string;
-
-  timeline: Array<{
-    id: string;
-    at: string;
-    actorId: string;
-    action: string;
-    fromStatus?: string;
-    toStatus?: string;
-    note?: string;
-    visibleToParent?: boolean;
-  }>;
+  timeline: TimelineEvent[];
 };
 
 export interface Survey {
@@ -577,21 +596,161 @@ export interface CommunicationCampaign {
 
 export interface SchoolEvent {
   id: string;
-  title: string;
-  description: string;
-  date: string;
+  eventCode: string;
+  eventName: string;
+  eventType: string;
+  objective: string;
+  description?: string;
+  semester?: string;
+  startAt: string;
+  endAt: string;
+  preparationStartAt?: string;
   location: string;
-  organizer: string;
-  status: 'PLANNING' | 'APPROVED' | 'COMPLETED' | 'CANCELLED';
-  attendeeCount: number;
+  backupLocation?: string;
+  isOnline: boolean;
+  onlineLink?: string;
+  participants: string[];
+  gradeIds?: string[];
+  classIds?: string[];
+  expectedAttendees?: number;
+  guestNote?: string;
+  ownerDepartment: string;
+  ownerId: string;
+  coDepartments?: string[];
+  eventTeam?: string[];
+  approverId?: string;
+  checklist: Array<{
+    id: string;
+    enabled: boolean;
+    title: string;
+    assigneeId?: string;
+    dueAt?: string;
+    createTask: boolean;
+  }>;
+  needCommunicationPlan: boolean;
+  needParentNotice: boolean;
+  communicationChannels?: string[];
+  plannedAnnouncementAt?: string;
+  relatedCommunicationIds?: string[];
+  riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  safetyPlan?: string;
+  medicalSupportNeeded: boolean;
+  securitySupportNeeded: boolean;
+  emergencyContact?: string;
+  createRiskRecord: boolean;
+  status: 'DRAFT' | 'PLANNING' | 'PENDING_APPROVAL' | 'APPROVED' | 'PREPARING' | 'ONGOING' | 'COMPLETED' | 'REVIEWED' | 'CANCELLED';
+  createdAt: string;
+  updatedAt: string;
+  createdBy: string;
+  timeline: TimelineEvent[];
 }
 
 export interface CrisisIncident {
   id: string;
+  crisisCode: string;
   title: string;
-  description: string;
-  severity: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
-  status: 'REPORTED' | 'INVESTIGATING' | 'MITIGATED' | 'RESOLVED';
-  reportedAt: string;
-  leadResponder: string;
+  detectedAt: string;
+  summary: string;
+  details?: string;
+  attachments?: string[];
+  
+  source: string;
+  sourceDetail?: string;
+  impactScope: string[];
+  publicVisibility: string;
+  affectedStudentIds?: string[];
+  affectedClassIds?: string[];
+  
+  severity: 'Theo dõi' | 'Cần xử lý' | 'Nghiêm trọng' | 'Khẩn cấp';
+  riskArea: string[];
+  urgencyReason?: string;
+  potentialImpact?: string;
+  
+  ownerId: string;
+  spokespersonId?: string;
+  relatedDepartments: string[];
+  responseTeam?: string[];
+  watchers?: string[];
+  
+  firstAction: string;
+  firstActionDeadline?: string;
+  verificationPlan?: string;
+  containmentPlan?: string;
+  parentContactPlan?: string;
+  authorityContactNeeded: boolean;
+  
+  keyMessage?: string;
+  communicationChannels?: string[];
+  approvalRequired: boolean;
+  approverId?: string;
+  doNotPublishExternally: boolean;
+  publicResponseStatus: string;
+  
+  relatedTicketId?: string;
+  relatedEventId?: string;
+  createRiskRecord: boolean;
+  relatedRiskId?: string;
+  createBoardDirective: boolean;
+  createTask: boolean;
+  internalNote?: string;
+  
+  status: 'DRAFT' | 'DETECTED' | 'VERIFYING' | 'IN_PROGRESS' | 'OFFICIAL_RESPONSE_READY' | 'PENDING_APPROVAL' | 'OFFICIAL_RESPONSE_SENT' | 'MONITORING' | 'CLOSED' | 'REOPENED';
+  createdAt: string;
+  updatedAt: string;
+  createdBy: string;
+  timeline: TimelineEvent[];
+}
+
+export interface SchoolSurvey {
+  id: string;
+  surveyCode: string;
+  surveyTitle: string;
+  surveyType: string;
+  objective: string;
+  description?: string;
+  semester?: string;
+  
+  targetAudience: string[];
+  gradeIds?: string[];
+  classIds?: string[];
+  departmentIds?: string[];
+  estimatedRecipients?: number;
+  
+  startAt?: string;
+  endAt: string;
+  reminderAt?: string;
+  isAnonymous: boolean;
+  allowMultipleResponses: boolean;
+  
+  questions: Array<{
+    id: string;
+    questionText: string;
+    questionType: string;
+    options?: string[];
+    required: boolean;
+    category?: string;
+  }>;
+  
+  visibleToParentPortal: boolean;
+  visibleToStudentPortal: boolean;
+  responsePrivacy: string;
+  showResultToRespondent: boolean;
+  thankYouMessage?: string;
+  
+  ownerDepartment: string;
+  ownerId: string;
+  approverId?: string;
+  reviewNote?: string;
+  
+  relatedEventId?: string;
+  relatedTicketId?: string;
+  createFollowUpTask: boolean;
+  createCapaIfNegative: boolean;
+  negativeThreshold?: number | string;
+  
+  status: 'DRAFT' | 'PENDING_APPROVAL' | 'APPROVED' | 'ACTIVE' | 'CLOSED' | 'REPORTED' | 'CANCELLED';
+  createdAt: string;
+  updatedAt: string;
+  createdBy: string;
+  timeline: TimelineEvent[];
 }

@@ -98,7 +98,7 @@ export default function CreateTicketForm({ onClose, onSubmit }: CreateTicketForm
     }
   }, [priority]);
 
-  const handleActionSubmit = (data: FormData, status: string) => {
+  const handleActionSubmit = (data: FormData, status: 'NEW' | 'DRAFT' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED' | 'ASSIGNED' | 'ESCALATED') => {
     if (status === 'ASSIGNED' && !data.assigneeId) {
       alert('Vui lòng chọn Người xử lý chính để Giao việc.');
       return;

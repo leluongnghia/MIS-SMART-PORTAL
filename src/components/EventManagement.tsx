@@ -14,107 +14,154 @@ import {
   Clock,
   AlertCircle,
   MoreVertical,
-  Activity
+  Activity,
+  UserSquare,
+  Send,
+  Calendar,
+  X,
+  Users,
+  CalendarHeart,
+  ShieldAlert,
+  ClipboardList
 } from 'lucide-react';
-import { ParentSupportTicket, Survey, CommunicationCampaign, SchoolEvent, CrisisIncident } from '../types';
+import { ParentSupportTicket, CommunicationContent, Survey, SchoolEvent, CrisisIncident } from '../types';
 
 import CreateTicketForm from './CreateTicketForm';
+import CreateCommunicationForm from './CreateCommunicationForm';
+import CreateEventForm from './CreateEventForm';
+import CreateSurveyForm from './CreateSurveyForm';
+import CreateCrisisForm from './CreateCrisisForm';
 
-type TabType = 'TICKETS' | 'SURVEYS' | 'COMMUNICATIONS' | 'EVENTS' | 'CRISIS';
+// ─── MAIN COMPONENT ─────────────────────────────────────────────────────────
 
 export default function EventManagement() {
-  const [activeTab, setActiveTab] = useState<TabType>('TICKETS');
+  const [activeTab, setActiveTab] = useState('tickets'); // 'tickets' | 'communications' | 'events' | 'crisis' | 'surveys'
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [formType, setFormType] = useState<'TICKETS' | 'COMMUNICATIONS' | 'EVENTS' | 'CRISIS' | 'SURVEYS'>('TICKETS');
 
-  const tabs = [
-    { id: 'TICKETS', label: 'CSKH & Phản ánh', icon: MessageSquare },
-    { id: 'SURVEYS', label: 'Khảo sát', icon: FileText },
-    { id: 'COMMUNICATIONS', label: 'Truyền thông', icon: Megaphone },
-    { id: 'EVENTS', label: 'Sự kiện', icon: CalendarDays },
-    { id: 'CRISIS', label: 'Khủng hoảng', icon: AlertTriangle },
-  ] as const;
+  const openForm = (type: 'TICKETS' | 'COMMUNICATIONS' | 'EVENTS' | 'CRISIS' | 'SURVEYS') => {
+    setFormType(type);
+    setIsFormOpen(true);
+  };
+
+  const getCreateButtonConfig = () => {
+    switch(activeTab) {
+      case 'tickets': return { label: 'Tạo Ticket', action: () => openForm('TICKETS'), icon: Plus, color: 'bg-indigo-600 hover:bg-indigo-700' };
+      case 'communications': return { label: 'Tạo Truyền thông', action: () => openForm('COMMUNICATIONS'), icon: Plus, color: 'bg-emerald-600 hover:bg-emerald-700' };
+      case 'events': return { label: 'Tạo Sự kiện', action: () => openForm('EVENTS'), icon: Plus, color: 'bg-rose-600 hover:bg-rose-700' };
+      case 'crisis': return { label: 'Báo cáo Khủng hoảng', action: () => openForm('CRISIS'), icon: ShieldAlert, color: 'bg-red-600 hover:bg-red-700' };
+      case 'surveys': return { label: 'Tạo Khảo sát', action: () => openForm('SURVEYS'), icon: Plus, color: 'bg-amber-600 hover:bg-amber-700' };
+      default: return { label: 'Tạo mới', action: () => openForm('TICKETS'), icon: Plus, color: 'bg-indigo-600 hover:bg-indigo-700' };
+    }
+  };
+
+  const createBtn = getCreateButtonConfig();
 
   return (
-    <div className="flex flex-col h-full bg-slate-50">
+    <div className="p-6 pb-24 h-screen overflow-y-auto bg-slate-50/50">
       {/* Header */}
-      <div className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between sticky top-0 z-10">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight">CSKH, Truyền thông & Sự kiện</h1>
-          <p className="text-sm text-slate-500 mt-1 font-medium">Trung tâm quản lý quan hệ phụ huynh và truyền thông trường học</p>
+          <h1 className="text-2xl font-black text-slate-900 tracking-tight">Sự kiện & Khảo sát</h1>
+          <p className="text-sm font-medium text-slate-500 mt-1">Quản lý sự kiện, truyền thông và khảo sát toàn trường</p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="relative">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Tìm kiếm nhanh..."
-              className="pl-9 pr-4 py-2 bg-slate-100 border-none rounded-xl text-sm w-64 focus:ring-2 focus:ring-indigo-500 transition-all font-medium placeholder:font-normal"
-            />
-          </div>
-          <button className="p-2 bg-slate-100 text-slate-600 rounded-xl hover:bg-slate-200 transition-colors">
-            <Filter className="w-4 h-4" />
-          </button>
           <button 
-            onClick={() => setIsFormOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-sm transition-all shadow-sm shadow-indigo-200"
+            onClick={createBtn.action}
+            className={`flex items-center gap-2 px-4 py-2 ${createBtn.color} text-white font-bold rounded-xl transition-all shadow-sm active:scale-95`}
           >
-            <Plus className="w-4 h-4" />
-            <span>Tạo mới</span>
+            <createBtn.icon className="w-4 h-4" /> {createBtn.label}
           </button>
         </div>
       </div>
 
-      {/* Navigation */}
-      <div className="px-6 py-3 border-b border-slate-200 bg-white/50 backdrop-blur-sm sticky top-[73px] z-10">
-        <div className="flex gap-2">
-          {tabs.map((tab) => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${
-                  isActive
-                    ? 'bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200 ring-inset'
-                    : 'text-slate-600 hover:bg-slate-100'
-                }`}
-              >
-                <Icon className={`w-4 h-4 ${isActive ? 'text-indigo-600' : 'text-slate-400'}`} />
-                {tab.label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Content Area */}
-      <div className="flex-1 overflow-auto p-6">
-        {activeTab === 'TICKETS' && <TicketsView />}
-        {activeTab === 'SURVEYS' && <SurveysView />}
-        {activeTab === 'COMMUNICATIONS' && <CommunicationsView />}
-        {activeTab === 'EVENTS' && <EventsView />}
-        {activeTab === 'CRISIS' && <CrisisView />}
-      </div>
-
-      {/* Drawer Overlay */}
-      {isFormOpen && (
-        <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/20 backdrop-blur-sm transition-opacity">
-          <div 
-            className="w-full max-w-4xl bg-white h-full shadow-2xl animate-in slide-in-from-right duration-300"
-            onClick={(e) => e.stopPropagation()}
+      {/* Tabs */}
+      <div className="flex items-center gap-2 border-b border-slate-200 mb-6 overflow-x-auto no-scrollbar">
+        {[
+          { id: 'tickets', label: 'CSKH Phụ huynh', icon: Users },
+          { id: 'communications', label: 'Truyền thông', icon: Megaphone },
+          { id: 'events', label: 'Sự kiện', icon: CalendarHeart },
+          { id: 'crisis', label: 'Khủng hoảng', icon: ShieldAlert },
+          { id: 'surveys', label: 'Khảo sát', icon: ClipboardList }
+        ].map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`flex items-center gap-2 px-4 py-3 text-sm font-bold border-b-2 transition-colors whitespace-nowrap
+              ${activeTab === tab.id ? 'border-indigo-600 text-indigo-700 bg-indigo-50/50 rounded-t-lg' : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50'}`}
           >
-            <CreateTicketForm 
-              onClose={() => setIsFormOpen(false)}
-              onSubmit={(data) => {
-                console.log('Ticket Submitted:', data);
-                setIsFormOpen(false);
-                alert(`Tạo ticket thành công với mã: ${data.ticketCode} (Trạng thái: ${data.status})`);
-              }}
-            />
+            <tab.icon className={`w-4 h-4 ${activeTab === tab.id ? 'text-indigo-600' : 'text-slate-400'}`} /> 
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Content */}
+      <div className="space-y-6">
+        {activeTab === 'tickets' && <TicketsView />}
+        {activeTab === 'communications' && <CommunicationsView />}
+        {activeTab === 'events' && <EventsView />}
+        {activeTab === 'crisis' && <CrisisView />}
+        {activeTab === 'surveys' && <SurveysView />}
+      </div>
+
+      {/* Drawer */}
+      <div className={`fixed inset-y-0 right-0 w-full md:w-[600px] lg:w-[800px] bg-white shadow-2xl transform transition-transform duration-300 ease-in-out z-50 ${isFormOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+        <div className="h-full relative flex flex-col">
+          <div className="flex-1 overflow-hidden">
+            {formType === 'TICKETS' && (
+              <CreateTicketForm 
+                onClose={() => setIsFormOpen(false)} 
+                onSubmit={(data) => {
+                  console.log('Ticket Submitted:', data);
+                  setIsFormOpen(false);
+                  alert(`Tạo ticket thành công: ${data.ticketCode}`);
+                }} 
+              />
+            )}
+            {formType === 'COMMUNICATIONS' && (
+              <CreateCommunicationForm 
+                onClose={() => setIsFormOpen(false)}
+                onSubmit={(data) => {
+                  console.log('Communication Submitted:', data);
+                  setIsFormOpen(false);
+                  alert(`Tạo nội dung truyền thông thành công: ${data.title} (Trạng thái: ${data.status})`);
+                }}
+              />
+            )}
+            {formType === 'EVENTS' && (
+              <CreateEventForm 
+                onClose={() => setIsFormOpen(false)}
+                onSubmit={(data) => {
+                  console.log('Event Submitted:', data);
+                  setIsFormOpen(false);
+                  alert(`Tạo sự kiện thành công: ${data.eventName} (Trạng thái: ${data.status})`);
+                }}
+              />
+            )}
+            {formType === 'SURVEYS' && (
+              <CreateSurveyForm 
+                onClose={() => setIsFormOpen(false)}
+                onSubmit={(data) => {
+                  console.log('Survey Submitted:', data);
+                  setIsFormOpen(false);
+                  alert(`Tạo khảo sát thành công: ${data.surveyTitle} (Trạng thái: ${data.status})`);
+                }}
+              />
+            )}
+            {formType === 'CRISIS' && (
+              <CreateCrisisForm 
+                onClose={() => setIsFormOpen(false)}
+                onSubmit={(data) => {
+                  console.log('Crisis Submitted:', data);
+                  setIsFormOpen(false);
+                  alert(`Báo cáo vụ việc khủng hoảng thành công: ${data.title} (Trạng thái: ${data.status})`);
+                }}
+              />
+            )}
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }
@@ -124,16 +171,16 @@ export default function EventManagement() {
 function TicketsView() {
   const mockTickets: ParentSupportTicket[] = [
     { 
-      id: 'TKT-001', ticketCode: 'CSKH-2026-0001', receivedAt: '2026-06-20', channel: 'Cổng phụ huynh', receivedBy: 'user_1',
+      id: 'TKT-001', ticketCode: 'CSKH-2026-0001', receivedAt: '2026-06-20', channel: 'Cổng phụ huynh', 
       title: 'Phản ánh chất lượng bữa ăn trưa', description: '', parentName: 'Nguyễn Văn A', parentPhone: '0901234567', relationship: 'Bố', 
-      studentName: 'Nguyễn Văn B (10A1)', status: 'OPEN', priority: 'high', category: 'OTHER', createdAt: '2026-06-20', updatedAt: '2026-06-20',
-      slaDueAt: '2026-06-22', isSensitive: false, riskFlag: false, visibleToParent: true, departmentOwner: 'Dịch vụ học đường', createdBy: 'parent', timeline: []
+      studentName: 'Nguyễn Văn B (10A1)', status: 'NEW', priority: 'high', category: 'OTHER', departmentOwner: 'Dịch vụ', receivedBy: 'System', 
+      slaDueAt: '2026-06-22', isSensitive: false, riskFlag: false, visibleToParent: true, createdBy: 'System', timeline: [], createdAt: '2026-06-20', updatedAt: '2026-06-20' 
     },
     { 
-      id: 'TKT-002', ticketCode: 'CSKH-2026-0002', receivedAt: '2026-06-18', channel: 'Điện thoại', receivedBy: 'user_1',
-      title: 'Thắc mắc về học phí kỳ 2', description: '', parentName: 'Lê Thị C', parentPhone: '0901234568', relationship: 'Mẹ', 
-      studentName: 'Lê D (11B2)', status: 'RESOLVED', priority: 'medium', category: 'FINANCE', createdAt: '2026-06-18', updatedAt: '2026-06-20',
-      slaDueAt: '2026-06-20', isSensitive: false, riskFlag: false, visibleToParent: true, departmentOwner: 'Kế toán', createdBy: 'user_1', timeline: []
+      id: 'TKT-002', ticketCode: 'CSKH-2026-0002', receivedAt: '2026-06-21', channel: 'Hotline', 
+      title: 'Hỏi về lịch thi học kỳ', description: '', parentName: 'Trần Thị C', parentPhone: '0912345678', relationship: 'Mẹ', 
+      studentName: 'Trần Văn D (11A2)', status: 'IN_PROGRESS', priority: 'medium', category: 'OTHER', departmentOwner: 'Học vụ', receivedBy: 'System', 
+      slaDueAt: '2026-06-23', isSensitive: false, riskFlag: false, visibleToParent: true, createdBy: 'System', timeline: [], createdAt: '2026-06-21', updatedAt: '2026-06-22' 
     },
   ];
 
@@ -174,7 +221,7 @@ function TicketsView() {
                   </span>
                 </td>
                 <td className="px-4 py-3">
-                  <span className={`px-2 py-1 rounded-lg text-xs font-bold ${t.status === 'OPEN' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'}`}>
+                    <span className={`px-2 py-1 rounded-lg text-xs font-bold ${t.status === 'NEW' ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'}`}>
                     {t.status}
                   </span>
                 </td>
