@@ -39,6 +39,7 @@ import {
   ClipboardCheck,
   MessageSquare,
   Building,
+  BookOpen,
 } from 'lucide-react';
 import { Button } from '@/src/components/ui/button';
 import { cn } from '@/src/lib/utils';
@@ -81,6 +82,8 @@ const menuGroups: MenuItemGroup[] = [
       { label: 'Nhiệm vụ & Dự án', href: 'tasks', icon: CheckSquare, badgeKey: 'tasks' },
       { label: 'Đơn từ & Phê duyệt', href: 'approvals', icon: UserCheck },
       { label: 'Thông báo nội bộ', href: 'announcements', icon: Bell, badgeKey: 'announcements' },
+      { label: 'Quản lý Văn bản', href: 'document', icon: FileText },
+      { label: 'Kho Quy trình & Tri thức', href: 'knowledge', icon: BookOpen },
     ],
   },
   {
@@ -447,6 +450,8 @@ export default function AdminShell({ locale, children }: { locale: string; child
         { label: 'Công việc & Quy trình', href: 'tasks', icon: CheckSquare, badgeKey: 'tasks' },
         { label: 'Chỉ đạo BGH', href: 'directives', icon: ClipboardCheck, badgeKey: 'directives' },
         { label: 'Thông báo nội bộ', href: 'announcements', icon: Bell, badgeKey: 'announcements' },
+        { label: 'Quản lý Văn bản', href: 'document', icon: FileText },
+        { label: 'Kho Quy trình & Tri thức', href: 'knowledge', icon: BookOpen },
       ],
     },
     {
