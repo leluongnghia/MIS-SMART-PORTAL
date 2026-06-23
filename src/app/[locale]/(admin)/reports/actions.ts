@@ -345,6 +345,12 @@ export async function getReportsData() {
 
   // DOCUMENTS / SOPS
   try {
+    try {
+      const { getKnowledgeDocuments } = await import('@/src/app/[locale]/(admin)/knowledge/actions');
+      await getKnowledgeDocuments();
+    } catch (e) {
+      console.error('Seed knowledge in reports failed:', e);
+    }
     const files = await db.select().from(schema.dataFiles);
     
     let totalDocs = files.length;

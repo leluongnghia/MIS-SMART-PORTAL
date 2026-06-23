@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { getKnowledgeDocuments, saveKnowledgeDocument, archiveKnowledgeDocument, deleteKnowledgeDocument } from '../app/[locale]/(admin)/knowledge/actions';
 import { 
   FileText, Search, Filter, Plus, BookOpen, 
   Settings, CheckCircle2, Clock, AlertTriangle, 
@@ -483,20 +484,47 @@ export default function KnowledgeManagement() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [selectedDoc, setSelectedDoc] = useState<DocumentItem | null>(null);
   const [editingDoc, setEditingDoc] = useState<DocumentItem | null>(null);
-  const [documents, setDocuments] = useState<DocumentItem[]>(mockDocuments);
+  const [documents, setDocuments] = useState<DocumentItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const handleArchiveDoc = (docId: string) => {
-    setDocuments(docs => docs.map(d => d.id === docId ? { ...d, status: 'ARCHIVED' } : d));
-    if (selectedDoc?.id === docId) {
-      setSelectedDoc(prev => prev ? { ...prev, status: 'ARCHIVED' } : null);
+  const fetchDocs = async () => {
+    try {
+      setIsLoading(true);
+      const res = await getKnowledgeDocuments();
+      setDocuments(res);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleDeleteDoc = (docId: string) => {
-    if (window.confirm('Bạn có chắc chắn muốn xóa tài liệu này?')) {
-      setDocuments(docs => docs.filter(d => d.id !== docId));
+  useEffect(() => {
+    fetchDocs();
+  }, []);
+
+  const handleArchiveDoc = async (docId: string) => {
+    try {
+      await archiveKnowledgeDocument(docId);
+      await fetchDocs();
       if (selectedDoc?.id === docId) {
-        setSelectedDoc(null);
+        setSelectedDoc(prev => prev ? { ...prev, status: 'ARCHIVED' } : null);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleDeleteDoc = async (docId: string) => {
+    if (window.confirm('Bạn có chắc chắn muốn xóa tài liệu này?')) {
+      try {
+        await deleteKnowledgeDocument(docId);
+        await fetchDocs();
+        if (selectedDoc?.id === docId) {
+          setSelectedDoc(null);
+        }
+      } catch (e) {
+        console.error(e);
       }
     }
   };
@@ -859,17 +887,14 @@ export default function KnowledgeManagement() {
           <div className="relative w-full max-w-3xl bg-white dark:bg-slate-900 h-full shadow-2xl animate-in slide-in-from-right duration-200">
             <CreateDocumentForm 
               onClose={() => setIsDrawerOpen(false)}
-              onSubmitSuccess={(data) => {
-                const newDoc: DocumentItem = {
-                  ...data,
-                  id: `doc-${Date.now()}`,
-                  createdAt: new Date().toISOString(),
-                  updatedAt: new Date().toISOString(),
-                  createdBy: 'current_user',
-                  timeline: []
-                } as DocumentItem;
-                setDocuments([newDoc, ...documents]);
-                setIsDrawerOpen(false);
+              onSubmitSuccess={async (data) => {
+                try {
+                  await saveKnowledgeDocument(data);
+                  await fetchDocs();
+                  setIsDrawerOpen(false);
+                } catch (e) {
+                  console.error(e);
+                }
               }}
             />
           </div>
@@ -895,20 +920,17 @@ export default function KnowledgeManagement() {
             <CreateDocumentForm 
               onClose={() => setEditingDoc(null)}
               initialData={editingDoc}
-              onSubmitSuccess={(data) => {
-                setDocuments(docs => docs.map(d => d.id === editingDoc.id ? {
-                  ...d,
-                  ...data,
-                  updatedAt: new Date().toISOString()
-                } : d));
-                if (selectedDoc?.id === editingDoc.id) {
-                  setSelectedDoc(prev => prev ? {
-                    ...prev,
-                    ...data,
-                    updatedAt: new Date().toISOString()
-                  } : null);
+              onSubmitSuccess={async (data) => {
+                try {
+                  await saveKnowledgeDocument({ ...editingDoc, ...data });
+                  await fetchDocs();
+                  if (selectedDoc?.id === editingDoc.id) {
+                    setSelectedDoc(prev => prev ? { ...prev, ...data } : null);
+                  }
+                  setEditingDoc(null);
+                } catch (e) {
+                  console.error(e);
                 }
-                setEditingDoc(null);
               }}
             />
           </div>
