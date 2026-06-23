@@ -496,3 +496,102 @@ export interface TransferRecord {
   approvedBy?: string;
   status: 'PENDING' | 'APPROVED' | 'REJECTED';
 }
+
+export type ParentSupportTicket = {
+  id: string;
+  ticketCode: string;
+  receivedAt: string;
+  channel: string;
+  receivedBy: string;
+
+  parentName: string;
+  parentPhone: string;
+  parentEmail?: string;
+  relationship: string;
+  preferredContactMethod?: string;
+
+  studentId?: string;
+  studentName?: string;
+  className?: string;
+  homeroomTeacher?: string;
+
+  title: string;
+  description: string;
+  expectedResolution?: string;
+  attachments?: string[];
+
+  category: string;
+  priority: 'low' | 'medium' | 'high' | 'critical';
+  status: string;
+  slaDueAt: string;
+  isSensitive: boolean;
+  riskFlag: boolean;
+  visibleToParent: boolean;
+
+  departmentOwner: string;
+  assigneeId?: string;
+  watchers?: string[];
+  internalNote?: string;
+
+  createdAt: string;
+  updatedAt: string;
+  createdBy: string;
+
+  relatedTaskId?: string;
+  relatedRiskId?: string;
+  relatedCapaId?: string;
+
+  timeline: Array<{
+    id: string;
+    at: string;
+    actorId: string;
+    action: string;
+    fromStatus?: string;
+    toStatus?: string;
+    note?: string;
+    visibleToParent?: boolean;
+  }>;
+};
+
+export interface Survey {
+  id: string;
+  title: string;
+  description: string;
+  targetAudience: 'PARENTS' | 'STUDENTS' | 'STAFF' | 'ALL';
+  status: 'DRAFT' | 'ACTIVE' | 'CLOSED';
+  createdAt: string;
+  expiresAt: string;
+  responseCount: number;
+}
+
+export interface CommunicationCampaign {
+  id: string;
+  title: string;
+  content: string;
+  channels: ('EMAIL' | 'SMS' | 'APP_PUSH' | 'PORTAL')[];
+  status: 'DRAFT' | 'SCHEDULED' | 'SENT' | 'FAILED';
+  scheduledDate: string;
+  author: string;
+  approvedBy?: string;
+}
+
+export interface SchoolEvent {
+  id: string;
+  title: string;
+  description: string;
+  date: string;
+  location: string;
+  organizer: string;
+  status: 'PLANNING' | 'APPROVED' | 'COMPLETED' | 'CANCELLED';
+  attendeeCount: number;
+}
+
+export interface CrisisIncident {
+  id: string;
+  title: string;
+  description: string;
+  severity: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  status: 'REPORTED' | 'INVESTIGATING' | 'MITIGATED' | 'RESOLVED';
+  reportedAt: string;
+  leadResponder: string;
+}

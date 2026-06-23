@@ -101,7 +101,7 @@ const menuGroups: MenuItemGroup[] = [
     title: 'TUYỂN SINH & TRUYỀN THÔNG',
     items: [
       { label: 'Tuyển sinh CRM', href: 'admissions', icon: Workflow },
-      { label: 'Sự kiện & Truyền thông', href: 'events', icon: Calendar },
+      { label: 'CSKH, Truyền thông & Sự kiện', href: 'events', icon: Calendar },
     ],
   },
   {
