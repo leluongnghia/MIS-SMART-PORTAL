@@ -749,13 +749,15 @@ function AppInner() {
     (canDisplayTab('LMS') && matchesSearch('LMS'));
 
   const hasVisibleCampus = 
+    (canDisplayTab('HRM') && matchesSearch('HRM')) ||
     (canDisplayTab('EVENTS') && matchesSearch('EVENTS')) ||
     (canDisplayTab('ACADEMIC_OPS') && matchesSearch('ACADEMIC_OPS')) ||
-    (canDisplayTab('LOGISTICS') && matchesSearch('LOGISTICS')) ||
-    (canDisplayTab('REQUESTS') && matchesSearch('REQUESTS')) ||
-    (canDisplayTab('GOOGLE_SHEETS') && matchesSearch('GOOGLE_SHEETS'));
+    (canDisplayTab('LMS') && matchesSearch('LMS'));
 
-  const hasVisibleSystem = currentUser.role === 'ADMIN';
+  const hasVisibleSystem =
+    currentUser.role === 'ADMIN' ||
+    (canDisplayTab('LOGISTICS') && matchesSearch('LOGISTICS')) ||
+    (canDisplayTab('REQUESTS') && matchesSearch('REQUESTS'));
 
   const isGroupOpen = (groupKey: 'strategy' | 'operation' | 'foundation' | 'business' | 'campus' | 'system') => {
     if (sidebarSearchQuery) return true;

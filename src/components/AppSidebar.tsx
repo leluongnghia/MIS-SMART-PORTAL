@@ -187,7 +187,7 @@ export default function AppSidebar({
         </div>
 
         <div className="p-4 flex flex-col gap-3.5 flex-1 overflow-y-auto">
-          <p className="text-[10px] uppercase tracking-widest font-black text-slate-400 mb-0.5 px-3 font-mono">School OS 2.0</p>
+          <p className="text-[10px] uppercase tracking-widest font-black text-slate-400 mb-0.5 px-3 font-mono">MIS Smart Portal</p>
 
           {/* Sidebar Search Input */}
           <div className="px-3 mb-1.5 relative">
@@ -477,6 +477,136 @@ export default function AppSidebar({
                         <GraduationCap className={`w-4 h-4 transition-colors ${getIconClass('STUDENT_SUCCESS', 'business')}`} />
                         <span>Học vụ &amp; Điểm số</span>
                       </div>
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* GROUP 5: CAMPUS (Nhân sự & Học vụ) */}
+          {hasVisibleCampus && (
+            <div className="flex flex-col gap-0.5 border-b border-slate-100 dark:border-slate-800/80 pb-2.5">
+              <button 
+                onClick={() => toggleGroup('campus')}
+                aria-expanded={isGroupOpen('campus')}
+                className={`w-full flex items-center justify-between text-[10px] font-black tracking-wider text-slate-400 dark:text-slate-500 py-1.5 px-3 uppercase font-mono cursor-pointer transition-colors ${groupHeaderClass('campus').colorHover}`}
+              >
+                <span className="flex items-center gap-2">
+                  <span className={`w-1.5 h-1.5 rounded-full ${groupHeaderClass('campus').bgDot}`}></span>
+                  <span className={groupHeaderClass('campus').colorActive}>5. Nhân sự & Học vụ</span>
+                </span>
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isGroupOpen('campus') ? groupHeaderClass('campus').colorActive : '-rotate-90'}`} />
+              </button>
+              
+              {isGroupOpen('campus') && (
+                <div className="flex flex-col gap-1 pl-2 ml-2 mt-1 border-l border-sky-100 dark:border-sky-950 transition-all duration-300">
+                  {canDisplayTab('HRM') && matchesSearch('HRM') && (
+                    <button 
+                      onClick={() => { setOverviewTab('HRM'); setIsSidebarOpen(false); }}
+                      aria-current={overviewTab === 'HRM' ? 'page' : undefined}
+                      className={getTabClass('HRM', 'campus')}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <Users className={`w-4 h-4 transition-colors ${getIconClass('HRM', 'campus')}`} />
+                        <span>Nhân sự & Đào tạo</span>
+                      </div>
+                    </button>
+                  )}
+
+                  {canDisplayTab('EVENTS') && matchesSearch('EVENTS') && (
+                    <button 
+                      onClick={() => { setOverviewTab('EVENTS'); setIsSidebarOpen(false); }}
+                      aria-current={overviewTab === 'EVENTS' ? 'page' : undefined}
+                      className={getTabClass('EVENTS', 'campus')}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <Smartphone className={`w-4 h-4 transition-colors ${getIconClass('EVENTS', 'campus')}`} />
+                        <span>CSKH & Sự kiện</span>
+                      </div>
+                    </button>
+                  )}
+
+                  {canDisplayTab('ACADEMIC_OPS') && matchesSearch('ACADEMIC_OPS') && (
+                    <button 
+                      onClick={() => { setOverviewTab('ACADEMIC_OPS'); setIsSidebarOpen(false); }}
+                      aria-current={overviewTab === 'ACADEMIC_OPS' ? 'page' : undefined}
+                      className={getTabClass('ACADEMIC_OPS', 'campus')}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <GraduationCap className={`w-4 h-4 transition-colors ${getIconClass('ACADEMIC_OPS', 'campus')}`} />
+                        <span>Thời khóa biểu & Giáo án</span>
+                      </div>
+                    </button>
+                  )}
+
+                  {canDisplayTab('LMS') && matchesSearch('LMS') && (
+                    <button 
+                      onClick={() => { setOverviewTab('LMS'); setIsSidebarOpen(false); }}
+                      aria-current={overviewTab === 'LMS' ? 'page' : undefined}
+                      className={getTabClass('LMS', 'campus')}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <Laptop className={`w-4 h-4 transition-colors ${getIconClass('LMS', 'campus')}`} />
+                        <span>Hệ thống LMS</span>
+                      </div>
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* GROUP 6: SYSTEM (Cơ sở vật chất & Hệ thống) */}
+          {hasVisibleSystem && (
+            <div className="flex flex-col gap-0.5 pb-2.5">
+              <button 
+                onClick={() => toggleGroup('system')}
+                aria-expanded={isGroupOpen('system')}
+                className={`w-full flex items-center justify-between text-[10px] font-black tracking-wider text-slate-400 dark:text-slate-500 py-1.5 px-3 uppercase font-mono cursor-pointer transition-colors ${groupHeaderClass('system').colorHover}`}
+              >
+                <span className="flex items-center gap-2">
+                  <span className={`w-1.5 h-1.5 rounded-full ${groupHeaderClass('system').bgDot}`}></span>
+                  <span className={groupHeaderClass('system').colorActive}>6. Cơ sở vật chất</span>
+                </span>
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isGroupOpen('system') ? groupHeaderClass('system').colorActive : '-rotate-90'}`} />
+              </button>
+              
+              {isGroupOpen('system') && (
+                <div className="flex flex-col gap-1 pl-2 ml-2 mt-1 border-l border-slate-200 dark:border-slate-700 transition-all duration-300">
+                  {canDisplayTab('LOGISTICS') && matchesSearch('LOGISTICS') && (
+                    <button 
+                      onClick={() => { setOverviewTab('LOGISTICS'); setIsSidebarOpen(false); }}
+                      aria-current={overviewTab === 'LOGISTICS' ? 'page' : undefined}
+                      className={getTabClass('LOGISTICS', 'campus')}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <Briefcase className={`w-4 h-4 transition-colors ${getIconClass('LOGISTICS', 'campus')}`} />
+                        <span>Tài sản & Thiết bị</span>
+                      </div>
+                    </button>
+                  )}
+
+                  {canDisplayTab('SCHOOL_REQUESTS') && matchesSearch('SCHOOL_REQUESTS') && (
+                    <button 
+                      onClick={() => { setOverviewTab('SCHOOL_REQUESTS'); setIsSidebarOpen(false); }}
+                      aria-current={overviewTab === 'SCHOOL_REQUESTS' ? 'page' : undefined}
+                      className={getTabClass('SCHOOL_REQUESTS', 'campus')}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <RefreshCw className={`w-4 h-4 transition-colors ${getIconClass('SCHOOL_REQUESTS', 'campus')}`} />
+                        <span>Yêu cầu Dịch vụ</span>
+                      </div>
+                    </button>
+                  )}
+
+                  {canDisplayTab('SETTINGS') && matchesSearch('SETTINGS') && (
+                    <button 
+                      onClick={() => openSystemSettings()}
+                      className="w-full px-3 py-2.5 rounded-xl flex items-center gap-2.5 text-[12.5px] cursor-pointer transition-all text-left text-slate-600 dark:text-slate-350 hover:bg-slate-50/35 hover:text-slate-700 dark:hover:bg-slate-800 font-semibold border-l-4 border-transparent"
+                    >
+                      <UserCheck className="w-4 h-4 text-slate-400" />
+                      <span>Cài đặt hệ thống</span>
                     </button>
                   )}
                 </div>
