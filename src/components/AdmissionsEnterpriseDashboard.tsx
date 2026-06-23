@@ -274,7 +274,7 @@ export default function AdmissionsEnterpriseDashboard({
   const renderModule = () => {
     switch (internalModule) {
       case 'dashboard':    return <AdmissionsDashboard onNavigate={(tab) => setInternalModule(tab as AdmissionsModule)} />;
-      case 'leads':        return <AdmissionsLeadsTable initialData={initialData} users={users} filters={filters} chuongTrinhList={chuongTrinhList.filter(c => c.hoatDong).map(c => c.ten)} onViewDetail={(leadId) => { setSelectedLeadId(leadId); setInternalModule('lead_detail'); }} />;
+      case 'leads':        return <AdmissionsLeadsTable initialData={initialData} leads={leads} users={users} filters={filters} chuongTrinhList={chuongTrinhList.filter(c => c.hoatDong).map(c => c.ten)} onViewDetail={(leadId) => { setSelectedLeadId(leadId); setInternalModule('lead_detail'); }} onEditLead={(lead) => { setLeadDangSua(lead); setHienModal(true); }} />;
       case 'pipeline':     return <AdmissionsPipelineKanban leads={leads} onViewDetail={(leadId) => { setSelectedLeadId(leadId); setInternalModule('lead_detail'); }} />;
       case 'lead_detail':  {
         const selectedLead = leads.find(l => l.id === selectedLeadId) || leads[0];

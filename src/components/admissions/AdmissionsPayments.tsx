@@ -7,6 +7,8 @@ import {
   Clock, AlertTriangle, RefreshCw, Plus, ChevronDown, Copy,
   QrCode, Receipt, TrendingUp, Calendar, X, Send
 } from 'lucide-react';
+import { confirmPayment, createPayment } from '@/src/app/[locale]/(admin)/payments/actions';
+import type { Lead as AdmissionLead } from './AdmissionsLeadsTable';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type TrangThaiTT = 'Đã thanh toán' | 'Chờ xác nhận' | 'Quá hạn' | 'Thanh toán 1 phần';
@@ -59,6 +61,53 @@ const KPI_TT = [
   { ten: 'Chờ xác nhận', gia_tri: '44', phanTram: '', mau: 'text-amber-600 bg-amber-50', icon: '⏳' },
   { ten: 'Quá hạn', gia_tri: '12', phanTram: '−3%', mau: 'text-red-600 bg-red-50', icon: '🚨' },
 ];
+
+const UI_TO_PAYMENT_TYPE: Record<LoaiTT, 'seat_reservation' | 'tuition' | 'admission_fee'> = {
+  'Giữ chỗ': 'seat_reservation',
+  'Học phí': 'tuition',
+  'Nhập học': 'tuition',
+  'Khác': 'admission_fee',
+};
+
+const PAYMENT_TYPE_TO_UI: Record<string, LoaiTT> = {
+  seat_reservation: 'Giữ chỗ',
+  tuition: 'Học phí',
+  admission_fee: 'Nhập học',
+};
+
+function mapDbPaymentToGiaoDich(row: any): GiaoDich {
+  const payment = row.payment || row;
+  const lead = row.lead || {};
+  const paidAt = payment.paidAt ? new Date(payment.paidAt).toLocaleDateString('vi-VN') : undefined;
+  return {
+    id: payment.id,
+    maGD: payment.transferContent || payment.id,
+    hoTen: lead.fullName || payment.payload?.fullName || 'Chưa rõ học sinh',
+    maLead: lead.leadCode || payment.leadId,
+    loai: PAYMENT_TYPE_TO_UI[payment.type] || 'Khác',
+    soTien: Number(payment.amount || 0),
+    ngayHanChot: payment.createdAt ? new Date(payment.createdAt).toLocaleDateString('vi-VN') : new Date().toLocaleDateString('vi-VN'),
+    ngayThanhToan: paidAt,
+    phuongThuc: payment.status === 'paid' ? 'Chuyển khoản' : undefined,
+    trangThai: payment.status === 'paid' ? 'Đã thanh toán' : 'Chờ xác nhận',
+  };
+}
+
+function downloadCsv(filename: string, headers: string[], rows: Array<Array<string | number>>) {
+  const csv = '\uFEFF' + [
+    headers.map(h => `"${h.replace(/"/g, '""')}"`).join(','),
+    ...rows.map(row => row.map(value => `"${String(value ?? '').replace(/"/g, '""')}"`).join(',')),
+  ].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
 
 // ─── Modal VietQR ─────────────────────────────────────────────────────────────
 function ModalVietQR({ giaoDich, onClose }: { giaoDich: GiaoDich; onClose: () => void }) {

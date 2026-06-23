@@ -158,9 +158,13 @@ export default function AdmissionsDocuments() {
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 2500); };
 
+  React.useEffect(() => {
+    setHoSoChon(current => current && hoSoList.some(item => item.id === current.id) ? current : hoSoList[0] || null);
+  }, [hoSoList]);
+
   const handleExportCSV = () => {
     const headers = 'ID,Học sinh,Mã Lead,Khối,Trạng thái,Tiến độ,Đã nộp,Tổng tài liệu\n';
-    const rows = HO_SO_DANH_SACH.map(hs => 
+    const rows = hoSoList.map(hs => 
       `"${hs.id}","${hs.hoTen}","${hs.maLead}","${hs.khoi}","${hs.trangThai}",${hs.tienDo}%,${hs.daNop},${hs.tongTaiLieu}`
     ).join('\n');
     const blob = new Blob(['\uFEFF' + headers + rows], { type: 'text/csv;charset=utf-8;' });
@@ -175,11 +179,11 @@ export default function AdmissionsDocuments() {
     showToast('Tải xuống danh sách hồ sơ (CSV) thành công!');
   };
 
-  const targetsNhac = HO_SO_DANH_SACH.filter(h => h.trangThai === 'Thiếu giấy tờ');
+  const targetsNhac = hoSoList.filter(h => h.trangThai === 'Thiếu giấy tờ');
 
   const NHOM: NhomHoSo[] = ['Bắt buộc', 'Bổ sung', 'Ưu tiên'];
-  const daNop = DANH_SACH_TAI_LIEU.filter(d => d.trangThai === 'Đã nộp').length;
-  const tongTaiLieu = DANH_SACH_TAI_LIEU.filter(d => d.batBuoc).length;
+  const daNop = taiLieuList.filter(d => d.trangThai === 'Đã nộp').length;
+  const tongTaiLieu = taiLieuList.filter(d => d.batBuoc).length;
 
   return (
     <>
@@ -239,7 +243,7 @@ export default function AdmissionsDocuments() {
               </div>
             </div>
             <div className="divide-y divide-slate-50 overflow-y-auto max-h-[500px]">
-              {HO_SO_DANH_SACH.filter(h =>
+              {hoSoList.filter(h =>
                 (locTrangThai === 'Tất cả' || h.trangThai === locTrangThai) &&
                 (!timKiem || h.hoTen.toLowerCase().includes(timKiem.toLowerCase()))
               ).map(hs => {
@@ -312,10 +316,17 @@ export default function AdmissionsDocuments() {
                   <button type="button" onClick={() => showToast(`Gửi nhắc nộp hồ sơ đến ${hoSoChon?.hoTen}`)} className="flex items-center gap-1.5 rounded-xl bg-blue-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-blue-700">
                     <Send className="h-3.5 w-3.5" /> Nhắc nộp hồ sơ
                   </button>
-                  <button type="button" onClick={() => showToast(`Tải tất cả tài liệu của ${hoSoChon?.hoTen}...`)} className="flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50">
+                  <button type="button" onClick={() => {
+                    downloadTextFile(`Ho_so_${hoSoChon?.maLead || 'hoc_sinh'}.txt`, taiLieuList.map(tl => `${tl.ten}: ${tl.trangThai || 'Chưa cung cấp'}${tl.file ? ` - ${tl.file}` : ''}`).join('\n'));
+                    showToast(`Đã tải danh mục tài liệu của ${hoSoChon?.hoTen}`);
+                  }} className="flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50">
                     <Download className="h-3.5 w-3.5" /> Tải tất cả
                   </button>
-                  <button type="button" onClick={() => showToast('Cập nhật hồ sơ thành công!')} className="flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50">
+                  <button type="button" onClick={() => {
+                    const required = taiLieuList.filter(tl => tl.batBuoc);
+                    const submitted = required.filter(tl => tl.trangThai === 'Đã nộp').length;
+                    showToast(`Đã cập nhật tiến độ hồ sơ: ${submitted}/${required.length} giấy tờ bắt buộc`);
+                  }} className="flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50">
                     <RefreshCw className="h-3.5 w-3.5" /> Cập nhật
                   </button>
                 </div>
@@ -324,7 +335,7 @@ export default function AdmissionsDocuments() {
               {/* Danh sách tài liệu theo nhóm */}
               <div className="p-4 space-y-4 overflow-y-auto max-h-[480px]">
                 {NHOM.map(nhom => {
-                  const dsNhom = DANH_SACH_TAI_LIEU.filter(d => d.nhom === nhom);
+                  const dsNhom = taiLieuList.filter(d => d.nhom === nhom);
                   return (
                     <div key={nhom}>
                       <p className="mb-2 flex items-center gap-2 text-[10px] font-black uppercase tracking-wide text-slate-400">
@@ -366,7 +377,10 @@ export default function AdmissionsDocuments() {
                                   </button>
                                 )}
                                 {tl.file && (
-                                  <button type="button" onClick={() => showToast(`Tải về: ${tl.file}`)} className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:bg-green-50 hover:text-green-600" title="Tải về">
+                                  <button type="button" onClick={() => {
+                                    downloadTextFile(tl.file || `${tl.id}.txt`, `${tl.ten}\nHồ sơ: ${hoSoChon?.hoTen || ''}\nTrạng thái: ${tl.trangThai || 'Chưa cung cấp'}`);
+                                    showToast(`Đã tải về: ${tl.file}`);
+                                  }} className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:bg-green-50 hover:text-green-600" title="Tải về">
                                     <Download className="h-3.5 w-3.5" />
                                   </button>
                                 )}
@@ -396,7 +410,16 @@ export default function AdmissionsDocuments() {
       </div>
 
       {/* Modal upload */}
-      {uploadTaiLieu && <UploaderTaiLieu taiLieu={uploadTaiLieu} onClose={() => setUploadTaiLieu(null)} />}
+      {uploadTaiLieu && <UploaderTaiLieu taiLieu={uploadTaiLieu} onClose={() => setUploadTaiLieu(null)} onUploaded={(fileName) => {
+        setTaiLieuList(prev => prev.map(tl => tl.id === uploadTaiLieu.id ? {
+          ...tl,
+          trangThai: 'Đã nộp',
+          file: fileName,
+          ngayNop: new Date().toLocaleDateString('vi-VN'),
+          ghiChu: '',
+        } : tl));
+        showToast(`Đã tải lên ${fileName}`);
+      }} />}
 
       {/* Modal nhắc nộp hồ sơ */}
       <Dialog
