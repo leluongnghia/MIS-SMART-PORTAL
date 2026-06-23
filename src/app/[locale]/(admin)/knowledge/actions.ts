@@ -1,7 +1,7 @@
 'use server';
 
 import { db, schema } from '@/src/libs/server/db';
-import { eq, and, isNull, desc, count } from 'drizzle-orm';
+import { eq, and, isNull, desc } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { DocumentItem } from '@/src/types';
 
@@ -149,15 +149,17 @@ const SEED_DOCUMENTS = [
 
 export async function getKnowledgeDocuments(): Promise<DocumentItem[]> {
   try {
-    // Check if seeded
-    const existingCount = await db
-      .select({ value: count() })
+    // Upsert each seed document by id (ensures all docs exist even if DB was partially seeded)
+    const existingIds = await db
+      .select({ id: schema.dataFiles.id })
       .from(schema.dataFiles)
       .where(and(eq(schema.dataFiles.module, 'KNOWLEDGE'), isNull(schema.dataFiles.deletedAt)));
-    
-    if (Number(existingCount[0]?.value || 0) === 0) {
-      // Seed the documents
-      const seedData = SEED_DOCUMENTS.map(doc => {
+
+    const existingIdSet = new Set(existingIds.map(r => r.id));
+    const missing = SEED_DOCUMENTS.filter(doc => !existingIdSet.has(doc.id));
+
+    if (missing.length > 0) {
+      const seedData = missing.map(doc => {
         const ext = 'pdf';
         return {
           id: doc.id,
@@ -197,6 +199,7 @@ export async function getKnowledgeDocuments(): Promise<DocumentItem[]> {
 
       await db.insert(schema.dataFiles).values(seedData as any);
     }
+
 
     const files = await db
       .select()
