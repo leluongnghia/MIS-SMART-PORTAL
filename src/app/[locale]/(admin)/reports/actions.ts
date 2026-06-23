@@ -149,7 +149,13 @@ export async function getReportsData() {
       name: name === 'pending' ? 'Chờ duyệt' : name === 'approved' ? 'Đã duyệt' : 'Từ chối',
       value
     }));
-    tasksData.recentApprovalsList = allApprovals.slice(0, 10);
+    tasksData.recentApprovalsList = allApprovals.slice(0, 10).map(app => ({
+      ...app,
+      startDate: app.startDate ? app.startDate.toLocaleDateString('vi-VN') : '',
+      endDate: app.endDate ? app.endDate.toLocaleDateString('vi-VN') : '',
+      createdAt: app.createdAt ? app.createdAt.toLocaleDateString('vi-VN') : '',
+      updatedAt: app.updatedAt ? app.updatedAt.toLocaleDateString('vi-VN') : '',
+    }));
   } catch (e) {
     console.error('Reports actions - approvals query failed:', e);
   }
@@ -290,7 +296,12 @@ export async function getReportsData() {
     const events = await db.select().from(schema.events).where(sql`${schema.events.date} >= ${nowStr}`);
 
     kpiStats.upcomingEvents = events.length;
-    parentCareData.upcomingEvents = events;
+    parentCareData.upcomingEvents = events.map(ev => ({
+      ...ev,
+      date: ev.date ? ev.date.toLocaleDateString('vi-VN') : '',
+      createdAt: ev.createdAt ? ev.createdAt.toLocaleDateString('vi-VN') : '',
+      updatedAt: ev.updatedAt ? ev.updatedAt.toLocaleDateString('vi-VN') : '',
+    }));
 
     // Leads by status
     const statusCounts: Record<string, number> = {};
