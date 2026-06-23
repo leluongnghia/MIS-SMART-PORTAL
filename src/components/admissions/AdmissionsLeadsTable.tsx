@@ -455,15 +455,17 @@ export function ModalThemLead({ onDong, onLuu, chuongTrinhList = DS_CHUONG_TRINH
 // ─── Component chính ─────────────────────────────────────────────────────────
 interface AdmissionsLeadsTableProps {
   initialData?: any;
+  leads?: Lead[];
   users?: { id: string; name: string }[];
   filters?: any;
   chuongTrinhList?: string[];
   onViewDetail?: (leadId: string) => void;
+  onEditLead?: (lead: any) => void;
 }
 
-export default function AdmissionsLeadsTable({ initialData, users, filters, chuongTrinhList, onViewDetail }: AdmissionsLeadsTableProps) {
+export default function AdmissionsLeadsTable({ initialData, leads: externalLeads, users, filters, chuongTrinhList, onViewDetail, onEditLead }: AdmissionsLeadsTableProps) {
   const router = useRouter();
-  const leads = initialData?.data || [];
+  const leads = externalLeads || initialData?.data || [];
   
   const [timKiem, setTimKiem] = useState(filters?.search || '');
   const [nguon, setNguon] = useState(filters?.source || 'Tất cả nguồn');
