@@ -214,7 +214,58 @@ export async function createLead(data: {
   });
 
   revalidatePath('/[locale]/leads', 'page');
+  revalidatePath('/[locale]/admissions', 'page');
   return { success: true, leadId: id };
+}
+
+export async function updateLeadStatusOnly(
+  id: string,
+  status: LeadStatus,
+  note?: string
+) {
+  const existingLeads = await db.select().from(schema.leads).where(eq(schema.leads.id, id)).limit(1);
+  const existing = existingLeads[0];
+
+  if (!existing) {
+    throw new Error('Lead not found');
+  }
+
+  if (existing.status === status) {
+    return { success: true };
+  }
+
+  await db
+    .update(schema.leads)
+    .set({
+      status,
+      updatedAt: new Date(),
+    })
+    .where(eq(schema.leads.id, id));
+
+  await db.insert(schema.leadPipeline).values({
+    id: `pipe_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    leadId: id,
+    fromStatus: existing.status,
+    toStatus: status,
+    changedAt: new Date(),
+    note: note || `Status updated from ${existing.status} to ${status}`,
+    payload: {},
+  });
+
+  await db.insert(schema.leadActivities).values({
+    id: `act_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    leadId: id,
+    type: 'pipeline',
+    title: 'Status Updated',
+    description: `Lead status updated to ${status}`,
+    activityAt: new Date(),
+    payload: {},
+  });
+
+  revalidatePath('/[locale]/leads', 'page');
+  revalidatePath('/[locale]/admissions', 'page');
+  revalidatePath(`/[locale]/leads/${id}`, 'page');
+  return { success: true };
 }
 
 export async function updateLead(
@@ -337,11 +388,13 @@ export async function updateLead(
   }
 
   revalidatePath('/[locale]/leads', 'page');
+  revalidatePath('/[locale]/admissions', 'page');
   return { success: true };
 }
 
 export async function deleteLead(id: string) {
   await db.update(schema.leads).set({ deletedAt: new Date(), deletedBy: 'system', updatedAt: new Date() }).where(eq(schema.leads.id, id));
   revalidatePath('/[locale]/leads', 'page');
+  revalidatePath('/[locale]/admissions', 'page');
   return { success: true };
 }

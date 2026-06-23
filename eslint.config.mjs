@@ -4,7 +4,7 @@ import nextPlugin from "@next/eslint-plugin-next";
 
 export default [
   {
-    ignores: [".next/**", "dist/**", "node_modules/**", "coverage/**", "*.cjs"],
+    ignores: [".next/**", "dist/**", "node_modules/**", "coverage/**", "scratch/**", "*.cjs"],
   },
   {
     plugins: {

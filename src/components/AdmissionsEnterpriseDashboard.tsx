@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   LayoutDashboard, Users, Kanban, User, CalendarCheck,
   FolderOpen, CreditCard, BarChart3, Megaphone, Settings,
@@ -20,6 +21,7 @@ import AdmissionsReports from './admissions/AdmissionsReports';
 import AdmissionsCampaigns from './admissions/AdmissionsCampaigns';
 import AdmissionsSettings, { type ChuongTrinhHoc } from './admissions/AdmissionsSettings';
 import { MOCK_USERS } from '@/src/mockData';
+import { createLead, updateLead, type LeadStatus } from '@/src/app/[locale]/(admin)/leads/actions';
 
 const INITIAL_CHUONG_TRINH: ChuongTrinhHoc[] = [
   { id: 'ct1', ten: 'Tiểu học - Chương trình Quốc gia', cap: 'Tiểu học', hoatDong: true, moTa: 'Chương trình chuẩn của Bộ Giáo dục & Đào tạo Việt Nam kết hợp các môn bổ trợ phát triển thể chất và kỹ năng.' },
@@ -70,6 +72,79 @@ const NAV_ITEMS: NavItem[] = [
 
 const ADMISSIONS_TEAM = MOCK_USERS.filter(user => user.workspaceId === 'TUYEN_SINH_PR').slice(0, 3);
 
+type DbLead = {
+  id: string;
+  fullName: string;
+  phone: string;
+  email?: string | null;
+  source: string;
+  grade: string;
+  status: LeadStatus;
+  assignedUserId?: string | null;
+  createdAt?: Date | string | null;
+};
+
+const DB_STATUS_TO_UI: Record<LeadStatus, Lead['trangThai']> = {
+  received: 'Mới',
+  consulting: 'Đang tư vấn',
+  test_scheduled: 'Đăng ký test',
+  test_participated: 'Đăng ký test',
+  seat_reserved: 'Giữ chỗ',
+  docs_submitted: 'Nộp hồ sơ',
+  enrolled: 'Nhập học',
+  cancelled: 'Không tiếp tục',
+};
+
+const UI_STATUS_TO_DB: Partial<Record<Lead['trangThai'], LeadStatus>> = {
+  'Mới': 'received',
+  'Đang tư vấn': 'consulting',
+  'Đăng ký test': 'test_scheduled',
+  'Nộp hồ sơ': 'docs_submitted',
+  'Giữ chỗ': 'seat_reserved',
+  'Nhập học': 'enrolled',
+  'Không tiếp tục': 'cancelled',
+};
+
+function scoreFromStatus(status: LeadStatus) {
+  if (status === 'enrolled') return 95;
+  if (status === 'seat_reserved') return 88;
+  if (status === 'docs_submitted') return 78;
+  if (status === 'test_participated') return 72;
+  if (status === 'test_scheduled') return 66;
+  if (status === 'consulting') return 58;
+  if (status === 'cancelled') return 20;
+  return 45;
+}
+
+function initials(value: string) {
+  return value
+    .split(' ')
+    .filter(Boolean)
+    .map(word => word[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase() || 'CP';
+}
+
+function mapDbLeadToAdmissionLead(lead: DbLead, users: { id: string; name: string }[]): Lead {
+  const advisorName = users.find(user => user.id === lead.assignedUserId)?.name || 'Chưa phân công';
+  return {
+    id: lead.id,
+    hoTen: lead.fullName,
+    sdt: lead.phone,
+    email: lead.email || '—',
+    nguonLead: lead.source,
+    khoi: lead.grade,
+    tvv: advisorName,
+    tvvAvatar: initials(advisorName),
+    trangThai: DB_STATUS_TO_UI[lead.status] || 'Mới',
+    diemLead: scoreFromStatus(lead.status),
+    ngayTao: lead.createdAt
+      ? new Date(lead.createdAt).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+      : new Date().toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+  };
+}
+
 // Map legacy module IDs to new modules
 const LEGACY_MAP: Partial<Record<AdmissionsModule, AdmissionsModule>> = {
   applications: 'documents',
@@ -111,10 +186,15 @@ export default function AdmissionsEnterpriseDashboard({
   users?: { id: string; name: string }[];
   filters?: any;
 }) {
+  const router = useRouter();
   // Resolve legacy module IDs
   const resolvedModule = LEGACY_MAP[propModule] ?? propModule;
+  const dbBackedLeads = React.useMemo(() => {
+    const rows = initialData?.data || initialData?.leads || [];
+    return rows.map((lead: DbLead) => mapDbLeadToAdmissionLead(lead, users));
+  }, [initialData, users]);
   const [internalModule, setInternalModule] = useState<AdmissionsModule>(resolvedModule);
-  const [leads, setLeads] = useState<Lead[]>(initialData?.leads || LEADS_MAU);
+  const [leads, setLeads] = useState<Lead[]>(() => dbBackedLeads.length ? dbBackedLeads : LEADS_MAU);
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const [hienModal, setHienModal] = useState(false);
   const [leadDangSua, setLeadDangSua] = useState<any>(null);
@@ -127,26 +207,68 @@ export default function AdmissionsEnterpriseDashboard({
   }, [propModule]);
 
   React.useEffect(() => {
-    if (initialData?.leads) {
-      setLeads(initialData.leads);
+    if (dbBackedLeads.length) {
+      setLeads(dbBackedLeads);
     }
-  }, [initialData]);
+  }, [dbBackedLeads]);
 
-  const handleLuuLead = (data: FormThem) => {
+  const handleLuuLead = async (data: FormThem, isEdit?: boolean) => {
+    const assignedUserId = users.find(user => user.name === data.tvv)?.id || null;
+    const status = leadDangSua?.trangThai ? UI_STATUS_TO_DB[leadDangSua.trangThai as Lead['trangThai']] || 'received' : 'received';
+
+    if (isEdit && leadDangSua) {
+      await updateLead(leadDangSua.id, {
+        fullName: data.hoTenHocSinh,
+        parentName: data.hoTenPhuHuynh,
+        phone: data.sdtPhuHuynh,
+        email: data.emailPhuHuynh,
+        source: data.nguonLead,
+        grade: data.khoi,
+        status,
+        notes: data.ghiChu,
+        assignedUserId,
+      });
+      setLeads(prev => prev.map(lead => lead.id === leadDangSua.id ? {
+        ...lead,
+        hoTen: data.hoTenHocSinh,
+        sdt: data.sdtPhuHuynh,
+        email: data.emailPhuHuynh || '—',
+        nguonLead: data.nguonLead,
+        khoi: data.khoi,
+        tvv: data.tvv || 'Chưa phân công',
+        tvvAvatar: initials(data.tvv || 'Chưa phân công'),
+      } : lead));
+      router.refresh();
+      return;
+    }
+
+    const result = await createLead({
+      fullName: data.hoTenHocSinh,
+      parentName: data.hoTenPhuHuynh,
+      phone: data.sdtPhuHuynh,
+      email: data.emailPhuHuynh,
+      source: data.nguonLead,
+      grade: data.khoi,
+      status: 'received',
+      notes: data.ghiChu,
+      assignedUserId,
+    });
+
     const leadMoi: Lead = {
-      id: `l${Date.now()}`,
+      id: result.leadId || `l${Date.now()}`,
       hoTen: data.hoTenHocSinh,
       sdt: data.sdtPhuHuynh,
       email: data.emailPhuHuynh || '—',
       nguonLead: data.nguonLead,
       khoi: data.khoi,
-      tvv: data.tvv,
-      tvvAvatar: data.tvv.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase(),
+      tvv: data.tvv || 'Chưa phân công',
+      tvvAvatar: initials(data.tvv || 'Chưa phân công'),
       trangThai: 'Mới',
       diemLead: 50,
       ngayTao: new Date().toLocaleDateString('vi-VN', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }),
     };
     setLeads(prev => [leadMoi, ...prev]);
+    router.refresh();
   };
 
   const renderModule = () => {

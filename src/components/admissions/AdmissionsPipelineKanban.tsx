@@ -6,6 +6,7 @@ import {
   X, Phone, Mail, Clock, ArrowRight, ChevronDown, Filter, Settings,
   Plus, RefreshCw, Calendar, MessageSquare, Send, Zap, Check
 } from 'lucide-react';
+import { createLead, updateLeadStatusOnly, type LeadStatus } from '@/src/app/[locale]/(admin)/leads/actions';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type GiaiDoan =
@@ -55,6 +56,17 @@ const MAU_UU_TIEN: Record<DoUuTien, string> = {
   'Cao': 'bg-red-100 text-red-700',
   'Trung bình': 'bg-amber-100 text-amber-700',
   'Thấp': 'bg-slate-100 text-slate-600',
+};
+
+const GIAI_DOAN_TO_STATUS: Partial<Record<GiaiDoan, LeadStatus>> = {
+  'Tiếp nhận mới': 'received',
+  'Đang tư vấn': 'consulting',
+  'Đặt lịch test': 'test_scheduled',
+  'Đã thi test': 'test_participated',
+  'Nộp hồ sơ': 'docs_submitted',
+  'Giữ chỗ': 'seat_reserved',
+  'Nhập học': 'enrolled',
+  'Không tiếp tục': 'cancelled',
 };
 
 // ─── Dữ liệu mẫu ─────────────────────────────────────────────────────────────
@@ -138,7 +150,7 @@ function TheKanbanItem({ the, onClick, onActionClick, anDiem = false, anTvv = fa
 }
 
 // ─── Quick Add Form ───────────────────────────────────────────────────────────
-function QuickAddForm({ giaiDoan, onAdd, onCancel }: { giaiDoan: GiaiDoan; onAdd: (the: TheKanban) => void; onCancel: () => void }) {
+function QuickAddForm({ giaiDoan, onAdd, onCancel }: { giaiDoan: GiaiDoan; onAdd: (the: TheKanban) => void | Promise<void>; onCancel: () => void }) {
   const [hoTen, setHoTen] = useState('');
   const [khoi, setKhoi] = useState('Lớp 6');
 
@@ -413,15 +425,34 @@ export default function AdmissionsPipelineKanban({
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 2500); };
 
-  const chuyenGiaiDoan = (id: string, giaiDoanMoi: GiaiDoan) => {
-    setDanhSachThe(prev => prev.map(t => t.id === id ? { ...t, giaiDoan: giaiDoanMoi } : t));
-    setTheChon(prev => prev?.id === id ? { ...prev, giaiDoan: giaiDoanMoi } : prev);
+  const chuyenGiaiDoan = async (id: string, giaiDoanMoi: GiaiDoan) => {
+    const nextStatus = GIAI_DOAN_TO_STATUS[giaiDoanMoi];
+    if (!nextStatus) return;
+    try {
+      await updateLeadStatusOnly(id, nextStatus, `Admissions pipeline moved to ${giaiDoanMoi}`);
+      setDanhSachThe(prev => prev.map(t => t.id === id ? { ...t, giaiDoan: giaiDoanMoi } : t));
+      setTheChon(prev => prev?.id === id ? { ...prev, giaiDoan: giaiDoanMoi } : prev);
+    } catch {
+      showToast('Cập nhật giai đoạn thất bại');
+    }
   };
 
-  const themThe = (newThe: TheKanban) => {
-    setDanhSachThe(prev => [newThe, ...prev]);
-    setQuickAddCol(null);
-    showToast(`✓ Đã thêm lead: ${newThe.hoTen}`);
+  const themThe = async (newThe: TheKanban) => {
+    try {
+      const result = await createLead({
+        fullName: newThe.hoTen,
+        phone: '0000000000',
+        source: newThe.nguon,
+        grade: newThe.khoi,
+        status: GIAI_DOAN_TO_STATUS[newThe.giaiDoan] || 'received',
+        notes: 'Tạo nhanh từ pipeline tuyển sinh. Cần cập nhật số điện thoại phụ huynh.',
+      });
+      setDanhSachThe(prev => [{ ...newThe, id: result.leadId || newThe.id }, ...prev]);
+      setQuickAddCol(null);
+      showToast(`✓ Đã thêm lead: ${newThe.hoTen}`);
+    } catch {
+      showToast('Thêm lead thất bại');
+    }
   };
 
   const toggleExpand = (gd: GiaiDoan) => {

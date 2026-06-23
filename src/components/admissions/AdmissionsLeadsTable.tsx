@@ -10,7 +10,7 @@ import {
   X, Phone, Mail, MapPin, ChevronDown, AlertCircle, CheckCircle2
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { createLead, getAllLeadsForExport, updateLead, type LeadStatus } from '@/src/app/[locale]/(admin)/leads/actions';
+import { createLead, getAllLeadsForExport, updateLead, updateLeadStatusOnly, type LeadStatus } from '@/src/app/[locale]/(admin)/leads/actions';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type TrangThai = 'Mới' | 'Đang tư vấn' | 'Đăng ký test' | 'Nộp hồ sơ' | 'Giữ chỗ' | 'Nhập học' | 'Không tiếp tục';
@@ -724,13 +724,7 @@ export default function AdmissionsLeadsTable({ initialData, users, filters, chuo
     try {
       const dbStatus = MAP_STATUS_TO_DB[newStatus];
       if (!dbStatus) return;
-      const res = await updateLead(leadId, {
-        fullName: oldLead.hoTen,
-        phone: oldLead.sdt,
-        source: oldLead.nguonLead,
-        grade: oldLead.khoi,
-        status: dbStatus,
-      });
+      const res = await updateLeadStatusOnly(leadId, dbStatus, `CRM admissions status changed to ${newStatus}`);
       if (res.success) {
         showToast(`Cập nhật trạng thái thành ${newStatus}`);
         router.refresh();
