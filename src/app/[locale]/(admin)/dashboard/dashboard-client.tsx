@@ -261,9 +261,6 @@ export default function DashboardClient({ tab, initialData }: DashboardClientPro
             <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
               Bảng Điều Hành Chỉ Đạo
             </h1>
-            <Badge className="bg-slate-100 text-slate-800 border-0 rounded-sm font-bold text-[10px] uppercase tracking-wider">
-              {currentUser?.role === 'ADMIN' ? 'BGH Executive' : `Trưởng phòng: ${currentUser?.workspaceId || ''}`}
-            </Badge>
           </div>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
             Trung tâm kiểm soát vận hành, rủi ro, tài sản, nhân sự và chỉ đạo hành chính đa kênh MIS.
