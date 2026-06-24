@@ -41,6 +41,9 @@ import {
   Building,
   BookOpen,
   AlertTriangle,
+  Bus,
+  Utensils,
+  HeartPulse,
 } from 'lucide-react';
 import { Button } from '@/src/components/ui/button';
 import { cn } from '@/src/lib/utils';
@@ -104,7 +107,16 @@ const menuGroups: MenuItemGroup[] = [
     title: 'TUYỂN SINH & TRUYỀN THÔNG',
     items: [
       { label: 'Tuyển sinh CRM', href: 'admissions', icon: Workflow },
-      { label: 'CSKH, Truyền thông & Sự kiện', href: 'events', icon: Calendar },
+      { label: 'Sự kiện & Truyền thông', href: 'events', icon: Calendar },
+      { label: 'CSKH Phụ huynh', href: 'tickets', icon: MessageSquare },
+    ],
+  },
+  {
+    title: 'VẬN HÀNH DỊCH VỤ',
+    items: [
+      { label: 'Xe đưa đón học sinh', href: 'transport', icon: Bus },
+      { label: 'Bán trú & Bếp ăn', href: 'meals', icon: Utensils },
+      { label: 'Y tế học đường', href: 'health', icon: HeartPulse },
     ],
   },
   {
@@ -115,7 +127,9 @@ const menuGroups: MenuItemGroup[] = [
   },
 ];
 
+
 const titleColors: Record<string, { text: string; dot: string; activeBg: string }> = {
+  'VẬN HÀNH DỊCH VỤ': { text: 'text-orange-600 dark:text-orange-400', dot: 'bg-orange-600 dark:bg-orange-400', activeBg: 'bg-orange-600 text-white shadow-md shadow-orange-500/20' },
   'ĐIỀU HÀNH': { text: 'text-indigo-600 dark:text-indigo-400', dot: 'bg-indigo-600 dark:bg-indigo-400', activeBg: 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20' },
   'CÔNG VIỆC & QUY TRÌNH': { text: 'text-amber-600 dark:text-amber-400', dot: 'bg-amber-600 dark:bg-amber-400', activeBg: 'bg-amber-600 text-white shadow-md shadow-amber-500/20' },
   'NHÂN SỰ & ĐÀO TẠO': { text: 'text-rose-600 dark:text-rose-400', dot: 'bg-rose-600 dark:bg-rose-400', activeBg: 'bg-rose-600 text-white shadow-md shadow-rose-500/20' },

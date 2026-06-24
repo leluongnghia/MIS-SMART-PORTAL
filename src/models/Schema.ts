@@ -1,5 +1,5 @@
 import { relations } from 'drizzle-orm';
-import { boolean, index, integer, jsonb, pgEnum, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
+import { boolean, index, integer, jsonb, pgEnum, pgTable, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
 
 const timestamps = {
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
@@ -1311,3 +1311,707 @@ export const timetableSlots = pgTable('timetable_slots', {
   index('timetable_slots_class_idx').on(table.className),
   index('timetable_slots_teacher_idx').on(table.teacherId),
 ]);
+
+/* =============================================================================
+ * BLOCK: XE ĐƯA ĐÓN / BÁN TRÚ / Y TẾ HỌC ĐƯỜNG
+ * Thêm: 2026-06-24 — nguồn: mis_portal_handoff/02_schema/schema_transport_meals_health.ts
+ * NOTE: Dùng text id (thay serial) + text thay numeric/time cho tương thích PGlite
+ * ============================================================================= */
+
+// === ENUMS ===
+export const transportDirectionEnum = pgEnum('transport_direction', ['pickup', 'dropoff', 'both']);
+export const transportBoardStatusEnum = pgEnum('transport_board_status', ['boarded', 'alighted', 'absent', 'no_show']);
+export const vehicleStatusEnum = pgEnum('vehicle_status', ['active', 'maintenance', 'inactive']);
+export const incidentSeverityEnum = pgEnum('incident_severity', ['low', 'medium', 'high', 'critical']);
+export const mealPlanTypeEnum = pgEnum('meal_plan_type', ['full', 'lunch_only', 'custom']);
+export const mealTypeEnum = pgEnum('meal_type', ['breakfast', 'lunch', 'snack', 'dinner']);
+export const opsRegistrationStatusEnum = pgEnum('ops_registration_status', ['pending', 'active', 'paused', 'cancelled']);
+export const healthSeverityEnum = pgEnum('health_severity', ['info', 'minor', 'moderate', 'serious', 'emergency']);
+export const medicationStatusEnum = pgEnum('medication_status', ['active', 'completed', 'stopped']);
+
+// === XE ĐƯA ĐÓN ===
+export const transportRoutes = pgTable('transport_routes', {
+  id: text('id').primaryKey(),
+  code: text('code').notNull(),
+  name: text('name').notNull(),
+  description: text('description'),
+  direction: transportDirectionEnum('direction').default('both').notNull(),
+  campus: text('campus'),
+  active: boolean('active').default(true).notNull(),
+  ...timestamps,
+}, t => [
+  uniqueIndex('transport_routes_code_idx').on(t.code),
+  index('transport_routes_active_idx').on(t.active),
+]);
+
+export const transportStops = pgTable('transport_stops', {
+  id: text('id').primaryKey(),
+  routeId: text('route_id').references(() => transportRoutes.id, { onDelete: 'cascade' }).notNull(),
+  name: text('name').notNull(),
+  address: text('address'),
+  lat: text('lat'),
+  lng: text('lng'),
+  sequence: integer('sequence').default(0).notNull(),
+  pickupTime: text('pickup_time'),
+  dropoffTime: text('dropoff_time'),
+  ...timestamps,
+}, t => [
+  index('transport_stops_route_idx').on(t.routeId),
+]);
+
+export const transportVehicles = pgTable('transport_vehicles', {
+  id: text('id').primaryKey(),
+  plate: text('plate').notNull(),
+  model: text('model'),
+  capacity: integer('capacity').default(0).notNull(),
+  driverId: text('driver_id').references(() => employeeProfiles.id),
+  assistantId: text('assistant_id').references(() => employeeProfiles.id),
+  routeId: text('route_id').references(() => transportRoutes.id),
+  status: vehicleStatusEnum('status').default('active').notNull(),
+  gpsDeviceId: text('gps_device_id'),
+  nextMaintenanceAt: text('next_maintenance_at'),
+  ...timestamps,
+}, t => [
+  uniqueIndex('transport_vehicles_plate_idx').on(t.plate),
+  index('transport_vehicles_route_idx').on(t.routeId),
+]);
+
+export const transportStudentAssignments = pgTable('transport_student_assignments', {
+  id: text('id').primaryKey(),
+  studentId: text('student_id').references(() => students.id, { onDelete: 'cascade' }).notNull(),
+  routeId: text('route_id').references(() => transportRoutes.id, { onDelete: 'cascade' }).notNull(),
+  pickupStopId: text('pickup_stop_id').references(() => transportStops.id),
+  dropoffStopId: text('dropoff_stop_id').references(() => transportStops.id),
+  guardianPhone: text('guardian_phone'),
+  startDate: text('start_date'),
+  endDate: text('end_date'),
+  status: opsRegistrationStatusEnum('status').default('active').notNull(),
+  note: text('note'),
+  ...timestamps,
+}, t => [
+  index('transport_assign_student_idx').on(t.studentId),
+  index('transport_assign_route_idx').on(t.routeId),
+  uniqueIndex('transport_assign_uniq').on(t.studentId, t.routeId),
+]);
+
+export const transportAttendance = pgTable('transport_attendance', {
+  id: text('id').primaryKey(),
+  studentId: text('student_id').references(() => students.id, { onDelete: 'cascade' }).notNull(),
+  routeId: text('route_id').references(() => transportRoutes.id, { onDelete: 'cascade' }).notNull(),
+  vehicleId: text('vehicle_id').references(() => transportVehicles.id),
+  date: text('date').notNull(),
+  direction: transportDirectionEnum('direction').notNull(),
+  boardOnTime: timestamp('board_on_time', { withTimezone: true }),
+  boardOffTime: timestamp('board_off_time', { withTimezone: true }),
+  status: transportBoardStatusEnum('status').default('boarded').notNull(),
+  recordedBy: text('recorded_by').references(() => employeeProfiles.id),
+  note: text('note'),
+  ...timestamps,
+}, t => [
+  index('transport_att_day_idx').on(t.date, t.routeId),
+  uniqueIndex('transport_att_student_day_idx').on(t.studentId, t.date, t.direction),
+]);
+
+export const transportIncidents = pgTable('transport_incidents', {
+  id: text('id').primaryKey(),
+  routeId: text('route_id').references(() => transportRoutes.id),
+  vehicleId: text('vehicle_id').references(() => transportVehicles.id),
+  occurredAt: timestamp('occurred_at', { withTimezone: true }).defaultNow().notNull(),
+  type: text('type'),
+  severity: incidentSeverityEnum('severity').default('low').notNull(),
+  description: text('description'),
+  handledBy: text('handled_by').references(() => employeeProfiles.id),
+  notifiedParentAt: timestamp('notified_parent_at', { withTimezone: true }),
+  resolvedAt: timestamp('resolved_at', { withTimezone: true }),
+  ...timestamps,
+}, t => [
+  index('transport_incident_route_idx').on(t.routeId),
+  index('transport_incident_time_idx').on(t.occurredAt),
+]);
+
+// === BÁN TRÚ / BẾP ĂN ===
+export const mealMenus = pgTable('meal_menus', {
+  id: text('id').primaryKey(),
+  weekStart: text('week_start').notNull(),
+  dayOfWeek: integer('day_of_week').notNull(),
+  mealType: mealTypeEnum('meal_type').notNull(),
+  items: jsonb('items').notNull().default([]),
+  nutritionNote: text('nutrition_note'),
+  calories: integer('calories'),
+  campus: text('campus'),
+  publishedBy: text('published_by').references(() => employeeProfiles.id),
+  ...timestamps,
+}, t => [
+  index('meal_menus_week_idx').on(t.weekStart),
+  uniqueIndex('meal_menus_slot_idx').on(t.weekStart, t.dayOfWeek, t.mealType),
+]);
+
+export const mealRegistrations = pgTable('meal_registrations', {
+  id: text('id').primaryKey(),
+  studentId: text('student_id').references(() => students.id, { onDelete: 'cascade' }).notNull(),
+  planType: mealPlanTypeEnum('plan_type').default('lunch_only').notNull(),
+  startDate: text('start_date').notNull(),
+  endDate: text('end_date'),
+  monthlyFee: text('monthly_fee'),
+  status: opsRegistrationStatusEnum('status').default('active').notNull(),
+  note: text('note'),
+  ...timestamps,
+}, t => [
+  index('meal_reg_student_idx').on(t.studentId),
+  index('meal_reg_status_idx').on(t.status),
+]);
+
+export const mealDietaryProfiles = pgTable('meal_dietary_profiles', {
+  id: text('id').primaryKey(),
+  studentId: text('student_id').references(() => students.id, { onDelete: 'cascade' }).notNull(),
+  allergies: jsonb('allergies').notNull().default([]),
+  specialDiet: text('special_diet'),
+  notes: text('notes'),
+  confirmedByParent: boolean('confirmed_by_parent').default(false).notNull(),
+  ...timestamps,
+}, t => [
+  uniqueIndex('meal_diet_student_idx').on(t.studentId),
+]);
+
+export const mealDailyAttendance = pgTable('meal_daily_attendance', {
+  id: text('id').primaryKey(),
+  studentId: text('student_id').references(() => students.id, { onDelete: 'cascade' }).notNull(),
+  date: text('date').notNull(),
+  mealType: mealTypeEnum('meal_type').notNull(),
+  served: boolean('served').default(true).notNull(),
+  note: text('note'),
+  recordedBy: text('recorded_by').references(() => employeeProfiles.id),
+  ...timestamps,
+}, t => [
+  index('meal_att_day_idx').on(t.date, t.mealType),
+  uniqueIndex('meal_att_student_day_idx').on(t.studentId, t.date, t.mealType),
+]);
+
+export const mealFeedback = pgTable('meal_feedback', {
+  id: text('id').primaryKey(),
+  studentId: text('student_id').references(() => students.id),
+  date: text('date').notNull(),
+  mealType: mealTypeEnum('meal_type'),
+  rating: integer('rating'),
+  comment: text('comment'),
+  ...timestamps,
+}, t => [
+  index('meal_feedback_day_idx').on(t.date),
+]);
+
+export const mealFoodSafetyLogs = pgTable('meal_food_safety_logs', {
+  id: text('id').primaryKey(),
+  date: text('date').notNull(),
+  supplier: text('supplier'),
+  sampleKept: boolean('sample_kept').default(true).notNull(),
+  temperatureNote: text('temperature_note'),
+  inspector: text('inspector').references(() => employeeProfiles.id),
+  note: text('note'),
+  ...timestamps,
+}, t => [
+  index('meal_safety_day_idx').on(t.date),
+]);
+
+// === Y TẾ HỌC ĐƯỜNG ===
+export const healthProfiles = pgTable('health_profiles', {
+  id: text('id').primaryKey(),
+  studentId: text('student_id').references(() => students.id, { onDelete: 'cascade' }).notNull(),
+  bloodType: text('blood_type'),
+  heightCm: text('height_cm'),
+  weightKg: text('weight_kg'),
+  chronicConditions: jsonb('chronic_conditions').notNull().default([]),
+  allergies: jsonb('allergies').notNull().default([]),
+  vaccinations: jsonb('vaccinations').notNull().default([]),
+  insuranceNumber: text('insurance_number'),
+  emergencyContact: text('emergency_contact'),
+  emergencyPhone: text('emergency_phone'),
+  confidential: boolean('confidential').default(true).notNull(),
+  ...timestamps,
+}, t => [
+  uniqueIndex('health_profile_student_idx').on(t.studentId),
+]);
+
+export const healthIncidents = pgTable('health_incidents', {
+  id: text('id').primaryKey(),
+  studentId: text('student_id').references(() => students.id, { onDelete: 'cascade' }).notNull(),
+  occurredAt: timestamp('occurred_at', { withTimezone: true }).defaultNow().notNull(),
+  symptom: text('symptom'),
+  firstAidGiven: text('first_aid_given'),
+  severity: healthSeverityEnum('severity').default('minor').notNull(),
+  handledBy: text('handled_by').references(() => employeeProfiles.id),
+  referredToHospital: boolean('referred_to_hospital').default(false).notNull(),
+  notifiedParentAt: timestamp('notified_parent_at', { withTimezone: true }),
+  followUp: text('follow_up'),
+  confidential: boolean('confidential').default(true).notNull(),
+  ...timestamps,
+}, t => [
+  index('health_incident_student_idx').on(t.studentId),
+  index('health_incident_time_idx').on(t.occurredAt),
+  index('health_incident_severity_idx').on(t.severity),
+]);
+
+export const healthMedications = pgTable('health_medications', {
+  id: text('id').primaryKey(),
+  studentId: text('student_id').references(() => students.id, { onDelete: 'cascade' }).notNull(),
+  medicine: text('medicine').notNull(),
+  dosage: text('dosage'),
+  schedule: text('schedule'),
+  startDate: text('start_date'),
+  endDate: text('end_date'),
+  parentConsent: boolean('parent_consent').default(false).notNull(),
+  status: medicationStatusEnum('status').default('active').notNull(),
+  administeredBy: text('administered_by').references(() => employeeProfiles.id),
+  note: text('note'),
+  ...timestamps,
+}, t => [
+  index('health_med_student_idx').on(t.studentId),
+  index('health_med_status_idx').on(t.status),
+]);
+
+export const healthSickLeaves = pgTable('health_sick_leaves', {
+  id: text('id').primaryKey(),
+  studentId: text('student_id').references(() => students.id, { onDelete: 'cascade' }).notNull(),
+  fromDate: text('from_date').notNull(),
+  toDate: text('to_date'),
+  reason: text('reason'),
+  docAttachmentUrl: text('doc_attachment_url'),
+  reportedBy: text('reported_by'),
+  verifiedBy: text('verified_by').references(() => employeeProfiles.id),
+  ...timestamps,
+}, t => [
+  index('health_sick_student_idx').on(t.studentId),
+]);
+
+// === CSKH TICKETS ===
+export const parentTickets = pgTable('parent_tickets', {
+  id: text('id').primaryKey(),
+  studentId: text('student_id').references(() => students.id),
+  parentName: text('parent_name').notNull(),
+  parentPhone: text('parent_phone'),
+  category: text('category').notNull(), // 'academic' | 'service' | 'finance' | 'other'
+  subject: text('subject').notNull(),
+  description: text('description'),
+  priority: text('priority').default('normal').notNull(), // 'normal' | 'high' | 'urgent'
+  status: text('status').default('open').notNull(), // 'open' | 'in_progress' | 'resolved' | 'closed'
+  assignedTo: text('assigned_to').references(() => users.id),
+  firstRespondedAt: timestamp('first_responded_at', { withTimezone: true }),
+  resolvedAt: timestamp('resolved_at', { withTimezone: true }),
+  satisfactionRating: integer('satisfaction_rating'), // 1-5
+  deletedAt: timestamp('deleted_at', { withTimezone: true }),
+  ...timestamps,
+}, t => [
+  index('parent_ticket_status_idx').on(t.status),
+  index('parent_ticket_student_idx').on(t.studentId),
+  index('parent_ticket_assigned_idx').on(t.assignedTo),
+]);
+
+export const parentTicketActivities = pgTable('parent_ticket_activities', {
+  id: text('id').primaryKey(),
+  ticketId: text('ticket_id').references(() => parentTickets.id, { onDelete: 'cascade' }).notNull(),
+  actorId: text('actor_id').references(() => users.id),
+  actorName: text('actor_name'),
+  action: text('action').notNull(), // 'comment' | 'status_change' | 'assign' | 'resolve'
+  content: text('content'),
+  meta: jsonb('meta').notNull().default({}),
+  ...timestamps,
+}, t => [
+  index('ticket_activity_ticket_idx').on(t.ticketId),
+]);
+
+/* =============================================================================
+ * HẾT BLOCK SCHEMA BỔ SUNG (Xe / Bán trú / Y tế / CSKH)
+ * ============================================================================= */
+
+/* =============================================================================
+ * BLOCK: TỔ CHUYÊN MÔN / GIÁO ÁN / ĐỀ THI / NỀ NẾP / SỔ LIÊN LẠC
+ * Thêm: 2026-06-24 — nguồn: mis_portal_handoff/02_schema/schema_academic_teacher.ts
+ * ============================================================================= */
+
+// === ENUMS ACADEMIC ===
+export const academicLevelEnum = pgEnum('academic_level', ['primary', 'secondary', 'high']);
+export const lessonPlanStatusEnum = pgEnum('lesson_plan_status', ['draft', 'submitted', 'approved', 'rejected', 'published']);
+export const examTypeEnum = pgEnum('exam_type', ['quiz', 'periodic', 'midterm', 'final', 'mock']);
+export const examStatusEnum = pgEnum('exam_status', ['planned', 'ongoing', 'grading', 'completed', 'cancelled']);
+export const questionDifficultyEnum = pgEnum('question_difficulty', ['recognition', 'comprehension', 'application', 'advanced']);
+export const questionTypeEnum = pgEnum('question_type', ['mcq', 'true_false', 'short_answer', 'essay']);
+export const academicAttendanceStatusEnum = pgEnum('academic_attendance_status', ['present', 'absent_excused', 'absent_unexcused', 'late']);
+export const conductTypeEnum = pgEnum('conduct_type', ['violation', 'progress', 'support', 'praise']);
+export const conductTermRatingEnum = pgEnum('conduct_term_rating', ['excellent', 'good', 'fair', 'weak']);
+export const observationResultEnum = pgEnum('observation_result', ['excellent', 'good', 'achieved', 'needs_improvement']);
+
+// === TỔ CHUYÊN MÔN ===
+export const subjects = pgTable('subjects', {
+  id: text('id').primaryKey(),
+  code: text('code').notNull(),
+  name: text('name').notNull(),
+  level: academicLevelEnum('level'),
+  active: boolean('active').default(true).notNull(),
+  ...timestamps,
+}, t => [
+  uniqueIndex('subjects_code_idx').on(t.code),
+]);
+
+export const subjectGroups = pgTable('subject_groups', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  level: academicLevelEnum('level'),
+  headTeacherId: text('head_teacher_id').references(() => employeeProfiles.id),
+  deputyTeacherId: text('deputy_teacher_id').references(() => employeeProfiles.id),
+  description: text('description'),
+  ...timestamps,
+}, t => [
+  index('subject_groups_name_idx').on(t.name),
+]);
+
+export const subjectGroupMembers = pgTable('subject_group_members', {
+  id: text('id').primaryKey(),
+  groupId: text('group_id').references(() => subjectGroups.id, { onDelete: 'cascade' }).notNull(),
+  teacherId: text('teacher_id').references(() => employeeProfiles.id, { onDelete: 'cascade' }).notNull(),
+  roleInGroup: text('role_in_group'),
+  joinedAt: text('joined_at'),
+  ...timestamps,
+}, t => [
+  uniqueIndex('sg_member_uniq').on(t.groupId, t.teacherId),
+  index('sg_member_group_idx').on(t.groupId),
+]);
+
+export const subjectGroupMeetings = pgTable('subject_group_meetings', {
+  id: text('id').primaryKey(),
+  groupId: text('group_id').references(() => subjectGroups.id, { onDelete: 'cascade' }).notNull(),
+  date: text('date').notNull(),
+  title: text('title'),
+  minutes: text('minutes'),
+  attendees: jsonb('attendees').notNull().default([]),
+  attachmentUrl: text('attachment_url'),
+  createdBy: text('created_by').references(() => employeeProfiles.id),
+  ...timestamps,
+}, t => [
+  index('sg_meeting_group_idx').on(t.groupId, t.date),
+]);
+
+// === PHÂN CÔNG GIẢNG DẠY ===
+export const teachingAssignments = pgTable('teaching_assignments', {
+  id: text('id').primaryKey(),
+  teacherId: text('teacher_id').references(() => employeeProfiles.id).notNull(),
+  subjectId: text('subject_id').references(() => subjects.id).notNull(),
+  classId: text('class_id').references(() => classes.id).notNull(),
+  schoolYear: text('school_year'),
+  term: text('term'),
+  periodsPerWeek: integer('periods_per_week').default(0),
+  ...timestamps,
+}, t => [
+  index('teach_assign_teacher_idx').on(t.teacherId),
+  index('teach_assign_class_idx').on(t.classId),
+  uniqueIndex('teach_assign_uniq').on(t.teacherId, t.subjectId, t.classId, t.schoolYear, t.term),
+]);
+
+export const timetableEntries = pgTable('timetable_entries', {
+  id: text('id').primaryKey(),
+  classId: text('class_id').references(() => classes.id).notNull(),
+  subjectId: text('subject_id').references(() => subjects.id),
+  teacherId: text('teacher_id').references(() => employeeProfiles.id),
+  dayOfWeek: integer('day_of_week').notNull(),
+  period: integer('period').notNull(),
+  startTime: text('start_time'),
+  endTime: text('end_time'),
+  room: text('room'),
+  schoolYear: text('school_year'),
+  term: text('term'),
+  ...timestamps,
+}, t => [
+  index('tt_class_day_idx').on(t.classId, t.dayOfWeek),
+  uniqueIndex('tt_slot_uniq').on(t.classId, t.dayOfWeek, t.period, t.schoolYear, t.term),
+]);
+
+// === GIÁO ÁN & DỰ GIỜ ===
+export const lessonPlans = pgTable('lesson_plans', {
+  id: text('id').primaryKey(),
+  teacherId: text('teacher_id').references(() => employeeProfiles.id).notNull(),
+  subjectId: text('subject_id').references(() => subjects.id),
+  classId: text('class_id').references(() => classes.id),
+  groupId: text('group_id').references(() => subjectGroups.id),
+  title: text('title').notNull(),
+  week: integer('week'),
+  schoolYear: text('school_year'),
+  term: text('term'),
+  content: text('content'),
+  fileUrl: text('file_url'),
+  status: lessonPlanStatusEnum('status').default('draft').notNull(),
+  submittedAt: timestamp('submitted_at', { withTimezone: true }),
+  approvedBy: text('approved_by').references(() => employeeProfiles.id),
+  approvedAt: timestamp('approved_at', { withTimezone: true }),
+  reviewNote: text('review_note'),
+  ...timestamps,
+}, t => [
+  index('lesson_plan_teacher_idx').on(t.teacherId),
+  index('lesson_plan_status_idx').on(t.status),
+]);
+
+export const teachingObservations = pgTable('teaching_observations', {
+  id: text('id').primaryKey(),
+  observerId: text('observer_id').references(() => employeeProfiles.id).notNull(),
+  teacherId: text('teacher_id').references(() => employeeProfiles.id).notNull(),
+  subjectId: text('subject_id').references(() => subjects.id),
+  classId: text('class_id').references(() => classes.id),
+  date: text('date').notNull(),
+  period: integer('period'),
+  score: text('score'),
+  result: observationResultEnum('result'),
+  strengths: text('strengths'),
+  improvements: text('improvements'),
+  ...timestamps,
+}, t => [
+  index('obs_teacher_idx').on(t.teacherId, t.date),
+]);
+
+// === ĐỀ THI / NGÂN HÀNG CÂU HỎI ===
+export const examQuestionBank = pgTable('exam_question_bank', {
+  id: text('id').primaryKey(),
+  subjectId: text('subject_id').references(() => subjects.id).notNull(),
+  grade: integer('grade'),
+  chapter: text('chapter'),
+  questionType: questionTypeEnum('question_type').default('mcq').notNull(),
+  difficulty: questionDifficultyEnum('difficulty').default('comprehension').notNull(),
+  content: text('content').notNull(),
+  options: jsonb('options').notNull().default([]),
+  answer: text('answer'),
+  points: text('points').default('1'),
+  tags: jsonb('tags').notNull().default([]),
+  createdBy: text('created_by').references(() => employeeProfiles.id),
+  ...timestamps,
+}, t => [
+  index('qbank_subject_idx').on(t.subjectId, t.grade),
+  index('qbank_difficulty_idx').on(t.difficulty),
+]);
+
+export const exams = pgTable('exams', {
+  id: text('id').primaryKey(),
+  subjectId: text('subject_id').references(() => subjects.id).notNull(),
+  classId: text('class_id').references(() => classes.id),
+  teacherId: text('teacher_id').references(() => employeeProfiles.id),
+  title: text('title').notNull(),
+  type: examTypeEnum('type').default('periodic').notNull(),
+  date: text('date'),
+  durationMinutes: integer('duration_minutes'),
+  totalPoints: text('total_points').default('10'),
+  schoolYear: text('school_year'),
+  term: text('term'),
+  status: examStatusEnum('status').default('planned').notNull(),
+  questionIds: jsonb('question_ids').notNull().default([]),
+  ...timestamps,
+}, t => [
+  index('exam_class_idx').on(t.classId),
+  index('exam_subject_idx').on(t.subjectId),
+  index('exam_status_idx').on(t.status),
+]);
+
+export const examResults = pgTable('exam_results', {
+  id: text('id').primaryKey(),
+  examId: text('exam_id').references(() => exams.id, { onDelete: 'cascade' }).notNull(),
+  studentId: text('student_id').references(() => students.id, { onDelete: 'cascade' }).notNull(),
+  score: text('score'),
+  rank: integer('rank'),
+  note: text('note'),
+  gradedBy: text('graded_by').references(() => employeeProfiles.id),
+  gradedAt: timestamp('graded_at', { withTimezone: true }),
+  ...timestamps,
+}, t => [
+  index('exam_result_exam_idx').on(t.examId),
+  uniqueIndex('exam_result_uniq').on(t.examId, t.studentId),
+]);
+
+export const subjectQualityReports = pgTable('subject_quality_reports', {
+  id: text('id').primaryKey(),
+  subjectId: text('subject_id').references(() => subjects.id),
+  classId: text('class_id').references(() => classes.id),
+  grade: integer('grade'),
+  schoolYear: text('school_year'),
+  term: text('term'),
+  avgScore: text('avg_score'),
+  passRate: text('pass_rate'),
+  excellentRate: text('excellent_rate'),
+  weakCount: integer('weak_count'),
+  summary: text('summary'),
+  createdBy: text('created_by').references(() => employeeProfiles.id),
+  ...timestamps,
+}, t => [
+  index('sqr_scope_idx').on(t.subjectId, t.classId, t.term),
+]);
+
+// === GVCN / CHỦ NHIỆM ===
+export const homeroomAssignments = pgTable('homeroom_assignments', {
+  id: text('id').primaryKey(),
+  classId: text('class_id').references(() => classes.id, { onDelete: 'cascade' }).notNull(),
+  teacherId: text('teacher_id').references(() => employeeProfiles.id).notNull(),
+  role: text('role').notNull(), // 'GVCN' | 'QuanNhiem'
+  schoolYear: text('school_year'),
+  ...timestamps,
+}, t => [
+  index('homeroom_class_idx').on(t.classId),
+  uniqueIndex('homeroom_uniq').on(t.classId, t.teacherId, t.role, t.schoolYear),
+]);
+
+export const studentAttendance = pgTable('student_attendance', {
+  id: text('id').primaryKey(),
+  studentId: text('student_id').references(() => students.id, { onDelete: 'cascade' }).notNull(),
+  classId: text('class_id').references(() => classes.id).notNull(),
+  date: text('date').notNull(),
+  period: integer('period'),
+  status: academicAttendanceStatusEnum('status').default('present').notNull(),
+  reason: text('reason'),
+  recordedBy: text('recorded_by').references(() => employeeProfiles.id),
+  ...timestamps,
+}, t => [
+  index('att_day_idx').on(t.date, t.classId),
+  uniqueIndex('att_student_day_idx').on(t.studentId, t.date, t.period),
+]);
+
+export const studentConductLogs = pgTable('student_conduct_logs', {
+  id: text('id').primaryKey(),
+  studentId: text('student_id').references(() => students.id, { onDelete: 'cascade' }).notNull(),
+  classId: text('class_id').references(() => classes.id),
+  date: text('date').notNull(),
+  type: conductTypeEnum('type').notNull(),
+  description: text('description'),
+  points: integer('points'),
+  handledBy: text('handled_by').references(() => employeeProfiles.id),
+  notifiedParent: boolean('notified_parent').default(false).notNull(),
+  ...timestamps,
+}, t => [
+  index('conduct_student_idx').on(t.studentId, t.date),
+  index('conduct_type_idx').on(t.type),
+]);
+
+export const conductTermRatings = pgTable('conduct_term_ratings', {
+  id: text('id').primaryKey(),
+  studentId: text('student_id').references(() => students.id, { onDelete: 'cascade' }).notNull(),
+  schoolYear: text('school_year'),
+  term: text('term'),
+  rating: conductTermRatingEnum('rating'),
+  strengths: text('strengths'),
+  reminders: text('reminders'),
+  homeroomTeacherId: text('homeroom_teacher_id').references(() => employeeProfiles.id),
+  ...timestamps,
+}, t => [
+  uniqueIndex('conduct_term_uniq').on(t.studentId, t.schoolYear, t.term),
+]);
+
+export const communicationBook = pgTable('communication_book', {
+  id: text('id').primaryKey(),
+  studentId: text('student_id').references(() => students.id, { onDelete: 'cascade' }).notNull(),
+  date: text('date').notNull(),
+  authorType: text('author_type').notNull(), // 'teacher' | 'parent'
+  authorId: text('author_id'),
+  content: text('content').notNull(),
+  category: text('category'),
+  parentSeenAt: timestamp('parent_seen_at', { withTimezone: true }),
+  teacherSeenAt: timestamp('teacher_seen_at', { withTimezone: true }),
+  ...timestamps,
+}, t => [
+  index('commbook_student_idx').on(t.studentId, t.date),
+]);
+
+export const rewardsDisciplines = pgTable('rewards_disciplines', {
+  id: text('id').primaryKey(),
+  studentId: text('student_id').references(() => students.id, { onDelete: 'cascade' }).notNull(),
+  type: text('type').notNull(), // 'reward' | 'discipline'
+  reason: text('reason'),
+  decision: text('decision'),
+  decidedBy: text('decided_by').references(() => employeeProfiles.id),
+  date: text('date'),
+  documentUrl: text('document_url'),
+  ...timestamps,
+}, t => [
+  index('reward_student_idx').on(t.studentId),
+]);
+
+/* =============================================================================
+ * HẾT BLOCK SCHEMA TỔ CHUYÊN MÔN / GIÁO ÁN / GVCN
+ * ============================================================================= */
+
+/* =============================================================================
+ * BLOCK: HÀNH CHÍNH — CÔNG VĂN & PHÒNG HỌP
+ * Thêm: 2026-06-24
+ * ============================================================================= */
+
+// === ENUMS ===
+export const letterTypeEnum = pgEnum('letter_type', ['incoming', 'outgoing', 'internal']);
+export const letterStatusEnum = pgEnum('letter_status', ['draft', 'pending_approval', 'approved', 'sent', 'archived', 'rejected']);
+export const letterApprovalStatusEnum = pgEnum('letter_approval_status', ['pending', 'approved', 'rejected', 'delegated']);
+export const roomStatusEnum = pgEnum('room_status', ['available', 'occupied', 'maintenance']);
+export const bookingStatusEnum = pgEnum('booking_status', ['pending', 'confirmed', 'cancelled', 'completed']);
+
+// === CÔNG VĂN ===
+export const officialLetters = pgTable('official_letters', {
+  id: text('id').primaryKey(),
+  code: text('code').notNull().unique(), // CV-2026-0001
+  type: letterTypeEnum('type').default('incoming').notNull(),
+  status: letterStatusEnum('status').default('draft').notNull(),
+  subject: text('subject').notNull(),
+  summary: text('summary'),
+  fromOrg: text('from_org'),        // đơn vị gửi
+  toOrg: text('to_org'),            // đơn vị nhận
+  issuedDate: text('issued_date'),  // ngày ban hành
+  receivedDate: text('received_date'),
+  dueDate: text('due_date'),
+  fileUrl: text('file_url'),
+  tags: jsonb('tags').notNull().default([]),
+  priority: text('priority').default('normal'),  // normal / urgent
+  createdBy: text('created_by').references(() => employeeProfiles.id),
+  assignedTo: text('assigned_to').references(() => employeeProfiles.id),
+  ...timestamps,
+}, t => [
+  index('official_letters_type_idx').on(t.type, t.status),
+  index('official_letters_issued_idx').on(t.issuedDate),
+]);
+
+export const letterApprovals = pgTable('letter_approvals', {
+  id: text('id').primaryKey(),
+  letterId: text('letter_id').references(() => officialLetters.id, { onDelete: 'cascade' }).notNull(),
+  approverId: text('approver_id').references(() => employeeProfiles.id).notNull(),
+  stepOrder: integer('step_order').default(1).notNull(), // thứ tự ký
+  status: letterApprovalStatusEnum('status').default('pending').notNull(),
+  comment: text('comment'),
+  actionAt: timestamp('action_at', { withTimezone: true }),
+  ...timestamps,
+}, t => [
+  index('letter_approval_letter_idx').on(t.letterId),
+  uniqueIndex('letter_approval_step_uniq').on(t.letterId, t.stepOrder),
+]);
+
+// === PHÒNG HỌP ===
+export const meetingRooms = pgTable('meeting_rooms', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  building: text('building'),
+  floor: text('floor'),
+  capacity: integer('capacity').default(10),
+  facilities: jsonb('facilities').notNull().default([]), // ['projector','whiteboard','ac']
+  status: roomStatusEnum('status').default('available').notNull(),
+  active: boolean('active').default(true).notNull(),
+  ...timestamps,
+}, t => [
+  index('meeting_rooms_status_idx').on(t.status),
+]);
+
+export const roomBookings = pgTable('room_bookings', {
+  id: text('id').primaryKey(),
+  roomId: text('room_id').references(() => meetingRooms.id, { onDelete: 'cascade' }).notNull(),
+  title: text('title').notNull(),
+  organizer: text('organizer').references(() => employeeProfiles.id),
+  date: text('date').notNull(),     // YYYY-MM-DD
+  startTime: text('start_time').notNull(), // HH:MM
+  endTime: text('end_time').notNull(),
+  attendeesJson: jsonb('attendees_json').notNull().default([]), // [employeeProfileId]
+  purpose: text('purpose'),
+  status: bookingStatusEnum('status').default('confirmed').notNull(),
+  cancelReason: text('cancel_reason'),
+  ...timestamps,
+}, t => [
+  index('room_bookings_room_date_idx').on(t.roomId, t.date),
+  index('room_bookings_organizer_idx').on(t.organizer),
+]);
+
+/* =============================================================================
+ * HẾT BLOCK SCHEMA HÀNH CHÍNH (CÔNG VĂN & PHÒNG HỌP)
+ * ============================================================================= */

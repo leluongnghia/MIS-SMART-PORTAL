@@ -6,7 +6,7 @@ import { RoleCode, WorkspaceCode } from '../../utils/constants';
 
 export type ApprovalStatus = 'DRAFT' | 'PENDING' | 'APPROVED' | 'REJECTED' | 'NEEDS_REVISION' | 'CANCELLED';
 export type ApprovalAction = 'SUBMITTED' | 'APPROVED' | 'REJECTED' | 'NEEDS_REVISION' | 'CANCELLED' | 'COMMENTED';
-type ApprovalModule = 'TASKS' | 'ADMISSIONS' | 'STUDENTS' | 'FACILITIES' | 'STORAGE' | 'SETTINGS' | 'SYSTEM';
+type ApprovalModule = 'TASKS' | 'ADMISSIONS' | 'STUDENTS' | 'FACILITIES' | 'STORAGE' | 'SETTINGS' | 'SYSTEM' | 'ACADEMIC' | 'OFFICIAL_LETTERS';
 
 export interface ApprovalRequestInput {
   module: ApprovalModule;
@@ -206,6 +206,52 @@ async function transitionApproval(requestId: string, status: ApprovalStatus, act
   const updated = { ...request, ...patch };
   await addEvent({ requestId, action, fromStatus: request.status, toStatus: status, actor, comment });
   await writeAuditLog(actor.id, `APPROVAL_${action}`, 'APPROVAL_REQUEST', requestId, { before: { status: request.status }, after: { status }, comment });
+
+  // Post-approval triggers
+  try {
+    if (request.entityType === 'TASK' || request.module === 'TASKS') {
+      const taskStatus = status === 'APPROVED' ? 'HOAN_THANH' : status === 'REJECTED' ? 'DANG_TIEN_HANH' : undefined;
+      if (taskStatus) {
+        const [task] = await db.select().from(schema.tasks).where(eq(schema.tasks.id, request.entityId)).limit(1);
+        if (task) {
+          const payload = (task.payload || {}) as Record<string, any>;
+          const history = payload.history || [];
+          history.push({
+            actorName: actor.name,
+            action: status === 'APPROVED' ? `Phê duyệt hoàn thành từ hệ thống: "${comment || ''}"` : `Từ chối hoàn thành từ hệ thống: "${comment || ''}"`,
+            timestamp: new Date().toISOString(),
+          });
+          await db.update(schema.tasks).set({
+            status: taskStatus,
+            payload: { ...payload, history },
+            updatedAt: new Date()
+          }).where(eq(schema.tasks.id, request.entityId));
+        }
+      }
+    } else if (request.entityType === 'LESSON_PLAN' || request.module === 'ACADEMIC') {
+      const planStatus = status === 'APPROVED' ? 'approved' : status === 'REJECTED' ? 'rejected' : undefined;
+      if (planStatus) {
+        await db.update(schema.lessonPlans).set({
+          status: planStatus,
+          approvedBy: actor.id,
+          approvedAt: new Date(),
+          reviewNote: comment || null,
+          updatedAt: new Date()
+        }).where(eq(schema.lessonPlans.id, request.entityId));
+      }
+    } else if (request.entityType === 'OFFICIAL_LETTER' || request.module === 'OFFICIAL_LETTERS') {
+      const letterStatus = status === 'APPROVED' ? 'approved' : status === 'REJECTED' ? 'rejected' : undefined;
+      if (letterStatus) {
+        await db.update(schema.officialLetters).set({
+          status: letterStatus,
+          updatedAt: new Date()
+        }).where(eq(schema.officialLetters.id, request.entityId));
+      }
+    }
+  } catch (err) {
+    console.error("Failed to run post-approval trigger:", err);
+  }
+
   await notifyApproval(updated, action, actor, comment);
   return updated;
 }

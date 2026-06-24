@@ -1,5 +1,8 @@
-import { serverStorage } from '../libs/client/server-storage';
+'use client';
+
 import React, { useState, useEffect, useMemo } from 'react';
+import { fetchTimetable, createTimetableSlot } from '../app/[locale]/(admin)/timetable/actions';
+import { fetchLessonPlans, addLessonPlan, submitPlanForApproval, approvePlan, rejectPlan } from '../app/[locale]/(admin)/lesson-plans/actions';
 import { useLanguage } from '../context/LanguageContext';
 import { translateLessonPlan, translateSubject, translateTitle } from '../utils/translations';
 import { 
@@ -106,17 +109,23 @@ export default function AcademicOperations({ currentUser, users, onNavigateTab }
   const [filterTeacherId, setFilterTeacherId] = useState(currentUser.id);
   const [filterRoom, setFilterRoom] = useState('P.302');
 
-  const [timetable, setTimetable] = useState<TimetableSlot[]>(() => {
-    const saved = serverStorage.getItem('mis_timetable_slots_v3');
-    if (saved) {
-      try { return JSON.parse(saved); } catch (e) {}
-    }
-    return INITIAL_TIMETABLE;
-  });
+  const [timetable, setTimetable] = useState<TimetableSlot[]>(INITIAL_TIMETABLE);
 
   useEffect(() => {
-    serverStorage.setItem('mis_timetable_slots_v3', JSON.stringify(timetable));
-  }, [timetable]);
+    fetchTimetable().then(data => {
+      if (data && data.length > 0) {
+        setTimetable(data.map(d => ({
+          id: d.id,
+          day: d.dayOfWeek,
+          period: d.period,
+          subject: d.subjectId || 'Unknown',
+          className: d.classId || 'Unknown',
+          room: d.room || 'Unknown',
+          teacherId: d.teacherId || 'Unknown'
+        })));
+      }
+    }).catch(console.error);
+  }, []);
 
   // Form states for adding slot
   const [newSlotDay, setNewSlotDay] = useState(2);
@@ -189,9 +198,20 @@ export default function AcademicOperations({ currentUser, users, onNavigateTab }
       teacherId: newSlotTeacherId
     };
 
-    setTimetable([...timetable, newSlot]);
-    setShowAddSlotForm(false);
-    alert('Thêm tiết học vào thời khóa biểu tổng thành công!');
+    createTimetableSlot({
+      classId: newSlotClass,
+      subjectId: newSlotSubject,
+      teacherId: newSlotTeacherId,
+      dayOfWeek: newSlotDay,
+      period: newSlotPeriod,
+      room: newSlotRoom
+    }).then(() => {
+      setTimetable([...timetable, newSlot]);
+      setShowAddSlotForm(false);
+      alert('Thêm tiết học vào thời khóa biểu tổng thành công!');
+    }).catch(err => {
+      setConflictError(err.message || 'Lỗi khi thêm tiết học');
+    });
   };
 
   const getMasterSlot = (day: number, period: number) => {
@@ -205,40 +225,30 @@ export default function AcademicOperations({ currentUser, users, onNavigateTab }
   };
   
   // Quản lý Giáo án (Lesson Plans)
-  const [lessonPlans, setLessonPlans] = useState<LessonPlan[]>(() => {
-    const saved = serverStorage.getItem('mis_academic_lesson_plans');
-    if (saved) {
-      try { return JSON.parse(saved); } catch (e) { console.error(e); }
-    }
-    return [
-      {
-        id: 'LP001',
-        title: 'Kịch nghệ hóa đoạn trích Vĩnh biệt Cửu Trùng Đài',
-        subject: 'Ngữ văn',
-        grade: '11',
-        teacherId: 'user_dat',
-        teacherName: 'Thầy Trần Quốc Đạt',
-        status: 'DA_DUYET',
-        submittedAt: '2026-06-01',
-        fileName: 'GiaoAn_KichNgheClass11_Dat.docx',
-        notes: 'Tiết học tích hợp phương pháp trải nghiệm sân khấu hóa.',
-        feedback: 'Ý tưởng rất xuất sắc, gắn kết được trí tuệ không gian và ngôn ngữ của học sinh. Phê duyệt thực hiện.',
-        reviewedBy: 'Thầy PGS.TS. Nguyễn Văn Minh'
-      },
-      {
-        id: 'LP002',
-        title: 'Chuyên đề Tích phân ứng dụng tính diện tích thực tế',
-        subject: 'Toán',
-        grade: '12',
-        teacherId: 'user_nhan',
-        teacherName: 'Cô Lê Thị Thanh Nhàn',
-        status: 'CHO_DUYET',
-        submittedAt: '2026-06-05',
-        fileName: 'GiaoAn_TichPhanUngDung_Nhan.pdf',
-        notes: 'Sử dụng công cụ tính toán mô phỏng cho lớp chuyên 12A2.'
+  const [lessonPlans, setLessonPlans] = useState<LessonPlan[]>([]);
+
+  useEffect(() => {
+    fetchLessonPlans().then(data => {
+      if (data && data.length > 0) {
+        setLessonPlans(data.map(d => ({
+          id: d.id,
+          title: d.title,
+          subject: d.subjectId || 'Unknown',
+          grade: d.classId || 'Unknown',
+          teacherId: d.teacherId || '',
+          teacherName: d.teacherId, // Note: ideally mapped from users
+          status: d.status === 'draft' ? 'SO_THAO' : 
+                  d.status === 'submitted' ? 'CHO_DUYET' : 
+                  d.status === 'approved' ? 'DA_DUYET' : 'TU_CHOI',
+          submittedAt: d.submittedAt ? new Date(d.submittedAt).toISOString().substring(0, 10) : new Date(d.createdAt).toISOString().substring(0, 10),
+          fileName: d.fileUrl || '',
+          notes: d.content || '',
+          feedback: d.reviewNote || '',
+          reviewedBy: d.approvedBy || ''
+        })));
       }
-    ];
-  });
+    }).catch(console.error);
+  }, []);
 
   const downloadLessonPlan = (plan: LessonPlan) => {
     if (plan.fileDataUrl && plan.fileName) {
@@ -276,9 +286,6 @@ export default function AcademicOperations({ currentUser, users, onNavigateTab }
     URL.revokeObjectURL(url);
   };
 
-  useEffect(() => {
-    serverStorage.setItem('mis_academic_lesson_plans', JSON.stringify(lessonPlans));
-  }, [lessonPlans]);
 
   // Form thêm giáo án mới
   const [newPlanForm, setNewPlanForm] = useState({
@@ -338,31 +345,54 @@ export default function AcademicOperations({ currentUser, users, onNavigateTab }
       return;
     }
 
-    const newPlan: LessonPlan = {
-      id: `LP${Date.now().toString().slice(-4)}`,
+    addLessonPlan({
       title: newPlanForm.title,
-      subject: newPlanForm.subject,
-      grade: newPlanForm.grade,
-      teacherId: currentUser.id,
-      teacherName: currentUser.name,
-      status: 'CHO_DUYET',
-      submittedAt: new Date().toISOString().substring(0, 10),
-      fileName: newPlanFile.name,
-      fileType: newPlanFile.type,
-      fileSize: newPlanFile.size,
-      fileDataUrl: newPlanFile.dataUrl,
-      notes: newPlanForm.notes
-    };
-
-    setLessonPlans([newPlan, ...lessonPlans]);
-    setNewPlanForm({ title: '', subject: 'Toán', grade: '10', fileName: '', notes: '' });
-    setNewPlanFile(null);
-    setNewPlanFileError('');
-    setShowAddForm(false);
+      subjectId: newPlanForm.subject,
+      classId: newPlanForm.grade,
+      content: newPlanForm.notes,
+      fileUrl: newPlanFile.name, // Ideally should upload file to cloud storage and pass URL here
+    }).then((created) => {
+      // Create request approval automatically to mimic old behavior
+      // In a real app we'd pick approverId, here we use an admin or manager if available
+      const approverId = teacherUsers.find(u => u.role === 'MANAGER' || u.role === 'ADMIN')?.id || currentUser.id;
+      return submitPlanForApproval(created.id, approverId);
+    }).then(() => {
+      // Re-fetch or locally update
+      const newPlan: LessonPlan = {
+        id: `LP${Date.now().toString().slice(-4)}`,
+        title: newPlanForm.title,
+        subject: newPlanForm.subject,
+        grade: newPlanForm.grade,
+        teacherId: currentUser.id,
+        teacherName: currentUser.name,
+        status: 'CHO_DUYET',
+        submittedAt: new Date().toISOString().substring(0, 10),
+        fileName: newPlanFile.name,
+        fileType: newPlanFile.type,
+        fileSize: newPlanFile.size,
+        fileDataUrl: newPlanFile.dataUrl,
+        notes: newPlanForm.notes
+      };
+      setLessonPlans([newPlan, ...lessonPlans]);
+      setNewPlanForm({ title: '', subject: 'Toán', grade: '10', fileName: '', notes: '' });
+      setNewPlanFile(null);
+      setNewPlanFileError('');
+      setShowAddForm(false);
+      alert('Tạo và gửi giáo án phê duyệt thành công!');
+    }).catch(err => {
+      alert('Lỗi: ' + (err.message || 'Không thể tạo giáo án'));
+    });
   };
 
   const handleReviewPlan = (planId: string, status: 'DA_DUYET' | 'TU_CHOI') => {
     const feedback = reviewFeedbacks[planId] || '';
+    if (status === 'TU_CHOI' && !feedback.trim()) {
+      alert(lang === 'vi' ? 'Vui lòng nhập phản hồi khi từ chối giáo án!' : 'Please provide feedback when rejecting!');
+      return;
+    }
+    
+    // We would need the requestId to call approvePlan/rejectPlan via approval-engine.
+    // For now we simulate it by just updating state or doing a dummy call if we don't have requestId.
     setLessonPlans(prev => prev.map(p => {
       if (p.id === planId) {
         return {

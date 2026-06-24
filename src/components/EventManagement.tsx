@@ -35,9 +35,9 @@ import CreateCrisisForm from './CreateCrisisForm';
 // ─── MAIN COMPONENT ─────────────────────────────────────────────────────────
 
 export default function EventManagement() {
-  const [activeTab, setActiveTab] = useState('tickets'); // 'tickets' | 'communications' | 'events' | 'crisis' | 'surveys'
+  const [activeTab, setActiveTab] = useState('events'); // 'events' | 'surveys'
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [formType, setFormType] = useState<'TICKETS' | 'COMMUNICATIONS' | 'EVENTS' | 'CRISIS' | 'SURVEYS'>('TICKETS');
+  const [formType, setFormType] = useState<'EVENTS' | 'SURVEYS'>('EVENTS');
 
   const openForm = (type: 'TICKETS' | 'COMMUNICATIONS' | 'EVENTS' | 'CRISIS' | 'SURVEYS') => {
     setFormType(type);
@@ -46,12 +46,9 @@ export default function EventManagement() {
 
   const getCreateButtonConfig = () => {
     switch(activeTab) {
-      case 'tickets': return { label: 'Tạo Ticket', action: () => openForm('TICKETS'), icon: Plus, color: 'bg-indigo-600 hover:bg-indigo-700' };
-      case 'communications': return { label: 'Tạo Truyền thông', action: () => openForm('COMMUNICATIONS'), icon: Plus, color: 'bg-emerald-600 hover:bg-emerald-700' };
       case 'events': return { label: 'Tạo Sự kiện', action: () => openForm('EVENTS'), icon: Plus, color: 'bg-rose-600 hover:bg-rose-700' };
-      case 'crisis': return { label: 'Báo cáo Khủng hoảng', action: () => openForm('CRISIS'), icon: ShieldAlert, color: 'bg-red-600 hover:bg-red-700' };
       case 'surveys': return { label: 'Tạo Khảo sát', action: () => openForm('SURVEYS'), icon: Plus, color: 'bg-amber-600 hover:bg-amber-700' };
-      default: return { label: 'Tạo mới', action: () => openForm('TICKETS'), icon: Plus, color: 'bg-indigo-600 hover:bg-indigo-700' };
+      default: return { label: 'Tạo mới', action: () => openForm('EVENTS'), icon: Plus, color: 'bg-indigo-600 hover:bg-indigo-700' };
     }
   };
 
@@ -78,10 +75,7 @@ export default function EventManagement() {
       {/* Tabs */}
       <div className="flex items-center gap-2 border-b border-slate-200 mb-6 overflow-x-auto no-scrollbar">
         {[
-          { id: 'tickets', label: 'CSKH Phụ huynh', icon: Users },
-          { id: 'communications', label: 'Truyền thông', icon: Megaphone },
           { id: 'events', label: 'Sự kiện', icon: CalendarHeart },
-          { id: 'crisis', label: 'Khủng hoảng', icon: ShieldAlert },
           { id: 'surveys', label: 'Khảo sát', icon: ClipboardList }
         ].map(tab => (
           <button

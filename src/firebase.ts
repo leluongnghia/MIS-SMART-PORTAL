@@ -4,7 +4,10 @@ import { getFirestore, doc, getDocFromServer } from 'firebase/firestore';
 import firebaseConfig from '../firebase-applet-config.json';
 
 const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId); /* CRITICAL: The app will break without this line */
+/** Firestore DB — use `firestoreDb` to distinguish from Drizzle `db` (src/libs/server/db.ts) */
+export const firestoreDb = getFirestore(app, firebaseConfig.firestoreDatabaseId); /* CRITICAL: The app will break without this line */
+/** @deprecated use firestoreDb */
+export const db = firestoreDb;
 export const auth = getAuth();
 
 export enum OperationType {
@@ -55,7 +58,7 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
 // CRITICAL CONSTRAINT: Validate Connection to Firestore on startup
 async function testConnection() {
   try {
-    await getDocFromServer(doc(db, 'test', 'connection'));
+    await getDocFromServer(doc(firestoreDb, 'test', 'connection'));
   } catch (error) {
     if (error instanceof Error && error.message.includes('the client is offline')) {
       console.error("Please check your Firebase configuration.");

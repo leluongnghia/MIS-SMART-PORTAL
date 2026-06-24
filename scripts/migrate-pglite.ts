@@ -34,9 +34,13 @@ async function migrate() {
 
     const sql = fs.readFileSync(path.join(migrationsDir, file), 'utf8');
     const statements = sql
-      .split('--> statement-breakpoint')
-      .map(statement => statement.trim().replace(/^CREATE TABLE\s+"/i, 'CREATE TABLE IF NOT EXISTS "'))
-      .filter(Boolean);
+      // Support both "--> statement-breakpoint" and "-->statement-breakpoint"
+      .split(/-->[\s]?statement-breakpoint/g)
+      .map(s => s.trim())
+      .filter(Boolean)
+      .map(s => s.replace(/^CREATE TABLE\s+"/i, 'CREATE TABLE IF NOT EXISTS "'))
+      .map(s => s.replace(/^CREATE UNIQUE INDEX\s+(?!IF NOT EXISTS)/i, 'CREATE UNIQUE INDEX IF NOT EXISTS '))
+      .map(s => s.replace(/^CREATE INDEX\s+(?!IF NOT EXISTS)/i, 'CREATE INDEX IF NOT EXISTS '));
 
     await client.transaction(async (tx) => {
       for (const statement of statements) {

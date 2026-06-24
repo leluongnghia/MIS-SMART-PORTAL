@@ -43,9 +43,9 @@ export default function RiskManagementCenter() {
           <span className="px-2.5 py-1 bg-rose-500/20 text-rose-300 rounded-lg text-[10px] font-black uppercase tracking-wider font-mono border border-rose-500/20 flex items-center gap-1 w-fit">
             <ShieldAlert className="w-3.5 h-3.5" /> ISO 9001:2015 & ISO 21001:2018
           </span>
-          <h2 className="text-xl md:text-2xl font-display font-black leading-tight">Hệ thống Kiểm soát Nội bộ & CAPA</h2>
+          <h2 className="text-xl md:text-2xl font-display font-black leading-tight">Quản lý Rủi ro & Xử lý Vấn đề</h2>
           <p className="text-rose-200/80 text-sm max-w-2xl">
-            Quản trị rủi ro vận hành trường học, theo dõi kết quả đánh giá chất lượng nội bộ, và quản lý các hành động khắc phục phòng ngừa (CAPA) một cách tập trung.
+            Nhận diện rủi ro, theo dõi đánh giá chất lượng nội bộ, và quản lý các hành động khắc phục (CAPA) tập trung để cải tiến liên tục.
           </p>
         </div>
       </div>

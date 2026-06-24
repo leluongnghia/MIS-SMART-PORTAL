@@ -10,6 +10,7 @@ export interface Actor {
   email: string | null;
   workspaceId: string | null;
   departmentId: string | null;
+  homeroomClassId: string | null;
   status: string;
 }
 

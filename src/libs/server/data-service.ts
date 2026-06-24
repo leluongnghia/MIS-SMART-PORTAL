@@ -55,9 +55,19 @@ export class DataService<T extends keyof typeof schema> {
    * Override this to provide custom authorization logic per model
    */
   protected async authorize(actor: Actor, action: 'read' | 'create' | 'update' | 'delete', record?: any): Promise<boolean> {
-    // By default, only logged-in users can do anything.
-    // In a real implementation, you'd integrate auth-helper.ts's specific canEdit/canView functions here.
-    return !!actor;
+    if (!actor) return false;
+    
+    // Admin & Managers have full access
+    if (actor.role === 'ADMIN' || actor.role === 'MANAGER') return true;
+
+    // Homeroom teacher row-level scope
+    if (actor.homeroomClassId && record && this.tableModel.classId) {
+      if (record.classId !== actor.homeroomClassId) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   public async findMany(options: ListOptions = {}, actorOverride?: Actor | null) {
@@ -68,7 +78,16 @@ export class DataService<T extends keyof typeof schema> {
     const queryOptions: any = {};
     if (options.limit) queryOptions.limit = options.limit;
     if (options.offset) queryOptions.offset = options.offset;
-    if (options.where) queryOptions.where = options.where;
+    
+    // Auto-apply row-level security for homeroom teachers if the table has classId
+    let mergedWhere = options.where;
+    if (actor.role !== 'ADMIN' && actor.role !== 'MANAGER' && actor.homeroomClassId && this.tableModel.classId) {
+      mergedWhere = mergedWhere 
+        ? and(mergedWhere, eq(this.tableModel.classId, actor.homeroomClassId))
+        : eq(this.tableModel.classId, actor.homeroomClassId);
+    }
+    
+    if (mergedWhere) queryOptions.where = mergedWhere;
     
     // Sort
     if (options.orderBy && options.orderBy.length > 0) {

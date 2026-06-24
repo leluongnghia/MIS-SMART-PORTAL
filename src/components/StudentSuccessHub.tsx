@@ -27,7 +27,7 @@ import { getGradeLevelFromClassName, getSubjectsForClassName } from '../utils/vi
 import { encryptData, decryptData, generateBackupSignature } from '../utils/security';
 import { normalizeStudentProfile, normalizeStudentProfiles, initializeUnifiedDatabase, getUnifiedStudents, saveUnifiedStudents, UnifiedStudent } from '../utils/peopleDirectory';
 import { readCrmLeadsFromStorage, syncEnrolledCrmLeadsToLifecycle } from '../utils/crmStudentSync';
-import { db } from '../firebase';
+import { firestoreDb as db } from '../firebase';
 import { collection, onSnapshot, doc, setDoc } from 'firebase/firestore';
 import { useToast } from './ui/Toast';
 

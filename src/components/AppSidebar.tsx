@@ -257,6 +257,30 @@ export default function AppSidebar({
                     </button>
                   )}
 
+                  {canDisplayTab('TICKETS') && matchesSearch('TICKETS') && (
+                    <button 
+                      onClick={() => { window.location.href='/tickets'; setIsSidebarOpen(false); }}
+                      className={getTabClass('TICKETS', 'strategy')}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <Users className={`w-4 h-4 transition-colors ${getIconClass('TICKETS', 'strategy')}`} />
+                        <span>CSKH & Phản ánh</span>
+                      </div>
+                    </button>
+                  )}
+
+                  {canDisplayTab('MEDIA') && matchesSearch('MEDIA') && (
+                    <button 
+                      onClick={() => { window.location.href='/media'; setIsSidebarOpen(false); }}
+                      className={getTabClass('MEDIA', 'strategy')}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <Megaphone className={`w-4 h-4 transition-colors ${getIconClass('MEDIA', 'strategy')}`} />
+                        <span>Truyền thông</span>
+                      </div>
+                    </button>
+                  )}
+
                   {canDisplayTab('ANALYTICS') && matchesSearch('ANALYTICS') && (
                     <button 
                       onClick={() => { setOverviewTab('ANALYTICS'); setIsSidebarOpen(false); }}
@@ -501,15 +525,39 @@ export default function AppSidebar({
               
               {isGroupOpen('campus') && (
                 <div className="flex flex-col gap-1 pl-2 ml-2 mt-1 border-l border-sky-100 dark:border-sky-950 transition-all duration-300">
-                  {canDisplayTab('HRM') && matchesSearch('HRM') && (
+                  {canDisplayTab('LETTERS') && matchesSearch('LETTERS') && (
                     <button 
-                      onClick={() => { setOverviewTab('HRM'); setIsSidebarOpen(false); }}
-                      aria-current={overviewTab === 'HRM' ? 'page' : undefined}
-                      className={getTabClass('HRM', 'campus')}
+                      onClick={() => { window.location.href='/letters'; setIsSidebarOpen(false); }}
+                      className={getTabClass('LETTERS', 'foundation')}
                     >
                       <div className="flex items-center gap-2.5">
-                        <Users className={`w-4 h-4 transition-colors ${getIconClass('HRM', 'campus')}`} />
-                        <span>Nhân sự & Đào tạo</span>
+                        <FileText className={`w-4 h-4 transition-colors ${getIconClass('LETTERS', 'foundation')}`} />
+                        <span>Văn thư & Trình ký</span>
+                      </div>
+                    </button>
+                  )}
+
+                  {canDisplayTab('MEETINGS') && matchesSearch('MEETINGS') && (
+                    <button 
+                      onClick={() => { window.location.href='/meetings'; setIsSidebarOpen(false); }}
+                      className={getTabClass('MEETINGS', 'foundation')}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <CalendarDays className={`w-4 h-4 transition-colors ${getIconClass('MEETINGS', 'foundation')}`} />
+                        <span>Lịch họp & Đặt phòng</span>
+                      </div>
+                    </button>
+                  )}
+
+                  {canDisplayTab('HRM_CENTER') && matchesSearch('HRM_CENTER') && (
+                    <button 
+                      onClick={() => { setOverviewTab('HRM_CENTER'); setIsSidebarOpen(false); }}
+                      aria-current={overviewTab === 'HRM_CENTER' ? 'page' : undefined}
+                      className={getTabClass('HRM_CENTER', 'foundation')}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <Users className={`w-4 h-4 transition-colors ${getIconClass('HRM_CENTER', 'foundation')}`} />
+                        <span>Quản trị Nhân sự (HRM)</span>
                       </div>
                     </button>
                   )}

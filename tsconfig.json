@@ -35,7 +35,9 @@
   "exclude": [
     "dist",
     "node_modules",
-    "scratch"
+    "scratch",
+    "mis_portal_handoff*",
+    "mis_portal_handoff (1)"
   ],
   "include": [
     "next-env.d.ts",
