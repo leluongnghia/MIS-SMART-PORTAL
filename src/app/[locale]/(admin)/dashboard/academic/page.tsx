@@ -27,6 +27,8 @@ export const metadata = {
   title: "Điều hành Học vụ & Chuyên môn — MIS Smart Portal",
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function AcademicDashboardPage({
   params,
 }: {
