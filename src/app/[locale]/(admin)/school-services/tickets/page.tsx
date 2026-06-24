@@ -7,11 +7,21 @@ import { Button } from '@/src/components/ui/button';
 import { Input } from '@/src/components/ui/input';
 import { MessageSquarePlus, Search, Filter, MoreHorizontal } from 'lucide-react';
 import { Badge } from '@/src/components/ui/badge';
+import { TicketActionDropdown } from './TicketActionDropdown';
+import { useToast } from '@/src/hooks/use-toast';
 
 export default function TicketsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
+  const { toast } = useToast();
+
+  const handleAction = (action: string, ticketId: string) => {
+    toast({
+      title: 'Thành công',
+      description: `Đã thực hiện thao tác: ${action} trên ticket ${ticketId}`,
+    });
+  };
 
   const filteredTickets = SERVICE_TICKETS.filter(ticket => {
     const matchesSearch = ticket.title.toLowerCase().includes(searchTerm.toLowerCase()) || ticket.id.toLowerCase().includes(searchTerm.toLowerCase());
@@ -130,9 +140,7 @@ export default function TicketsPage() {
                       {getStatusBadge(ticket.status)}
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <Button onClick={() => alert('Tính năng đang được phát triển')}  variant="ghost" size="icon" className="h-8 w-8">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
+                      <TicketActionDropdown ticket={ticket} onAction={handleAction} />
                     </td>
                   </tr>
                 ))}
