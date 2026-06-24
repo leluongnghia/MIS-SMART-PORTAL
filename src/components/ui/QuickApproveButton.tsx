@@ -2,15 +2,22 @@
 
 import React, { useState } from "react";
 import { CheckCircle2, XCircle, Loader2 } from "lucide-react";
+import { useToast } from "@/src/components/ui/Toast";
 
 export function QuickApproveButton({ itemId }: { itemId: string }) {
   const [status, setStatus] = useState<"pending" | "approved" | "rejected" | "loading">("pending");
+  const { toast } = useToast();
 
   const handleAction = async (action: "approve" | "reject") => {
     setStatus("loading");
     // Giả lập API call
     setTimeout(() => {
       setStatus(action === "approve" ? "approved" : "rejected");
+      toast({
+        variant: action === "approve" ? "success" : "warning",
+        title: action === "approve" ? "Đã phê duyệt" : "Đã từ chối",
+        message: `Hệ thống đã lưu trạng thái ${action === "approve" ? "phê duyệt" : "từ chối"} cho yêu cầu ${itemId}`
+      });
     }, 600);
   };
 
@@ -38,12 +45,14 @@ export function QuickApproveButton({ itemId }: { itemId: string }) {
     <div className="flex items-center justify-end gap-2">
       <button 
         onClick={() => handleAction("reject")}
+        disabled={status === "loading"}
         className="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg font-bold transition-colors text-[10px]"
       >
         Từ chối
       </button>
       <button 
         onClick={() => handleAction("approve")}
+        disabled={status === "loading"}
         className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-600 text-indigo-600 hover:text-white rounded-lg font-bold transition-colors"
       >
         Duyệt ngay
