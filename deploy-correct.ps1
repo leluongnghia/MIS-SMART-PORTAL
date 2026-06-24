@@ -5,7 +5,7 @@ $remoteCmd = @"
 export NVM_DIR="`$HOME/.nvm"
 [ -s "`$NVM_DIR/nvm.sh" ] && \. "`$NVM_DIR/nvm.sh"
 cd /home/duong/duong-node-app
-git clean -fd -e node_modules -e .env.local
+git clean -fd -e node_modules -e .env.local -e local.db
 git reset --hard
 git fetch --all
 git reset --hard origin/main
