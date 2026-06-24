@@ -22,7 +22,7 @@ echo.
 REM Thu dung plink neu co
 where plink >nul 2>&1
 if %errorlevel% equ 0 (
-    plink -ssh duong@192.168.49.206 -pw "d123456" -batch "cd $(find /home /var/www -name 'MIS-SMART-PORTAL' -o -name 'mis-smart-portal' -o -name 'portal' 2>/dev/null | head -1) && git pull origin main && npm install --legacy-peer-deps && npm run build && pm2 restart all || pm2 start npm --name mis-portal -- start"
+    plink -ssh duong@192.168.49.206 -pw "d123456" -hostkey "ssh-ed25519 255 SHA256:bYJyCtOaLSbt8pGdgX7jt27x/l4MeuqXmYl6dJtVJAc" -batch "cd $(find /home /var/www -name 'MIS-SMART-PORTAL' -o -name 'mis-smart-portal' -o -name 'portal' 2>/dev/null | head -1) && git reset --hard && git pull origin main && npm install --legacy-peer-deps && npm run build && pm2 restart all || pm2 start npm --name mis-portal -- start"
     goto done
 )
 
