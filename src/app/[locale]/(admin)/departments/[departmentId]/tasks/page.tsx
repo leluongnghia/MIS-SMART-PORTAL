@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/src/components/ui/card';
 import { Badge } from '@/src/components/ui/badge';
 import { Button } from '@/src/components/ui/button';
-import { Plus, Search, Filter, MessageSquare, Paperclip, Clock } from 'lucide-react';
+import { Plus, Search, Filter, MessageSquare, Paperclip, Clock, CheckSquare } from 'lucide-react';
 import { MOCK_DEPT_TASKS, DeptTask } from '@/src/libs/mock-data/department-mock';
 
 const PRIORITY_COLORS: Record<string, string> = {
