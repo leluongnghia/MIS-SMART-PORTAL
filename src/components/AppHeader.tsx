@@ -148,8 +148,18 @@ export default function AppHeader({
         </div>
       </div>
 
-      {/* Prominent Global Search */}
-      <div className="hidden lg:flex items-center flex-1 justify-center max-w-[min(40vw,560px)] mx-2 xl:mx-4 z-40 min-w-0">
+      {/* Prominent Global Search & Global Filter */}
+      <div className="hidden lg:flex items-center flex-1 justify-center max-w-[min(45vw,700px)] mx-2 xl:mx-4 z-40 min-w-0 gap-2">
+        {/* Global Time Filter */}
+        <div className="shrink-0">
+          <select className="bg-slate-50/80 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-xl px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/50 cursor-pointer font-bold appearance-none pr-8 relative">
+            <option value="HK2_2025_2026">HK2 - 2025-2026</option>
+            <option value="HK1_2025_2026">HK1 - 2025-2026</option>
+            <option value="YEAR_2024_2025">Năm học 2024-2025</option>
+          </select>
+        </div>
+
+        {/* Search */}
         <div className="relative flex-1 min-w-0">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input

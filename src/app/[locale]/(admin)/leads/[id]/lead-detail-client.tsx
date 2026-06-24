@@ -465,7 +465,7 @@ export default function LeadDetailClient({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-100 pb-5 dark:border-slate-800">
         <div className="flex items-center gap-3">
           <Link href={`/${locale}/leads`}>
-            <Button variant="outline" size="icon">
+            <Button onClick={() => alert('Tính năng đang được phát triển')} type="button"  variant="outline" size="icon">
               <ArrowLeft className="h-4 w-4" />
             </Button>
           </Link>

@@ -153,10 +153,10 @@ export default function CategoriesClient({ canManage }: { canManage: boolean }) 
             </div>
             {canManage && (
               <div className="flex gap-2">
-                <Button variant="outline">
+                <Button onClick={() => alert('Tính năng đang được phát triển')} type="button"  variant="outline">
                   <FileUp className="h-4 w-4 mr-2" /> Nhập CSV
                 </Button>
-                <Button variant="outline">
+                <Button onClick={() => alert('Tính năng đang được phát triển')} type="button"  variant="outline">
                   <FileDown className="h-4 w-4 mr-2" /> Xuất CSV
                 </Button>
                 <Button onClick={() => handleOpenDialog()}>

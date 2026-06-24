@@ -546,7 +546,7 @@ export default function Student360Dashboard({ initialData }: { initialData?: any
             </div>
             <div className="text-xs text-slate-500 mb-2">{conduct.notes?.[0] || "Không có môn yếu"}</div>
             <div className="flex justify-between items-end mt-auto">
-              <a href="#" className="text-[10px] font-medium text-blue-600">Xem chi tiết →</a>
+              <a href="#" onClick={(e) => { e.preventDefault(); alert('Tính năng đang được phát triển'); }}  className="text-[10px] font-medium text-blue-600">Xem chi tiết →</a>
               <div className="w-16 h-6">
                  <svg viewBox="0 0 100 20" preserveAspectRatio="none" className="w-full h-full">
                   <path d="M0,18 L20,18 L40,15 L60,12 L80,6 L100,8" fill="none" stroke="#f97316" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -873,7 +873,7 @@ export default function Student360Dashboard({ initialData }: { initialData?: any
                   )}
                 </div>
                 <div className="text-center mt-1">
-                  <a href="#" className="text-[10px] font-bold text-blue-600">Xem tất cả →</a>
+                  <a href="#" onClick={(e) => { e.preventDefault(); alert('Tính năng đang được phát triển'); }}  className="text-[10px] font-bold text-blue-600">Xem tất cả →</a>
                 </div>
               </CardContent>
             </Card>
@@ -982,7 +982,7 @@ export default function Student360Dashboard({ initialData }: { initialData?: any
               <Card>
                 <CardHeader className="p-4 pb-2 border-b border-slate-100 dark:border-slate-800 flex flex-row items-center justify-between">
                   <CardTitle className="text-sm font-bold">Hồ sơ & Giấy tờ đính kèm</CardTitle>
-                  <Button size="sm" variant="outline" className="h-8 gap-1 font-bold text-blue-600 border-blue-200 hover:bg-blue-50">
+                  <Button onClick={() => alert('Tính năng đang được phát triển')} type="button"  size="sm" variant="outline" className="h-8 gap-1 font-bold text-blue-600 border-blue-200 hover:bg-blue-50">
                     + Tải file lên
                   </Button>
                 </CardHeader>
@@ -1003,7 +1003,7 @@ export default function Student360Dashboard({ initialData }: { initialData?: any
                             <p className="text-xs text-slate-500">{file.date} • {file.size}</p>
                           </div>
                         </div>
-                        <Button variant="ghost" size="sm" className="text-blue-600 font-bold text-xs">Tải xuống</Button>
+                        <Button onClick={() => alert('Tính năng đang được phát triển')} type="button"  variant="ghost" size="sm" className="text-blue-600 font-bold text-xs">Tải xuống</Button>
                       </div>
                     ))}
                   </div>

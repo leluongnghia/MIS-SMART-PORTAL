@@ -19,40 +19,47 @@ export type PrimaryRole =
 
 /** Maps system role/workspaceId to primaryRole */
 export function inferPrimaryRole(user: {
+  id?: string;
   role?: string | null;
   workspaceId?: string | null;
   homeroomClassId?: string | null;
+  title?: string | null;
 }): PrimaryRole {
   const ws = user.workspaceId?.toUpperCase() ?? '';
   const role = user.role?.toUpperCase() ?? '';
 
   // Super admin
-  if (role === 'ADMIN') return 'super_admin';
+  if (role === 'ADMIN') {
+    if (user.id === 'user_chutich' || (user.title && user.title.toLowerCase().includes('chủ tịch'))) {
+      return 'super_admin';
+    }
+    return 'principal';
+  }
 
   // Workspace-based mapping
   const wsMap: Record<string, PrimaryRole> = {
     'BGH': 'principal',
-    'HDT': 'council',
-    'HDTRUONG': 'council',
-    'COUNCIL': 'council',
-    'DAO_TAO': 'academic_office',
-    'KHAOTHI': 'academic_office',
-    'DBCL': 'academic_office',
-    'HCNS': 'hr_admin',
-    'NHANSU': 'hr_admin',
-    'KETOAN': 'finance',
-    'TAICHINH': 'finance',
-    'TUYENSINH': 'admissions',
-    'PR': 'admissions',
-    'TRUYENTHONG': 'media_cskh',
-    'CSKH': 'media_cskh',
-    'CSVC': 'operations',
-    'BEP': 'operations',
-    'YTE': 'operations',
-    'VANHÀNH': 'operations',
+    'TUYEN_SINH_PR': 'admissions',
+    'QUOC_TE': 'academic_office',
+    'KHAO_THI': 'academic_office',
+    'CTHS_TAM_LY': 'supervisor_quannhiem',
+    'DICH_VU_HOC_DUONG': 'operations',
+    'HANH_CHINH': 'hr_admin',
+    'TOAN_TIN': 'academic_office',
+    'VAN': 'academic_office',
+    'NGOAI_NGU': 'academic_office',
+    'KHTN': 'academic_office',
+    'LS_DL': 'academic_office',
+    'GDCD_KTPL': 'academic_office',
+    'NT_TC_QPAN': 'academic_office',
+    'CN_TRAI_NGHIEM': 'academic_office',
   };
 
   if (ws && wsMap[ws]) return wsMap[ws];
+
+  if (role === 'MANAGER') {
+    return 'principal'; // Managers default to principal dashboard
+  }
 
   // If user has homeroom class → GVCN
   if (user.homeroomClassId) return 'homeroom_gvcn';

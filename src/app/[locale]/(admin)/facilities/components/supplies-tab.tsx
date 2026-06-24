@@ -159,7 +159,7 @@ export function SuppliesTab({ initialSupplies = [] }: { initialSupplies?: Supply
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <Button variant="outline" className="w-full sm:w-auto h-10 rounded-xl font-bold bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-800 border-blue-200 dark:bg-blue-950/30 dark:border-blue-800 dark:text-blue-300">
+          <Button onClick={() => alert('Tính năng đang được phát triển')} type="button"  variant="outline" className="w-full sm:w-auto h-10 rounded-xl font-bold bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-800 border-blue-200 dark:bg-blue-950/30 dark:border-blue-800 dark:text-blue-300">
             <ScanBarcode className="mr-2 h-4 w-4" /> Quét mã QR
           </Button>
         </div>

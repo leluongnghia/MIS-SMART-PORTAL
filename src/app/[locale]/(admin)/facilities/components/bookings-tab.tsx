@@ -134,7 +134,7 @@ export function BookingsTab({ initialBookings = [] }: { initialBookings?: Handov
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <Button variant="outline">
+          <Button onClick={() => alert('Tính năng đang được phát triển')} type="button"  variant="outline">
             <CalendarClock className="mr-2 h-4 w-4" /> Xem theo lịch
           </Button>
         </div>

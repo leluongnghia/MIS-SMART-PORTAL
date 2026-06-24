@@ -49,6 +49,11 @@ export async function getCurrentActor(): Promise<Actor | null> {
       .limit(1);
 
     if (user) return user as Actor;
+
+    // Fallback to MOCK_USERS if local DB hasn't been re-seeded
+    const { MOCK_USERS } = require('../../mockData');
+    const mockUser = MOCK_USERS.find((u: any) => u.id === userId);
+    if (mockUser) return mockUser as Actor;
   }
 
   // 3. Fallback for demo/local auth: use an active admin, then any active user.

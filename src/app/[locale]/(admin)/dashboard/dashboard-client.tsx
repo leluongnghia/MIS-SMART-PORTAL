@@ -200,7 +200,7 @@ export default function DashboardClient({ tab, initialData }: DashboardClientPro
               <p className="text-xs text-slate-500 mt-1">4 đang mở • 2 quá hạn</p>
               <div className="mt-4">
                 <Link href={`/${locale}/tasks`}>
-                  <Button variant="outline" size="sm" className="w-full text-xs rounded-sm">Xem danh sách</Button>
+                  <Button onClick={() => alert('Tính năng đang được phát triển')} type="button"  variant="outline" size="sm" className="w-full text-xs rounded-sm">Xem danh sách</Button>
                 </Link>
               </div>
             </CardContent>
@@ -215,7 +215,7 @@ export default function DashboardClient({ tab, initialData }: DashboardClientPro
               <p className="text-xs text-slate-500 mt-1">1 đang chờ duyệt • 1 đã duyệt</p>
               <div className="mt-4">
                 <Link href={`/${locale}/approvals`}>
-                  <Button variant="outline" size="sm" className="w-full text-xs rounded-sm">Đăng ký nghỉ phép / Yêu cầu</Button>
+                  <Button onClick={() => alert('Tính năng đang được phát triển')} type="button"  variant="outline" size="sm" className="w-full text-xs rounded-sm">Đăng ký nghỉ phép / Yêu cầu</Button>
                 </Link>
               </div>
             </CardContent>
@@ -230,7 +230,7 @@ export default function DashboardClient({ tab, initialData }: DashboardClientPro
               <p className="text-xs text-slate-500 mt-1">SOPs trường học đang hiệu lực</p>
               <div className="mt-4">
                 <Link href={`/${locale}/knowledge`}>
-                  <Button variant="outline" size="sm" className="w-full text-xs rounded-sm">Tra cứu quy trình</Button>
+                  <Button onClick={() => alert('Tính năng đang được phát triển')} type="button"  variant="outline" size="sm" className="w-full text-xs rounded-sm">Tra cứu quy trình</Button>
                 </Link>
               </div>
             </CardContent>
@@ -444,7 +444,7 @@ export default function DashboardClient({ tab, initialData }: DashboardClientPro
               </div>
             </div>
             <Link href={`/${locale}/directives`}>
-              <Button variant="ghost" size="sm" className="h-7 text-xs text-slate-500 hover:text-slate-800 rounded-full">
+              <Button onClick={() => alert('Tính năng đang được phát triển')} type="button"  variant="ghost" size="sm" className="h-7 text-xs text-slate-500 hover:text-slate-800 rounded-full">
                 Mở rộng <ChevronRight className="h-3.5 w-3.5 ml-0.5" />
               </Button>
             </Link>
@@ -515,12 +515,12 @@ export default function DashboardClient({ tab, initialData }: DashboardClientPro
             </div>
             <div className="flex gap-2">
               <Link href={`/${locale}/tasks`}>
-                <Button variant="outline" size="sm" className="h-7 text-xs rounded-full">
+                <Button onClick={() => alert('Tính năng đang được phát triển')} type="button"  variant="outline" size="sm" className="h-7 text-xs rounded-full">
                   Tasks
                 </Button>
               </Link>
               <Link href={`/${locale}/approvals`}>
-                <Button variant="outline" size="sm" className="h-7 text-xs rounded-full">
+                <Button onClick={() => alert('Tính năng đang được phát triển')} type="button"  variant="outline" size="sm" className="h-7 text-xs rounded-full">
                   Duyệt Đơn
                 </Button>
               </Link>
@@ -567,7 +567,7 @@ export default function DashboardClient({ tab, initialData }: DashboardClientPro
                     <div className="text-[10px] text-slate-500">Phòng Đào tạo • Đăng ký từ 25/06/2026</div>
                   </div>
                   <Link href={`/${locale}/approvals`}>
-                    <Button size="sm" className="h-6 text-[10px] bg-slate-900 text-white rounded-full hover:bg-slate-800 px-3">Duyệt nhanh</Button>
+                    <Button onClick={() => alert('Tính năng đang được phát triển')} type="button"  size="sm" className="h-6 text-[10px] bg-slate-900 text-white rounded-full hover:bg-slate-800 px-3">Duyệt nhanh</Button>
                   </Link>
                 </div>
               </div>
@@ -586,7 +586,7 @@ export default function DashboardClient({ tab, initialData }: DashboardClientPro
               </div>
             </div>
             <Link href={`/${locale}/hrm`}>
-              <Button variant="ghost" size="sm" className="h-7 text-xs text-slate-500 hover:text-slate-800 rounded-full">
+              <Button onClick={() => alert('Tính năng đang được phát triển')} type="button"  variant="ghost" size="sm" className="h-7 text-xs text-slate-500 hover:text-slate-800 rounded-full">
                 Mở rộng <ChevronRight className="h-3.5 w-3.5 ml-0.5" />
               </Button>
             </Link>
@@ -637,7 +637,7 @@ export default function DashboardClient({ tab, initialData }: DashboardClientPro
               </div>
             </div>
             <Link href={`/${locale}/facilities`}>
-              <Button variant="ghost" size="sm" className="h-7 text-xs text-slate-500 hover:text-slate-800 rounded-full">
+              <Button onClick={() => alert('Tính năng đang được phát triển')} type="button"  variant="ghost" size="sm" className="h-7 text-xs text-slate-500 hover:text-slate-800 rounded-full">
                 Mở rộng <ChevronRight className="h-3.5 w-3.5 ml-0.5" />
               </Button>
             </Link>
@@ -684,7 +684,7 @@ export default function DashboardClient({ tab, initialData }: DashboardClientPro
               </div>
             </div>
             <Link href={`/${locale}/risk`}>
-              <Button variant="ghost" size="sm" className="h-7 text-xs text-slate-500 hover:text-slate-800 rounded-full">
+              <Button onClick={() => alert('Tính năng đang được phát triển')} type="button"  variant="ghost" size="sm" className="h-7 text-xs text-slate-500 hover:text-slate-800 rounded-full">
                 Mở rộng <ChevronRight className="h-3.5 w-3.5 ml-0.5" />
               </Button>
             </Link>
@@ -723,7 +723,7 @@ export default function DashboardClient({ tab, initialData }: DashboardClientPro
               </div>
             </div>
             <Link href={`/${locale}/events`}>
-              <Button variant="ghost" size="sm" className="h-7 text-xs text-slate-500 hover:text-slate-800 rounded-full">
+              <Button onClick={() => alert('Tính năng đang được phát triển')} type="button"  variant="ghost" size="sm" className="h-7 text-xs text-slate-500 hover:text-slate-800 rounded-full">
                 Mở rộng <ChevronRight className="h-3.5 w-3.5 ml-0.5" />
               </Button>
             </Link>
@@ -772,7 +772,7 @@ export default function DashboardClient({ tab, initialData }: DashboardClientPro
               </div>
             </div>
             <Link href={`/${locale}/knowledge`}>
-              <Button variant="ghost" size="sm" className="h-7 text-xs text-slate-500 hover:text-slate-800 rounded-full">
+              <Button onClick={() => alert('Tính năng đang được phát triển')} type="button"  variant="ghost" size="sm" className="h-7 text-xs text-slate-500 hover:text-slate-800 rounded-full">
                 Mở rộng <ChevronRight className="h-3.5 w-3.5 ml-0.5" />
               </Button>
             </Link>
@@ -824,7 +824,7 @@ export default function DashboardClient({ tab, initialData }: DashboardClientPro
               </div>
             </div>
             <Link href={`/${locale}/admissions`}>
-              <Button variant="outline" size="sm" className="h-7 text-xs text-blue-600 hover:bg-blue-50/50 border-blue-200 hover:border-blue-300 rounded-full px-4.5 font-bold transition-all">
+              <Button onClick={() => alert('Tính năng đang được phát triển')} type="button"  variant="outline" size="sm" className="h-7 text-xs text-blue-600 hover:bg-blue-50/50 border-blue-200 hover:border-blue-300 rounded-full px-4.5 font-bold transition-all">
                 Đến Quản trị Tuyển sinh <ChevronRight className="h-3.5 w-3.5 ml-0.5 inline-block" />
               </Button>
             </Link>

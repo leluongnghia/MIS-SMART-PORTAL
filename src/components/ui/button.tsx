@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { cn } from '@/src/lib/utils';
 
-type ButtonVariant = 'default' | 'secondary' | 'outline' | 'ghost' | 'destructive';
+type ButtonVariant = 'default' | 'secondary' | 'outline' | 'ghost' | 'destructive' | 'link';
 type ButtonSize = 'sm' | 'default' | 'lg' | 'icon';
 
 const variants: Record<ButtonVariant, string> = {
@@ -10,6 +10,7 @@ const variants: Record<ButtonVariant, string> = {
   outline: 'border border-slate-200 bg-white text-slate-900 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:hover:bg-slate-900',
   ghost: 'text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800',
   destructive: 'bg-rose-600 text-white hover:bg-rose-700',
+  link: 'text-slate-900 underline-offset-4 hover:underline dark:text-slate-50',
 };
 
 const sizes: Record<ButtonSize, string> = {

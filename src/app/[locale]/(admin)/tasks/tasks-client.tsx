@@ -433,7 +433,7 @@ export default function TasksDashboard({ initialData, defaultTab, defaultTaskId 
                 </div>
               </div>
             </div>
-            <Button variant="ghost" size="sm" className="text-blue-600 hover:bg-blue-50">Xem chi tiết</Button>
+            <Button onClick={() => alert('Tính năng đang được phát triển')} type="button"  variant="ghost" size="sm" className="text-blue-600 hover:bg-blue-50">Xem chi tiết</Button>
           </CardContent>
         </Card>
 
@@ -460,7 +460,7 @@ export default function TasksDashboard({ initialData, defaultTab, defaultTaskId 
                 </div>
               </div>
             </div>
-            <Button variant="ghost" size="sm" className="text-orange-600 hover:bg-orange-50">Xem chi tiết</Button>
+            <Button onClick={() => alert('Tính năng đang được phát triển')} type="button"  variant="ghost" size="sm" className="text-orange-600 hover:bg-orange-50">Xem chi tiết</Button>
           </CardContent>
         </Card>
 
@@ -487,7 +487,7 @@ export default function TasksDashboard({ initialData, defaultTab, defaultTaskId 
                 </div>
               </div>
             </div>
-            <Button variant="ghost" size="sm" className="text-purple-600 hover:bg-purple-50">Xem chi tiết</Button>
+            <Button onClick={() => alert('Tính năng đang được phát triển')} type="button"  variant="ghost" size="sm" className="text-purple-600 hover:bg-purple-50">Xem chi tiết</Button>
           </CardContent>
         </Card>
 
@@ -514,7 +514,7 @@ export default function TasksDashboard({ initialData, defaultTab, defaultTaskId 
                 </div>
               </div>
             </div>
-            <Button variant="ghost" size="sm" className="text-emerald-600 hover:bg-emerald-50">Xem chi tiết</Button>
+            <Button onClick={() => alert('Tính năng đang được phát triển')} type="button"  variant="ghost" size="sm" className="text-emerald-600 hover:bg-emerald-50">Xem chi tiết</Button>
           </CardContent>
         </Card>
       </div>
@@ -536,7 +536,7 @@ export default function TasksDashboard({ initialData, defaultTab, defaultTaskId 
             </TabsList>
             <div className="flex gap-2">
               <Link href={`/${locale}/tasks/overdue`}>
-                <Button
+                <Button onClick={() => alert('Tính năng đang được phát triển')} type="button" 
                   variant="outline"
                   className="h-10 border-orange-200 text-orange-600 bg-orange-50 hover:bg-orange-100 hover:text-orange-700 shadow-sm"
                 >
@@ -614,7 +614,7 @@ export default function TasksDashboard({ initialData, defaultTab, defaultTaskId 
                                 isOverdue && overdueLevel === 'CRITICAL' ? "border-l-rose-700 bg-rose-50/30 dark:bg-rose-950/10" : "border-l-transparent"
                               )}
                             >
-                              <Button variant="ghost" size="icon" className="h-6 w-6 absolute top-2 right-2 opacity-0 group-hover:opacity-100"><MoreVertical className="h-3 w-3" /></Button>
+                              <Button onClick={() => alert('Tính năng đang được phát triển')} type="button"  variant="ghost" size="icon" className="h-6 w-6 absolute top-2 right-2 opacity-0 group-hover:opacity-100"><MoreVertical className="h-3 w-3" /></Button>
                               <h4 className="text-xs font-bold leading-snug pr-6 mb-2">{card.title}</h4>
                               <div className="flex items-center gap-1.5 text-[10px] text-slate-500 mb-1">
                                 <UserCircle className="h-3 w-3" /> {card.user}
@@ -782,7 +782,7 @@ export default function TasksDashboard({ initialData, defaultTab, defaultTaskId 
         <Card className="xl:col-span-7 h-[650px] flex flex-col">
           <CardHeader className="p-4 pb-2 border-b border-slate-100 dark:border-slate-800 flex flex-row items-center justify-between">
             <CardTitle className="text-base font-bold">Quy trình phê duyệt</CardTitle>
-            <a href="#" className="text-xs font-medium text-blue-600">Xem tất cả</a>
+            <a href="#" onClick={(e) => { e.preventDefault(); alert('Tính năng đang được phát triển'); }}  className="text-xs font-medium text-blue-600">Xem tất cả</a>
           </CardHeader>
           <CardContent className="p-6 flex-1 overflow-y-auto">
             {approvalDetails ? (
@@ -1175,7 +1175,7 @@ export default function TasksDashboard({ initialData, defaultTab, defaultTaskId 
                 </div>
                 <div className="flex gap-2">
                   <input type="text" placeholder="Nhập bình luận..." className="flex-1 text-xs p-2 rounded border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 focus:ring-1 focus:ring-blue-500" />
-                  <Button className="h-auto text-xs bg-blue-600 hover:bg-blue-700">Gửi</Button>
+                  <Button onClick={() => alert('Tính năng đang được phát triển')} type="button"  className="h-auto text-xs bg-blue-600 hover:bg-blue-700">Gửi</Button>
                 </div>
               </TabsContent>
               
@@ -1193,7 +1193,7 @@ export default function TasksDashboard({ initialData, defaultTab, defaultTaskId 
                     <div className="text-center text-xs text-slate-500 py-4">Chưa có tệp đính kèm nào.</div>
                   )}
                 </div>
-                <Button variant="outline" className="w-full text-xs border-dashed border-2 py-6 text-slate-500 hover:text-blue-600 hover:border-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20">
+                <Button onClick={() => alert('Tính năng đang được phát triển')} type="button"  variant="outline" className="w-full text-xs border-dashed border-2 py-6 text-slate-500 hover:text-blue-600 hover:border-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20">
                   <Plus className="h-4 w-4 mr-1" /> Thêm đính kèm
                 </Button>
               </TabsContent>
@@ -1438,7 +1438,7 @@ export default function TasksDashboard({ initialData, defaultTab, defaultTaskId 
         <Card>
           <CardHeader className="p-4 pb-2 border-b border-slate-100 dark:border-slate-800 flex flex-row items-center justify-between">
             <CardTitle className="text-sm font-bold">Hạn chót sắp tới</CardTitle>
-            <a href="#" className="text-xs font-medium text-blue-600">Xem tất cả</a>
+            <a href="#" onClick={(e) => { e.preventDefault(); alert('Tính năng đang được phát triển'); }}  className="text-xs font-medium text-blue-600">Xem tất cả</a>
           </CardHeader>
           <CardContent className="p-0">
             <div className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -1468,7 +1468,7 @@ export default function TasksDashboard({ initialData, defaultTab, defaultTaskId 
         <Card>
           <CardHeader className="p-4 pb-2 border-b border-slate-100 dark:border-slate-800 flex flex-row items-center justify-between">
             <CardTitle className="text-sm font-bold">Thống kê theo trạng thái</CardTitle>
-            <a href="#" className="text-xs font-medium text-blue-600">Xem báo cáo</a>
+            <a href="#" onClick={(e) => { e.preventDefault(); alert('Tính năng đang được phát triển'); }}  className="text-xs font-medium text-blue-600">Xem báo cáo</a>
           </CardHeader>
           <CardContent className="p-4 flex items-center justify-between">
             <div className="w-32 h-32 relative">

@@ -51,6 +51,7 @@ import LoginPortal from '@/src/components/LoginPortal';
 import { MOCK_USERS, WORKSPACES } from '@/src/mockData';
 import type { UserProfile, Announcement, BoardDirective, Task } from '@/src/types';
 import NotificationDrawer from '../NotificationDrawer';
+import { DepartmentSidebar } from '@/src/components/department/DepartmentSidebar';
 
 type MenuItemGroup = {
   title: string;
@@ -68,87 +69,76 @@ type NotificationSummary = {
 
 const menuGroups: MenuItemGroup[] = [
   {
-    title: 'ĐIỀU HÀNH',
+    title: 'BỘ MÁY ĐIỀU HÀNH',
     items: [
-      { label: 'Tổng quan điều hành', href: 'dashboard', icon: LayoutDashboard },
-      { label: 'Chiến lược & OKRs', href: 'okr', icon: Target },
-      { label: 'Kế hoạch hoạt động', href: 'plans', icon: ClipboardCheck },
+      { label: 'Dashboard Hội đồng', href: 'dashboard/council', icon: LayoutDashboard },
+      { label: 'Dashboard Hiệu trưởng', href: 'dashboard/academic', icon: LayoutDashboard },
+      { label: 'Mục tiêu chiến lược', href: 'dashboard/okrs', icon: Target },
+      { label: 'Quản trị rủi ro', href: 'risk', icon: ShieldAlert },
       { label: 'Chỉ đạo BGH', href: 'directives', icon: ClipboardCheck, badgeKey: 'directives' },
-      { label: 'Báo cáo & Phân tích', href: 'reports', icon: FileBarChart },
-      { label: 'KPI điều hành', href: 'kpi', icon: LineChart },
-      { label: 'Phân tích & Dự báo', href: 'forecast', icon: TrendingUp },
-      { label: 'Rủi ro & Kiểm soát nội bộ', href: 'risk', icon: ShieldAlert },
-    ],
-  },
-  {
-    title: 'CÔNG VIỆC & QUY TRÌNH',
-    items: [
       { label: 'Nhiệm vụ & Dự án', href: 'tasks', icon: CheckSquare, badgeKey: 'tasks' },
       { label: 'Đơn từ & Phê duyệt', href: 'approvals', icon: UserCheck },
       { label: 'Thông báo nội bộ', href: 'announcements', icon: Bell, badgeKey: 'announcements' },
-      { label: 'Kho Quy trình & Tri thức', href: 'knowledge', icon: BookOpen },
     ],
   },
   {
-    title: 'NHÂN SỰ & ĐÀO TẠO',
+    title: 'HỌC VỤ & NHÂN SỰ',
     items: [
+      { label: 'Hồ sơ Học sinh 360', href: 'students', icon: GraduationCap },
+      { label: 'Quản lý Lớp học', href: 'classes', icon: Users },
+      { label: 'Giáo án & Dự giờ', href: 'lesson-plans', icon: BookOpen },
+      { label: 'Thời khóa biểu & Lịch', href: 'schedule', icon: CalendarDays },
+      { label: 'Kiểm tra & Đánh giá', href: 'exams', icon: FileText },
+      { label: 'Sổ liên lạc & Nề nếp', href: 'conduct', icon: CheckSquare },
       { label: 'Nhân sự trường học', href: 'hrm', icon: Users },
     ],
   },
   {
-    title: 'HỌC VỤ & HỌC SINH',
-    items: [
-      { label: 'Thời khóa biểu & Giáo án', href: 'schedule', icon: CalendarDays },
-      { label: 'Hồ sơ Học sinh 360', href: 'students', icon: GraduationCap },
-      { label: 'Quản lý Lớp học', href: 'classes', icon: Users },
-    ],
-  },
-  {
-    title: 'TUYỂN SINH & TRUYỀN THÔNG',
+    title: 'VẬN HÀNH & NGUỒN LỰC',
     items: [
       { label: 'Tuyển sinh CRM', href: 'admissions', icon: Workflow },
-      { label: 'Sự kiện & Truyền thông', href: 'events', icon: Calendar },
       { label: 'CSKH Phụ huynh', href: 'tickets', icon: MessageSquare },
-    ],
-  },
-  {
-    title: 'VẬN HÀNH DỊCH VỤ',
-    items: [
+      { label: 'Sự kiện & Truyền thông', href: 'events', icon: Calendar },
       { label: 'Xe đưa đón học sinh', href: 'transport', icon: Bus },
       { label: 'Bán trú & Bếp ăn', href: 'meals', icon: Utensils },
-      { label: 'Y tế học đường', href: 'health', icon: HeartPulse },
+      { label: 'Tài sản & Cơ sở VC', href: 'facilities', icon: Building },
+      { label: 'Kho Quy trình & Tri thức', href: 'knowledge', icon: BookOpen },
+      { label: 'Hành chính & Cuộc họp', href: 'meetings', icon: Users },
     ],
   },
   {
-    title: 'CƠ SỞ VẬT CHẤT & DỊCH VỤ',
+    title: 'CÀI ĐẶT HỆ THỐNG',
     items: [
-      { label: 'Tài sản, Thiết bị & Thư viện', href: 'facilities', icon: Building },
+      { label: 'Cấu hình cá nhân', href: 'settings', icon: Settings },
+    ],
+  },
+  {
+    title: 'DỊCH VỤ HỌC ĐƯỜNG',
+    items: [
+      { label: 'Dashboard dịch vụ', href: 'school-services', icon: LayoutDashboard },
+      { label: 'Xe đưa đón', href: 'school-services/transport', icon: Bus },
+      { label: 'Ăn uống / Suất ăn', href: 'school-services/meals', icon: Utensils },
+      { label: 'Bán trú - Nội trú', href: 'school-services/boarding', icon: Moon },
+      { label: 'Y tế học đường', href: 'school-services/health', icon: HeartPulse },
+      { label: 'Đồng phục - Học phẩm', href: 'school-services/uniforms', icon: ClipboardCheck },
+      { label: 'Cơ sở vật chất', href: 'school-services/facilities', icon: Building },
+      { label: 'Hỗ trợ học sinh', href: 'school-services/student-support', icon: Users },
+      { label: 'Ticket dịch vụ', href: 'school-services/tickets', icon: MessageSquare },
+      { label: 'Phản ánh / Khiếu nại', href: 'school-services/feedback', icon: ShieldAlert },
+      { label: 'Thông báo dịch vụ', href: 'school-services/notifications', icon: Bell },
+      { label: 'Báo cáo vận hành', href: 'school-services/reports', icon: FileBarChart },
+      { label: 'Cấu hình dịch vụ', href: 'school-services/settings', icon: Settings },
     ],
   },
 ];
 
 
 const titleColors: Record<string, { text: string; dot: string; activeBg: string }> = {
-  'VẬN HÀNH DỊCH VỤ': { text: 'text-orange-600 dark:text-orange-400', dot: 'bg-orange-600 dark:bg-orange-400', activeBg: 'bg-orange-600 text-white shadow-md shadow-orange-500/20' },
-  'ĐIỀU HÀNH': { text: 'text-indigo-600 dark:text-indigo-400', dot: 'bg-indigo-600 dark:bg-indigo-400', activeBg: 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20' },
-  'CÔNG VIỆC & QUY TRÌNH': { text: 'text-amber-600 dark:text-amber-400', dot: 'bg-amber-600 dark:bg-amber-400', activeBg: 'bg-amber-600 text-white shadow-md shadow-amber-500/20' },
-  'NHÂN SỰ & ĐÀO TẠO': { text: 'text-rose-600 dark:text-rose-400', dot: 'bg-rose-600 dark:bg-rose-400', activeBg: 'bg-rose-600 text-white shadow-md shadow-rose-500/20' },
-  'HỌC VỤ & HỌC SINH': { text: 'text-emerald-600 dark:text-emerald-400', dot: 'bg-emerald-600 dark:bg-emerald-400', activeBg: 'bg-emerald-600 text-white shadow-md shadow-emerald-500/20' },
-  'TUYỂN SINH & TRUYỀN THÔNG': { text: 'text-cyan-600 dark:text-cyan-400', dot: 'bg-cyan-600 dark:bg-cyan-400', activeBg: 'bg-cyan-600 text-white shadow-md shadow-cyan-500/20' },
-  'CƠ SỞ VẬT CHẤT & DỊCH VỤ': { text: 'text-sky-600 dark:text-sky-400', dot: 'bg-sky-600 dark:bg-sky-400', activeBg: 'bg-sky-600 text-white shadow-md shadow-sky-500/20' },
-  'DỮ LIỆU HỆ THỐNG': { text: 'text-sky-600 dark:text-sky-400', dot: 'bg-sky-600 dark:bg-sky-400', activeBg: 'bg-sky-600 text-white shadow-md shadow-sky-500/20' },
-  'QUẢN TRỊ NỀN TẢNG': { text: 'text-purple-600 dark:text-purple-400', dot: 'bg-purple-600 dark:bg-purple-400', activeBg: 'bg-purple-600 text-white shadow-md shadow-purple-500/20' },
-  'TỔNG QUAN': { text: 'text-slate-500 dark:text-slate-400', dot: 'bg-slate-400', activeBg: 'bg-blue-600 text-white shadow-md shadow-blue-500/20' },
-  'NGHIỆP VỤ BỘ PHẬN': { text: 'text-blue-600 dark:text-blue-400', dot: 'bg-blue-600 dark:bg-blue-400', activeBg: 'bg-blue-600 text-white shadow-md shadow-blue-500/20' },
-  'HỌC VỤ & LỊCH': { text: 'text-emerald-600 dark:text-emerald-400', dot: 'bg-emerald-600 dark:bg-emerald-400', activeBg: 'bg-emerald-600 text-white shadow-md shadow-emerald-500/20' },
-  'HỆ THỐNG': { text: 'text-slate-500 dark:text-slate-400', dot: 'bg-slate-400', activeBg: 'bg-blue-600 text-white shadow-md shadow-blue-500/20' },
-  'KHẢO THÍ': { text: 'text-teal-600 dark:text-teal-400', dot: 'bg-teal-600 dark:bg-teal-400', activeBg: 'bg-teal-600 text-white shadow-md shadow-teal-500/20' },
-  'DỮ LIỆU HỌC VỤ': { text: 'text-sky-600 dark:text-sky-400', dot: 'bg-sky-600 dark:bg-sky-400', activeBg: 'bg-sky-600 text-white shadow-md shadow-sky-500/20' },
-  'ĐẢM BẢO CHẤT LƯỢNG': { text: 'text-purple-600 dark:text-purple-400', dot: 'bg-purple-600 dark:bg-purple-400', activeBg: 'bg-purple-600 text-white shadow-md shadow-purple-500/20' },
-  'BÁO CÁO': { text: 'text-pink-600 dark:text-pink-400', dot: 'bg-pink-600 dark:bg-pink-400', activeBg: 'bg-pink-600 text-white shadow-md shadow-pink-500/20' },
-  'CÀI ĐẶT': { text: 'text-slate-500 dark:text-slate-400', dot: 'bg-slate-400', activeBg: 'bg-blue-600 text-white shadow-md shadow-blue-500/20' },
-  'TUYỂN SINH & CRM': { text: 'text-indigo-600 dark:text-indigo-400', dot: 'bg-indigo-600 dark:bg-indigo-400', activeBg: 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20' },
-  'VẬN HÀNH BỘ PHẬN': { text: 'text-amber-600 dark:text-amber-400', dot: 'bg-amber-600 dark:bg-amber-400', activeBg: 'bg-amber-600 text-white shadow-md shadow-amber-500/20' },
+  'BỘ MÁY ĐIỀU HÀNH': { text: 'text-indigo-600 dark:text-indigo-400', dot: 'bg-indigo-600 dark:bg-indigo-400', activeBg: 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20' },
+  'HỌC VỤ & NHÂN SỰ': { text: 'text-emerald-600 dark:text-emerald-400', dot: 'bg-emerald-600 dark:bg-emerald-400', activeBg: 'bg-emerald-600 text-white shadow-md shadow-emerald-500/20' },
+  'VẬN HÀNH & NGUỒN LỰC': { text: 'text-amber-600 dark:text-amber-400', dot: 'bg-amber-600 dark:bg-amber-400', activeBg: 'bg-amber-600 text-white shadow-md shadow-amber-500/20' },
+  'CÀI ĐẶT HỆ THỐNG': { text: 'text-slate-500 dark:text-slate-400', dot: 'bg-slate-400', activeBg: 'bg-blue-600 text-white shadow-md shadow-blue-500/20' },
+  'DỊCH VỤ HỌC ĐƯỜNG': { text: 'text-cyan-600 dark:text-cyan-400', dot: 'bg-cyan-600 dark:bg-cyan-400', activeBg: 'bg-cyan-600 text-white shadow-md shadow-cyan-500/20' },
 };
 
 
@@ -427,92 +417,29 @@ export default function AdminShell({ locale, children }: { locale: string; child
     return parts.length ? parts : ['dashboard'];
   }, [pathname]);
 
-  const isDepartment = currentUser?.workspaceId &&
-    currentUser.workspaceId !== 'BGH' &&
-    currentUser.workspaceId !== 'KHAO_THI' &&
-    currentUser.workspaceId !== 'TUYEN_SINH_PR' &&
-    currentUser?.role !== 'ADMIN';
-  const usesSchoolOperationsMenu = currentUser?.workspaceId !== 'KHAO_THI' &&
-    currentUser?.workspaceId !== 'TUYEN_SINH_PR' &&
-    !isDepartment;
+  const WORKSPACE_MENU_MAPPING: Record<string, string[]> = {
+    ALL: ['BỘ MÁY ĐIỀU HÀNH', 'HỌC VỤ & NHÂN SỰ', 'VẬN HÀNH & NGUỒN LỰC', 'DỊCH VỤ HỌC ĐƯỜNG', 'CÀI ĐẶT HỆ THỐNG'],
+    BGH: ['BỘ MÁY ĐIỀU HÀNH', 'HỌC VỤ & NHÂN SỰ', 'VẬN HÀNH & NGUỒN LỰC', 'DỊCH VỤ HỌC ĐƯỜNG', 'CÀI ĐẶT HỆ THỐNG'],
+    TUYEN_SINH_PR: ['VẬN HÀNH & NGUỒN LỰC', 'CÀI ĐẶT HỆ THỐNG'],
+    QUOC_TE: ['HỌC VỤ & NHÂN SỰ', 'CÀI ĐẶT HỆ THỐNG'],
+    CTHS_TAM_LY: ['HỌC VỤ & NHÂN SỰ', 'VẬN HÀNH & NGUỒN LỰC', 'CÀI ĐẶT HỆ THỐNG'],
+    DICH_VU_HOC_DUONG: ['DỊCH VỤ HỌC ĐƯỜNG', 'CÀI ĐẶT HỆ THỐNG'],
+    TOAN_TIN: ['HỌC VỤ & NHÂN SỰ', 'CÀI ĐẶT HỆ THỐNG'],
+    VAN: ['HỌC VỤ & NHÂN SỰ', 'CÀI ĐẶT HỆ THỐNG'],
+    NGOAI_NGU: ['HỌC VỤ & NHÂN SỰ', 'CÀI ĐẶT HỆ THỐNG'],
+    KHTN: ['HỌC VỤ & NHÂN SỰ', 'CÀI ĐẶT HỆ THỐNG'],
+    LS_DL: ['HỌC VỤ & NHÂN SỰ', 'CÀI ĐẶT HỆ THỐNG'],
+    GDCD_KTPL: ['HỌC VỤ & NHÂN SỰ', 'CÀI ĐẶT HỆ THỐNG'],
+    NT_TC_QPAN: ['HỌC VỤ & NHÂN SỰ', 'CÀI ĐẶT HỆ THỐNG'],
+    CN_TRAI_NGHIEM: ['HỌC VỤ & NHÂN SỰ', 'CÀI ĐẶT HỆ THỐNG'],
+    HANH_CHINH: ['VẬN HÀNH & NGUỒN LỰC', 'HỌC VỤ & NHÂN SỰ', 'CÀI ĐẶT HỆ THỐNG'],
+  };
 
-  const departmentMenuGroups: MenuItemGroup[] = [
-    {
-      title: 'TỔNG QUAN',
-      items: [
-        { label: 'Tổng quan bộ phận', href: 'dashboard', icon: LayoutDashboard },
-      ],
-    },
-    {
-      title: 'NGHIỆP VỤ BỘ PHẬN',
-      items: [
-        { label: 'Công việc nội bộ', href: 'dashboard?tab=tasks', icon: CheckSquare, badgeKey: 'tasks' },
-        { label: 'Duyệt giáo án', href: 'dashboard?tab=giaoan', icon: FileText },
-        { label: 'Đề xuất nghỉ phép', href: 'dashboard?tab=nghiphep', icon: UserCheck },
-        { label: 'Thành viên tổ', href: 'dashboard?tab=members', icon: Users },
-        { label: 'Chỉ đạo BGH', href: 'directives', icon: ClipboardCheck, badgeKey: 'directives' },
-        { label: 'Thông báo nội bộ', href: 'announcements', icon: Bell, badgeKey: 'announcements' },
-      ],
-    },
-    {
-      title: 'HỌC VỤ & LỊCH',
-      items: [
-        { label: 'Thời khóa biểu & Lịch dạy', href: 'dashboard?tab=schedule', icon: CalendarDays },
-        { label: 'Hồ sơ Học sinh 360', href: 'students', icon: GraduationCap },
-        { label: 'Quản lý Lớp học', href: 'classes', icon: Users },
-      ],
-    },
-    {
-      title: 'HỆ THỐNG',
-      items: [
-        { label: 'Cấu hình cá nhân', href: 'settings', icon: Settings },
-      ],
-    },
-  ];
+  const allowedGroups = WORKSPACE_MENU_MAPPING[currentUser?.workspaceId || 'ALL'] || ['BỘ MÁY ĐIỀU HÀNH', 'CÀI ĐẶT HỆ THỐNG'];
 
-  const admissionsMenuGroups: MenuItemGroup[] = [
-    {
-      title: 'TỔNG QUAN',
-      items: [
-        { label: 'Tổng quan điều hành', href: 'dashboard', icon: LayoutDashboard },
-        { label: 'Báo cáo nhanh', href: 'reports', icon: FileBarChart },
-      ],
-    },
-    {
-      title: 'TUYỂN SINH & CRM',
-      items: [
-        { label: 'Dashboard', href: 'admissions?view=dashboard', icon: Workflow },
-        { label: 'Lead & Thí sinh', href: 'admissions?view=leads', icon: Users },
-        { label: 'Pipeline', href: 'admissions?view=pipeline', icon: Workflow },
-        { label: 'Lịch hẹn & Test', href: 'admissions?view=appointments', icon: Calendar },
-        { label: 'Hồ sơ tuyển sinh', href: 'admissions?view=documents', icon: FileText },
-        { label: 'Thanh toán', href: 'admissions?view=payments', icon: CreditCard },
-        { label: 'Báo cáo CRM', href: 'admissions?view=reports', icon: FileBarChart },
-        { label: 'Chiến dịch', href: 'admissions?view=campaigns', icon: Bell },
-        { label: 'Cài đặt Pipeline', href: 'admissions?view=settings', icon: Settings },
-        { label: 'Hồ sơ Học sinh 360', href: 'students', icon: GraduationCap },
-        { label: 'Quản lý Lớp học', href: 'classes', icon: Users },
-        { label: 'Lịch & Sự kiện', href: 'events', icon: Calendar },
-      ],
-    },
-    {
-      title: 'VẬN HÀNH BỘ PHẬN',
-      items: [
-        { label: 'Công việc & Quy trình', href: 'tasks', icon: CheckSquare, badgeKey: 'tasks' },
-        { label: 'Chỉ đạo BGH', href: 'directives', icon: ClipboardCheck, badgeKey: 'directives' },
-        { label: 'Thông báo nội bộ', href: 'announcements', icon: Bell, badgeKey: 'announcements' },
-        { label: 'Kho Quy trình & Tri thức', href: 'knowledge', icon: BookOpen },
-      ],
-    },
-    {
-      title: 'HỆ THỐNG',
-      items: [
-        { label: 'Cấu hình cá nhân', href: 'settings', icon: Settings },
-      ],
-    },
-  ];
-
-  const rawMenuGroups = currentUser?.workspaceId === 'KHAO_THI' ? [
+  const rawMenuGroups = (currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER') 
+    ? menuGroups 
+    : currentUser?.workspaceId === 'KHAO_THI' ? [
     {
       title: 'TỔNG QUAN',
       items: [
@@ -565,20 +492,23 @@ export default function AdminShell({ locale, children }: { locale: string; child
         { label: 'Danh mục', href: 'system-data/categories', icon: List }
       ]
     }
-  ] : currentUser?.workspaceId === 'TUYEN_SINH_PR' ? admissionsMenuGroups : isDepartment ? departmentMenuGroups : menuGroups;
-
+  ] : menuGroups.filter(g => allowedGroups.includes(g.title));
   const activeMenuGroups = useMemo(() => {
     const mapped = rawMenuGroups.map(group => {
-      const targetTitles = ['CÔNG VIỆC & QUY TRÌNH', 'VẬN HÀNH', 'VẬN HÀNH NỘI BỘ', 'NGHIỆP VỤ BỘ PHẬN', 'VẬN HÀNH BỘ PHẬN', 'CÀI ĐẶT'];
-      if (targetTitles.includes(group.title)) {
-        const extraItems: { label: string; href: string; icon: any; badgeKey?: 'tasks' | 'directives' | 'announcements' }[] = [
-          { label: 'Chat nội bộ', href: 'chat', icon: MessageSquare }
-        ];
-        if (!usesSchoolOperationsMenu && group.title !== 'VẬN HÀNH NỘI BỘ' && (currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER')) {
+        const targetTitles = ['BỘ MÁY ĐIỀU HÀNH', 'CÀI ĐẶT HỆ THỐNG'];
+        if (targetTitles.includes(group.title)) {
+          const extraItems: { label: string; href: string; icon: any; badgeKey?: 'tasks' | 'directives' | 'announcements' }[] = [];
+          
+          if (group.title === 'BỘ MÁY ĐIỀU HÀNH') {
+            extraItems.push({ label: 'Chat nội bộ', href: 'chat', icon: MessageSquare });
+          }
+        
+        if (group.title === 'CÀI ĐẶT HỆ THỐNG' && (currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER')) {
           extraItems.push({ label: 'Quản lý người dùng & phân quyền', href: 'users', icon: Users });
+          extraItems.push({ label: 'Cấu hình hệ thống', href: 'system-data/settings', icon: Settings });
+          extraItems.push({ label: 'Danh mục hệ thống', href: 'system-data/categories', icon: List });
         }
         
-        // Remove duplicate hrefs if any
         const existingHrefs = new Set(group.items.map(i => i.href.split('?')[0]));
         const filteredExtra = extraItems.filter(item => !existingHrefs.has(item.href));
         
@@ -590,57 +520,8 @@ export default function AdminShell({ locale, children }: { locale: string; child
       return group;
     });
 
-    const finalGroups = mapped
-      .filter(g => g.title !== 'DỮ LIỆU HỆ THỐNG' && g.title !== 'DỮ LIỆU & HỆ THỐNG' && g.title !== 'QUẢN TRỊ NỀN TẢNG')
-      .map(group => ({ ...group, items: [...group.items] }));
-
-    const systemDataItems: any[] = [];
-    if (currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER') {
-      systemDataItems.push({ label: 'Danh mục hệ thống', href: 'system-data/categories', icon: List });
-      systemDataItems.push({ label: 'Trung tâm báo cáo', href: 'system-data/reports', icon: FileBarChart });
-      systemDataItems.push({ label: 'Lưu trữ & Dữ liệu', href: 'system-data/storage', icon: Database });
-    } else if (currentUser?.role === 'STAFF') {
-      systemDataItems.push({ label: 'Lưu trữ & Dữ liệu', href: 'system-data/storage', icon: Database });
-    }
-
-    if (systemDataItems.length > 0) {
-      if (usesSchoolOperationsMenu) {
-        const executiveGroup = finalGroups.find(group => group.title === 'ĐIỀU HÀNH');
-        if (executiveGroup) {
-          executiveGroup.items.push(...systemDataItems);
-        }
-      } else {
-      finalGroups.push({
-        title: 'DỮ LIỆU HỆ THỐNG',
-        items: systemDataItems,
-      });
-      }
-    }
-
-    const platformItems: any[] = [];
-    if (currentUser?.role === 'ADMIN') {
-      platformItems.push({ label: 'Quản lý người dùng & phân quyền', href: 'users', icon: Users });
-      platformItems.push({ label: 'Cấu hình hệ thống', href: 'system-data/settings', icon: Settings });
-    } else if (currentUser?.role === 'MANAGER') {
-      platformItems.push({ label: 'Quản lý người dùng & phân quyền', href: 'users', icon: Users });
-    }
-
-    if (platformItems.length > 0) {
-      if (usesSchoolOperationsMenu) {
-        const executiveGroup = finalGroups.find(group => group.title === 'ĐIỀU HÀNH');
-        if (executiveGroup) {
-          executiveGroup.items.push(...platformItems);
-        }
-      } else {
-      finalGroups.push({
-        title: 'QUẢN TRỊ NỀN TẢNG',
-        items: platformItems,
-      });
-      }
-    }
-
-    return finalGroups;
-  }, [rawMenuGroups, currentUser, usesSchoolOperationsMenu]);
+    return mapped;
+  }, [rawMenuGroups, currentUser]);
 
   if (!isAuthReady) {
     return (
@@ -664,7 +545,38 @@ export default function AdminShell({ locale, children }: { locale: string; child
     );
   }
 
-  const Sidebar = (
+  const isDepartmentRoute = pathname.includes('/departments/');
+  const currentDepartmentId = isDepartmentRoute ? pathname.split('/departments/')[1]?.split('/')[0] : null;
+  const currentDepartmentName = currentDepartmentId ? WORKSPACES.find(w => w.id === currentDepartmentId)?.name || 'Phòng ban' : '';
+
+  const Sidebar = isDepartmentRoute && currentDepartmentId ? (
+    <aside className={cn('flex h-full flex-col border-r border-slate-200 bg-white transition-all dark:border-slate-800 dark:bg-slate-950', collapsed ? 'w-20' : 'w-72')}>
+      <div className="flex h-16 items-center justify-between border-b border-slate-100 px-4 dark:border-slate-800">
+        <Link href={`/${locale}/dashboard`} className="flex min-w-0 items-center gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#2563eb] text-white">
+            <BarChart3 className="h-5 w-5" />
+          </div>
+          {!collapsed && (
+            <div className="min-w-0">
+              <div className="truncate text-sm font-black text-[#2563eb] dark:text-blue-400">MIS SMART PORTAL</div>
+              {currentUser?.workspaceId === 'KHAO_THI' && (
+                <div className="text-[10px] font-black text-slate-400 truncate mt-0.5">Phòng Khảo thí & ĐBCL</div>
+              )}
+            </div>
+          )}
+        </Link>
+        <Button variant="ghost" size="icon" className="hidden lg:inline-flex" onClick={() => setCollapsed(value => !value)}>
+          {collapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
+        </Button>
+      </div>
+      <DepartmentSidebar 
+        locale={locale} 
+        departmentId={currentDepartmentId} 
+        departmentName={currentDepartmentName} 
+        collapsed={collapsed} 
+      />
+    </aside>
+  ) : (
     <aside className={cn('flex h-full flex-col border-r border-slate-200 bg-white transition-all dark:border-slate-800 dark:bg-slate-950', collapsed ? 'w-20' : 'w-72')}>
       <div className="flex h-16 items-center justify-between border-b border-slate-100 px-4 dark:border-slate-800">
         <Link href={`/${locale}/dashboard`} className="flex min-w-0 items-center gap-3">
@@ -741,9 +653,9 @@ export default function AdminShell({ locale, children }: { locale: string; child
                 );
               })}
             </div>
-          </div>
-        );
-      })}
+            </div>
+          );
+        })}
       </nav>
     </aside>
   );

@@ -124,7 +124,7 @@ export function InventoryTab({ initialChecks = [] }: { initialChecks?: Inventory
                       )}
                     </td>
                     <td className="p-3 text-right">
-                      <Button variant="outline" size="sm" title="Tiến hành kiểm kê">
+                      <Button onClick={() => alert('Tính năng đang được phát triển')} type="button"  variant="outline" size="sm" title="Tiến hành kiểm kê">
                         <ClipboardCheck className="h-4 w-4" />
                       </Button>
                     </td>

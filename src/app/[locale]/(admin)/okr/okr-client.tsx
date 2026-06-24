@@ -167,7 +167,7 @@ export default function OkrDashboard({ initialData }: { initialData?: OkrData })
                 </div>
               ))}
               <div className="p-3">
-                <Button variant="ghost" className="w-full gap-2 text-blue-600"><Plus className="h-4 w-4" />Thêm việc theo dõi</Button>
+                <Button onClick={() => alert('Tính năng đang được phát triển')} type="button"  variant="ghost" className="w-full gap-2 text-blue-600"><Plus className="h-4 w-4" />Thêm việc theo dõi</Button>
               </div>
             </CardContent>
           </Card>

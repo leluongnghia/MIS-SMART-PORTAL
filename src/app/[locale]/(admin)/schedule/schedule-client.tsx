@@ -374,11 +374,11 @@ export default function ScheduleDashboard({ initialData }: { initialData?: any }
         </div>
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-md">
-            <Button variant="ghost" size="icon" className="h-8 w-8"><ChevronLeft className="h-4 w-4" /></Button>
+            <Button onClick={() => alert('Tính năng đang được phát triển')} type="button"  variant="ghost" size="icon" className="h-8 w-8"><ChevronLeft className="h-4 w-4" /></Button>
             <select className="border-0 bg-transparent text-sm font-bold focus:ring-0 w-56">
               <option>Tuần 20 (12/05 - 18/05/2026)</option>
             </select>
-            <Button variant="ghost" size="icon" className="h-8 w-8"><ChevronRight className="h-4 w-4" /></Button>
+            <Button onClick={() => alert('Tính năng đang được phát triển')} type="button"  variant="ghost" size="icon" className="h-8 w-8"><ChevronRight className="h-4 w-4" /></Button>
           </div>
           <Button variant="outline" className="gap-2" onClick={() => setIsCustomizeOpen(true)}>
             <SettingsIcon className="h-4 w-4" /> Tùy chỉnh
@@ -1196,13 +1196,13 @@ export default function ScheduleDashboard({ initialData }: { initialData?: any }
 
               {/* Tool Control Bar */}
               <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-slate-950/80 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 flex items-center gap-3">
-                <Button size="icon" variant="ghost" className="h-9 w-9 rounded-full bg-slate-800 text-slate-200 hover:bg-slate-700 border-0">
+                <Button onClick={() => alert('Tính năng đang được phát triển')} type="button"  size="icon" variant="ghost" className="h-9 w-9 rounded-full bg-slate-800 text-slate-200 hover:bg-slate-700 border-0">
                   <Mic className="h-4.5 w-4.5" />
                 </Button>
-                <Button size="icon" variant="ghost" className="h-9 w-9 rounded-full bg-slate-800 text-slate-200 hover:bg-slate-700 border-0">
+                <Button onClick={() => alert('Tính năng đang được phát triển')} type="button"  size="icon" variant="ghost" className="h-9 w-9 rounded-full bg-slate-800 text-slate-200 hover:bg-slate-700 border-0">
                   <Video className="h-4.5 w-4.5" />
                 </Button>
-                <Button size="icon" variant="ghost" className="h-9 w-9 rounded-full bg-slate-800 text-slate-200 hover:bg-slate-700 border-0">
+                <Button onClick={() => alert('Tính năng đang được phát triển')} type="button"  size="icon" variant="ghost" className="h-9 w-9 rounded-full bg-slate-800 text-slate-200 hover:bg-slate-700 border-0">
                   <Volume2 className="h-4.5 w-4.5" />
                 </Button>
                 <div className="w-px h-5 bg-slate-800" />
