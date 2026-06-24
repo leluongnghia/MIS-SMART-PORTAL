@@ -83,9 +83,6 @@ export function DashboardControls({ onTimeFilterChange, quickActions = "council"
               <button onClick={() => setIsDirectiveOpen(true)} className="flex items-center gap-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50">
                 <ClipboardCheck className="w-3.5 h-3.5" /> Tạo chỉ đạo
               </button>
-              <button onClick={() => setIsRiskOpen(true)} className="flex items-center gap-1.5 bg-rose-50 text-rose-600 hover:bg-rose-100 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors dark:bg-rose-900/30 dark:text-rose-400 dark:hover:bg-rose-900/50">
-                <ShieldAlert className="w-3.5 h-3.5" /> Khai báo Rủi ro
-              </button>
               <button onClick={() => setIsMeetingOpen(true)} className="flex items-center gap-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors dark:bg-indigo-900/30 dark:text-indigo-400 dark:hover:bg-indigo-900/50">
                 <Users className="w-3.5 h-3.5" /> Triệu tập Cuộc họp
               </button>
@@ -107,9 +104,11 @@ export function DashboardControls({ onTimeFilterChange, quickActions = "council"
           )}
 
           {/* Global Export Action */}
-          <button onClick={() => setIsReportOpen(true)} className="flex items-center gap-1.5 bg-slate-900 text-white hover:bg-slate-800 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ml-auto sm:ml-2 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200">
-            <Download className="w-3.5 h-3.5" /> Báo cáo nhanh
-          </button>
+          {quickActions !== "council" && (
+            <button onClick={() => setIsReportOpen(true)} className="flex items-center gap-1.5 bg-slate-900 text-white hover:bg-slate-800 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ml-auto sm:ml-2 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200">
+              <Download className="w-3.5 h-3.5" /> Báo cáo nhanh
+            </button>
+          )}
         </div>
       </div>
 
