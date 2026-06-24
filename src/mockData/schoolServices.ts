@@ -37,7 +37,17 @@ export const TRANSPORT_ROUTES = [
   { id: "T03", name: "Tuyến 03: Gò Vấp - Trường", licensePlate: "51B-345.67", driverName: "Anh Dũng", assistantName: "Cô Lan", seats: 16, studentsCount: 15, status: "maintenance" }
 ];
 
-export const SERVICE_TICKETS = [
+export type Ticket = {
+  id: string;
+  title: string;
+  category: string;
+  status: string;
+  priority: string;
+  createdBy: string;
+  createdAt: string;
+};
+
+export const SERVICE_TICKETS: Ticket[] = [
   { id: "TICKET-101", title: "Cơm trưa hôm nay hơi nguội", category: "Ăn uống", status: "open", priority: "normal", createdBy: "Trần Bảo Nam (PH)", createdAt: "2026-06-24T08:15:00Z" },
   { id: "TICKET-102", title: "Xin đổi tuyến xe tạm 1 tuần", category: "Xe đưa đón", status: "in_progress", priority: "high", createdBy: "Lê Ngọc Hân (PH)", createdAt: "2026-06-23T14:30:00Z" },
   { id: "TICKET-103", title: "Cháu bị dị ứng đậu phộng, nhà bếp lưu ý", category: "Ăn uống", status: "resolved", priority: "urgent", createdBy: "Phạm Hải Yến (PH)", createdAt: "2026-06-20T09:00:00Z" },

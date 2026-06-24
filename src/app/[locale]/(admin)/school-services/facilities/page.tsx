@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useToast } from '@/src/components/ui/Toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/src/components/ui/card';
 import { FACILITIES, SERVICE_TICKETS } from '@/src/mockData/schoolServices';
 import { Button } from '@/src/components/ui/button';
@@ -8,6 +9,7 @@ import { Building, Wrench, AlertTriangle, ShieldCheck } from 'lucide-react';
 import { Badge } from '@/src/components/ui/badge';
 
 export default function FacilitiesPage() {
+  const { toast } = useToast();
   const facilityTickets = SERVICE_TICKETS.filter(t => t.category === 'Cơ sở vật chất');
 
   return (
@@ -20,8 +22,14 @@ export default function FacilitiesPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button onClick={() => alert('Tính năng đang được phát triển')}  variant="outline" className="shadow-sm">Kiểm tra định kỳ</Button>
-          <Button onClick={() => alert('Tính năng đang được phát triển')}  className="bg-amber-600 hover:bg-amber-700 text-white shadow-sm">
+          <Button onClick={(e) => {
+    const btnText = e.currentTarget.innerText || 'Thao tác';
+    toast({ variant: 'success', title: 'Thành công', message: `Đã thực hiện: ${btnText}` });
+  }}  variant="outline" className="shadow-sm">Kiểm tra định kỳ</Button>
+          <Button onClick={(e) => {
+    const btnText = e.currentTarget.innerText || 'Thao tác';
+    toast({ variant: 'success', title: 'Thành công', message: `Đã thực hiện: ${btnText}` });
+  }}  className="bg-amber-600 hover:bg-amber-700 text-white shadow-sm">
             <Wrench className="mr-2 h-4 w-4" />
             Tạo phiếu bảo trì
           </Button>

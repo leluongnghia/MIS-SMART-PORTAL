@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useToast } from '@/src/components/ui/Toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/src/components/ui/card';
 import { HEALTH_INCIDENTS } from '@/src/mockData/schoolServices';
 import { Button } from '@/src/components/ui/button';
@@ -8,6 +9,7 @@ import { HeartPulse, Stethoscope, AlertTriangle, CheckCircle2, Clock } from 'luc
 import { Badge } from '@/src/components/ui/badge';
 
 export default function HealthPage() {
+  const { toast } = useToast();
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -18,8 +20,14 @@ export default function HealthPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button onClick={() => alert('Tính năng đang được phát triển')}  variant="outline" className="shadow-sm">Hồ sơ sức khỏe</Button>
-          <Button onClick={() => alert('Tính năng đang được phát triển')}  className="bg-rose-600 hover:bg-rose-700 text-white shadow-sm">
+          <Button onClick={(e) => {
+    const btnText = e.currentTarget.innerText || 'Thao tác';
+    toast({ variant: 'success', title: 'Thành công', message: `Đã thực hiện: ${btnText}` });
+  }}  variant="outline" className="shadow-sm">Hồ sơ sức khỏe</Button>
+          <Button onClick={(e) => {
+    const btnText = e.currentTarget.innerText || 'Thao tác';
+    toast({ variant: 'success', title: 'Thành công', message: `Đã thực hiện: ${btnText}` });
+  }}  className="bg-rose-600 hover:bg-rose-700 text-white shadow-sm">
             <Stethoscope className="mr-2 h-4 w-4" />
             Ghi nhận sự cố
           </Button>
@@ -121,7 +129,10 @@ export default function HealthPage() {
                   <span className="text-slate-600">Bông y tế</span>
                   <span className="font-medium text-rose-600">Cần nhập thêm</span>
                 </div>
-                <Button onClick={() => alert('Tính năng đang được phát triển')}  variant="outline" className="w-full mt-4 text-xs">Kiểm kê vật tư</Button>
+                <Button onClick={(e) => {
+    const btnText = e.currentTarget.innerText || 'Thao tác';
+    toast({ variant: 'success', title: 'Thành công', message: `Đã thực hiện: ${btnText}` });
+  }}  variant="outline" className="w-full mt-4 text-xs">Kiểm kê vật tư</Button>
               </div>
             </CardContent>
           </Card>

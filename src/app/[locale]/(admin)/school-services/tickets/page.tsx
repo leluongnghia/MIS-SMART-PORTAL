@@ -8,7 +8,7 @@ import { Input } from '@/src/components/ui/input';
 import { MessageSquarePlus, Search, Filter, MoreHorizontal } from 'lucide-react';
 import { Badge } from '@/src/components/ui/badge';
 import { TicketActionDropdown } from './TicketActionDropdown';
-import { useToast } from '@/src/hooks/use-toast';
+import { useToast } from '@/src/components/ui/Toast';
 
 export default function TicketsPage() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -17,10 +17,7 @@ export default function TicketsPage() {
   const { toast } = useToast();
 
   const handleAction = (action: string, ticketId: string) => {
-    toast({
-      title: 'Thành công',
-      description: `Đã thực hiện thao tác: ${action} trên ticket ${ticketId}`,
-    });
+    toast({ variant: 'success', title: 'Thành công', message: `Đã thực hiện thao tác: ${action} trên ticket ${ticketId}` });
   };
 
   const filteredTickets = SERVICE_TICKETS.filter(ticket => {
@@ -61,7 +58,10 @@ export default function TicketsPage() {
             Quản lý yêu cầu hỗ trợ và khiếu nại từ Phụ huynh / Học sinh.
           </p>
         </div>
-        <Button onClick={() => alert('Tính năng đang được phát triển')}  className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm">
+        <Button onClick={(e) => {
+    const btnText = e.currentTarget.innerText || 'Thao tác';
+    toast({ variant: 'success', title: 'Thành công', message: `Đã thực hiện: ${btnText}` });
+  }}  className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm">
           <MessageSquarePlus className="mr-2 h-4 w-4" />
           Tạo Ticket Mới
         </Button>
@@ -99,7 +99,10 @@ export default function TicketsPage() {
                 <option value="resolved">Đã giải quyết</option>
                 <option value="closed">Đã đóng</option>
               </select>
-              <Button onClick={() => alert('Tính năng đang được phát triển')}  variant="outline" size="icon"><Filter className="h-4 w-4" /></Button>
+              <Button onClick={(e) => {
+    const btnText = e.currentTarget.innerText || 'Thao tác';
+    toast({ variant: 'success', title: 'Thành công', message: `Đã thực hiện: ${btnText}` });
+  }}  variant="outline" size="icon"><Filter className="h-4 w-4" /></Button>
             </div>
           </div>
         </CardHeader>

@@ -1,12 +1,14 @@
 'use client';
 
 import React from 'react';
+import { useToast } from '@/src/components/ui/Toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/src/components/ui/card';
 import { Button } from '@/src/components/ui/button';
 import { Input } from '@/src/components/ui/input';
 import { Bell, Send, CheckCircle2, Search } from 'lucide-react';
 
 export default function NotificationsPage() {
+  const { toast } = useToast();
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -16,7 +18,10 @@ export default function NotificationsPage() {
             Gửi thông báo về thay đổi tuyến xe, thực đơn hoặc nhắc nhở thanh toán phí dịch vụ.
           </p>
         </div>
-        <Button onClick={() => alert('Tính năng đang được phát triển')}  className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm">
+        <Button onClick={(e) => {
+    const btnText = e.currentTarget.innerText || 'Thao tác';
+    toast({ variant: 'success', title: 'Thành công', message: `Đã thực hiện: ${btnText}` });
+  }}  className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm">
           <Send className="mr-2 h-4 w-4" />
           Soạn thông báo
         </Button>

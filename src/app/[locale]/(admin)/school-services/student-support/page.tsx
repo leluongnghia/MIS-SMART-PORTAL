@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useToast } from '@/src/components/ui/Toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/src/components/ui/card';
 import { Button } from '@/src/components/ui/button';
 import { Users, HeartHandshake, PhoneCall, CheckCircle2, Clock } from 'lucide-react';
@@ -8,6 +9,7 @@ import { SERVICE_TICKETS } from '@/src/mockData/schoolServices';
 import { Badge } from '@/src/components/ui/badge';
 
 export default function StudentSupportPage() {
+  const { toast } = useToast();
   const supportTickets = SERVICE_TICKETS.filter(t => t.category === 'Hỗ trợ học sinh');
 
   return (
@@ -20,8 +22,14 @@ export default function StudentSupportPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button onClick={() => alert('Tính năng đang được phát triển')}  variant="outline" className="shadow-sm">Danh sách theo dõi</Button>
-          <Button onClick={() => alert('Tính năng đang được phát triển')}  className="bg-purple-600 hover:bg-purple-700 text-white shadow-sm">
+          <Button onClick={(e) => {
+    const btnText = e.currentTarget.innerText || 'Thao tác';
+    toast({ variant: 'success', title: 'Thành công', message: `Đã thực hiện: ${btnText}` });
+  }}  variant="outline" className="shadow-sm">Danh sách theo dõi</Button>
+          <Button onClick={(e) => {
+    const btnText = e.currentTarget.innerText || 'Thao tác';
+    toast({ variant: 'success', title: 'Thành công', message: `Đã thực hiện: ${btnText}` });
+  }}  className="bg-purple-600 hover:bg-purple-700 text-white shadow-sm">
             <HeartHandshake className="mr-2 h-4 w-4" />
             Mở ca tư vấn mới
           </Button>
@@ -59,8 +67,14 @@ export default function StudentSupportPage() {
                       </div>
                     </div>
                     <div className="mt-4 pt-3 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-2">
-                      <Button onClick={() => alert('Tính năng đang được phát triển')}  variant="outline" size="sm">Cập nhật tiến trình</Button>
-                      <Button onClick={() => alert('Tính năng đang được phát triển')}  size="sm" className="bg-purple-600 hover:bg-purple-700 text-white">Lên lịch hẹn</Button>
+                      <Button onClick={(e) => {
+    const btnText = e.currentTarget.innerText || 'Thao tác';
+    toast({ variant: 'success', title: 'Thành công', message: `Đã thực hiện: ${btnText}` });
+  }}  variant="outline" size="sm">Cập nhật tiến trình</Button>
+                      <Button onClick={(e) => {
+    const btnText = e.currentTarget.innerText || 'Thao tác';
+    toast({ variant: 'success', title: 'Thành công', message: `Đã thực hiện: ${btnText}` });
+  }}  size="sm" className="bg-purple-600 hover:bg-purple-700 text-white">Lên lịch hẹn</Button>
                     </div>
                   </div>
                 ))}

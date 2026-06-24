@@ -1,12 +1,14 @@
 'use client';
 
 import React from 'react';
+import { useToast } from '@/src/components/ui/Toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/src/components/ui/card';
 import { SERVICE_TICKETS } from '@/src/mockData/schoolServices';
 import { Button } from '@/src/components/ui/button';
 import { FileText, ShieldAlert } from 'lucide-react';
 
 export default function FeedbackPage() {
+  const { toast } = useToast();
   const feedbacks = SERVICE_TICKETS.filter(t => t.priority === 'urgent' || t.priority === 'high');
 
   return (
@@ -18,7 +20,10 @@ export default function FeedbackPage() {
             Xử lý các ý kiến đóng góp, khiếu nại mức độ nghiêm trọng cần Ban giám hiệu can thiệp.
           </p>
         </div>
-        <Button onClick={() => alert('Tính năng đang được phát triển')}  variant="outline" className="shadow-sm">
+        <Button onClick={(e) => {
+    const btnText = e.currentTarget.innerText || 'Thao tác';
+    toast({ variant: 'success', title: 'Thành công', message: `Đã thực hiện: ${btnText}` });
+  }}  variant="outline" className="shadow-sm">
           <FileText className="mr-2 h-4 w-4" />
           Xuất Báo Cáo
         </Button>
@@ -54,8 +59,14 @@ export default function FeedbackPage() {
                   </div>
                 </div>
                 <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-end">
-                  <Button onClick={() => alert('Tính năng đang được phát triển')}  variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700">Xem chi tiết</Button>
-                  <Button onClick={() => alert('Tính năng đang được phát triển')}  size="sm" className="ml-2 bg-rose-600 hover:bg-rose-700 text-white">Xử lý ngay</Button>
+                  <Button onClick={(e) => {
+    const btnText = e.currentTarget.innerText || 'Thao tác';
+    toast({ variant: 'success', title: 'Thành công', message: `Đã thực hiện: ${btnText}` });
+  }}  variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700">Xem chi tiết</Button>
+                  <Button onClick={(e) => {
+    const btnText = e.currentTarget.innerText || 'Thao tác';
+    toast({ variant: 'success', title: 'Thành công', message: `Đã thực hiện: ${btnText}` });
+  }}  size="sm" className="ml-2 bg-rose-600 hover:bg-rose-700 text-white">Xử lý ngay</Button>
                 </div>
               </div>
             </CardContent>

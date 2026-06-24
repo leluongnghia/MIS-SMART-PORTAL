@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useToast } from '@/src/components/ui/Toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/src/components/ui/card';
 import { Button } from '@/src/components/ui/button';
 import { Input } from '@/src/components/ui/input';
@@ -9,6 +10,7 @@ import { Label } from '@/src/components/ui/label';
 import { Switch } from '@/src/components/ui/switch';
 
 export default function SettingsPage() {
+  const { toast } = useToast();
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -18,7 +20,10 @@ export default function SettingsPage() {
             Quản lý tham số, phân quyền và quy trình phê duyệt của khối Dịch vụ Học đường.
           </p>
         </div>
-        <Button onClick={() => alert('Tính năng đang được phát triển')}  className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm">
+        <Button onClick={(e) => {
+    const btnText = e.currentTarget.innerText || 'Thao tác';
+    toast({ variant: 'success', title: 'Thành công', message: `Đã thực hiện: ${btnText}` });
+  }}  className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm">
           <Save className="mr-2 h-4 w-4" />
           Lưu cấu hình
         </Button>

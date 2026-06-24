@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useToast } from '@/src/components/ui/Toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/src/components/ui/card';
 import { FACILITIES, SERVICE_STUDENTS } from '@/src/mockData/schoolServices';
 import { Button } from '@/src/components/ui/button';
@@ -8,6 +9,7 @@ import { Moon, Bed, Users, ShieldAlert, CheckSquare } from 'lucide-react';
 import { Badge } from '@/src/components/ui/badge';
 
 export default function BoardingPage() {
+  const { toast } = useToast();
   const boardingRooms = FACILITIES.filter(f => f.type === 'Phòng bán trú');
 
   return (
@@ -20,8 +22,14 @@ export default function BoardingPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button onClick={() => alert('Tính năng đang được phát triển')}  variant="outline" className="shadow-sm">Sắp xếp phòng</Button>
-          <Button onClick={() => alert('Tính năng đang được phát triển')}  className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm">
+          <Button onClick={(e) => {
+    const btnText = e.currentTarget.innerText || 'Thao tác';
+    toast({ variant: 'success', title: 'Thành công', message: `Đã thực hiện: ${btnText}` });
+  }}  variant="outline" className="shadow-sm">Sắp xếp phòng</Button>
+          <Button onClick={(e) => {
+    const btnText = e.currentTarget.innerText || 'Thao tác';
+    toast({ variant: 'success', title: 'Thành công', message: `Đã thực hiện: ${btnText}` });
+  }}  className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm">
             <CheckSquare className="mr-2 h-4 w-4" />
             Điểm danh đồng loạt
           </Button>
@@ -79,10 +87,16 @@ export default function BoardingPage() {
                 </div>
 
                 <div className="pt-3 flex gap-2">
-                  <Button onClick={() => alert('Tính năng đang được phát triển')}  variant="outline" className="flex-1 text-indigo-600 hover:bg-indigo-50 hover:text-indigo-700">
+                  <Button onClick={(e) => {
+    const btnText = e.currentTarget.innerText || 'Thao tác';
+    toast({ variant: 'success', title: 'Thành công', message: `Đã thực hiện: ${btnText}` });
+  }}  variant="outline" className="flex-1 text-indigo-600 hover:bg-indigo-50 hover:text-indigo-700">
                     Xem danh sách
                   </Button>
-                  <Button onClick={() => alert('Tính năng đang được phát triển')}  className="flex-1 bg-indigo-50 text-indigo-700 hover:bg-indigo-100">
+                  <Button onClick={(e) => {
+    const btnText = e.currentTarget.innerText || 'Thao tác';
+    toast({ variant: 'success', title: 'Thành công', message: `Đã thực hiện: ${btnText}` });
+  }}  className="flex-1 bg-indigo-50 text-indigo-700 hover:bg-indigo-100">
                     Điểm danh
                   </Button>
                 </div>

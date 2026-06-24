@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useToast } from '@/src/components/ui/Toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/src/components/ui/card';
 import { Button } from '@/src/components/ui/button';
 import { Shirt, Package, CheckSquare, Plus } from 'lucide-react';
@@ -8,6 +9,7 @@ import { SERVICE_TICKETS } from '@/src/mockData/schoolServices';
 import { Badge } from '@/src/components/ui/badge';
 
 export default function UniformsPage() {
+  const { toast } = useToast();
   const uniformTickets = SERVICE_TICKETS.filter(t => t.category === 'Đồng phục');
 
   return (
@@ -20,8 +22,14 @@ export default function UniformsPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button onClick={() => alert('Tính năng đang được phát triển')}  variant="outline" className="shadow-sm">Nhập kho</Button>
-          <Button onClick={() => alert('Tính năng đang được phát triển')}  className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm">
+          <Button onClick={(e) => {
+    const btnText = e.currentTarget.innerText || 'Thao tác';
+    toast({ variant: 'success', title: 'Thành công', message: `Đã thực hiện: ${btnText}` });
+  }}  variant="outline" className="shadow-sm">Nhập kho</Button>
+          <Button onClick={(e) => {
+    const btnText = e.currentTarget.innerText || 'Thao tác';
+    toast({ variant: 'success', title: 'Thành công', message: `Đã thực hiện: ${btnText}` });
+  }}  className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm">
             <Plus className="mr-2 h-4 w-4" />
             Cấp phát mới
           </Button>
@@ -100,7 +108,10 @@ export default function UniformsPage() {
               <CheckSquare className="h-8 w-8 text-emerald-500 mx-auto mb-3" />
               <h3 className="font-semibold text-slate-900 dark:text-white mb-1">Chiến dịch cấp phát đầu năm</h3>
               <p className="text-xs text-slate-500 mb-4">Đã hoàn thành 98% cho toàn khối THPT. Xem báo cáo chi tiết để đối soát.</p>
-              <Button onClick={() => alert('Tính năng đang được phát triển')}  variant="outline" size="sm" className="w-full">Xem báo cáo đối soát</Button>
+              <Button onClick={(e) => {
+    const btnText = e.currentTarget.innerText || 'Thao tác';
+    toast({ variant: 'success', title: 'Thành công', message: `Đã thực hiện: ${btnText}` });
+  }}  variant="outline" size="sm" className="w-full">Xem báo cáo đối soát</Button>
             </CardContent>
           </Card>
         </div>

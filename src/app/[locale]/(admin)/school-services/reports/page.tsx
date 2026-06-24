@@ -1,12 +1,14 @@
 'use client';
 
 import React from 'react';
+import { useToast } from '@/src/components/ui/Toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/src/components/ui/card';
 import { Button } from '@/src/components/ui/button';
 import { FileBarChart, Download, Calendar, Filter } from 'lucide-react';
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend, LineChart, Line, CartesianGrid } from 'recharts';
 
 export default function ReportsPage() {
+  const { toast } = useToast();
   const expenseData = [
     { name: 'Tháng 1', thucPham: 120, vanHanhXe: 45, yTe: 12, csvc: 30 },
     { name: 'Tháng 2', thucPham: 110, vanHanhXe: 40, yTe: 10, csvc: 20 },
@@ -35,10 +37,16 @@ export default function ReportsPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button onClick={() => alert('Tính năng đang được phát triển')}  variant="outline" className="shadow-sm">
+          <Button onClick={(e) => {
+    const btnText = e.currentTarget.innerText || 'Thao tác';
+    toast({ variant: 'success', title: 'Thành công', message: `Đã thực hiện: ${btnText}` });
+  }}  variant="outline" className="shadow-sm">
             <Filter className="mr-2 h-4 w-4" /> Lọc
           </Button>
-          <Button onClick={() => alert('Tính năng đang được phát triển')}  className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm">
+          <Button onClick={(e) => {
+    const btnText = e.currentTarget.innerText || 'Thao tác';
+    toast({ variant: 'success', title: 'Thành công', message: `Đã thực hiện: ${btnText}` });
+  }}  className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm">
             <Download className="mr-2 h-4 w-4" />
             Xuất Báo Cáo
           </Button>

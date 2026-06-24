@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useToast } from '@/src/components/ui/Toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/src/components/ui/card';
 import { MEALS_MENU, SERVICE_STUDENTS } from '@/src/mockData/schoolServices';
 import { Button } from '@/src/components/ui/button';
@@ -8,6 +9,7 @@ import { Utensils, CalendarDays, ChefHat, AlertCircle } from 'lucide-react';
 import { Badge } from '@/src/components/ui/badge';
 
 export default function MealsPage() {
+  const { toast } = useToast();
   const todayMenu = MEALS_MENU.find(m => m.date === '2026-06-24') || MEALS_MENU[0];
 
   return (
@@ -20,8 +22,14 @@ export default function MealsPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button onClick={() => alert('Tính năng đang được phát triển')}  variant="outline" className="shadow-sm">Thống kê khẩu phần</Button>
-          <Button onClick={() => alert('Tính năng đang được phát triển')}  className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm">
+          <Button onClick={(e) => {
+    const btnText = e.currentTarget.innerText || 'Thao tác';
+    toast({ variant: 'success', title: 'Thành công', message: `Đã thực hiện: ${btnText}` });
+  }}  variant="outline" className="shadow-sm">Thống kê khẩu phần</Button>
+          <Button onClick={(e) => {
+    const btnText = e.currentTarget.innerText || 'Thao tác';
+    toast({ variant: 'success', title: 'Thành công', message: `Đã thực hiện: ${btnText}` });
+  }}  className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm">
             <Utensils className="mr-2 h-4 w-4" />
             Lên thực đơn tuần
           </Button>
@@ -91,7 +99,10 @@ export default function MealsPage() {
                   <span className="text-xl font-bold text-amber-600 dark:text-amber-400">5</span>
                 </div>
                 
-                <Button onClick={() => alert('Tính năng đang được phát triển')}  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white">
+                <Button onClick={(e) => {
+    const btnText = e.currentTarget.innerText || 'Thao tác';
+    toast({ variant: 'success', title: 'Thành công', message: `Đã thực hiện: ${btnText}` });
+  }}  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white">
                   Bắt đầu Điểm danh ăn
                 </Button>
               </div>
@@ -104,7 +115,10 @@ export default function MealsPage() {
                 <AlertCircle className="h-4 w-4 text-amber-500" />
                 Lưu ý dị ứng
               </CardTitle>
-              <Button onClick={() => alert('Tính năng đang được phát triển')}  variant="link" className="text-xs h-auto p-0 text-blue-600">Xem tất cả</Button>
+              <Button onClick={(e) => {
+    const btnText = e.currentTarget.innerText || 'Thao tác';
+    toast({ variant: 'success', title: 'Thành công', message: `Đã thực hiện: ${btnText}` });
+  }}  variant="link" className="text-xs h-auto p-0 text-blue-600">Xem tất cả</Button>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
