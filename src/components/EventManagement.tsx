@@ -37,7 +37,7 @@ import CreateCrisisForm from './CreateCrisisForm';
 export default function EventManagement() {
   const [activeTab, setActiveTab] = useState('events'); // 'events' | 'surveys'
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [formType, setFormType] = useState<'EVENTS' | 'SURVEYS'>('EVENTS');
+  const [formType, setFormType] = useState<'EVENTS' | 'SURVEYS' | 'TICKETS' | 'COMMUNICATIONS' | 'CRISIS'>('EVENTS');
 
   const openForm = (type: 'TICKETS' | 'COMMUNICATIONS' | 'EVENTS' | 'CRISIS' | 'SURVEYS') => {
     setFormType(type);
