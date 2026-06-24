@@ -9,7 +9,7 @@ import { Task, Workspace, UserProfile, Role, TaskStatus, TaskPriority, Comment, 
 import { WORKSPACES as INITIAL_WORKSPACES, MOCK_USERS, INITIAL_TASKS } from './mockData';
 import { enrichUserWithMIDetails, MI_KEY_DETAILS } from './miAndOkrUtils';
 import { MIProfile } from './types';
-import { db, auth, handleFirestoreError, OperationType } from './firebase';
+import { firestoreDb, auth, handleFirestoreError, OperationType } from './firebase';
 import { encryptData, decryptData } from './utils/security';
 import { normalizeTaskAssigneeRoles, normalizeUserProfile, normalizeUserProfiles } from './utils/peopleDirectory';
 import { 
@@ -521,7 +521,7 @@ function AppInner() {
     setRbacConfig(updatedConfig);
     serverStorage.setItem('school_task_manager_rbac', encryptData(updatedConfig));
     try {
-      await setDoc(doc(db, 'config', 'rbac'), { config: updatedConfig });
+      await setDoc(doc(firestoreDb, 'config', 'rbac'), { config: updatedConfig });
     } catch (e) {
       handleFirestoreError(e, OperationType.UPDATE, 'config/rbac');
     }
@@ -531,7 +531,7 @@ function AppInner() {
     setUserOverrides(updatedOverrides);
     writeLocalJson(LOCAL_USER_OVERRIDES_KEY, updatedOverrides);
     try {
-      await setDoc(doc(db, 'config', 'user_overrides'), { overrides: updatedOverrides });
+      await setDoc(doc(firestoreDb, 'config', 'user_overrides'), { overrides: updatedOverrides });
     } catch (e) {
       handleFirestoreError(e, OperationType.UPDATE, 'config/user_overrides');
     }
@@ -800,11 +800,11 @@ function AppInner() {
   // Syncing workspaces
   useEffect(() => {
     if (!isAuthReady) return;
-    const unsub = onSnapshot(collection(db, 'workspaces'), async (snapshot) => {
+    const unsub = onSnapshot(collection(firestoreDb, 'workspaces'), async (snapshot) => {
       if (snapshot.empty) {
         try {
           for (const w of INITIAL_WORKSPACES) {
-            await setDoc(doc(db, 'workspaces', w.id), w);
+            await setDoc(doc(firestoreDb, 'workspaces', w.id), w);
           }
         } catch (err) {
           console.error("Error seeding workspaces to Firestore:", err);
@@ -826,11 +826,11 @@ function AppInner() {
   // Syncing tasks
   useEffect(() => {
     if (!isAuthReady) return;
-    const unsub = onSnapshot(collection(db, 'tasks'), async (snapshot) => {
+    const unsub = onSnapshot(collection(firestoreDb, 'tasks'), async (snapshot) => {
       if (snapshot.empty) {
         try {
           for (const t of INITIAL_TASKS) {
-            await setDoc(doc(db, 'tasks', t.id), t);
+            await setDoc(doc(firestoreDb, 'tasks', t.id), t);
           }
         } catch (err) {
           console.error("Error seeding tasks to Firestore:", err);
@@ -872,7 +872,7 @@ function AppInner() {
             for (const t of INITIAL_TASKS) {
               const alreadyExists = loaded.some(l => l.id === t.id);
               if (!alreadyExists) {
-                await setDoc(doc(db, 'tasks', t.id), t);
+                await setDoc(doc(firestoreDb, 'tasks', t.id), t);
               }
             }
           } catch (err) {
@@ -882,8 +882,8 @@ function AppInner() {
           const d1 = INITIAL_TASKS.find(t => t.id === 'task_demo_minh_1');
           const d2 = INITIAL_TASKS.find(t => t.id === 'task_demo_minh_2');
           try {
-            if (!hasDemo1 && d1) await setDoc(doc(db, 'tasks', 'task_demo_minh_1'), d1);
-            if (!hasDemo2 && d2) await setDoc(doc(db, 'tasks', 'task_demo_minh_2'), d2);
+            if (!hasDemo1 && d1) await setDoc(doc(firestoreDb, 'tasks', 'task_demo_minh_1'), d1);
+            if (!hasDemo2 && d2) await setDoc(doc(firestoreDb, 'tasks', 'task_demo_minh_2'), d2);
           } catch (err) {
             console.error("Auto seeding demo tasks failed:", err);
           }
@@ -898,11 +898,11 @@ function AppInner() {
   // Syncing directives
   useEffect(() => {
     if (!isAuthReady) return;
-    const unsub = onSnapshot(collection(db, 'directives'), async (snapshot) => {
+    const unsub = onSnapshot(collection(firestoreDb, 'directives'), async (snapshot) => {
       if (snapshot.empty) {
         try {
           for (const d of INITIAL_DIRECTIVES) {
-            await setDoc(doc(db, 'directives', d.id), d);
+            await setDoc(doc(firestoreDb, 'directives', d.id), d);
           }
         } catch (err) {
           console.error("Error seeding directives to Firestore:", err);
@@ -924,10 +924,10 @@ function AppInner() {
   // Syncing rbacConfig
   useEffect(() => {
     if (!isAuthReady) return;
-    const unsub = onSnapshot(doc(db, 'config', 'rbac'), async (snapshot) => {
+    const unsub = onSnapshot(doc(firestoreDb, 'config', 'rbac'), async (snapshot) => {
       if (!snapshot.exists()) {
         try {
-          await setDoc(doc(db, 'config', 'rbac'), { config: rbacConfig });
+          await setDoc(doc(firestoreDb, 'config', 'rbac'), { config: rbacConfig });
         } catch (err) {
           console.error("Error seeding RBAC config to Firestore:", err);
         }
@@ -947,10 +947,10 @@ function AppInner() {
   // Syncing userOverrides
   useEffect(() => {
     if (!isAuthReady) return;
-    const unsub = onSnapshot(doc(db, 'config', 'user_overrides'), async (snapshot) => {
+    const unsub = onSnapshot(doc(firestoreDb, 'config', 'user_overrides'), async (snapshot) => {
       if (!snapshot.exists()) {
         try {
-          await setDoc(doc(db, 'config', 'user_overrides'), { overrides: {} });
+          await setDoc(doc(firestoreDb, 'config', 'user_overrides'), { overrides: {} });
         } catch (err) {
           console.error("Error seeding User Overrides to Firestore:", err);
         }
@@ -1020,7 +1020,7 @@ function AppInner() {
             [item.type === 'OVERDUE' ? 'lastOverdueReminderDate' : 'lastNearDeadlineReminderDate']: item.reminderDate,
           };
           persistTaskLocally(updatedTask);
-          await setDoc(doc(db, 'tasks', task.id), updatedTask);
+          await setDoc(doc(firestoreDb, 'tasks', task.id), updatedTask);
         }));
 
         console.log(`[Auto-Reminder] Updated ${data.sent.length} reminder flag(s) in Firestore.`);
@@ -1125,7 +1125,7 @@ function AppInner() {
     };
     persistDirectiveLocally(newDir);
     try {
-      await setDoc(doc(db, 'directives', newDirId), newDir);
+      await setDoc(doc(firestoreDb, 'directives', newDirId), newDir);
     } catch (e) {
       handleFirestoreError(e, OperationType.CREATE, `directives/${newDirId}`);
     }
@@ -1150,7 +1150,7 @@ function AppInner() {
     };
     persistDirectiveLocally(updatedDir);
     try {
-      await setDoc(doc(db, 'directives', directiveId), updatedDir);
+      await setDoc(doc(firestoreDb, 'directives', directiveId), updatedDir);
     } catch (e) {
       handleFirestoreError(e, OperationType.UPDATE, `directives/${directiveId}`);
     }
@@ -1159,7 +1159,7 @@ function AppInner() {
   const handleDeleteDirective = async (id: string) => {
     removeDirectiveLocally(id);
     try {
-      await deleteDoc(doc(db, 'directives', id));
+      await deleteDoc(doc(firestoreDb, 'directives', id));
     } catch (e) {
       handleFirestoreError(e, OperationType.DELETE, `directives/${id}`);
     }
@@ -1170,7 +1170,7 @@ function AppInner() {
     serverStorage.setItem('school_task_manager_workspaces', JSON.stringify(updatedWorkspaces));
     try {
       for (const w of updatedWorkspaces) {
-        await setDoc(doc(db, 'workspaces', w.id), w);
+        await setDoc(doc(firestoreDb, 'workspaces', w.id), w);
       }
     } catch (e) {
       handleFirestoreError(e, OperationType.UPDATE, 'workspaces');
@@ -1239,7 +1239,7 @@ function AppInner() {
     persistTasksLocally(syncedTasks);
     try {
       for (const t of syncedTasks) {
-        await setDoc(doc(db, 'tasks', t.id), t);
+        await setDoc(doc(firestoreDb, 'tasks', t.id), t);
       }
     } catch (e) {
       console.error("Error syncing tasks from Google Sheets:", e);

@@ -27,7 +27,7 @@ import { getGradeLevelFromClassName, getSubjectsForClassName } from '../utils/vi
 import { encryptData, decryptData, generateBackupSignature } from '../utils/security';
 import { normalizeStudentProfile, normalizeStudentProfiles, initializeUnifiedDatabase, getUnifiedStudents, saveUnifiedStudents, UnifiedStudent } from '../utils/peopleDirectory';
 import { readCrmLeadsFromStorage, syncEnrolledCrmLeadsToLifecycle } from '../utils/crmStudentSync';
-import { firestoreDb as db } from '../firebase';
+import { firestoreDb } from '../firebase';
 import { collection, onSnapshot, doc, setDoc } from 'firebase/firestore';
 import { useToast } from './ui/Toast';
 
@@ -427,7 +427,7 @@ export default function StudentSuccessHub({ currentUser }: { currentUser: UserPr
 
   // Real-time Firestore Sync Listeners
   useEffect(() => {
-    const unsub = onSnapshot(collection(db, 'mis_student_directory'), (snapshot) => {
+    const unsub = onSnapshot(collection(firestoreDb, 'mis_student_directory'), (snapshot) => {
       const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as UnifiedStudent[];
       if (list.length > 0) {
         const enrolled = list.filter(s => s.enrollmentStatus === 'ENROLLED') as StudentRecord[];
@@ -443,7 +443,7 @@ export default function StudentSuccessHub({ currentUser }: { currentUser: UserPr
   }, []);
 
   useEffect(() => {
-    const unsub = onSnapshot(collection(db, GRADE_STORAGE_KEY), (snapshot) => {
+    const unsub = onSnapshot(collection(firestoreDb, GRADE_STORAGE_KEY), (snapshot) => {
       const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as GradeEntry[];
       if (list.length > 0) {
         setGrades(prev => {
@@ -488,7 +488,7 @@ export default function StudentSuccessHub({ currentUser }: { currentUser: UserPr
     const syncGrades = async () => {
       try {
         for (const g of grades) {
-          await setDoc(doc(db, GRADE_STORAGE_KEY, g.id), g);
+          await setDoc(doc(firestoreDb, GRADE_STORAGE_KEY, g.id), g);
         }
       } catch (e) {
         console.warn('Failed to sync grades to Firestore: ', e);

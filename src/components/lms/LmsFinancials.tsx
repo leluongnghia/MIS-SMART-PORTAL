@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { UserProfile } from '../../types';
 import { exportToCsv } from '../../utils/exportUtils';
-import { db } from '../../firebase';
+import { firestoreDb } from '../../firebase';
 import { collection, onSnapshot, doc, setDoc } from 'firebase/firestore';
 
 interface Invoice {

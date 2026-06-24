@@ -1,5 +1,5 @@
 import { doc, setDoc, deleteDoc } from 'firebase/firestore';
-import { db, handleFirestoreError, OperationType } from '../firebase';
+import { firestoreDb, handleFirestoreError, OperationType } from '../firebase';
 import { Task, TaskStatus, Comment, UserProfile } from '../types';
 
 interface UseTaskHandlersParams {
@@ -84,7 +84,7 @@ export function useTaskHandlers({
 
     persistTaskLocally(newTask);
     try {
-      await setDoc(doc(db, 'tasks', newTaskId), newTask);
+      await setDoc(doc(firestoreDb, 'tasks', newTaskId), newTask);
     } catch (e) {
       handleFirestoreError(e, OperationType.CREATE, `tasks/${newTaskId}`);
     }
@@ -138,7 +138,7 @@ export function useTaskHandlers({
 
     persistTaskLocally(updatedTask);
     try {
-      await setDoc(doc(db, 'tasks', taskId), updatedTask);
+      await setDoc(doc(firestoreDb, 'tasks', taskId), updatedTask);
     } catch (e) {
       handleFirestoreError(e, OperationType.UPDATE, `tasks/${taskId}`);
     }
@@ -174,7 +174,7 @@ export function useTaskHandlers({
 
     persistTaskLocally(updatedTask);
     try {
-      await setDoc(doc(db, 'tasks', taskId), updatedTask);
+      await setDoc(doc(firestoreDb, 'tasks', taskId), updatedTask);
     } catch (e) {
       handleFirestoreError(e, OperationType.UPDATE, `tasks/${taskId}`);
     }
@@ -191,7 +191,7 @@ export function useTaskHandlers({
     }
     removeTaskLocally(taskId);
     try {
-      await deleteDoc(doc(db, 'tasks', taskId));
+      await deleteDoc(doc(firestoreDb, 'tasks', taskId));
       if (selectedTaskForDetail && selectedTaskForDetail.id === taskId) {
         setSelectedTaskForDetail(null);
       }
@@ -272,7 +272,7 @@ export function useTaskHandlers({
 
     persistTaskLocally(updatedTask);
     try {
-      await setDoc(doc(db, 'tasks', taskId), updatedTask);
+      await setDoc(doc(firestoreDb, 'tasks', taskId), updatedTask);
     } catch (e) {
       handleFirestoreError(e, OperationType.UPDATE, `tasks/${taskId}`);
     }
@@ -315,7 +315,7 @@ export function useTaskHandlers({
 
     persistTaskLocally(updatedTask);
     try {
-      await setDoc(doc(db, 'tasks', taskId), updatedTask);
+      await setDoc(doc(firestoreDb, 'tasks', taskId), updatedTask);
     } catch (e) {
       handleFirestoreError(e, OperationType.UPDATE, `tasks/${taskId}`);
     }

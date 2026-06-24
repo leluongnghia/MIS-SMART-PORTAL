@@ -4,10 +4,8 @@ import { getFirestore, doc, getDocFromServer } from 'firebase/firestore';
 import firebaseConfig from '../firebase-applet-config.json';
 
 const app = initializeApp(firebaseConfig);
-/** Firestore DB — use `firestoreDb` to distinguish from Drizzle `db` (src/libs/server/db.ts) */
+/** Firestore DB — use `firestoreDb` to distinguish from Drizzle `db` (src/libs/server/firestoreDb.ts) */
 export const firestoreDb = getFirestore(app, firebaseConfig.firestoreDatabaseId); /* CRITICAL: The app will break without this line */
-/** @deprecated use firestoreDb */
-export const db = firestoreDb;
 export const auth = getAuth();
 
 export enum OperationType {

@@ -4,9 +4,7 @@ import type { NextConfig } from 'next';
 const withNextIntl = createNextIntlPlugin('./src/libs/I18n.ts');
 
 const nextConfig: NextConfig = {
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
+
   devIndicators: {
     position: 'bottom-right',
   },

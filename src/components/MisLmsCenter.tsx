@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { Task, UserProfile } from '../types';
 import { getUnifiedStudents, saveUnifiedStudents, UnifiedStudent } from '../utils/peopleDirectory';
-import { db } from '../firebase';
+import { firestoreDb } from '../firebase';
 import { collection, onSnapshot, doc, setDoc } from 'firebase/firestore';
 
 // Subcomponents
@@ -141,7 +141,7 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
 
   // Real-time Firestore Sync for Student Directory
   useEffect(() => {
-    const unsub = onSnapshot(collection(db, 'mis_student_directory'), (snapshot) => {
+    const unsub = onSnapshot(collection(firestoreDb, 'mis_student_directory'), (snapshot) => {
       const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as UnifiedStudent[];
       if (list.length > 0) {
         const enrolled = list.filter(s => s.enrollmentStatus === 'ENROLLED') as LmsStudent[];
@@ -379,7 +379,7 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
   });
 
   useEffect(() => {
-    const unsub = onSnapshot(collection(db, 'mis_lms_tuition_fees'), (snapshot) => {
+    const unsub = onSnapshot(collection(firestoreDb, 'mis_lms_tuition_fees'), (snapshot) => {
       const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       if (list.length > 0) {
         setTuitionFees(prev => {
@@ -400,7 +400,7 @@ export default function MisLmsCenter({ currentUser, tasks, onAddTask }: MisLmsCe
     const syncInvoices = async () => {
       try {
         for (const t of tuitionFees) {
-          await setDoc(doc(db, 'mis_lms_tuition_fees', t.id), t);
+          await setDoc(doc(firestoreDb, 'mis_lms_tuition_fees', t.id), t);
         }
       } catch (e) {
         console.warn('Failed to sync invoices to Firestore: ', e);

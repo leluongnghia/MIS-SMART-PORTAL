@@ -31,7 +31,7 @@ import { UserProfile, AcademicYearRecord, HealthIncident, VaccinationRecord, Bor
 import { encryptData, decryptData } from '../utils/security';
 import { normalizeStudentProfile, normalizeStudentProfiles } from '../utils/peopleDirectory';
 import { readCrmLeadsFromStorage, syncEnrolledCrmLeadsToLifecycle } from '../utils/crmStudentSync';
-import { db } from '../firebase';
+import { firestoreDb } from '../firebase';
 import { collection, onSnapshot, doc, setDoc, deleteDoc } from 'firebase/firestore';
 
 interface ParentStudentPortalProps {
@@ -122,7 +122,7 @@ export default function ParentStudentPortal({ currentUser, onLogout }: ParentStu
 
   // Real-time Firestore Sync Listeners
   useEffect(() => {
-    const unsub = onSnapshot(collection(db, 'mis_student_directory'), (snapshot) => {
+    const unsub = onSnapshot(collection(firestoreDb, 'mis_student_directory'), (snapshot) => {
       const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       if (list.length > 0) {
         const normalized = normalizeStudentProfiles(list as any);
@@ -138,7 +138,7 @@ export default function ParentStudentPortal({ currentUser, onLogout }: ParentStu
   }, []);
 
   useEffect(() => {
-    const unsub = onSnapshot(collection(db, 'mis_sis_grades_v3'), (snapshot) => {
+    const unsub = onSnapshot(collection(firestoreDb, 'mis_sis_grades_v3'), (snapshot) => {
       const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       if (list.length > 0) {
         setGrades(prev => {
@@ -153,7 +153,7 @@ export default function ParentStudentPortal({ currentUser, onLogout }: ParentStu
   }, []);
 
   useEffect(() => {
-    const unsub = onSnapshot(collection(db, 'mis_lms_tuition_fees'), (snapshot) => {
+    const unsub = onSnapshot(collection(firestoreDb, 'mis_lms_tuition_fees'), (snapshot) => {
       const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       if (list.length > 0) {
         setTuitionFees(prev => {
@@ -168,7 +168,7 @@ export default function ParentStudentPortal({ currentUser, onLogout }: ParentStu
   }, []);
 
   useEffect(() => {
-    const unsub = onSnapshot(collection(db, 'mis_portal_leave_requests_v3'), (snapshot) => {
+    const unsub = onSnapshot(collection(firestoreDb, 'mis_portal_leave_requests_v3'), (snapshot) => {
       const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       if (list.length > 0) {
         setLeaveRequests(prev => {
@@ -233,7 +233,7 @@ export default function ParentStudentPortal({ currentUser, onLogout }: ParentStu
       const syncGradesToCloud = async () => {
         try {
           for (const g of newGrades) {
-            await setDoc(doc(db, 'mis_sis_grades_v3', g.id), g);
+            await setDoc(doc(firestoreDb, 'mis_sis_grades_v3', g.id), g);
           }
         } catch (e) {
           console.warn('Failed to sync generated grades to Firestore: ', e);
@@ -325,7 +325,7 @@ export default function ParentStudentPortal({ currentUser, onLogout }: ParentStu
     // Sync to Firestore in background
     const syncLeaveToCloud = async () => {
       try {
-        await setDoc(doc(db, 'mis_portal_leave_requests_v3', newRequest.id), newRequest);
+        await setDoc(doc(firestoreDb, 'mis_portal_leave_requests_v3', newRequest.id), newRequest);
       } catch (err) {
         console.warn('Failed to sync leave request to Firestore: ', err);
       }
@@ -342,7 +342,7 @@ export default function ParentStudentPortal({ currentUser, onLogout }: ParentStu
       // Sync to Firestore in background
       const deleteLeaveFromCloud = async () => {
         try {
-          await deleteDoc(doc(db, 'mis_portal_leave_requests_v3', requestId));
+          await deleteDoc(doc(firestoreDb, 'mis_portal_leave_requests_v3', requestId));
         } catch (err) {
           console.warn('Failed to delete leave request from Firestore: ', err);
         }
@@ -383,7 +383,7 @@ export default function ParentStudentPortal({ currentUser, onLogout }: ParentStu
     if (updatedInvoice) {
       const syncInvoiceToCloud = async () => {
         try {
-          await setDoc(doc(db, 'mis_lms_tuition_fees', selectedInvoice.id), updatedInvoice);
+          await setDoc(doc(firestoreDb, 'mis_lms_tuition_fees', selectedInvoice.id), updatedInvoice);
         } catch (err) {
           console.warn('Failed to sync invoice payment to Firestore: ', err);
         }
@@ -435,7 +435,7 @@ export default function ParentStudentPortal({ currentUser, onLogout }: ParentStu
       if (updatedInvoice) {
         const syncInvoiceToCloud = async () => {
           try {
-            await setDoc(doc(db, 'mis_lms_tuition_fees', selectedInvoice.id), updatedInvoice);
+            await setDoc(doc(firestoreDb, 'mis_lms_tuition_fees', selectedInvoice.id), updatedInvoice);
           } catch (err) {
             console.warn('Failed to sync invoice payment to Firestore: ', err);
           }

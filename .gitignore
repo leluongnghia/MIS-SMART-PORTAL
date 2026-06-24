@@ -13,3 +13,6 @@ scratch/
 *.cjs
 .claude/
 .agent/
+
+deploy.tar.gz
+mis_portal_handoff*

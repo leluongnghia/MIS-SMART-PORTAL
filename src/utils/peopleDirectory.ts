@@ -1,6 +1,6 @@
 import { serverStorage } from '../libs/client/server-storage';
 import { Task, UserProfile } from '../types';
-import { db } from '../firebase';
+import { firestoreDb } from '../firebase';
 import { collection, doc, setDoc, getDocs } from 'firebase/firestore';
 
 type GenderText = 'Nam' | 'Nữ' | 'Khác';
@@ -334,10 +334,10 @@ export function initializeUnifiedDatabase(
   // Sync default profiles to Firestore if empty
   const syncDefaultsToCloud = async () => {
     try {
-      const snapshot = await getDocs(collection(db, 'mis_student_directory'));
+      const snapshot = await getDocs(collection(firestoreDb, 'mis_student_directory'));
       if (snapshot.empty) {
         for (const s of unifiedList) {
-          await setDoc(doc(db, 'mis_student_directory', s.id), s);
+          await setDoc(doc(firestoreDb, 'mis_student_directory', s.id), s);
         }
       }
     } catch (e) {
@@ -387,7 +387,7 @@ export function saveUnifiedStudents(students: UnifiedStudent[]) {
   const syncToCloud = async () => {
     try {
       for (const s of students) {
-        await setDoc(doc(db, 'mis_student_directory', s.id), s);
+        await setDoc(doc(firestoreDb, 'mis_student_directory', s.id), s);
       }
     } catch (e) {
       console.warn('Failed to sync saved students to Firestore: ', e);

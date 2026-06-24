@@ -10,7 +10,7 @@ const protectedRoutes: Record<string, string[]> = {
   '/en/ke-toan': ['KE_TOAN', 'BGH'],
 };
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
   // Skip auth checks on _next and static assets
