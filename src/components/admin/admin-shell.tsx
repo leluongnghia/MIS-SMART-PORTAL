@@ -55,7 +55,7 @@ import { DepartmentSidebar } from '@/src/components/department/DepartmentSidebar
 
 type MenuItemGroup = {
   title: string;
-  items: { label: string; href: string; icon: any; badgeKey?: 'tasks' | 'directives' | 'announcements' }[];
+  items: { label: string; href: string; icon: any; badgeKey?: 'tasks' | 'directives' | 'announcements'; roles?: string[] }[];
 };
 
 type NotificationSummary = {
@@ -71,11 +71,11 @@ const menuGroups: MenuItemGroup[] = [
   {
     title: 'BỘ MÁY ĐIỀU HÀNH',
     items: [
-      { label: 'Dashboard Hội đồng', href: 'dashboard/council', icon: LayoutDashboard },
-      { label: 'Dashboard Hiệu trưởng', href: 'dashboard/academic', icon: LayoutDashboard },
-      { label: 'Mục tiêu chiến lược', href: 'dashboard/okrs', icon: Target },
-      { label: 'Quản trị rủi ro', href: 'risk', icon: ShieldAlert },
-      { label: 'Chỉ đạo BGH', href: 'directives', icon: ClipboardCheck, badgeKey: 'directives' },
+      { label: 'Dashboard Hội đồng', href: 'dashboard/council', icon: LayoutDashboard, roles: ['ADMIN'] },
+      { label: 'Dashboard Hiệu trưởng', href: 'dashboard/academic', icon: LayoutDashboard, roles: ['ADMIN', 'MANAGER'] },
+      { label: 'Mục tiêu chiến lược', href: 'dashboard/okrs', icon: Target, roles: ['ADMIN', 'MANAGER'] },
+      { label: 'Quản trị rủi ro', href: 'risk', icon: ShieldAlert, roles: ['ADMIN'] },
+      { label: 'Chỉ đạo BGH', href: 'directives', icon: ClipboardCheck, badgeKey: 'directives', roles: ['ADMIN', 'MANAGER'] },
       { label: 'Nhiệm vụ & Dự án', href: 'tasks', icon: CheckSquare, badgeKey: 'tasks' },
       { label: 'Đơn từ & Phê duyệt', href: 'approvals', icon: UserCheck },
       { label: 'Thông báo nội bộ', href: 'announcements', icon: Bell, badgeKey: 'announcements' },
@@ -90,7 +90,7 @@ const menuGroups: MenuItemGroup[] = [
       { label: 'Thời khóa biểu & Lịch', href: 'schedule', icon: CalendarDays },
       { label: 'Kiểm tra & Đánh giá', href: 'exams', icon: FileText },
       { label: 'Sổ liên lạc & Nề nếp', href: 'conduct', icon: CheckSquare },
-      { label: 'Nhân sự trường học', href: 'hrm', icon: Users },
+      { label: 'Nhân sự trường học', href: 'hrm', icon: Users, roles: ['ADMIN', 'MANAGER'] },
     ],
   },
   {
@@ -115,19 +115,20 @@ const menuGroups: MenuItemGroup[] = [
   {
     title: 'DỊCH VỤ HỌC ĐƯỜNG',
     items: [
-      { label: 'Dashboard dịch vụ', href: 'school-services', icon: LayoutDashboard },
+      { label: 'Tổng quan Dịch vụ học đường', href: 'school-services', icon: LayoutDashboard },
+      { label: 'Trung tâm Ticket Dịch vụ', href: 'school-services/tickets', icon: MessageSquare },
       { label: 'Xe đưa đón', href: 'transport', icon: Bus },
-      { label: 'Ăn uống / Suất ăn', href: 'meals', icon: Utensils },
-      { label: 'Bán trú - Nội trú', href: 'school-services/boarding', icon: Moon },
+      { label: 'Suất ăn / Căng tin', href: 'meals', icon: Utensils },
       { label: 'Y tế học đường', href: 'health', icon: HeartPulse },
-      { label: 'Đồng phục - Học phẩm', href: 'school-services/uniforms', icon: ClipboardCheck },
+      { label: 'Bán trú / Nội trú', href: 'school-services/boarding', icon: Moon },
       { label: 'Cơ sở vật chất', href: 'school-services/facilities', icon: Building },
-      { label: 'Hỗ trợ học sinh', href: 'school-services/student-support', icon: Users },
-      { label: 'Ticket dịch vụ', href: 'school-services/tickets', icon: MessageSquare },
-      { label: 'Phản ánh / Khiếu nại', href: 'school-services/feedback', icon: ShieldAlert },
-      { label: 'Thông báo dịch vụ', href: 'school-services/notifications', icon: Bell },
-      { label: 'Báo cáo vận hành', href: 'school-services/reports', icon: FileBarChart },
-      { label: 'Cấu hình dịch vụ', href: 'school-services/settings', icon: Settings },
+      { label: 'Vệ sinh / Môi trường', href: 'school-services/cleaning', icon: CheckSquare },
+      { label: 'An ninh / An toàn', href: 'school-services/security', icon: ShieldAlert },
+      { label: 'Lịch vận hành', href: 'school-services/schedule', icon: CalendarDays },
+      { label: 'Nhân sự dịch vụ', href: 'school-services/staff', icon: Users },
+      { label: 'Báo cáo & KPI', href: 'school-services/reports', icon: FileBarChart },
+      { label: 'Cấu hình vận hành cơ bản', href: 'school-services/settings', icon: Settings },
+      { label: 'Thông báo / Cảnh báo', href: 'school-services/notifications', icon: Bell },
     ],
   },
 ];
@@ -420,19 +421,19 @@ export default function AdminShell({ locale, children }: { locale: string; child
   const WORKSPACE_MENU_MAPPING: Record<string, string[]> = {
     ALL: ['BỘ MÁY ĐIỀU HÀNH', 'HỌC VỤ & NHÂN SỰ', 'VẬN HÀNH & NGUỒN LỰC', 'DỊCH VỤ HỌC ĐƯỜNG', 'CÀI ĐẶT HỆ THỐNG'],
     BGH: ['BỘ MÁY ĐIỀU HÀNH', 'HỌC VỤ & NHÂN SỰ', 'VẬN HÀNH & NGUỒN LỰC', 'DỊCH VỤ HỌC ĐƯỜNG', 'CÀI ĐẶT HỆ THỐNG'],
-    TUYEN_SINH_PR: ['VẬN HÀNH & NGUỒN LỰC', 'CÀI ĐẶT HỆ THỐNG'],
-    QUOC_TE: ['HỌC VỤ & NHÂN SỰ', 'CÀI ĐẶT HỆ THỐNG'],
-    CTHS_TAM_LY: ['HỌC VỤ & NHÂN SỰ', 'VẬN HÀNH & NGUỒN LỰC', 'CÀI ĐẶT HỆ THỐNG'],
-    DICH_VU_HOC_DUONG: ['DỊCH VỤ HỌC ĐƯỜNG', 'CÀI ĐẶT HỆ THỐNG'],
-    TOAN_TIN: ['HỌC VỤ & NHÂN SỰ', 'CÀI ĐẶT HỆ THỐNG'],
-    VAN: ['HỌC VỤ & NHÂN SỰ', 'CÀI ĐẶT HỆ THỐNG'],
-    NGOAI_NGU: ['HỌC VỤ & NHÂN SỰ', 'CÀI ĐẶT HỆ THỐNG'],
-    KHTN: ['HỌC VỤ & NHÂN SỰ', 'CÀI ĐẶT HỆ THỐNG'],
-    LS_DL: ['HỌC VỤ & NHÂN SỰ', 'CÀI ĐẶT HỆ THỐNG'],
-    GDCD_KTPL: ['HỌC VỤ & NHÂN SỰ', 'CÀI ĐẶT HỆ THỐNG'],
-    NT_TC_QPAN: ['HỌC VỤ & NHÂN SỰ', 'CÀI ĐẶT HỆ THỐNG'],
-    CN_TRAI_NGHIEM: ['HỌC VỤ & NHÂN SỰ', 'CÀI ĐẶT HỆ THỐNG'],
-    HANH_CHINH: ['VẬN HÀNH & NGUỒN LỰC', 'HỌC VỤ & NHÂN SỰ', 'CÀI ĐẶT HỆ THỐNG'],
+    TUYEN_SINH_PR: ['BỘ MÁY ĐIỀU HÀNH', 'VẬN HÀNH & NGUỒN LỰC', 'CÀI ĐẶT HỆ THỐNG'],
+    QUOC_TE: ['BỘ MÁY ĐIỀU HÀNH', 'HỌC VỤ & NHÂN SỰ', 'CÀI ĐẶT HỆ THỐNG'],
+    CTHS_TAM_LY: ['BỘ MÁY ĐIỀU HÀNH', 'HỌC VỤ & NHÂN SỰ', 'VẬN HÀNH & NGUỒN LỰC', 'CÀI ĐẶT HỆ THỐNG'],
+    DICH_VU_HOC_DUONG: ['BỘ MÁY ĐIỀU HÀNH', 'DỊCH VỤ HỌC ĐƯỜNG', 'CÀI ĐẶT HỆ THỐNG'],
+    TOAN_TIN: ['BỘ MÁY ĐIỀU HÀNH', 'HỌC VỤ & NHÂN SỰ', 'CÀI ĐẶT HỆ THỐNG'],
+    VAN: ['BỘ MÁY ĐIỀU HÀNH', 'HỌC VỤ & NHÂN SỰ', 'CÀI ĐẶT HỆ THỐNG'],
+    NGOAI_NGU: ['BỘ MÁY ĐIỀU HÀNH', 'HỌC VỤ & NHÂN SỰ', 'CÀI ĐẶT HỆ THỐNG'],
+    KHTN: ['BỘ MÁY ĐIỀU HÀNH', 'HỌC VỤ & NHÂN SỰ', 'CÀI ĐẶT HỆ THỐNG'],
+    LS_DL: ['BỘ MÁY ĐIỀU HÀNH', 'HỌC VỤ & NHÂN SỰ', 'CÀI ĐẶT HỆ THỐNG'],
+    GDCD_KTPL: ['BỘ MÁY ĐIỀU HÀNH', 'HỌC VỤ & NHÂN SỰ', 'CÀI ĐẶT HỆ THỐNG'],
+    NT_TC_QPAN: ['BỘ MÁY ĐIỀU HÀNH', 'HỌC VỤ & NHÂN SỰ', 'CÀI ĐẶT HỆ THỐNG'],
+    CN_TRAI_NGHIEM: ['BỘ MÁY ĐIỀU HÀNH', 'HỌC VỤ & NHÂN SỰ', 'CÀI ĐẶT HỆ THỐNG'],
+    HANH_CHINH: ['BỘ MÁY ĐIỀU HÀNH', 'VẬN HÀNH & NGUỒN LỰC', 'HỌC VỤ & NHÂN SỰ', 'CÀI ĐẶT HỆ THỐNG'],
   };
 
   const allowedGroups = WORKSPACE_MENU_MAPPING[currentUser?.workspaceId || 'ALL'] || ['BỘ MÁY ĐIỀU HÀNH', 'CÀI ĐẶT HỆ THỐNG'];
@@ -497,7 +498,7 @@ export default function AdminShell({ locale, children }: { locale: string; child
     const mapped = rawMenuGroups.map(group => {
         const targetTitles = ['BỘ MÁY ĐIỀU HÀNH', 'CÀI ĐẶT HỆ THỐNG'];
         if (targetTitles.includes(group.title)) {
-          const extraItems: { label: string; href: string; icon: any; badgeKey?: 'tasks' | 'directives' | 'announcements' }[] = [];
+          const extraItems: { label: string; href: string; icon: any; badgeKey?: 'tasks' | 'directives' | 'announcements'; roles?: string[] }[] = [];
           
           if (group.title === 'BỘ MÁY ĐIỀU HÀNH') {
             extraItems.push({ label: 'Chat nội bộ', href: 'chat', icon: MessageSquare });
@@ -520,7 +521,10 @@ export default function AdminShell({ locale, children }: { locale: string; child
       return group;
     });
 
-    return mapped;
+    return mapped.map(group => ({
+      ...group,
+      items: group.items.filter(item => !item.roles || (currentUser && item.roles.includes(currentUser.role)))
+    })).filter(group => group.items.length > 0);
   }, [rawMenuGroups, currentUser]);
 
   if (!isAuthReady) {

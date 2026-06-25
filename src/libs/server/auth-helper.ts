@@ -11,11 +11,33 @@ export interface Actor {
   workspaceId: string | null;
   departmentId: string | null;
   homeroomClassId: string | null;
+  departmentScope?: string | null;
   status: string;
 }
 
 export async function getCurrentActor(): Promise<Actor | null> {
-  // 1. Try Clerk
+  // 1. Try simulated auth via cookies FIRST to allow User Switcher to override Clerk
+  let userId: string | undefined = undefined;
+  
+  try {
+    const { cookies } = require('next/headers');
+    const cookieStore = cookies();
+    userId = cookieStore.get('mis_demo_user_id')?.value;
+  } catch (e) {
+    // cookies() might fail in some contexts like non-request lifecycle
+  }
+
+  if (userId) {
+    const [user] = await db
+      .select()
+      .from(schema.users)
+      .where(eq(schema.users.id, userId))
+      .limit(1);
+
+    if (user) return user as Actor;
+  }
+
+  // 2. Try Clerk
   if (process.env.CLERK_SECRET_KEY) {
     try {
       const { auth } = require('@clerk/nextjs/server');
@@ -33,14 +55,20 @@ export async function getCurrentActor(): Promise<Actor | null> {
     }
   }
 
-  // 2. Try simulated auth via systemSettings client key
-  const [setting] = await db
-    .select()
-    .from(schema.systemSettings)
-    .where(eq(schema.systemSettings.key, 'client:mis_edutask_logged_in_user_id'))
-    .limit(1);
+  // 3. Fallback to DB settings if no cookie and no Clerk
+  if (!userId) {
+    try {
+      const [setting] = await db
+        .select()
+        .from(schema.systemSettings)
+        .where(eq(schema.systemSettings.key, 'client:mis_edutask_logged_in_user_id'))
+        .limit(1);
+      userId = setting?.value;
+    } catch (e) {
+      // settings check failed
+    }
+  }
 
-  const userId = setting?.value;
   if (userId) {
     const [user] = await db
       .select()
@@ -54,6 +82,39 @@ export async function getCurrentActor(): Promise<Actor | null> {
     const { MOCK_USERS } = require('../../mockData');
     const mockUser = MOCK_USERS.find((u: any) => u.id === userId);
     if (mockUser) return mockUser as Actor;
+
+    // Resolve student/parent mock users dynamically to avoid ADMIN fallback
+    if (userId.startsWith('student_') || userId.includes('student')) {
+      return {
+        id: userId,
+        name: 'Học sinh Demo',
+        role: 'STUDENT',
+        roleName: 'Học sinh',
+        title: 'Học sinh lớp 10A1',
+        email: `${userId}@student.misvn.edu.vn`,
+        workspaceId: 'STUDENT',
+        departmentId: null,
+        homeroomClassId: null,
+        status: 'ACTIVE'
+      };
+    }
+    if (userId.startsWith('parent_') || userId.includes('parent')) {
+      return {
+        id: userId,
+        name: 'Phụ huynh Demo',
+        role: 'PARENT',
+        roleName: 'Phụ huynh',
+        title: 'Phụ huynh học sinh',
+        email: `${userId}@parent.misvn.edu.vn`,
+        workspaceId: 'PARENT',
+        departmentId: null,
+        homeroomClassId: null,
+        status: 'ACTIVE'
+      };
+    }
+
+    // If userId is explicit but invalid, do not fallback to admin
+    return null;
   }
 
   // 3. Fallback for demo/local auth: use an active admin, then any active user.

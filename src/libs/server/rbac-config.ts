@@ -15,6 +15,8 @@ export type PrimaryRole =
   | 'media_cskh'     // Truyền thông & CSKH
   | 'hr_admin'       // Hành chính - Nhân sự
   | 'finance'        // Kế toán - Tài chính
+  | 'school_service_staff' // Nhân viên Dịch vụ học đường
+  | 'school_service_operations_manager' // Trưởng phòng Dịch vụ học đường
   | 'super_admin';   // Quản trị hệ thống
 
 /** Maps system role/workspaceId to primaryRole */
@@ -34,6 +36,14 @@ export function inferPrimaryRole(user: {
       return 'super_admin';
     }
     return 'principal';
+  }
+
+  if (role === 'SCHOOL_SERVICE_OPERATIONS_MANAGER') {
+    return 'school_service_operations_manager';
+  }
+
+  if (role === 'SCHOOL_SERVICE_STAFF') {
+    return 'school_service_staff';
   }
 
   // Workspace-based mapping
@@ -80,6 +90,8 @@ export const ROLE_DASHBOARD: Record<PrimaryRole, string> = {
   media_cskh:            '/tickets',
   hr_admin:              '/hrm',
   finance:               '/payments',
+  school_service_staff:  '/school-services',
+  school_service_operations_manager: '/school-services',
   super_admin:           '/dashboard/council',
 };
 
@@ -199,6 +211,26 @@ export const ROLE_CAPABILITIES: Record<PrimaryRole, string[]> = {
     'admission.view',
     'announcement.view',
     'document.view',
+  ],
+
+  school_service_staff: [
+    'ticket.service.view', 'ticket.service.edit',
+    'facility.view:own',
+    'transport.view:own',
+    'meal.view:own',
+    'health.view:own',
+    'announcement.view',
+  ],
+
+  school_service_operations_manager: [
+    'dashboard.service.view',
+    'ticket.service.view', 'ticket.service.edit', 'ticket.service.admin',
+    'facility.view', 'facility.edit',
+    'transport.view', 'transport.edit',
+    'meal.view', 'meal.edit',
+    'health.view', 'health.edit',
+    'report.service.view',
+    'announcement.view',
   ],
 };
 

@@ -10,6 +10,8 @@ export const ROLE_LABELS: Record<UserRole | string, string> = {
   ADMISSIONS: "Tuyển sinh",
   HRM: "Nhân sự",
   FACILITIES: "Cơ sở vật chất",
+  SCHOOL_SERVICE_STAFF: "Nhân viên Dịch vụ học đường",
+  SCHOOL_SERVICE_OPERATIONS_MANAGER: "Trưởng phòng Khai thác Dịch vụ phụ trợ & Vận hành",
 };
 
 export const STATUS_LABELS: Record<UserStatus | string, string> = {
@@ -49,6 +51,8 @@ export const ROLE_COLORS: Record<UserRole | string, string> = {
   ADMISSIONS: "bg-amber-500/10 text-amber-650 border-amber-500/20 dark:text-amber-400",
   HRM: "bg-pink-500/10 text-pink-650 border-pink-500/20 dark:text-pink-400",
   FACILITIES: "bg-cyan-500/10 text-cyan-650 border-cyan-500/20 dark:text-cyan-400",
+  SCHOOL_SERVICE_STAFF: "bg-teal-500/10 text-teal-650 border-teal-500/20 dark:text-teal-400",
+  SCHOOL_SERVICE_OPERATIONS_MANAGER: "bg-indigo-600/10 text-indigo-700 border-indigo-600/20 dark:text-indigo-400 font-bold",
 };
 
 export const STATUS_COLORS: Record<UserStatus | string, string> = {
@@ -78,6 +82,7 @@ export const PERMISSION_MODULES = [
   { key: "reports", label: "Trung tâm báo cáo" },
   { key: "settings", label: "Cấu hình hệ thống" },
   { key: "users", label: "Quản lý người dùng & phân quyền" },
+  { key: "school-services", label: "Dịch vụ học đường" },
 ];
 
 export const PERMISSION_ACTIONS = [
@@ -115,4 +120,16 @@ export const JOB_TITLES_LIST = [
   "Quản lý CSVC",
   "Cán bộ tuyển sinh",
   "Nhân sự",
+  "Nhân viên dịch vụ học đường",
+];
+
+export const SERVICE_DEPARTMENTS = [
+  { value: 'transport', label: 'Xe đưa đón' },
+  { value: 'meal', label: 'Suất ăn / Căng tin' },
+  { value: 'health', label: 'Y tế học đường' },
+  { value: 'boarding', label: 'Bán trú / Nội trú' },
+  { value: 'facility', label: 'Cơ sở vật chất' },
+  { value: 'security', label: 'An ninh / Bảo vệ' },
+  { value: 'cleaning', label: 'Vệ sinh / Môi trường' },
+  { value: 'general', label: 'Chung' },
 ];

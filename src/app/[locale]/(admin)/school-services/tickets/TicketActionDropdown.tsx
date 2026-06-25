@@ -9,9 +9,10 @@ import { cn } from '@/src/lib/utils';
 interface TicketActionDropdownProps {
   ticket: Ticket;
   onAction: (action: string, ticketId: string) => void;
+  isManager?: boolean;
 }
 
-export function TicketActionDropdown({ ticket, onAction }: TicketActionDropdownProps) {
+export function TicketActionDropdown({ ticket, onAction, isManager }: TicketActionDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -86,7 +87,7 @@ export function TicketActionDropdown({ ticket, onAction }: TicketActionDropdownP
             <Eye className="h-4 w-4 text-slate-400" /> Xem chi tiết
           </button>
 
-          {ticket.status === 'open' && (
+          {['open', 'NEW', 'ASSIGNED'].includes(ticket.status) && (
             <>
               <div className="my-1 border-t border-slate-100 dark:border-slate-800" />
               <button onClick={() => handleAction('accept')} className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2">
@@ -105,10 +106,15 @@ export function TicketActionDropdown({ ticket, onAction }: TicketActionDropdownP
               <button onClick={() => handleAction('cancel')} className="w-full text-left px-4 py-2 text-sm text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-900/30 flex items-center gap-2">
                 <XCircle className="h-4 w-4" /> Hủy ticket
               </button>
+              {isManager && (
+                <button onClick={() => handleAction('escalate')} className="w-full text-left px-4 py-2 text-sm text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900/30 flex items-center gap-2">
+                  <AlertCircle className="h-4 w-4" /> Chuyển cấp (Escalate)
+                </button>
+              )}
             </>
           )}
 
-          {ticket.status === 'in_progress' && (
+          {['in_progress', 'IN_PROGRESS'].includes(ticket.status) && (
             <>
               <div className="my-1 border-t border-slate-100 dark:border-slate-800" />
               <button onClick={() => handleAction('update_progress')} className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2">
@@ -127,10 +133,15 @@ export function TicketActionDropdown({ ticket, onAction }: TicketActionDropdownP
               <button onClick={() => handleAction('resolve')} className="w-full text-left px-4 py-2 text-sm text-emerald-600 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-900/30 flex items-center gap-2 font-medium">
                 <CheckCircle2 className="h-4 w-4" /> Đánh dấu đã giải quyết
               </button>
+              {isManager && (
+                <button onClick={() => handleAction('escalate')} className="w-full text-left px-4 py-2 text-sm text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900/30 flex items-center gap-2 font-medium">
+                  <AlertCircle className="h-4 w-4" /> Chuyển cấp xử lý (Escalate)
+                </button>
+              )}
             </>
           )}
 
-          {ticket.status === 'resolved' && (
+          {['resolved', 'RESOLVED'].includes(ticket.status) && (
             <>
               <div className="my-1 border-t border-slate-100 dark:border-slate-800" />
               <button onClick={() => handleAction('send_result')} className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2">
@@ -143,10 +154,20 @@ export function TicketActionDropdown({ ticket, onAction }: TicketActionDropdownP
               <button onClick={() => handleAction('close')} className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 font-medium">
                 <Lock className="h-4 w-4 text-slate-500" /> Đóng ticket
               </button>
+              {isManager && (
+                <>
+                  <button onClick={() => handleAction('confirm_closed')} className="w-full text-left px-4 py-2 text-sm text-emerald-600 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-900/30 flex items-center gap-2 font-medium">
+                    <CheckCircle2 className="h-4 w-4" /> Phê duyệt (Confirm Close)
+                  </button>
+                  <button onClick={() => handleAction('reject')} className="w-full text-left px-4 py-2 text-sm text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-900/30 flex items-center gap-2 font-medium">
+                    <XCircle className="h-4 w-4" /> Từ chối giải quyết (Reject)
+                  </button>
+                </>
+              )}
             </>
           )}
 
-          {ticket.status === 'closed' && (
+          {['closed', 'CLOSED'].includes(ticket.status) && (
             <>
               <div className="my-1 border-t border-slate-100 dark:border-slate-800" />
               <button onClick={() => handleAction('history')} className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2">

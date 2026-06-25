@@ -40,6 +40,7 @@ export const users = pgTable('users', {
   deletedAt: timestamp('deleted_at', { withTimezone: true }),
   createdBy: text('created_by'),
   updatedBy: text('updated_by'),
+  departmentScope: text('department_scope'),
   payload: jsonb('payload').notNull().default({}),
   ...timestamps,
 });
@@ -2028,4 +2029,42 @@ export const serviceSettings = pgTable('service_settings', {
   ...timestamps,
 }, t => [
   index('service_settings_type_idx').on(t.type),
+]);
+
+export const serviceTickets = pgTable('service_tickets', {
+  id: text('id').primaryKey(),
+  code: text('code').notNull().unique(),
+  title: text('title').notNull(),
+  serviceGroup: text('service_group').notNull(), // transport, meal, health, boarding, facility, security, cleaning, general
+  priority: text('priority').notNull(), // low, normal, high, urgent
+  location: text('location'),
+  detectedAt: timestamp('detected_at', { withTimezone: true }),
+  reportedBy: text('reported_by'), // Tên người báo
+  reporterId: text('reporter_id'), // User ID người báo nếu có
+  description: text('description'),
+  status: text('status').notNull().default('NEW'), // NEW, ASSIGNED, ACCEPTED, IN_PROGRESS, WAITING_INFO, WAITING_MATERIAL, WAITING_SUPPORT, ESCALATED, RESOLVED, CONFIRMED_CLOSED, REJECTED, CANCELLED
+  assignedToId: text('assigned_to_id').references(() => users.id, { onDelete: 'set null' }),
+  departmentScope: text('department_scope'),
+  deletedAt: timestamp('deleted_at', { withTimezone: true }),
+  payload: jsonb('payload').notNull().default({}),
+  ...timestamps,
+}, t => [
+  index('service_tickets_status_idx').on(t.status),
+  index('service_tickets_group_idx').on(t.serviceGroup),
+  index('service_tickets_assigned_idx').on(t.assignedToId),
+]);
+
+export const serviceTicketActivities = pgTable('service_ticket_activities', {
+  id: text('id').primaryKey(),
+  ticketId: text('ticket_id').notNull().references(() => serviceTickets.id, { onDelete: 'cascade' }),
+  actorId: text('actor_id').references(() => users.id, { onDelete: 'set null' }),
+  actorName: text('actor_name'),
+  action: text('action').notNull(), // create, comment, status_change, assign, resolve, request_support
+  content: text('content'),
+  fromStatus: text('from_status'),
+  toStatus: text('to_status'),
+  payload: jsonb('payload').notNull().default({}), // for images/attachments
+  ...timestamps,
+}, t => [
+  index('service_ticket_activities_ticket_idx').on(t.ticketId),
 ]);

@@ -7,7 +7,9 @@ export type UserRole =
   | 'STAFF'
   | 'ADMISSIONS'
   | 'HRM'
-  | 'FACILITIES';
+  | 'FACILITIES'
+  | 'SCHOOL_SERVICE_STAFF'
+  | 'SCHOOL_SERVICE_OPERATIONS_MANAGER';
 
 export type UserStatus =
   | 'ACTIVE'

@@ -62,6 +62,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ status: 'error', error: 'Không được đổi sang role cao hơn.' }, { status: 403 });
     }
 
+    // Keep writing to systemSettings as fallback sync option
     await db.insert(schema.systemSettings).values({
       key: 'client:mis_edutask_logged_in_user_id',
       value: targetUserId,
@@ -83,9 +84,26 @@ export async function POST(request: Request) {
       });
     }
 
-    return NextResponse.json({ status: 'success', targetUserId, persisted: Boolean(target) });
+    const response = NextResponse.json({ status: 'success', targetUserId, persisted: Boolean(target) });
+    response.cookies.set('mis_demo_user_id', targetUserId, {
+      path: '/',
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 7 // 7 days
+    });
+
+    return response;
   } catch (error) {
     console.error('User switcher POST failed:', error);
-    return NextResponse.json({ status: 'success', targetUserId, persisted: false, fallback: true });
+    const response = NextResponse.json({ status: 'success', targetUserId, persisted: false, fallback: true });
+    response.cookies.set('mis_demo_user_id', targetUserId, {
+      path: '/',
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 7
+    });
+    return response;
   }
 }
