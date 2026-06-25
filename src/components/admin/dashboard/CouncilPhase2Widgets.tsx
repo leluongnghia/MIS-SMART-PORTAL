@@ -29,18 +29,18 @@ const funnelData = [
 
 export function FinanceForecastWidget() {
   return (
-    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl shadow-xs space-y-4">
-      <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3">
+    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl shadow-xs space-y-4 flex flex-col">
+      <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3 shrink-0">
         <h3 className="font-bold text-xs uppercase text-slate-900 dark:text-white tracking-wider flex items-center gap-2">
           <TrendingUp className="w-4 h-4 text-emerald-600" /> DỰ BÁO DÒNG TIỀN (90 NGÀY)
         </h3>
       </div>
-      <div className="h-64 w-full">
+      <div className="h-64 w-full flex-1">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={financeData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+          <BarChart data={financeData} margin={{ top: 10, right: 10, left: -20, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />
-            <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />
+            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11 }} />
+            <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11 }} />
             <Tooltip cursor={{ fill: 'transparent' }} />
             <Bar dataKey="in" name="Dòng tiền vào (Triệu)" fill="#10b981" radius={[4, 4, 0, 0]} />
             <Bar dataKey="out" name="Dòng tiền ra (Triệu)" fill="#e11d48" radius={[4, 4, 0, 0]} />
@@ -53,17 +53,17 @@ export function FinanceForecastWidget() {
 
 export function AdmissionsFunnelWidget() {
   return (
-    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl shadow-xs space-y-4">
-      <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3">
+    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl shadow-xs space-y-4 flex flex-col">
+      <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3 shrink-0">
         <h3 className="font-bold text-xs uppercase text-slate-900 dark:text-white tracking-wider flex items-center gap-2">
           <Users className="w-4 h-4 text-blue-600" /> PHỄU TUYỂN SINH CHI TIẾT
         </h3>
       </div>
-      <div className="h-64 w-full">
+      <div className="h-64 w-full flex-1">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={funnelData} layout="vertical" margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
+          <AreaChart data={funnelData} layout="vertical" margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
             <XAxis type="number" hide />
-            <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 12 }} width={80} />
+            <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 11 }} width={95} />
             <Tooltip />
             <Area type="monotone" dataKey="value" stroke="#3b82f6" fill="#bfdbfe" />
           </AreaChart>
@@ -75,17 +75,17 @@ export function AdmissionsFunnelWidget() {
 
 export function HRTurnoverWidget() {
   return (
-    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl shadow-xs space-y-4">
-      <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3">
+    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl shadow-xs space-y-4 flex flex-col">
+      <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3 shrink-0">
         <h3 className="font-bold text-xs uppercase text-slate-900 dark:text-white tracking-wider flex items-center gap-2">
           <Briefcase className="w-4 h-4 text-purple-600" /> BIẾN ĐỘNG NHÂN SỰ
         </h3>
       </div>
-      <div className="flex items-center justify-between h-64">
-        <div className="w-1/2 h-full">
+      <div className="flex items-center gap-1 h-64 flex-1">
+        <div className="w-[45%] h-full flex items-center justify-center">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
-              <Pie data={hrData} dataKey="value" cx="50%" cy="50%" innerRadius={40} outerRadius={70} paddingAngle={5}>
+              <Pie data={hrData} dataKey="value" cx="50%" cy="50%" innerRadius={35} outerRadius={55} paddingAngle={5}>
                 {hrData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.color} />
                 ))}
@@ -94,19 +94,19 @@ export function HRTurnoverWidget() {
             </PieChart>
           </ResponsiveContainer>
         </div>
-        <div className="w-1/2 space-y-3">
+        <div className="w-[55%] flex flex-col justify-center space-y-3 pl-1">
           {hrData.map((item) => (
             <div key={item.name} className="flex justify-between items-center">
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }}></span>
-                <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{item.name}</span>
+              <div className="flex items-center gap-1.5 min-w-0">
+                <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: item.color }}></span>
+                <span className="text-[11px] font-medium text-slate-700 dark:text-slate-300 truncate">{item.name}</span>
               </div>
-              <span className="text-sm font-bold text-slate-900 dark:text-white">{item.value}</span>
+              <span className="text-[11px] font-bold text-slate-900 dark:text-white shrink-0 ml-1">{item.value}</span>
             </div>
           ))}
           <div className="pt-2 border-t border-slate-100 dark:border-slate-800 mt-2">
-            <button onClick={() => alert("Đang chuyển sang trang Báo cáo Nhân sự...")} className="text-xs font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1">
-              Xem báo cáo chi tiết <ArrowRight className="w-3 h-3" />
+            <button onClick={() => alert("Đang chuyển sang trang Báo cáo Nhân sự...")} className="text-[11px] font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1 whitespace-nowrap">
+              Xem báo cáo chi tiết <ArrowRight className="w-3 h-3 shrink-0" />
             </button>
           </div>
         </div>
@@ -123,15 +123,15 @@ export function CouncilMeetingsWidget() {
   ];
 
   return (
-    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl shadow-xs space-y-4">
-      <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3">
+    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl shadow-xs space-y-4 flex flex-col">
+      <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3 shrink-0">
         <h3 className="font-bold text-xs uppercase text-slate-900 dark:text-white tracking-wider flex items-center gap-2">
           <Calendar className="w-4 h-4 text-amber-600" /> NGHỊ QUYẾT & CUỘC HỌP HĐT
         </h3>
       </div>
       
       {meetings.length > 0 ? (
-        <div className="space-y-3 h-64 overflow-y-auto pr-2 custom-scrollbar">
+        <div className="space-y-3 h-64 overflow-y-auto pr-2 custom-scrollbar flex-1">
           {meetings.map((meeting) => (
             <div key={meeting.id} className="p-3 border border-slate-100 dark:border-slate-800 rounded-lg bg-slate-50 dark:bg-slate-900/50 hover:border-amber-200 transition-colors">
               <div className="flex justify-between items-start">

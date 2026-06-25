@@ -485,10 +485,28 @@ export default async function CouncilDashboardPage({
                   <td colSpan={6} className="py-8 text-center text-slate-400">Không có yêu cầu phê duyệt nào đang chờ xử lý.</td>
                 </tr>
               ) : (
-                approvalReqs.map((req) => (
+                approvalReqs.map((req) => {
+                  let prefix = "PD";
+                  if (req.entityType === "LEAVE_REQUEST") prefix = "NP";
+                  else if (req.entityType === "RESIGNATION") prefix = "NV";
+                  else if (req.entityType === "MAINTENANCE") prefix = "SC";
+                  else if (req.entityType === "CAPA") prefix = "KP";
+                  
+                  const parts = req.id.split('_');
+                  const lastPart = parts[parts.length - 1];
+                  const code = (lastPart && lastPart.length <= 4 && !isNaN(Number(lastPart))) 
+                    ? `${prefix}-${lastPart.padStart(3, '0')}` 
+                    : `${prefix}-${req.id.replace('req_', '').substring(0, 4).toUpperCase()}`;
+
+                  let moduleName = "Hệ thống";
+                  if (req.entityType === "LEAVE_REQUEST" || req.entityType === "RESIGNATION") moduleName = "Nhân sự";
+                  else if (req.entityType === "MAINTENANCE") moduleName = "Cơ sở vật chất";
+                  else if (req.entityType === "CAPA") moduleName = "QL Chất lượng";
+
+                  return (
                   <tr key={req.id} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50/50 dark:hover:bg-slate-950/50">
-                    <td className="py-3 font-mono font-bold text-indigo-600">{req.id.slice(0, 8)}</td>
-                    <td className="py-3 uppercase font-semibold text-slate-500">{req.module}</td>
+                    <td className="py-3 font-mono font-bold text-indigo-600">{code}</td>
+                    <td className="py-3 uppercase font-semibold text-slate-500">{moduleName}</td>
                     <td className="py-3">
                       <div className="font-bold text-slate-800 dark:text-slate-200">{req.title}</div>
                       <div className="text-[10px] text-slate-400 mt-0.5">{req.description}</div>
@@ -499,7 +517,7 @@ export default async function CouncilDashboardPage({
                       <QuickApproveButton itemId={req.id.toString()} />
                     </td>
                   </tr>
-                ))
+                )})
               )}
             </tbody>
           </table>
