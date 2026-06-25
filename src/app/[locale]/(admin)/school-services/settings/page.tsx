@@ -5,9 +5,12 @@ import { useToast } from '@/src/components/ui/Toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/src/components/ui/card';
 import { Button } from '@/src/components/ui/button';
 import { Input } from '@/src/components/ui/input';
-import { Save, Sliders, Users, Bus, Utensils, ShieldCheck } from 'lucide-react';
+import { Save, Sliders, Users, Bus, Utensils, ShieldCheck, Plus, MapPin, Route, Clock, FileText, AlertTriangle, Settings, CarFront, CheckCircle2 } from 'lucide-react';
 import { Label } from '@/src/components/ui/label';
 import { Switch } from '@/src/components/ui/switch';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/src/components/ui/tabs';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/src/components/ui/table';
+import { Badge } from '@/src/components/ui/badge';
 
 export default function SettingsPage() {
   const { toast } = useToast();
@@ -182,17 +185,226 @@ export default function SettingsPage() {
           )}
 
           {activeTab === 'transport' && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Tham số Xe đưa đón</CardTitle>
-                <CardDescription>Quản lý tuyến đường, trạm dừng và biểu phí xe bus</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="p-4 border border-slate-100 dark:border-slate-800 rounded-lg text-center text-slate-500">
-                  <p>Phân hệ xe đưa đón đang trong giai đoạn triển khai.</p>
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-medium text-slate-900 dark:text-white">Tham số Xe đưa đón</h3>
+                  <p className="text-sm text-slate-500">Quản lý trung tâm điều hành dịch vụ xe bus học đường.</p>
                 </div>
-              </CardContent>
-            </Card>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" className="bg-white dark:bg-slate-900">
+                    <Settings className="w-4 h-4 mr-2" />
+                    Cấu hình phí
+                  </Button>
+                  <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Tạo tuyến mới
+                  </Button>
+                </div>
+              </div>
+
+              <Tabs defaultValue="routes" className="w-full">
+                <TabsList className="grid w-full grid-cols-5 bg-slate-100 dark:bg-slate-800">
+                  <TabsTrigger value="routes">Tuyến & Điểm đón</TabsTrigger>
+                  <TabsTrigger value="vehicles">Xe & Nhân sự</TabsTrigger>
+                  <TabsTrigger value="students">Học sinh đăng ký</TabsTrigger>
+                  <TabsTrigger value="fees">Phí dịch vụ</TabsTrigger>
+                  <TabsTrigger value="schedule">Lịch & An toàn</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="routes" className="mt-4 space-y-4">
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base">Danh sách Tuyến xe hoạt động</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="rounded-md border border-slate-200 dark:border-slate-800">
+                        <Table>
+                          <TableHeader className="bg-slate-50 dark:bg-slate-800/50">
+                            <TableRow>
+                              <TableHead>Mã Tuyến</TableHead>
+                              <TableHead>Tên Tuyến</TableHead>
+                              <TableHead>Chiều đi/về</TableHead>
+                              <TableHead>Số điểm đón</TableHead>
+                              <TableHead>Trạng thái</TableHead>
+                              <TableHead className="text-right">Thao tác</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            <TableRow>
+                              <TableCell className="font-medium">BUS-01</TableCell>
+                              <TableCell>KĐT Ecopark - Trường</TableCell>
+                              <TableCell>Cả 2 chiều</TableCell>
+                              <TableCell>5 điểm</TableCell>
+                              <TableCell><Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20">Hoạt động</Badge></TableCell>
+                              <TableCell className="text-right"><Button variant="ghost" size="sm">Chi tiết</Button></TableCell>
+                            </TableRow>
+                            <TableRow>
+                              <TableCell className="font-medium">BUS-02</TableCell>
+                              <TableCell>Times City - Trường</TableCell>
+                              <TableCell>Cả 2 chiều</TableCell>
+                              <TableCell>3 điểm</TableCell>
+                              <TableCell><Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20">Hoạt động</Badge></TableCell>
+                              <TableCell className="text-right"><Button variant="ghost" size="sm">Chi tiết</Button></TableCell>
+                            </TableRow>
+                            <TableRow>
+                              <TableCell className="font-medium">BUS-03</TableCell>
+                              <TableCell>Royal City - Trường</TableCell>
+                              <TableCell>Chỉ chiều về</TableCell>
+                              <TableCell>4 điểm</TableCell>
+                              <TableCell><Badge variant="outline" className="text-amber-600 border-amber-200">Tạm dừng</Badge></TableCell>
+                              <TableCell className="text-right"><Button variant="ghost" size="sm">Chi tiết</Button></TableCell>
+                            </TableRow>
+                          </TableBody>
+                        </Table>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="vehicles" className="mt-4">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-base">Quản lý Đội xe & Nhân sự</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="border border-slate-200 dark:border-slate-800 rounded-lg p-4">
+                          <div className="flex items-center gap-3 mb-4">
+                            <div className="p-2 bg-blue-100 text-blue-700 rounded-lg dark:bg-blue-900/30 dark:text-blue-400">
+                              <CarFront className="w-5 h-5" />
+                            </div>
+                            <div>
+                              <h4 className="font-medium">29 Xe đưa đón</h4>
+                              <p className="text-sm text-slate-500">100% đạt chuẩn kiểm định</p>
+                            </div>
+                          </div>
+                          <Button variant="outline" className="w-full text-sm">Quản lý Xe</Button>
+                        </div>
+                        <div className="border border-slate-200 dark:border-slate-800 rounded-lg p-4">
+                          <div className="flex items-center gap-3 mb-4">
+                            <div className="p-2 bg-indigo-100 text-indigo-700 rounded-lg dark:bg-indigo-900/30 dark:text-indigo-400">
+                              <Users className="w-5 h-5" />
+                            </div>
+                            <div>
+                              <h4 className="font-medium">32 Tài xế & Phụ xe</h4>
+                              <p className="text-sm text-slate-500">Đã gán 29/32 nhân sự vào tuyến</p>
+                            </div>
+                          </div>
+                          <Button variant="outline" className="w-full text-sm">Phân công Nhân sự</Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="students" className="mt-4">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-base">Học sinh Đăng ký Dịch vụ</CardTitle>
+                      <CardDescription>Thống kê số lượng học sinh sử dụng dịch vụ xe đưa đón</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="rounded-md border border-slate-200 dark:border-slate-800">
+                        <Table>
+                          <TableHeader className="bg-slate-50 dark:bg-slate-800/50">
+                            <TableRow>
+                              <TableHead>Cơ sở</TableHead>
+                              <TableHead>Học sinh đăng ký</TableHead>
+                              <TableHead>Tuyến chờ duyệt</TableHead>
+                              <TableHead className="text-right">Tỷ lệ lấp đầy</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            <TableRow>
+                              <TableCell className="font-medium">Cơ sở Chính</TableCell>
+                              <TableCell>452</TableCell>
+                              <TableCell><Badge variant="secondary">12 chờ</Badge></TableCell>
+                              <TableCell className="text-right">85%</TableCell>
+                            </TableRow>
+                            <TableRow>
+                              <TableCell className="font-medium">Cơ sở Tiểu học</TableCell>
+                              <TableCell>310</TableCell>
+                              <TableCell><Badge variant="secondary">5 chờ</Badge></TableCell>
+                              <TableCell className="text-right">92%</TableCell>
+                            </TableRow>
+                          </TableBody>
+                        </Table>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="fees" className="mt-4">
+                  <Card>
+                    <CardContent className="pt-6">
+                      <div className="flex flex-col items-center justify-center py-12 text-center">
+                        <FileText className="w-12 h-12 text-slate-300 mb-4" />
+                        <h4 className="text-lg font-medium text-slate-900 dark:text-white">Chưa có cấu hình biểu phí</h4>
+                        <p className="text-slate-500 mt-2 max-w-md">Hãy thiết lập biểu phí theo km hoặc theo khu vực để hệ thống tự động tính toán chi phí cho học sinh.</p>
+                        <Button className="mt-6 bg-blue-600 hover:bg-blue-700">Thiết lập Biểu phí</Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="schedule" className="mt-4 space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-base flex items-center gap-2">
+                          <Clock className="w-4 h-4 text-blue-500" />
+                          Lịch vận hành chung
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <ul className="space-y-3">
+                          <li className="flex justify-between items-center text-sm border-b border-slate-100 pb-2 dark:border-slate-800">
+                            <span className="text-slate-600 dark:text-slate-400">Giờ xe xuất phát (Sáng)</span>
+                            <span className="font-medium">06:30</span>
+                          </li>
+                          <li className="flex justify-between items-center text-sm border-b border-slate-100 pb-2 dark:border-slate-800">
+                            <span className="text-slate-600 dark:text-slate-400">Giờ xe rời trường (Chiều)</span>
+                            <span className="font-medium">16:45</span>
+                          </li>
+                          <li className="flex justify-between items-center text-sm">
+                            <span className="text-slate-600 dark:text-slate-400">Lịch chạy ngoại khóa (Thứ 7)</span>
+                            <Badge variant="outline">Tùy chọn</Badge>
+                          </li>
+                        </ul>
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-base flex items-center gap-2">
+                          <AlertTriangle className="w-4 h-4 text-amber-500" />
+                          Quy tắc An toàn
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-3">
+                          <div className="flex items-start gap-3">
+                            <CheckCircle2 className="w-4 h-4 text-emerald-500 mt-0.5" />
+                            <div className="text-sm">
+                              <p className="font-medium text-slate-900 dark:text-slate-100">Bắt buộc điểm danh App</p>
+                              <p className="text-slate-500">Phụ xe phải scan QR hoặc điểm danh qua App khi học sinh lên/xuống.</p>
+                            </div>
+                          </div>
+                          <div className="flex items-start gap-3">
+                            <CheckCircle2 className="w-4 h-4 text-emerald-500 mt-0.5" />
+                            <div className="text-sm">
+                              <p className="font-medium text-slate-900 dark:text-slate-100">Gửi SMS tự động</p>
+                              <p className="text-slate-500">Gửi tin nhắn cho PH trước 15p khi xe đến điểm đón.</p>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </div>
           )}
         </div>
       </div>
