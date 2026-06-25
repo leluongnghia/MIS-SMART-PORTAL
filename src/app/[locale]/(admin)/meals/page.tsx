@@ -1,21 +1,45 @@
 import { Utensils, Users, CheckCircle2, AlertTriangle, Calendar, Flame, WheatOff, MilkOff, Salad } from 'lucide-react';
+import { getWeekMenu, listSpecialDiets } from '@/src/libs/server/meals';
 
 export const metadata = { title: 'Bán trú & Bếp ăn – MIS Portal' };
 
-export default function MealsPage() {
-  const weekMenu = [
-    { day: 'Thứ 2', date: '23/06', lunch: 'Cơm gà xối mỡ, Canh bí đỏ thịt bằm', snack: 'Sữa chua nha đam', calories: 680, tag: 'Gà' },
-    { day: 'Thứ 3', date: '24/06', lunch: 'Cơm sườn nướng mật ong, Canh rau', snack: 'Bánh mì pate', calories: 720, tag: 'Heo' },
-    { day: 'Thứ 4', date: '25/06', lunch: 'Cơm cá hồi sốt Teriyaki, Canh chua', snack: 'Sữa non', calories: 660, tag: 'Cá' },
-    { day: 'Thứ 5', date: '26/06', lunch: 'Cơm bò xào cải mầm, Soup gà ngô non', snack: 'Trái cây theo mùa', calories: 700, tag: 'Bò' },
-    { day: 'Thứ 6', date: '27/06', lunch: 'Bún bò Huế, Tráng miệng rau câu', snack: 'Bánh ít', calories: 650, tag: 'Nước' },
-  ];
+export default async function MealsPage() {
+  const dbMenu = await getWeekMenu('2023-10-02'); // Example date or dynamic
+  let weekMenu = dbMenu.filter(m => m.mealType === 'lunch').map(m => ({
+    day: m.dayOfWeek === 2 ? 'Thứ 2' : m.dayOfWeek === 3 ? 'Thứ 3' : m.dayOfWeek === 4 ? 'Thứ 4' : m.dayOfWeek === 5 ? 'Thứ 5' : 'Thứ 6',
+    date: m.weekStart,
+    lunch: (m.items as any)?.main || 'Chưa cập nhật',
+    snack: (m.items as any)?.snack || 'Chưa cập nhật',
+    calories: m.calories || 0,
+    tag: 'Món chính'
+  }));
 
-  const allergies = [
-    { name: 'Nguyễn Văn A', class: '10A1', type: 'Dị ứng sữa bò', icon: MilkOff, color: 'text-orange-500', bg: 'bg-orange-100' },
-    { name: 'Lê Hoàng B', class: '11B2', type: 'Dị ứng gluten', icon: WheatOff, color: 'text-amber-500', bg: 'bg-amber-100' },
-    { name: 'Trần C', class: '12C3', type: 'Ăn chay', icon: Salad, color: 'text-emerald-500', bg: 'bg-emerald-100' },
-  ];
+  if (weekMenu.length === 0) {
+    weekMenu = [
+      { day: 'Thứ 2', date: '23/06', lunch: 'Cơm gà xối mỡ, Canh bí đỏ thịt bằm', snack: 'Sữa chua nha đam', calories: 680, tag: 'Gà' },
+      { day: 'Thứ 3', date: '24/06', lunch: 'Cơm sườn nướng mật ong, Canh rau', snack: 'Bánh mì pate', calories: 720, tag: 'Heo' },
+      { day: 'Thứ 4', date: '25/06', lunch: 'Cơm cá hồi sốt Teriyaki, Canh chua', snack: 'Sữa non', calories: 660, tag: 'Cá' },
+      { day: 'Thứ 5', date: '26/06', lunch: 'Cơm bò xào cải mầm, Soup gà ngô non', snack: 'Trái cây theo mùa', calories: 700, tag: 'Bò' },
+      { day: 'Thứ 6', date: '27/06', lunch: 'Bún bò Huế, Tráng miệng rau câu', snack: 'Bánh ít', calories: 650, tag: 'Nước' },
+    ];
+  }
+
+  const dbAllergies = await listSpecialDiets();
+  let allergies = dbAllergies.map(a => ({
+    name: 'Học sinh ' + a.studentId, // In real app, join with student table
+    class: 'N/A',
+    type: ((a.allergies as any)?.join?.(', ') || a.specialDiet || 'Chế độ đặc biệt') as string,
+    icon: (a.allergies as any)?.includes('sữa') ? MilkOff : (a.specialDiet?.includes('chay') ? Salad : WheatOff),
+    color: 'text-orange-500', bg: 'bg-orange-100'
+  }));
+
+  if (allergies.length === 0) {
+    allergies = [
+      { name: 'Nguyễn Văn A', class: '10A1', type: 'Dị ứng sữa bò', icon: MilkOff, color: 'text-orange-500', bg: 'bg-orange-100' },
+      { name: 'Lê Hoàng B', class: '11B2', type: 'Dị ứng gluten', icon: WheatOff, color: 'text-amber-500', bg: 'bg-amber-100' },
+      { name: 'Trần C', class: '12C3', type: 'Ăn chay', icon: Salad, color: 'text-emerald-500', bg: 'bg-emerald-100' },
+    ];
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50/60 via-slate-50 to-orange-50/40 p-6">

@@ -2015,3 +2015,17 @@ export const roomBookings = pgTable('room_bookings', {
 /* =============================================================================
  * HẾT BLOCK SCHEMA HÀNH CHÍNH (CÔNG VĂN & PHÒNG HỌP)
  * ============================================================================= */
+
+export const serviceSettings = pgTable('service_settings', {
+  id: text('id').primaryKey(),
+  type: text('type').notNull(), // 'service_general_settings', 'service_meal_parameters', etc.
+  name: text('name').notNull(),
+  status: text('status').default('active').notNull(),
+  campusId: text('campus_id'),
+  campusName: text('campus_name'),
+  schoolYear: text('school_year'),
+  payload: jsonb('payload').notNull().default({}),
+  ...timestamps,
+}, t => [
+  index('service_settings_type_idx').on(t.type),
+]);

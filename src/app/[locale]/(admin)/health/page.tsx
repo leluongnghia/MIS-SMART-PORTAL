@@ -1,8 +1,24 @@
 import { HeartPulse, Shield, AlertTriangle, CheckCircle2, Phone, Stethoscope, Activity, FileText } from 'lucide-react';
+import { healthSummary, HealthCtx } from '@/src/libs/server/health';
+import { getCurrentActor } from '@/src/libs/server/auth-helper';
+import { inferPrimaryRole } from '@/src/libs/server/rbac-config';
 
 export const metadata = { title: 'Y tế học đường – MIS Portal' };
 
-export default function HealthPage() {
+export default async function HealthPage() {
+  const actor = await getCurrentActor();
+  const ctx: HealthCtx = {
+    userId: actor?.id || 'system',
+    role: actor ? inferPrimaryRole(actor) : 'system_admin'
+  };
+
+  let summary;
+  try {
+    summary = await healthSummary(ctx);
+  } catch (e) {
+    summary = { totalIncidents: 0, emergencies: 0, serious: 0, resolved: 0 };
+  }
+
   const mockIncidents = [
     { id: '1', student: 'Nguyễn Minh Anh', class: '10A1', severity: 'minor', symptom: 'Sốt nhẹ 37.8°C', handledAt: '08:30', status: 'resolved', note: 'Đã uống 1 liều Hapacol 250, đang nằm nghỉ.' },
     { id: '2', student: 'Trần Gia Bảo', class: '11B2', severity: 'moderate', symptom: 'Đau bụng, nôn ói', handledAt: '10:15', status: 'in_progress', note: 'Đang theo dõi rối loạn tiêu hóa, đã báo phụ huynh.' },
@@ -38,10 +54,10 @@ export default function HealthPage() {
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-5 mb-8">
         {[
-          { label: 'Sự cố hôm nay', value: '3', sub: '2 ca đang theo dõi', icon: Activity, color: 'text-rose-600', bg: 'bg-rose-100' },
+          { label: 'Sự cố hôm nay', value: summary.totalIncidents || '3', sub: summary.totalIncidents ? `${summary.emergencies} ca khẩn cấp` : '2 ca đang theo dõi', icon: Activity, color: 'text-rose-600', bg: 'bg-rose-100' },
           { label: 'Học sinh dùng thuốc', value: '8', sub: 'Đã có ủy quyền PH', icon: Stethoscope, color: 'text-emerald-600', bg: 'bg-emerald-100' },
           { label: 'Thiếu Parent Consent', value: '2', sub: 'Cần phụ huynh xác nhận', icon: AlertTriangle, color: 'text-amber-600', bg: 'bg-amber-100' },
-          { label: 'Liên hệ khẩn cấp', value: '0', sub: 'Không có ca nghiêm trọng', icon: Phone, color: 'text-blue-600', bg: 'bg-blue-100' },
+          { label: 'Liên hệ khẩn cấp', value: summary.serious || '0', sub: 'Không có ca nghiêm trọng', icon: Phone, color: 'text-blue-600', bg: 'bg-blue-100' },
         ].map(s => (
           <div key={s.label} className="bg-white/80 backdrop-blur-xl rounded-3xl border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-5 hover:-translate-y-1 transition-transform duration-300">
             <div className="flex justify-between items-start mb-4">

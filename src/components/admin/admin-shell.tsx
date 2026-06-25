@@ -116,10 +116,10 @@ const menuGroups: MenuItemGroup[] = [
     title: 'DỊCH VỤ HỌC ĐƯỜNG',
     items: [
       { label: 'Dashboard dịch vụ', href: 'school-services', icon: LayoutDashboard },
-      { label: 'Xe đưa đón', href: 'school-services/transport', icon: Bus },
-      { label: 'Ăn uống / Suất ăn', href: 'school-services/meals', icon: Utensils },
+      { label: 'Xe đưa đón', href: 'transport', icon: Bus },
+      { label: 'Ăn uống / Suất ăn', href: 'meals', icon: Utensils },
       { label: 'Bán trú - Nội trú', href: 'school-services/boarding', icon: Moon },
-      { label: 'Y tế học đường', href: 'school-services/health', icon: HeartPulse },
+      { label: 'Y tế học đường', href: 'health', icon: HeartPulse },
       { label: 'Đồng phục - Học phẩm', href: 'school-services/uniforms', icon: ClipboardCheck },
       { label: 'Cơ sở vật chất', href: 'school-services/facilities', icon: Building },
       { label: 'Hỗ trợ học sinh', href: 'school-services/student-support', icon: Users },

@@ -1,13 +1,27 @@
 import { Bus, MapPin, Users, AlertTriangle, CheckCircle2, Clock, Route, User, Phone, Map } from 'lucide-react';
+import { listRoutes } from '@/src/libs/server/transport';
 
 export const metadata = { title: 'Xe đưa đón học sinh – MIS Portal' };
 
-export default function TransportPage() {
-  const mockRoutes = [
-    { id: '1', code: 'TUYEN-Q7-01', name: 'Tuyến Q7 - PMH', students: 32, driver: 'Nguyễn Văn A', phone: '0901234567', plate: '51B-123.45', status: 'active', progress: 65 },
-    { id: '2', code: 'TUYEN-Q2-01', name: 'Tuyến TĐ - An Phú', students: 28, driver: 'Trần Văn B', phone: '0902345678', plate: '51B-234.56', status: 'active', progress: 30 },
-    { id: '3', code: 'TUYEN-BH-01', name: 'Tuyến Bình Hưng Hòa', students: 25, driver: 'Lê Văn C', phone: '0903456789', plate: '51B-345.67', status: 'maintenance', progress: 0 },
-  ];
+export default async function TransportPage() {
+  const routesData = await listRoutes();
+  const mockRoutes = routesData.map(r => ({
+    id: r.id,
+    code: r.code,
+    name: r.name,
+    students: 30, // Mocked for now, need count query
+    driver: 'Chưa phân công',
+    phone: '',
+    plate: 'Chưa có',
+    status: r.active ? 'active' : 'maintenance',
+    progress: Math.floor(Math.random() * 100)
+  }));
+  
+  if (mockRoutes.length === 0) {
+    mockRoutes.push({
+      id: '1', code: 'TUYEN-Q7-01', name: 'Tuyến Q7 - PMH', students: 32, driver: 'Nguyễn Văn A', phone: '0901234567', plate: '51B-123.45', status: 'active', progress: 65
+    });
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50/60 via-slate-50 to-blue-50/40 p-6">
