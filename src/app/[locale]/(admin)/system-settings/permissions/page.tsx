@@ -11,7 +11,7 @@ export default async function PermissionsIndexPage({
   const overview = await getPermissionOverview();
   const cards = [
     {
-      label: 'Phan he cap 1 dang bat',
+      label: 'Phân hệ cấp 1 đang bật',
       value: `${overview.enabledModuleCount}/${overview.moduleCount}`,
       icon: Layers,
       colorClass: 'text-blue-600 dark:text-blue-400',
@@ -19,7 +19,7 @@ export default async function PermissionsIndexPage({
       borderClass: 'border-blue-100 dark:border-blue-900/30',
     },
     {
-      label: 'Chuc nang con',
+      label: 'Chức năng con',
       value: overview.featureCount,
       icon: Shield,
       colorClass: 'text-emerald-600 dark:text-emerald-400',
@@ -27,7 +27,7 @@ export default async function PermissionsIndexPage({
       borderClass: 'border-emerald-100 dark:border-emerald-900/30',
     },
     {
-      label: 'Permission chi tiet',
+      label: 'Quyền chi tiết',
       value: overview.permissionCount,
       icon: KeyRound,
       colorClass: 'text-amber-600 dark:text-amber-400',
@@ -35,7 +35,7 @@ export default async function PermissionsIndexPage({
       borderClass: 'border-amber-100 dark:border-amber-900/30',
     },
     {
-      label: 'User override',
+      label: 'Ngoại lệ người dùng',
       value: overview.overrideCount,
       icon: UserCog,
       colorClass: 'text-rose-600 dark:text-rose-400',
@@ -47,9 +47,9 @@ export default async function PermissionsIndexPage({
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-1">
-        <h2 className="text-lg font-bold text-slate-950 dark:text-white">Tong quan phan quyen</h2>
+        <h2 className="text-lg font-bold text-slate-950 dark:text-white">Tổng quan phân quyền</h2>
         <p className="text-sm text-slate-500">
-          6 module la phan he cap 1. Moi phan he co nhieu chuc nang con va permission chi tiet de gan theo vai tro, phong ban/nhom hoac ngoai le user.
+          6 module là phân hệ cấp 1. Mỗi phân hệ có nhiều chức năng con và quyền chi tiết để gán theo vai trò, phòng ban/nhóm hoặc ngoại lệ người dùng.
         </p>
       </div>
 
@@ -69,14 +69,14 @@ export default async function PermissionsIndexPage({
         <div className="rounded-lg border border-slate-200 p-4 dark:border-slate-800">
           <h3 className="flex items-center gap-2 text-sm font-black text-slate-950 dark:text-white">
             <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-            Luong cau hinh nhanh
+            Luồng cấu hình nhanh
           </h3>
           <div className="mt-4 grid gap-2">
             {[
-              { label: '1. Bat/tat module', href: 'modules' },
-              { label: '2. Gan quyen mac dinh theo vai tro', href: 'roles' },
-              { label: '3. Bo sung theo phong ban/nhom', href: 'departments' },
-              { label: '4. Kiem tra quyen user', href: 'check' },
+              { label: '1. Bật/tắt module', href: 'modules' },
+              { label: '2. Gán quyền mặc định theo vai trò', href: 'roles' },
+              { label: '3. Bổ sung theo phòng ban/nhóm', href: 'departments' },
+              { label: '4. Kiểm tra quyền người dùng', href: 'check' },
             ].map(item => (
               <Link
                 key={item.href}
@@ -93,28 +93,28 @@ export default async function PermissionsIndexPage({
         <div className="rounded-lg border border-slate-200 p-4 dark:border-slate-800">
           <h3 className="flex items-center gap-2 text-sm font-black text-slate-950 dark:text-white">
             <AlertTriangle className="h-4 w-4 text-amber-600" />
-            Canh bao can xu ly
+            Cảnh báo cần xử lý
           </h3>
           <div className="mt-4 space-y-3 text-sm">
             <div className="flex items-center justify-between">
-              <span>Module dang tat</span>
+              <span>Module đang tắt</span>
               <b>{overview.disabledModules.length}</b>
             </div>
             <div className="flex items-center justify-between">
-              <span>User DENY override</span>
+              <span>Người dùng bị phủ quyết (DENY)</span>
               <b>{overview.denyOverrideCount}</b>
             </div>
             <div className="flex items-center justify-between">
-              <span>Vai tro hoat dong</span>
+              <span>Vai trò hoạt động</span>
               <b>{overview.activeRoleCount}/{overview.roleCount}</b>
             </div>
             <div className="flex items-center justify-between">
-              <span>Nhom tam thoi</span>
+              <span>Nhóm tạm thời</span>
               <b>{overview.temporaryGroupCount}</b>
             </div>
             {overview.disabledModules.length > 0 && (
               <div className="rounded-md bg-amber-50 p-3 text-amber-800 dark:bg-amber-950 dark:text-amber-200">
-                Kiem tra sidebar, route va API lien quan cac module dang tat truoc khi mo lai.
+                Kiểm tra sidebar, route và API liên quan đến các module đang tắt trước khi mở lại.
               </div>
             )}
           </div>
@@ -122,7 +122,7 @@ export default async function PermissionsIndexPage({
       </div>
 
       <div className="rounded-lg border border-slate-200 p-4 dark:border-slate-800">
-        <h3 className="text-sm font-black text-slate-950 dark:text-white">Audit gan day</h3>
+        <h3 className="text-sm font-black text-slate-950 dark:text-white">Nhật ký thay đổi (Audit) gần đây</h3>
         <div className="mt-3 divide-y divide-slate-100 text-sm dark:divide-slate-800">
           {overview.auditLogs.map(log => (
             <div key={log.id} className="grid gap-2 py-3 md:grid-cols-[160px_1fr_120px]">
@@ -131,7 +131,7 @@ export default async function PermissionsIndexPage({
               <span className="text-xs text-slate-500">{log.actorUserId}</span>
             </div>
           ))}
-          {overview.auditLogs.length === 0 && <div className="py-6 text-center text-slate-500">Chua co audit log.</div>}
+          {overview.auditLogs.length === 0 && <div className="py-6 text-center text-slate-500">Chưa có lịch sử thay đổi.</div>}
         </div>
       </div>
     </div>
