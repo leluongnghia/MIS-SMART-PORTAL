@@ -10,10 +10,38 @@ export default async function PermissionsIndexPage({
   const { locale } = await params;
   const overview = await getPermissionOverview();
   const cards = [
-    { label: 'Phan he cap 1 dang bat', value: `${overview.enabledModuleCount}/${overview.moduleCount}`, icon: Layers },
-    { label: 'Chuc nang con', value: overview.featureCount, icon: Shield },
-    { label: 'Permission chi tiet', value: overview.permissionCount, icon: KeyRound },
-    { label: 'User override', value: overview.overrideCount, icon: UserCog },
+    {
+      label: 'Phan he cap 1 dang bat',
+      value: `${overview.enabledModuleCount}/${overview.moduleCount}`,
+      icon: Layers,
+      colorClass: 'text-blue-600 dark:text-blue-400',
+      bgClass: 'bg-blue-50/40 dark:bg-blue-950/10',
+      borderClass: 'border-blue-100 dark:border-blue-900/30',
+    },
+    {
+      label: 'Chuc nang con',
+      value: overview.featureCount,
+      icon: Shield,
+      colorClass: 'text-emerald-600 dark:text-emerald-400',
+      bgClass: 'bg-emerald-50/40 dark:bg-emerald-950/10',
+      borderClass: 'border-emerald-100 dark:border-emerald-900/30',
+    },
+    {
+      label: 'Permission chi tiet',
+      value: overview.permissionCount,
+      icon: KeyRound,
+      colorClass: 'text-amber-600 dark:text-amber-400',
+      bgClass: 'bg-amber-50/40 dark:bg-amber-950/10',
+      borderClass: 'border-amber-100 dark:border-amber-900/30',
+    },
+    {
+      label: 'User override',
+      value: overview.overrideCount,
+      icon: UserCog,
+      colorClass: 'text-rose-600 dark:text-rose-400',
+      bgClass: 'bg-rose-50/40 dark:bg-rose-950/10',
+      borderClass: 'border-rose-100 dark:border-rose-900/30',
+    },
   ];
 
   return (
@@ -27,10 +55,10 @@ export default async function PermissionsIndexPage({
 
       <div className="grid gap-3 md:grid-cols-4">
         {cards.map(card => (
-          <div key={card.label} className="rounded-lg border border-slate-200 p-4 dark:border-slate-800">
+          <div key={card.label} className={`rounded-lg border p-4 transition-all duration-200 hover:shadow-sm ${card.borderClass} ${card.bgClass}`}>
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold uppercase text-slate-500">{card.label}</span>
-              <card.icon className="h-4 w-4 text-indigo-600" />
+              <card.icon className={`h-4 w-4 ${card.colorClass}`} />
             </div>
             <div className="mt-3 text-2xl font-black text-slate-950 dark:text-white">{card.value}</div>
           </div>
