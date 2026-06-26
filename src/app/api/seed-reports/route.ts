@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { db, schema } from '@/src/libs/server/db';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     const grades = ['K6', 'K7', 'K10', 'K11'];
