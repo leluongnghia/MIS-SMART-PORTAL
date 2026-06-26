@@ -16,3 +16,5 @@ scratch/
 
 deploy.tar.gz
 mis_portal_handoff*
+*.tar.gz
+*.zip

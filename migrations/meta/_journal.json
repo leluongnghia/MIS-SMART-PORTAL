@@ -134,6 +134,13 @@
       "when": 1782386537561,
       "tag": "0018_quick_magik",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1782446352356,
+      "tag": "0019_even_starfox",
+      "breakpoints": true
     }
   ]
 }

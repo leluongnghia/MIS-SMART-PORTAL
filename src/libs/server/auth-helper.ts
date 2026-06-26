@@ -1,5 +1,7 @@
 import { db, schema } from './db';
 import { eq } from 'drizzle-orm';
+import { cookies } from 'next/headers';
+import { auth } from '@clerk/nextjs/server';
 
 export interface Actor {
   id: string;
@@ -20,8 +22,7 @@ export async function getCurrentActor(): Promise<Actor | null> {
   let userId: string | undefined = undefined;
   
   try {
-    const { cookies } = require('next/headers');
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     userId = cookieStore.get('mis_demo_user_id')?.value;
   } catch (e) {
     // cookies() might fail in some contexts like non-request lifecycle
@@ -40,7 +41,6 @@ export async function getCurrentActor(): Promise<Actor | null> {
   // 2. Try Clerk
   if (process.env.CLERK_SECRET_KEY) {
     try {
-      const { auth } = require('@clerk/nextjs/server');
       const authObj = await auth();
       if (authObj?.userId) {
         const [user] = await db

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { cn } from "@/src/lib/utils";
 import { serverStorage } from '../../../../libs/client/server-storage';
 import {
@@ -50,7 +50,6 @@ export default function DashboardClient({ tab, initialData }: DashboardClientPro
   const [selectedDept, setSelectedDept] = useState('ALL');
   const params = useParams();
   const locale = (params?.locale as string) || 'vi';
-  const router = useRouter();
 
   const [activeAlerts, setActiveAlerts] = useState<any[]>([]);
   const { success: toastSuccess } = useToast();
@@ -406,7 +405,7 @@ export default function DashboardClient({ tab, initialData }: DashboardClientPro
                           onClick={() => {
                             const target = alert.targetUrl || `/${locale}/dashboard`;
                             const url = `${target}${target.includes('?') ? '&' : '?'}sopAlertId=${alert.id}&sopTitle=${encodeURIComponent(alert.title)}&sopModule=${encodeURIComponent(alert.module)}&sopSeverity=${encodeURIComponent(alert.severity)}&sopOwner=${encodeURIComponent(alert.owner)}&sopDeadline=${encodeURIComponent(alert.deadline)}`;
-                            router.push(url);
+                            window.location.assign(url);
                           }}
                           variant="ghost" 
                           size="sm" 

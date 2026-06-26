@@ -1,24 +1,36 @@
 'use server';
 
 import { db, schema } from '@/src/libs/server/db';
-import { and, eq, desc } from 'drizzle-orm';
+import { and, eq, desc, inArray } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { type LeadStatus } from '../leads/actions';
+import { getCrmLeadScopeCondition, requireCrmLeadAccess } from '@/src/libs/server/crm-permissions';
+import { requirePermission } from '@/src/libs/server/permission-service';
 
 export async function getAdmissionsData() {
-  const allLeads = await db.select().from(schema.leads);
+  const scopeCondition = await getCrmLeadScopeCondition('crm.lead.view');
+  const allLeads = scopeCondition
+    ? await db.select().from(schema.leads).where(scopeCondition)
+    : await db.select().from(schema.leads);
   const allUsers = await db.select().from(schema.users);
+  const leadIds = allLeads.map(lead => lead.id);
   
   // Fetch activities to display the last activity date for each lead
-  const allActivities = await db
-    .select()
-    .from(schema.leadActivities)
-    .orderBy(desc(schema.leadActivities.activityAt));
+  const allActivities = leadIds.length
+    ? await db
+      .select()
+      .from(schema.leadActivities)
+      .where(inArray(schema.leadActivities.leadId, leadIds))
+      .orderBy(desc(schema.leadActivities.activityAt))
+    : [];
 
-  const allDocuments = await db
-    .select()
-    .from(schema.documents)
-    .orderBy(desc(schema.documents.createdAt));
+  const allDocuments = leadIds.length
+    ? await db
+      .select()
+      .from(schema.documents)
+      .where(inArray(schema.documents.leadId, leadIds))
+      .orderBy(desc(schema.documents.createdAt))
+    : [];
 
   return {
     leads: allLeads,
@@ -29,9 +41,18 @@ export async function getAdmissionsData() {
 }
 
 export async function getAdmissionDocuments() {
+  await requirePermission('crm.document.update');
+  const scopeCondition = await getCrmLeadScopeCondition('crm.lead.view');
+  const leads = scopeCondition
+    ? await db.select({ id: schema.leads.id }).from(schema.leads).where(scopeCondition)
+    : await db.select({ id: schema.leads.id }).from(schema.leads);
+  const leadIds = leads.map(lead => lead.id);
+  if (leadIds.length === 0) return [];
+
   return await db
     .select()
     .from(schema.documents)
+    .where(inArray(schema.documents.leadId, leadIds))
     .orderBy(desc(schema.documents.createdAt));
 }
 
@@ -51,6 +72,7 @@ export async function updateAdmissionLeadFields(
     status?: LeadStatus;
   }
 ) {
+  await requireCrmLeadAccess(leadId, 'crm.lead.update');
   const updateData: Partial<typeof schema.leads.$inferInsert> = {
     updatedAt: new Date(),
   };
@@ -93,6 +115,7 @@ export async function updateAdmissionAppointment(
     note?: string;
   }
 ) {
+  await requireCrmLeadAccess(leadId, 'crm.appointment.update');
   const updateData: Partial<typeof schema.leads.$inferInsert> = {
     updatedAt: new Date(),
   };
@@ -126,6 +149,7 @@ export async function addAdmissionCareActivity(
     description: string;
   }
 ) {
+  await requireCrmLeadAccess(leadId, 'crm.lead.update');
   await db.insert(schema.leadActivities).values({
     id: `act_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
     leadId,
@@ -146,6 +170,7 @@ export async function updateAdmissionDocumentStatus(
   docType: string,
   checked: boolean
 ) {
+  await requireCrmLeadAccess(leadId, 'crm.document.update');
   const existing = await db
     .select()
     .from(schema.documents)
@@ -187,6 +212,7 @@ export async function updateAdmissionDocumentFile(
     note?: string;
   }
 ) {
+  await requireCrmLeadAccess(leadId, 'crm.document.update');
   const existing = await db
     .select()
     .from(schema.documents)
@@ -239,6 +265,7 @@ export async function updateLeadStatusKanban(
   toStatus: LeadStatus,
   note?: string
 ) {
+  await requireCrmLeadAccess(leadId, 'crm.lead.stage.update');
   const existing = await db
     .select()
     .from(schema.leads)

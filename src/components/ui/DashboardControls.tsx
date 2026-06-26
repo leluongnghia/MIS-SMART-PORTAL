@@ -9,6 +9,10 @@ import { Dialog } from "./dialog";
 import { CreateDirectiveForm } from "../admin/dashboard/quick-actions/CreateDirectiveForm";
 import { DeclareRiskForm } from "../admin/dashboard/quick-actions/DeclareRiskForm";
 import { ConveneMeetingForm } from "../admin/dashboard/quick-actions/ConveneMeetingForm";
+import { AssignAcademicTaskForm } from "../admin/dashboard/quick-actions/AssignAcademicTaskForm";
+import { ApproveLessonPlanList } from "../admin/dashboard/quick-actions/ApproveLessonPlanList";
+import { ScheduleChangeForm } from "../admin/dashboard/quick-actions/ScheduleChangeForm";
+import { QuickAcademicReportForm } from "../admin/dashboard/quick-actions/QuickAcademicReportForm";
 
 interface DashboardControlsProps {
   onTimeFilterChange?: (filter: string) => void;
@@ -30,6 +34,10 @@ export function DashboardControls({ onTimeFilterChange, quickActions = "council"
   // Form states are now managed internally by their respective components
 
 
+  const [isAcademicTaskOpen, setIsAcademicTaskOpen] = useState(false);
+  const [isLessonPlanOpen, setIsLessonPlanOpen] = useState(false);
+  const [isScheduleChangeOpen, setIsScheduleChangeOpen] = useState(false);
+
   const timeOptions = ["Hôm nay", "Tuần này", "Tháng này", "Học kỳ 2", "Năm học 2025-2026"];
 
   const handleTimeSelect = (option: string) => {
@@ -40,7 +48,11 @@ export function DashboardControls({ onTimeFilterChange, quickActions = "council"
     }
   };
 
-
+  // Mock data for lesson plans until connected to real fetch
+  const pendingPlans = [
+    { id: "1", title: "Giáo án Đại số 10 - Tiết 24", teacherName: "Nguyễn Văn A", subject: "Toán", class: "10A1" },
+    { id: "2", title: "Thực hành Vật Lý - Bài 12", teacherName: "Trần Thị B", subject: "Vật lý", class: "11A3" },
+  ];
 
   return (
     <>
@@ -91,13 +103,13 @@ export function DashboardControls({ onTimeFilterChange, quickActions = "council"
 
           {quickActions === "academic" && (
             <>
-              <button onClick={() => toast({ variant: 'info', title: "Thông báo", message: "Chức năng Giao việc BGH đang được phát triển" })} className="flex items-center gap-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors dark:bg-indigo-900/30 dark:text-indigo-400 dark:hover:bg-indigo-900/50">
+              <button onClick={() => setIsAcademicTaskOpen(true)} className="flex items-center gap-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors dark:bg-indigo-900/30 dark:text-indigo-400 dark:hover:bg-indigo-900/50">
                 <ClipboardCheck className="w-3.5 h-3.5" /> Giao việc BGH
               </button>
-              <button onClick={() => toast({ variant: 'info', title: "Thông báo", message: "Chức năng Duyệt Giáo án đang được phát triển" })} className="flex items-center gap-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors dark:bg-emerald-900/30 dark:text-emerald-400 dark:hover:bg-emerald-900/50">
+              <button onClick={() => setIsLessonPlanOpen(true)} className="flex items-center gap-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors dark:bg-emerald-900/30 dark:text-emerald-400 dark:hover:bg-emerald-900/50">
                 <FileText className="w-3.5 h-3.5" /> Duyệt Giáo án
               </button>
-              <button onClick={() => toast({ variant: 'info', title: "Thông báo", message: "Chức năng Đổi lịch dạy đang được phát triển" })} className="flex items-center gap-1.5 bg-slate-100 text-slate-600 hover:bg-slate-200 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700">
+              <button onClick={() => setIsScheduleChangeOpen(true)} className="flex items-center gap-1.5 bg-slate-100 text-slate-600 hover:bg-slate-200 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700">
                 <Plus className="w-3.5 h-3.5" /> Đổi lịch dạy
               </button>
             </>
@@ -124,25 +136,42 @@ export function DashboardControls({ onTimeFilterChange, quickActions = "council"
         <ConveneMeetingForm onSuccess={() => setIsMeetingOpen(false)} />
       </Dialog>
 
-      <Dialog open={isReportOpen} onOpenChange={setIsReportOpen} title="Báo cáo nhanh">
-        <div className="p-4 flex flex-col items-center justify-center space-y-4 font-sans">
-          <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-full">
-            <Download className="w-8 h-8 text-slate-500" />
+      {/* Academic Quick Actions */}
+      <Dialog open={isAcademicTaskOpen} onOpenChange={setIsAcademicTaskOpen} title="Giao việc BGH">
+        <AssignAcademicTaskForm onSuccess={() => setIsAcademicTaskOpen(false)} />
+      </Dialog>
+
+      <Dialog open={isLessonPlanOpen} onOpenChange={setIsLessonPlanOpen} title="Duyệt Giáo án (BGH / Tổ trưởng)">
+        <ApproveLessonPlanList plans={pendingPlans} onSuccess={() => setIsLessonPlanOpen(false)} />
+      </Dialog>
+
+      <Dialog open={isScheduleChangeOpen} onOpenChange={setIsScheduleChangeOpen} title="Đăng ký đổi lịch dạy">
+        <ScheduleChangeForm onSuccess={() => setIsScheduleChangeOpen(false)} />
+      </Dialog>
+
+      <Dialog open={isReportOpen} onOpenChange={setIsReportOpen} title="Báo cáo nhanh học vụ">
+        {quickActions === "academic" ? (
+          <QuickAcademicReportForm onSuccess={() => setIsReportOpen(false)} />
+        ) : (
+          <div className="p-4 flex flex-col items-center justify-center space-y-4 font-sans">
+            <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-full">
+              <Download className="w-8 h-8 text-slate-500" />
+            </div>
+            <div className="text-center">
+              <h4 className="font-bold text-slate-900 dark:text-white">Xuất báo cáo tổng quan</h4>
+              <p className="text-sm text-slate-500 mt-1">Dữ liệu sẽ được xuất ra file Excel (.xlsx).</p>
+            </div>
+            <button
+              onClick={() => {
+                toast({ variant: 'success', title: 'Thành công', message: 'Đang tải xuống báo cáo...' });
+                setIsReportOpen(false);
+              }}
+              className="w-full bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200 py-2 rounded-lg font-bold transition-colors"
+            >
+              Tải xuống ngay
+            </button>
           </div>
-          <div className="text-center">
-            <h4 className="font-bold text-slate-900 dark:text-white">Xuất báo cáo tổng quan</h4>
-            <p className="text-sm text-slate-500 mt-1">Dữ liệu sẽ được xuất ra file Excel (.xlsx).</p>
-          </div>
-          <button
-            onClick={() => {
-              toast({ variant: 'success', title: 'Thành công', message: 'Đang tải xuống báo cáo...' });
-              setIsReportOpen(false);
-            }}
-            className="w-full bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200 py-2 rounded-lg font-bold transition-colors"
-          >
-            Tải xuống ngay
-          </button>
-        </div>
+        )}
       </Dialog>
     </>
   );

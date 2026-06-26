@@ -3,6 +3,8 @@
 import { db, schema } from '@/src/libs/server/db';
 import { eq, like, or, and, desc, asc, count, isNull } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
+import { getCrmLeadScopeCondition, requireCrmLeadAccess } from '@/src/libs/server/crm-permissions';
+import { requirePermission } from '@/src/libs/server/permission-service';
 
 export type LeadStatus = 'received' | 'consulting' | 'test_scheduled' | 'test_participated' | 'seat_reserved' | 'docs_submitted' | 'enrolled' | 'cancelled';
 
@@ -18,11 +20,13 @@ export interface GetLeadsParams {
 }
 
 export async function getLeads(params: GetLeadsParams) {
+  const scopeCondition = await getCrmLeadScopeCondition('crm.lead.view');
   const page = params.page || 1;
   const limit = params.limit || 10;
   const offset = (page - 1) * limit;
 
   const conditions = [isNull(schema.leads.deletedAt)];
+  if (scopeCondition) conditions.push(scopeCondition as any);
 
   if (params.search) {
     const searchPattern = `%${params.search}%`;
@@ -80,7 +84,10 @@ export async function getUsers() {
 }
 
 export async function getAllLeadsForExport(params?: { search?: string; status?: string; source?: string; grade?: string }) {
+  await requirePermission('crm.export');
+  const scopeCondition = await getCrmLeadScopeCondition('crm.lead.view');
   const conditions = [isNull(schema.leads.deletedAt)];
+  if (scopeCondition) conditions.push(scopeCondition as any);
   if (params?.search) {
     const searchPattern = `%${params.search}%`;
     conditions.push(or(
@@ -140,6 +147,7 @@ export async function createLead(data: {
   moetStudentId?: string | null;
   siblingsInfo?: any | null;
 }) {
+  await requirePermission('crm.lead.create');
   const id = `lead_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
   const leadCode = `LD-${Date.now().toString(36).toUpperCase()}`;
 
@@ -223,6 +231,7 @@ export async function updateLeadStatusOnly(
   status: LeadStatus,
   note?: string
 ) {
+  await requireCrmLeadAccess(id, 'crm.lead.stage.update');
   const existingLeads = await db.select().from(schema.leads).where(eq(schema.leads.id, id)).limit(1);
   const existing = existingLeads[0];
 
@@ -309,6 +318,7 @@ export async function updateLead(
     siblingsInfo?: any | null;
   }
 ) {
+  await requireCrmLeadAccess(id, 'crm.lead.update');
   // Get existing lead to check status changes
   const existingLeads = await db.select().from(schema.leads).where(eq(schema.leads.id, id)).limit(1);
   const existing = existingLeads[0];
@@ -393,6 +403,7 @@ export async function updateLead(
 }
 
 export async function deleteLead(id: string) {
+  await requireCrmLeadAccess(id, 'crm.lead.delete');
   await db.update(schema.leads).set({ deletedAt: new Date(), deletedBy: 'system', updatedAt: new Date() }).where(eq(schema.leads.id, id));
   revalidatePath('/[locale]/leads', 'page');
   revalidatePath('/[locale]/admissions', 'page');

@@ -447,8 +447,11 @@ export const departments = pgTable('departments', {
   id: text('id').primaryKey(),
   name: text('name').notNull(),
   code: text('code').notNull().unique(), // e.g., BGH, HANH_CHINH, TOAN_TIN, etc.
+  type: text('type').default('DEPARTMENT').notNull(), // BOARD, BGH, ACADEMIC_OFFICE, SUBJECT_GROUP...
+  parentDepartmentId: text('parent_department_id'), // Self referencing
   description: text('description'),
   managerId: text('manager_id'), // User ID of the department head
+  status: text('status').default('ACTIVE').notNull(),
   payload: jsonb('payload').notNull().default({}),
   ...timestamps,
 });
@@ -2067,4 +2070,181 @@ export const serviceTicketActivities = pgTable('service_ticket_activities', {
   ...timestamps,
 }, t => [
   index('service_ticket_activities_ticket_idx').on(t.ticketId),
+]);
+
+/* =============================================================================
+ * BLOCK: QUẢN LÝ PHÂN QUYỀN ĐỘNG (RBAC + FEATURE PERMISSIONS)
+ * Thêm: 2026-06-26
+ * ============================================================================= */
+
+export const sysModules = pgTable('sys_modules', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  code: text('code').notNull().unique(),
+  description: text('description'),
+  icon: text('icon'),
+  routePath: text('route_path'),
+  sortOrder: integer('sort_order').default(0).notNull(),
+  isSystem: boolean('is_system').default(false).notNull(),
+  isEnabled: boolean('is_enabled').default(true).notNull(),
+  parentModuleId: text('parent_module_id'), // Cho phép tạo cấu trúc module đa cấp
+  ...timestamps,
+});
+
+export const sysFeatures = pgTable('sys_features', {
+  id: text('id').primaryKey(),
+  moduleId: text('module_id').notNull().references(() => sysModules.id, { onDelete: 'cascade' }),
+  name: text('name').notNull(),
+  code: text('code').notNull().unique(),
+  description: text('description'),
+  routePath: text('route_path'),
+  sortOrder: integer('sort_order').default(0).notNull(),
+  isEnabled: boolean('is_enabled').default(true).notNull(),
+  ...timestamps,
+}, t => [
+  index('sys_features_module_idx').on(t.moduleId),
+]);
+
+export const sysPermissions = pgTable('sys_permissions', {
+  id: text('id').primaryKey(),
+  moduleId: text('module_id').notNull().references(() => sysModules.id, { onDelete: 'cascade' }),
+  featureId: text('feature_id').references(() => sysFeatures.id, { onDelete: 'set null' }),
+  name: text('name').notNull(),
+  code: text('code').notNull().unique(), // e.g. academic.plan.view
+  action: text('action').notNull(), // view, create, update, delete, approve, etc.
+  description: text('description'),
+  isSystem: boolean('is_system').default(false).notNull(),
+  ...timestamps,
+}, t => [
+  index('sys_permissions_module_idx').on(t.moduleId),
+]);
+
+export const roles = pgTable('roles', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  code: text('code').notNull().unique(),
+  description: text('description'),
+  level: integer('level').default(0).notNull(),
+  isSystemRole: boolean('is_system_role').default(false).notNull(),
+  status: text('status').default('ACTIVE').notNull(),
+  ...timestamps,
+});
+
+
+
+export const rolePermissions = pgTable('role_permissions', {
+  id: text('id').primaryKey(),
+  roleId: text('role_id').notNull().references(() => roles.id, { onDelete: 'cascade' }),
+  permissionId: text('permission_id').notNull().references(() => sysPermissions.id, { onDelete: 'cascade' }),
+  dataScope: text('data_scope').default('own').notNull(), // own, class, department, school, all
+  conditionsJson: jsonb('conditions_json').default({}).notNull(),
+  ...timestamps,
+}, t => [
+  index('role_permissions_role_idx').on(t.roleId),
+  uniqueIndex('role_permissions_unique').on(t.roleId, t.permissionId),
+]);
+
+export const departmentPermissions = pgTable('department_permissions', {
+  id: text('id').primaryKey(),
+  departmentId: text('department_id').notNull().references(() => departments.id, { onDelete: 'cascade' }),
+  permissionId: text('permission_id').notNull().references(() => sysPermissions.id, { onDelete: 'cascade' }),
+  dataScope: text('data_scope').default('department').notNull(),
+  conditionsJson: jsonb('conditions_json').default({}).notNull(),
+  ...timestamps,
+}, t => [
+  index('department_permissions_dept_idx').on(t.departmentId),
+  uniqueIndex('department_permissions_unique').on(t.departmentId, t.permissionId),
+]);
+
+export const userPermissions = pgTable('user_permissions', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  permissionId: text('permission_id').notNull().references(() => sysPermissions.id, { onDelete: 'cascade' }),
+  effect: text('effect').default('ALLOW').notNull(), // ALLOW, DENY
+  dataScope: text('data_scope').default('own').notNull(),
+  conditionsJson: jsonb('conditions_json').default({}).notNull(),
+  reason: text('reason'),
+  expiresAt: timestamp('expires_at', { withTimezone: true }),
+  ...timestamps,
+}, t => [
+  index('user_permissions_user_idx').on(t.userId),
+  uniqueIndex('user_permissions_unique').on(t.userId, t.permissionId),
+]);
+
+export const userDepartments = pgTable('user_departments', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  departmentId: text('department_id').notNull().references(() => departments.id, { onDelete: 'cascade' }),
+  roleId: text('role_id').references(() => roles.id, { onDelete: 'set null' }),
+  isPrimary: boolean('is_primary').default(false).notNull(),
+  startDate: timestamp('start_date', { withTimezone: true }),
+  endDate: timestamp('end_date', { withTimezone: true }),
+  status: text('status').default('ACTIVE').notNull(),
+  ...timestamps,
+}, t => [
+  index('user_departments_user_idx').on(t.userId),
+  index('user_departments_dept_idx').on(t.departmentId),
+]);
+
+export const sysGroups = pgTable('sys_groups', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  code: text('code').notNull().unique(),
+  type: text('type').notNull(), // CAMPAIGN, TASK_FORCE, EVENT...
+  description: text('description'),
+  ownerUserId: text('owner_user_id').references(() => users.id, { onDelete: 'set null' }),
+  status: text('status').default('ACTIVE').notNull(),
+  isTemporary: boolean('is_temporary').default(false).notNull(),
+  startDate: timestamp('start_date', { withTimezone: true }),
+  endDate: timestamp('end_date', { withTimezone: true }),
+  ...timestamps,
+});
+
+export const groupMembers = pgTable('group_members', {
+  id: text('id').primaryKey(),
+  groupId: text('group_id').notNull().references(() => sysGroups.id, { onDelete: 'cascade' }),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  memberRole: text('member_role').default('MEMBER').notNull(), // LEADER, MEMBER, APPROVER, VIEWER
+  isLeader: boolean('is_leader').default(false).notNull(),
+  status: text('status').default('ACTIVE').notNull(),
+  startDate: timestamp('start_date', { withTimezone: true }),
+  endDate: timestamp('end_date', { withTimezone: true }),
+  ...timestamps,
+}, t => [
+  index('group_members_group_idx').on(t.groupId),
+  index('group_members_user_idx').on(t.userId),
+  uniqueIndex('group_members_unique').on(t.groupId, t.userId),
+]);
+
+export const groupPermissions = pgTable('group_permissions', {
+  id: text('id').primaryKey(),
+  groupId: text('group_id').notNull().references(() => sysGroups.id, { onDelete: 'cascade' }),
+  permissionId: text('permission_id').notNull().references(() => sysPermissions.id, { onDelete: 'cascade' }),
+  dataScope: text('data_scope').default('group').notNull(),
+  conditionsJson: jsonb('conditions_json').default({}).notNull(),
+  effect: text('effect').default('ALLOW').notNull(),
+  startDate: timestamp('start_date', { withTimezone: true }),
+  endDate: timestamp('end_date', { withTimezone: true }),
+  reason: text('reason'),
+  ...timestamps,
+}, t => [
+  index('group_permissions_group_idx').on(t.groupId),
+  uniqueIndex('group_permissions_unique').on(t.groupId, t.permissionId),
+]);
+
+export const permissionAuditLogs = pgTable('permission_audit_logs', {
+  id: text('id').primaryKey(),
+  actorUserId: text('actor_user_id').notNull(),
+  targetType: text('target_type').notNull(), // ROLE, DEPARTMENT, USER, MODULE, PERMISSION, GROUP, GROUP_MEMBER, GROUP_PERMISSION
+  targetId: text('target_id').notNull(),
+  action: text('action').notNull(), // CREATE, UPDATE, DELETE, GRANT, REVOKE, DENY, ALLOW
+  beforeJson: jsonb('before_json'),
+  afterJson: jsonb('after_json'),
+  reason: text('reason'),
+  ipAddress: text('ip_address'),
+  userAgent: text('user_agent'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+}, t => [
+  index('permission_audit_logs_target_idx').on(t.targetType, t.targetId),
+  index('permission_audit_logs_actor_idx').on(t.actorUserId),
 ]);

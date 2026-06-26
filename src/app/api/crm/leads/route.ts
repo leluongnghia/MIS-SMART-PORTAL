@@ -1,12 +1,18 @@
 import { desc } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
-import { verifyApiAuth } from '../../../../libs/server/auth';
 import { db, schema } from '../../../../libs/server/db';
+import { getCrmLeadScopeCondition } from '../../../../libs/server/crm-permissions';
+import { permissionErrorResponse } from '../../../../libs/server/permission-service';
 
 export async function GET(req: Request) {
-  const { errorResponse } = await verifyApiAuth(req, { requiredWorkspace: 'TUYEN_SINH_PR' });
-  if (errorResponse) return errorResponse;
-
-  const leads = await db.select().from(schema.leads).orderBy(desc(schema.leads.updatedAt));
-  return NextResponse.json({ status: 'success', leads, count: leads.length });
+  try {
+    const scopeCondition = await getCrmLeadScopeCondition('crm.lead.view');
+    const query = db.select().from(schema.leads);
+    const leads = scopeCondition
+      ? await query.where(scopeCondition).orderBy(desc(schema.leads.updatedAt))
+      : await query.orderBy(desc(schema.leads.updatedAt));
+    return NextResponse.json({ status: 'success', leads, count: leads.length });
+  } catch (error) {
+    return permissionErrorResponse(error);
+  }
 }

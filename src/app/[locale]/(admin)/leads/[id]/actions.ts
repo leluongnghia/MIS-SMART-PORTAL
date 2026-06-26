@@ -4,8 +4,10 @@ import { db, schema } from '@/src/libs/server/db';
 import { eq, desc } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { type LeadStatus } from '../actions';
+import { requireCrmLeadAccess } from '@/src/libs/server/crm-permissions';
 
 export async function getLeadDetail(id: string) {
+  await requireCrmLeadAccess(id, 'crm.lead.view');
   const leadList = await db
     .select()
     .from(schema.leads)
@@ -89,6 +91,7 @@ export async function updateLeadProfile(
     siblingsInfo?: any | null;
   }
 ) {
+  await requireCrmLeadAccess(id, 'crm.lead.update');
   await db
     .update(schema.leads)
     .set({
@@ -159,6 +162,7 @@ export async function sendLeadEmail(
     toEmail: string;
   }
 ) {
+  await requireCrmLeadAccess(leadId, 'crm.workflow.run');
   const smtpHost = process.env.SMTP_HOST;
   const smtpPort = Number(process.env.SMTP_PORT || 587);
   const smtpUser = process.env.SMTP_USER;
@@ -233,6 +237,7 @@ export async function addConsultationActivity(
     description?: string;
   }
 ) {
+  await requireCrmLeadAccess(leadId, 'crm.lead.update');
   await db.insert(schema.leadActivities).values({
     id: `act_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
     leadId,
@@ -252,6 +257,7 @@ export async function updateLeadPipelineStatus(
   toStatus: LeadStatus,
   note?: string
 ) {
+  await requireCrmLeadAccess(leadId, 'crm.lead.stage.update');
   const existing = await db
     .select()
     .from(schema.leads)

@@ -52,10 +52,12 @@ import { MOCK_USERS, WORKSPACES } from '@/src/mockData';
 import type { UserProfile, Announcement, BoardDirective, Task } from '@/src/types';
 import NotificationDrawer from '../NotificationDrawer';
 import { DepartmentSidebar } from '@/src/components/department/DepartmentSidebar';
+import { usePermissions } from '@/src/hooks/usePermissions';
+import { inferPrimaryRole, ROLE_DASHBOARD } from '@/src/libs/server/rbac-config';
 
 type MenuItemGroup = {
   title: string;
-  items: { label: string; href: string; icon: any; badgeKey?: 'tasks' | 'directives' | 'announcements'; roles?: string[] }[];
+  items: { label: string; href: string; icon: any; badgeKey?: 'tasks' | 'directives' | 'announcements'; roles?: string[]; moduleCode?: string }[];
 };
 
 type NotificationSummary = {
@@ -71,64 +73,65 @@ const menuGroups: MenuItemGroup[] = [
   {
     title: 'BỘ MÁY ĐIỀU HÀNH',
     items: [
-      { label: 'Dashboard Hội đồng', href: 'dashboard/council', icon: LayoutDashboard, roles: ['ADMIN'] },
-      { label: 'Dashboard Hiệu trưởng', href: 'dashboard/academic', icon: LayoutDashboard, roles: ['ADMIN', 'MANAGER'] },
-      { label: 'Mục tiêu chiến lược', href: 'dashboard/okrs', icon: Target, roles: ['ADMIN', 'MANAGER'] },
-      { label: 'Quản trị rủi ro', href: 'risk', icon: ShieldAlert, roles: ['ADMIN'] },
-      { label: 'Chỉ đạo BGH', href: 'directives', icon: ClipboardCheck, badgeKey: 'directives', roles: ['ADMIN', 'MANAGER'] },
-      { label: 'Nhiệm vụ & Dự án', href: 'tasks', icon: CheckSquare, badgeKey: 'tasks' },
-      { label: 'Đơn từ & Phê duyệt', href: 'approvals', icon: UserCheck },
-      { label: 'Thông báo nội bộ', href: 'announcements', icon: Bell, badgeKey: 'announcements' },
+      { label: 'Dashboard Hội đồng', href: 'dashboard/council', icon: LayoutDashboard, roles: ['ADMIN'], moduleCode: 'DASHBOARD' },
+      { label: 'Dashboard Hiệu trưởng', href: 'dashboard/academic', icon: LayoutDashboard, roles: ['ADMIN', 'MANAGER'], moduleCode: 'DASHBOARD' },
+      { label: 'Mục tiêu chiến lược', href: 'dashboard/okrs', icon: Target, roles: ['ADMIN', 'MANAGER'], moduleCode: 'DASHBOARD' },
+      { label: 'Quản trị rủi ro', href: 'risk', icon: ShieldAlert, roles: ['ADMIN'], moduleCode: 'DASHBOARD' },
+      { label: 'Chỉ đạo BGH', href: 'directives', icon: ClipboardCheck, badgeKey: 'directives', roles: ['ADMIN', 'MANAGER'], moduleCode: 'DASHBOARD' },
+      { label: 'Nhiệm vụ & Dự án', href: 'tasks', icon: CheckSquare, badgeKey: 'tasks', moduleCode: 'DASHBOARD' },
+      { label: 'Đơn từ & Phê duyệt', href: 'approvals', icon: UserCheck, moduleCode: 'DASHBOARD' },
+      { label: 'Thông báo nội bộ', href: 'announcements', icon: Bell, badgeKey: 'announcements', moduleCode: 'DASHBOARD' },
     ],
   },
   {
     title: 'HỌC VỤ & NHÂN SỰ',
     items: [
-      { label: 'Hồ sơ Học sinh 360', href: 'students', icon: GraduationCap },
-      { label: 'Quản lý Lớp học', href: 'classes', icon: Users },
-      { label: 'Giáo án & Dự giờ', href: 'lesson-plans', icon: BookOpen },
-      { label: 'Thời khóa biểu & Lịch', href: 'schedule', icon: CalendarDays },
-      { label: 'Kiểm tra & Đánh giá', href: 'exams', icon: FileText },
-      { label: 'Sổ liên lạc & Nề nếp', href: 'conduct', icon: CheckSquare },
-      { label: 'Nhân sự trường học', href: 'hrm', icon: Users, roles: ['ADMIN', 'MANAGER'] },
+      { label: 'Hồ sơ Học sinh 360', href: 'students', icon: GraduationCap, moduleCode: 'ACADEMIC' },
+      { label: 'Quản lý Lớp học', href: 'classes', icon: Users, moduleCode: 'ACADEMIC' },
+      { label: 'Giáo án & Dự giờ', href: 'lesson-plans', icon: BookOpen, moduleCode: 'ACADEMIC' },
+      { label: 'Thời khóa biểu & Lịch', href: 'schedule', icon: CalendarDays, moduleCode: 'ACADEMIC' },
+      { label: 'Kiểm tra & Đánh giá', href: 'exams', icon: FileText, moduleCode: 'ACADEMIC' },
+      { label: 'Sổ liên lạc & Nề nếp', href: 'conduct', icon: CheckSquare, moduleCode: 'ACADEMIC' },
+      { label: 'Nhân sự trường học', href: 'hrm', icon: Users, roles: ['ADMIN', 'MANAGER'], moduleCode: 'ACADEMIC' },
     ],
   },
   {
     title: 'VẬN HÀNH & NGUỒN LỰC',
     items: [
-      { label: 'Tuyển sinh CRM', href: 'admissions', icon: Workflow },
-      { label: 'CSKH Phụ huynh', href: 'tickets', icon: MessageSquare },
-      { label: 'Sự kiện & Truyền thông', href: 'events', icon: Calendar },
-      { label: 'Xe đưa đón học sinh', href: 'transport', icon: Bus },
-      { label: 'Bán trú & Bếp ăn', href: 'meals', icon: Utensils },
-      { label: 'Tài sản & Cơ sở VC', href: 'facilities', icon: Building },
-      { label: 'Kho Quy trình & Tri thức', href: 'knowledge', icon: BookOpen },
-      { label: 'Hành chính & Cuộc họp', href: 'meetings', icon: Users },
+      { label: 'Tuyển sinh CRM', href: 'admissions', icon: Workflow, moduleCode: 'CRM_ADMISSIONS' },
+      { label: 'CSKH Phụ huynh', href: 'tickets', icon: MessageSquare, moduleCode: 'OPERATIONS' },
+      { label: 'Sự kiện & Truyền thông', href: 'events', icon: Calendar, moduleCode: 'OPERATIONS' },
+      { label: 'Xe đưa đón học sinh', href: 'transport', icon: Bus, moduleCode: 'OPERATIONS' },
+      { label: 'Bán trú & Bếp ăn', href: 'meals', icon: Utensils, moduleCode: 'OPERATIONS' },
+      { label: 'Tài sản & Cơ sở VC', href: 'facilities', icon: Building, moduleCode: 'OPERATIONS' },
+      { label: 'Kho Quy trình & Tri thức', href: 'knowledge', icon: BookOpen, moduleCode: 'OPERATIONS' },
+      { label: 'Hành chính & Cuộc họp', href: 'meetings', icon: Users, moduleCode: 'OPERATIONS' },
     ],
   },
   {
     title: 'CÀI ĐẶT HỆ THỐNG',
     items: [
-      { label: 'Cấu hình cá nhân', href: 'settings', icon: Settings },
+      { label: 'Cấu hình cá nhân', href: 'settings', icon: Settings, moduleCode: 'SYSTEM' },
+      { label: 'Người dùng & phân quyền', href: 'system-settings/permissions/users', icon: ShieldCheck, roles: ['ADMIN', 'MANAGER'], moduleCode: 'SYSTEM' },
     ],
   },
   {
     title: 'DỊCH VỤ HỌC ĐƯỜNG',
     items: [
-      { label: 'Tổng quan Dịch vụ học đường', href: 'school-services', icon: LayoutDashboard },
-      { label: 'Trung tâm Ticket Dịch vụ', href: 'school-services/tickets', icon: MessageSquare },
-      { label: 'Xe đưa đón', href: 'transport', icon: Bus },
-      { label: 'Suất ăn / Căng tin', href: 'meals', icon: Utensils },
-      { label: 'Y tế học đường', href: 'health', icon: HeartPulse },
-      { label: 'Bán trú / Nội trú', href: 'school-services/boarding', icon: Moon },
-      { label: 'Cơ sở vật chất', href: 'school-services/facilities', icon: Building },
-      { label: 'Vệ sinh / Môi trường', href: 'school-services/cleaning', icon: CheckSquare },
-      { label: 'An ninh / An toàn', href: 'school-services/security', icon: ShieldAlert },
-      { label: 'Lịch vận hành', href: 'school-services/schedule', icon: CalendarDays },
-      { label: 'Nhân sự dịch vụ', href: 'school-services/staff', icon: Users },
-      { label: 'Báo cáo & KPI', href: 'school-services/reports', icon: FileBarChart },
-      { label: 'Cấu hình vận hành cơ bản', href: 'school-services/settings', icon: Settings },
-      { label: 'Thông báo / Cảnh báo', href: 'school-services/notifications', icon: Bell },
+      { label: 'Tổng quan Dịch vụ học đường', href: 'school-services', icon: LayoutDashboard, moduleCode: 'SERVICES' },
+      { label: 'Trung tâm Ticket Dịch vụ', href: 'school-services/tickets', icon: MessageSquare, moduleCode: 'SERVICES' },
+      { label: 'Xe đưa đón', href: 'transport', icon: Bus, moduleCode: 'SERVICES' },
+      { label: 'Suất ăn / Căng tin', href: 'meals', icon: Utensils, moduleCode: 'SERVICES' },
+      { label: 'Y tế học đường', href: 'health', icon: HeartPulse, moduleCode: 'SERVICES' },
+      { label: 'Bán trú / Nội trú', href: 'school-services/boarding', icon: Moon, moduleCode: 'SERVICES' },
+      { label: 'Cơ sở vật chất', href: 'school-services/facilities', icon: Building, moduleCode: 'SERVICES' },
+      { label: 'Vệ sinh / Môi trường', href: 'school-services/cleaning', icon: CheckSquare, moduleCode: 'SERVICES' },
+      { label: 'An ninh / An toàn', href: 'school-services/security', icon: ShieldAlert, moduleCode: 'SERVICES' },
+      { label: 'Lịch vận hành', href: 'school-services/schedule', icon: CalendarDays, moduleCode: 'SERVICES' },
+      { label: 'Nhân sự dịch vụ', href: 'school-services/staff', icon: Users, moduleCode: 'SERVICES' },
+      { label: 'Báo cáo & KPI', href: 'school-services/reports', icon: FileBarChart, moduleCode: 'SERVICES' },
+      { label: 'Cấu hình vận hành cơ bản', href: 'school-services/settings', icon: Settings, moduleCode: 'SERVICES' },
+      { label: 'Thông báo / Cảnh báo', href: 'school-services/notifications', icon: Bell, moduleCode: 'SERVICES' },
     ],
   },
 ];
@@ -150,6 +153,7 @@ function segmentLabel(segment: string) {
 }
 
 export default function AdminShell({ locale, children }: { locale: string; children: ReactNode }) {
+  const { allowedModules, canAccessModule, isLoading: isPermissionsLoading } = usePermissions();
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -494,20 +498,20 @@ export default function AdminShell({ locale, children }: { locale: string; child
       ]
     }
   ] : menuGroups.filter(g => allowedGroups.includes(g.title));
+  
   const activeMenuGroups = useMemo(() => {
     const mapped = rawMenuGroups.map(group => {
         const targetTitles = ['BỘ MÁY ĐIỀU HÀNH', 'CÀI ĐẶT HỆ THỐNG'];
         if (targetTitles.includes(group.title)) {
-          const extraItems: { label: string; href: string; icon: any; badgeKey?: 'tasks' | 'directives' | 'announcements'; roles?: string[] }[] = [];
+          const extraItems: { label: string; href: string; icon: any; badgeKey?: 'tasks' | 'directives' | 'announcements'; roles?: string[]; moduleCode?: string }[] = [];
           
           if (group.title === 'BỘ MÁY ĐIỀU HÀNH') {
-            extraItems.push({ label: 'Chat nội bộ', href: 'chat', icon: MessageSquare });
+            extraItems.push({ label: 'Chat nội bộ', href: 'chat', icon: MessageSquare, moduleCode: 'DASHBOARD' });
           }
         
         if (group.title === 'CÀI ĐẶT HỆ THỐNG' && (currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER')) {
-          extraItems.push({ label: 'Quản lý người dùng & phân quyền', href: 'users', icon: Users });
-          extraItems.push({ label: 'Cấu hình hệ thống', href: 'system-data/settings', icon: Settings });
-          extraItems.push({ label: 'Danh mục hệ thống', href: 'system-data/categories', icon: List });
+          extraItems.push({ label: 'Cấu hình hệ thống', href: 'system-data/settings', icon: Settings, moduleCode: 'SYSTEM' });
+          extraItems.push({ label: 'Danh mục hệ thống', href: 'system-data/categories', icon: List, moduleCode: 'SYSTEM' });
         }
         
         const existingHrefs = new Set(group.items.map(i => i.href.split('?')[0]));
@@ -521,11 +525,20 @@ export default function AdminShell({ locale, children }: { locale: string; child
       return group;
     });
 
+    const hasDynamicPermissions = !isPermissionsLoading && allowedModules.length > 0;
+
     return mapped.map(group => ({
       ...group,
-      items: group.items.filter(item => !item.roles || (currentUser && item.roles.includes(currentUser.role)))
+      // Use dynamic permissions when available; otherwise keep the legacy role/workspace menu.
+      items: group.items.filter(item => {
+        const hasLegacyAccess = !item.roles || (currentUser && item.roles.includes(currentUser.role));
+        if (item.moduleCode && hasDynamicPermissions) {
+          return canAccessModule(item.moduleCode);
+        }
+        return hasLegacyAccess;
+      })
     })).filter(group => group.items.length > 0);
-  }, [rawMenuGroups, currentUser]);
+  }, [rawMenuGroups, currentUser, allowedModules.length, canAccessModule, isPermissionsLoading]);
 
   if (!isAuthReady) {
     return (
@@ -553,10 +566,13 @@ export default function AdminShell({ locale, children }: { locale: string; child
   const currentDepartmentId = isDepartmentRoute ? pathname.split('/departments/')[1]?.split('/')[0] : null;
   const currentDepartmentName = currentDepartmentId ? WORKSPACES.find(w => w.id === currentDepartmentId)?.name || 'Phòng ban' : '';
 
+  const roleDashboard = ROLE_DASHBOARD[inferPrimaryRole(currentUser)] || '/dashboard';
+  const homeHref = `/${locale}${roleDashboard}`;
+
   const Sidebar = isDepartmentRoute && currentDepartmentId ? (
     <aside className={cn('flex h-full flex-col border-r border-slate-200 bg-white transition-all dark:border-slate-800 dark:bg-slate-950', collapsed ? 'w-20' : 'w-72')}>
       <div className="flex h-16 items-center justify-between border-b border-slate-100 px-4 dark:border-slate-800">
-        <Link href={`/${locale}/dashboard`} className="flex min-w-0 items-center gap-3">
+        <Link href={homeHref} className="flex min-w-0 items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#2563eb] text-white">
             <BarChart3 className="h-5 w-5" />
           </div>
@@ -583,7 +599,7 @@ export default function AdminShell({ locale, children }: { locale: string; child
   ) : (
     <aside className={cn('flex h-full flex-col border-r border-slate-200 bg-white transition-all dark:border-slate-800 dark:bg-slate-950', collapsed ? 'w-20' : 'w-72')}>
       <div className="flex h-16 items-center justify-between border-b border-slate-100 px-4 dark:border-slate-800">
-        <Link href={`/${locale}/dashboard`} className="flex min-w-0 items-center gap-3">
+        <Link href={homeHref} className="flex min-w-0 items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#2563eb] text-white">
             <BarChart3 className="h-5 w-5" />
           </div>

@@ -8,6 +8,19 @@ let openPromise: Promise<PGlite> | null = null;
 let closePromise: Promise<void> | null = null;
 let closeTimeout: NodeJS.Timeout | null = null;
 let activeQueries = 0;
+const IDLE_CLOSE_DELAY_MS = 30_000;
+
+function resetClientState() {
+  clientInstance = null;
+  globalThis.pgliteClient = undefined;
+  dbState = 'closed';
+  openPromise = null;
+  closePromise = null;
+}
+
+function isPGliteClosedError(error: unknown) {
+  return error instanceof Error && error.message.includes('PGlite is closed');
+}
 
 async function getClient(): Promise<PGlite> {
   if (closeTimeout) {
@@ -65,6 +78,11 @@ function releaseClient() {
   activeQueries--;
   if (activeQueries <= 0) {
     activeQueries = 0;
+
+    if (process.env.NODE_ENV === 'development') {
+      return;
+    }
+
     if (closeTimeout) clearTimeout(closeTimeout);
     closeTimeout = setTimeout(() => {
       closeTimeout = null;
@@ -73,8 +91,7 @@ function releaseClient() {
         closePromise = (async () => {
           try {
             const client = clientInstance;
-            clientInstance = null;
-            globalThis.pgliteClient = undefined;
+            resetClientState();
             await client!.close();
           } catch (e) {
             // Ignore close errors
@@ -84,7 +101,7 @@ function releaseClient() {
           }
         })();
       }
-    }, 100);
+    }, IDLE_CLOSE_DELAY_MS);
   }
 }
 
@@ -102,9 +119,7 @@ const pgliteProxy = new Proxy({} as any, {
         }
         if (clientInstance) {
           const client = clientInstance;
-          clientInstance = null;
-          globalThis.pgliteClient = undefined;
-          dbState = 'closed';
+          resetClientState();
           await client.close();
         }
       };
@@ -116,7 +131,16 @@ const pgliteProxy = new Proxy({} as any, {
         const client = await getClient();
         const fn = (client as any)[prop];
         if (typeof fn === 'function') {
-          return await fn.apply(client, args);
+          try {
+            return await fn.apply(client, args);
+          } catch (error) {
+            if (isPGliteClosedError(error)) {
+              resetClientState();
+              const freshClient = await getClient();
+              return await (freshClient as any)[prop].apply(freshClient, args);
+            }
+            throw error;
+          }
         }
         return fn;
       } finally {
