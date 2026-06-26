@@ -9,9 +9,9 @@ export default async function ModulesPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-bold text-slate-950 dark:text-white">Module</h2>
+        <h2 className="text-lg font-bold text-slate-950 dark:text-white">Phân hệ & Chức năng</h2>
         <p className="text-sm text-slate-500">
-          Bang nay hien phan he cap 1; cac chuc nang con nam ngay ben duoi tung phan he. Bat/tat phan he se anh huong sidebar, route va backend guard.
+          Bảng này hiển thị phân hệ cấp 1; các chức năng con nằm ngay bên dưới từng phân hệ. Bật/tắt phân hệ sẽ ảnh hưởng đến thanh bên (sidebar), định tuyến (route) và bộ bảo vệ phía máy chủ (backend guard).
         </p>
       </div>
 
@@ -19,11 +19,11 @@ export default async function ModulesPage() {
         <table className="w-full text-left text-sm">
           <thead className="bg-slate-50 text-xs uppercase text-slate-500 dark:bg-slate-900">
             <tr>
-              <th className="px-4 py-3">Module</th>
-              <th className="px-4 py-3">Trang thai</th>
-              <th className="px-4 py-3">Quy mo</th>
-              <th className="px-4 py-3">Dang duoc gan</th>
-              <th className="px-4 py-3 text-right">Thao tac</th>
+              <th className="px-4 py-3">Phân hệ</th>
+              <th className="px-4 py-3">Trạng thái</th>
+              <th className="px-4 py-3">Quy mô</th>
+              <th className="px-4 py-3">Đang được gán</th>
+              <th className="px-4 py-3 text-right">Thao tác</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -46,11 +46,11 @@ export default async function ModulesPage() {
                   </td>
                   <td className="px-4 py-4">
                     <span className={module.isEnabled ? 'font-bold text-emerald-700' : 'font-bold text-rose-700'}>
-                      {module.isEnabled ? 'Dang bat' : 'Dang tat'}
+                      {module.isEnabled ? 'Đang bật' : 'Đang tắt'}
                     </span>
                   </td>
                   <td className="px-4 py-4 text-slate-600 dark:text-slate-300">
-                    {module.featureCount} chuc nang / {module.permissionCount} quyen
+                    {module.featureCount} chức năng / {module.permissionCount} quyền
                   </td>
                   <td className="px-4 py-4 font-bold">{module.assignmentCount}</td>
                   <td className="px-4 py-4">
@@ -60,7 +60,7 @@ export default async function ModulesPage() {
                       <input type="hidden" name="reason" value="Toggle module from simplified permission UI" />
                       <Button type="submit" variant={module.isEnabled ? 'outline' : 'default'} size="sm" className="gap-2">
                         <Power className="h-4 w-4" />
-                        {module.isEnabled ? 'Tat' : 'Bat'}
+                        {module.isEnabled ? 'Tắt' : 'Bật'}
                       </Button>
                     </form>
                   </td>
@@ -68,7 +68,7 @@ export default async function ModulesPage() {
                 <tr className={!module.isEnabled ? 'bg-slate-50/60 dark:bg-slate-900/40' : ''}>
                   <td colSpan={5} className="px-4 pb-4 pt-0">
                     <div className="rounded-lg border border-slate-100 bg-slate-50/70 p-3 dark:border-slate-800 dark:bg-slate-900/40">
-                      <div className="mb-2 text-xs font-bold uppercase text-slate-500">Chuc nang con</div>
+                      <div className="mb-2 text-xs font-bold uppercase text-slate-500">Chức năng con</div>
                       {module.features.length > 0 ? (
                         <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
                           {module.features.map(feature => (
@@ -79,7 +79,7 @@ export default async function ModulesPage() {
                                   <div className="font-mono text-xs text-slate-500">{feature.code}</div>
                                 </div>
                                 <span className="shrink-0 rounded-full bg-indigo-50 px-2 py-1 text-xs font-bold text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-200">
-                                  {feature.permissionCount} quyen
+                                  {feature.permissionCount} quyền
                                 </span>
                               </div>
                               <div className="mt-3 flex flex-wrap gap-1">
@@ -94,7 +94,7 @@ export default async function ModulesPage() {
                         </div>
                       ) : (
                         <div className="rounded-md border border-dashed border-slate-200 bg-white p-3 text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-950">
-                          Chua co chuc nang con nao trong catalog.
+                          Chưa có chức năng con nào trong danh mục.
                         </div>
                       )}
                     </div>

@@ -19,9 +19,9 @@ export default async function PermissionCheckPage({
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-bold text-slate-950 dark:text-white">Kiem tra quyen user</h2>
+        <h2 className="text-lg font-bold text-slate-950 dark:text-white">Kiểm tra quyền người dùng</h2>
         <p className="text-sm text-slate-500">
-          Cong cu nay doc effective permission that: role, phong ban, nhom va user override sau khi merge.
+          Công cụ này hiển thị quyền hiệu dụng thực tế (Effective Permissions) sau khi gộp từ Vai trò, Phòng ban, Nhóm và Ngoại lệ người dùng.
         </p>
       </div>
 
@@ -39,7 +39,7 @@ export default async function PermissionCheckPage({
         />
         <Button type="submit" className="gap-2">
           <Search className="h-4 w-4" />
-          Kiem tra
+          Kiểm tra
         </Button>
       </form>
 
@@ -52,14 +52,14 @@ export default async function PermissionCheckPage({
             <div className="flex items-start gap-3">
               {allowed ? <CheckCircle2 className="mt-0.5 h-5 w-5" /> : <XCircle className="mt-0.5 h-5 w-5" />}
               <div>
-                <h3 className="font-black">{allowed ? 'ALLOW' : 'DENY'}</h3>
+                <h3 className="font-black">{allowed ? 'ALLOW (Cho phép)' : 'DENY (Chặn)'}</h3>
                 <p className="mt-1 text-sm">
-                  Permission <code className="font-mono">{permissionCode}</code> co scope cuoi cung la <b>{allowed ? permission.dataScope : 'none'}</b>.
+                  Quyền hạn <code className="font-mono">{permissionCode}</code> có phạm vi dữ liệu cuối cùng là <b>{allowed ? permission.dataScope : 'none'}</b>.
                 </p>
               </div>
             </div>
             <span className="rounded bg-white/70 px-2 py-1 font-mono text-xs dark:bg-black/20">
-              {selectedUserId}
+              ID: {selectedUserId}
             </span>
           </div>
         </div>
@@ -67,26 +67,26 @@ export default async function PermissionCheckPage({
 
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="rounded-lg border border-slate-200 p-4 dark:border-slate-800">
-          <h3 className="text-sm font-black text-slate-950 dark:text-white">Module duoc truy cap</h3>
+          <h3 className="text-sm font-black text-slate-950 dark:text-white">Phân hệ (Module) được truy cập</h3>
           <div className="mt-3 flex flex-wrap gap-2">
             {result?.allowedModules.map(module => (
               <span key={module} className="rounded bg-indigo-50 px-2 py-1 font-mono text-xs font-bold text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300">
                 {module}
               </span>
             ))}
-            {result?.allowedModules.length === 0 && <span className="text-sm text-slate-500">Khong co module nao.</span>}
+            {result?.allowedModules.length === 0 && <span className="text-sm text-slate-500">Không có module nào.</span>}
           </div>
         </div>
 
         <div className="rounded-lg border border-slate-200 p-4 dark:border-slate-800">
-          <h3 className="text-sm font-black text-slate-950 dark:text-white">DENY override hieu luc</h3>
+          <h3 className="text-sm font-black text-slate-950 dark:text-white">Quyền bị chặn (DENY override) hiệu lực</h3>
           <div className="mt-3 flex flex-wrap gap-2">
             {result?.deniedPermissions.map(code => (
               <span key={code} className="rounded bg-rose-50 px-2 py-1 font-mono text-xs font-bold text-rose-700 dark:bg-rose-500/10 dark:text-rose-300">
                 {code}
               </span>
             ))}
-            {result?.deniedPermissions.length === 0 && <span className="text-sm text-slate-500">Khong co DENY override.</span>}
+            {result?.deniedPermissions.length === 0 && <span className="text-sm text-slate-500">Không có quyền DENY nào bị ghi đè.</span>}
           </div>
         </div>
       </div>

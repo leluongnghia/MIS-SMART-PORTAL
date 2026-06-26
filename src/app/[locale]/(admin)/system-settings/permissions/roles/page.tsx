@@ -3,18 +3,18 @@ import { Button } from '@/src/components/ui/button';
 import { getPermissionModules, getPermissionRoles, saveRoleModulePreset } from '../actions';
 
 const PRESETS = [
-  { value: 'view', label: 'Chi xem' },
-  { value: 'operator', label: 'Xu ly' },
-  { value: 'manager', label: 'Quan ly' },
-  { value: 'admin', label: 'Quan tri module' },
+  { value: 'view', label: 'Chỉ xem' },
+  { value: 'operator', label: 'Xử lý' },
+  { value: 'manager', label: 'Quản lý' },
+  { value: 'admin', label: 'Quản trị module' },
 ];
 
 const SCOPES = [
-  { value: 'own', label: 'Cua toi' },
-  { value: 'group', label: 'Nhom' },
-  { value: 'department', label: 'Phong ban' },
-  { value: 'school', label: 'Toan truong' },
-  { value: 'all', label: 'Tat ca' },
+  { value: 'own', label: 'Của tôi' },
+  { value: 'group', label: 'Nhóm' },
+  { value: 'department', label: 'Phòng ban' },
+  { value: 'school', label: 'Toàn trường' },
+  { value: 'all', label: 'Tất cả' },
 ];
 
 export default async function RolesPage() {
@@ -27,9 +27,9 @@ export default async function RolesPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-bold text-slate-950 dark:text-white">Vai tro va preset quyen</h2>
+        <h2 className="text-lg font-bold text-slate-950 dark:text-white">Vai trò & Preset quyền</h2>
         <p className="text-sm text-slate-500">
-          Gan quyen theo vai tro la luong chinh. Chon module, muc quyen va scope; he thong se cap cac permission phu hop.
+          Gán quyền theo vai trò là luồng chính. Chọn module, mức quyền và phạm vi (scope); hệ thống sẽ cấp các quyền hạn phù hợp.
         </p>
       </div>
 
@@ -49,7 +49,7 @@ export default async function RolesPage() {
                     </span>
                   </div>
                   <p className="mt-1 text-sm text-slate-500">
-                    {role.userCount} user / {role.permissionCount} permission / level {role.level}
+                    {role.userCount} người dùng / {role.permissionCount} quyền / cấp độ {role.level}
                   </p>
                 </div>
               </div>
@@ -73,12 +73,12 @@ export default async function RolesPage() {
                 </select>
                 <input
                   name="reason"
-                  placeholder="Ly do thay doi"
+                  placeholder="Lý do thay đổi"
                   className="h-9 rounded-md border border-slate-200 bg-white px-3 text-sm dark:border-slate-700 dark:bg-slate-950"
                 />
                 <Button type="submit" size="sm" className="gap-2">
                   <Save className="h-4 w-4" />
-                  Luu
+                  Lưu
                 </Button>
               </form>
             </div>
