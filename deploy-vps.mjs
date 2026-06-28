@@ -52,15 +52,15 @@ async function run() {
       console.log('No local migrations folder found to upload.');
     }
 
-    console.log('3. Running database migrations on live database...');
-    // Run npm run db:migrate inside duong-node-app using target database of production app
-    const migrateCmd = `DATABASE_URL=${remoteDir}/local.db npm run db:migrate`;
-    console.log(`Running migration command: ${migrateCmd}`);
+    console.log('3. Running database migrations & modules seeding on live database...');
+    // Run npm run db:migrate and db:seed:modules inside duong-node-app using target database of production app
+    const migrateCmd = `DATABASE_URL=${remoteDir}/local.db npm run db:migrate && DATABASE_URL=${remoteDir}/local.db npm run db:seed:modules`;
+    console.log(`Running migration & seed command: ${migrateCmd}`);
     const migrateRes = await execCommand(migrateCmd, remoteGitDir);
     if (migrateRes.code !== 0) {
-      console.warn('Warning: Migration failed. Check if table already exists or database is locked.');
+      console.warn('Warning: Migration/Seeding failed. Check if table already exists or database is locked.');
     } else {
-      console.log('Database migrations completed successfully!');
+      console.log('Database migrations and modules seeding completed successfully!');
     }
 
     console.log('4. Uploading app.zip bundle...');
