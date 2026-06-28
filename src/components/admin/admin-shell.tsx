@@ -529,10 +529,10 @@ export default function AdminShell({ locale, children }: { locale: string; child
 
     const MODULE_CODE_TO_SLUG: Record<string, string[]> = {
       'DASHBOARD': ['dashboard'],
-      'ACADEMIC': ['academic'],
+      'ACADEMIC': ['academic', 'classes', 'schedule', 'exams'],
       'CRM_ADMISSIONS': ['crm', 'admissions'],
-      'OPERATIONS': ['services', 'dashboard'],
-      'SYSTEM': ['system'],
+      'OPERATIONS': ['operations', 'services', 'dashboard', 'hrm'],
+      'SYSTEM': ['settings', 'system'],
       'SERVICES': ['services'],
       'FINANCE': ['finance'],
     };
@@ -541,6 +541,9 @@ export default function AdminShell({ locale, children }: { locale: string; child
       ...group,
       items: group.items.filter(item => {
         const hasLegacyAccess = !item.roles || (currentUser && item.roles.includes(currentUser.role));
+        if (item.moduleCode === 'SYSTEM' && (currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER')) {
+          return true;
+        }
         if (item.moduleCode && hasDynamicPermissions) {
           const targetSlugs = MODULE_CODE_TO_SLUG[item.moduleCode] || [item.moduleCode.toLowerCase()];
           return targetSlugs.some(slug => canAccessModule(slug));
