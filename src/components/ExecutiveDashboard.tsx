@@ -518,122 +518,211 @@ export default function ExecutiveDashboard({
           SECTION 2 — SIX KPI CARDS
       ═══════════════════════════════════════════════════════════════ */}
       <section className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-
-        {/* KPI 1 — School KPI */}
-        <div
-          onClick={() => onShowTaskList && onShowTaskList('COMPLETED')}
-          className="group cursor-pointer bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs hover:shadow-md hover:border-blue-200 transition-all duration-200 hover:-translate-y-0.5 select-none"
-        >
-          <div className="flex items-center justify-between mb-3">
-            <div className="w-9 h-9 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center">
-              <svg className="w-4.5 h-4.5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />
-              </svg>
+        {dashboardView === 'DIEU_HANH' ? (
+          <>
+            {/* KPI 1 — School KPI */}
+            <div
+              onClick={() => onShowTaskList && onShowTaskList('COMPLETED')}
+              className="group cursor-pointer bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs hover:shadow-md hover:border-blue-200 transition-all duration-200 hover:-translate-y-0.5 select-none"
+            >
+              <div className="flex items-center justify-between mb-3">
+                <div className="w-9 h-9 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center">
+                  <svg className="w-4.5 h-4.5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />
+                  </svg>
+                </div>
+              </div>
+              <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">KPI Toàn Trường</p>
+              <p className="text-2xl font-extrabold text-slate-900 leading-none">{summaryMetrics.kpiRate}%</p>
+              <div className="flex items-center gap-1 mt-2">
+                <TrendingUp className="w-3 h-3 text-emerald-500" />
+                <span className="text-[11px] font-semibold text-emerald-600">+5% tuần trước</span>
+              </div>
             </div>
-          </div>
-          <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">KPI Toàn Trường</p>
-          <p className="text-2xl font-extrabold text-slate-900 leading-none">{summaryMetrics.kpiRate}%</p>
-          <div className="flex items-center gap-1 mt-2">
-            <TrendingUp className="w-3 h-3 text-emerald-500" />
-            <span className="text-[11px] font-semibold text-emerald-600">+5% tuần trước</span>
-          </div>
-        </div>
 
-        {/* KPI 2 — Enrollment Rate */}
-        <div
-          onClick={() => onShowTaskList && onShowTaskList('IN_PROGRESS')}
-          className="group cursor-pointer bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs hover:shadow-md hover:border-orange-200 transition-all duration-200 hover:-translate-y-0.5 select-none"
-        >
-          <div className="flex items-center justify-between mb-3">
-            <div className="w-9 h-9 rounded-xl bg-orange-50 border border-orange-100 flex items-center justify-center">
-              <svg className="w-4.5 h-4.5 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
-              </svg>
+            {/* KPI 2 — Enrollment Rate */}
+            <div
+              onClick={() => onShowTaskList && onShowTaskList('IN_PROGRESS')}
+              className="group cursor-pointer bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs hover:shadow-md hover:border-orange-200 transition-all duration-200 hover:-translate-y-0.5 select-none"
+            >
+              <div className="flex items-center justify-between mb-3">
+                <div className="w-9 h-9 rounded-xl bg-orange-50 border border-orange-100 flex items-center justify-center">
+                  <svg className="w-4.5 h-4.5 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
+                  </svg>
+                </div>
+              </div>
+              <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Tuyển Sinh</p>
+              <p className="text-2xl font-extrabold text-slate-900 leading-none">{summaryMetrics.admissionsRate}%</p>
+              <div className="flex items-center gap-1 mt-2">
+                <TrendingDown className="w-3 h-3 text-rose-500" />
+                <span className="text-[11px] font-semibold text-rose-600">−8% tháng trước</span>
+              </div>
             </div>
-          </div>
-          <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Tuyển Sinh</p>
-          <p className="text-2xl font-extrabold text-slate-900 leading-none">{summaryMetrics.admissionsRate}%</p>
-          <div className="flex items-center gap-1 mt-2">
-            <TrendingDown className="w-3 h-3 text-rose-500" />
-            <span className="text-[11px] font-semibold text-rose-600">−8% tháng trước</span>
-          </div>
-        </div>
 
-        {/* KPI 3 — Teacher Count */}
-        <div
-          className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs hover:shadow-md hover:border-violet-200 transition-all duration-200 hover:-translate-y-0.5 select-none"
-        >
-          <div className="flex items-center justify-between mb-3">
-            <div className="w-9 h-9 rounded-xl bg-violet-50 border border-violet-100 flex items-center justify-center">
-              <svg className="w-4.5 h-4.5 text-violet-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zm0 0v-3.675A55.378 55.378 0 0112 8.443m-7.007 11.55A5.981 5.981 0 006.75 15.75v-1.5" />
-              </svg>
+            {/* KPI 3 — Teacher Count */}
+            <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs hover:shadow-md hover:border-violet-200 transition-all duration-200 hover:-translate-y-0.5 select-none">
+              <div className="flex items-center justify-between mb-3">
+                <div className="w-9 h-9 rounded-xl bg-violet-50 border border-violet-100 flex items-center justify-center">
+                  <Users className="w-4.5 h-4.5 text-violet-600" />
+                </div>
+              </div>
+              <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Giáo Viên</p>
+              <p className="text-2xl font-extrabold text-slate-900 leading-none">312</p>
+              <div className="flex items-center gap-1 mt-2">
+                <TrendingUp className="w-3 h-3 text-emerald-500" />
+                <span className="text-[11px] font-semibold text-emerald-600">+12 tháng trước</span>
+              </div>
             </div>
-          </div>
-          <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Giáo Viên</p>
-          <p className="text-2xl font-extrabold text-slate-900 leading-none">312</p>
-          <div className="flex items-center gap-1 mt-2">
-            <TrendingUp className="w-3 h-3 text-emerald-500" />
-            <span className="text-[11px] font-semibold text-emerald-600">+12 tháng trước</span>
-          </div>
-        </div>
 
-        {/* KPI 4 — Student Count */}
-        <div
-          className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs hover:shadow-md hover:border-emerald-200 transition-all duration-200 hover:-translate-y-0.5 select-none"
-        >
-          <div className="flex items-center justify-between mb-3">
-            <div className="w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center">
-              <svg className="w-4.5 h-4.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path d="M12 14l9-5-9-5-9 5 9 5z" /><path d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
-              </svg>
+            {/* KPI 4 — Student Count */}
+            <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs hover:shadow-md hover:border-emerald-200 transition-all duration-200 hover:-translate-y-0.5 select-none">
+              <div className="flex items-center justify-between mb-3">
+                <div className="w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center">
+                  <User className="w-4.5 h-4.5 text-emerald-600" />
+                </div>
+              </div>
+              <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Học Sinh</p>
+              <p className="text-2xl font-extrabold text-slate-900 leading-none">2,415</p>
+              <div className="flex items-center gap-1 mt-2">
+                <TrendingUp className="w-3 h-3 text-emerald-500" />
+                <span className="text-[11px] font-semibold text-emerald-600">+38 tháng trước</span>
+              </div>
             </div>
-          </div>
-          <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Học Sinh</p>
-          <p className="text-2xl font-extrabold text-slate-900 leading-none">2,415</p>
-          <div className="flex items-center gap-1 mt-2">
-            <TrendingUp className="w-3 h-3 text-emerald-500" />
-            <span className="text-[11px] font-semibold text-emerald-600">+38 tháng trước</span>
-          </div>
-        </div>
 
-        {/* KPI 5 — Revenue */}
-        <div
-          className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs hover:shadow-md hover:border-teal-200 transition-all duration-200 hover:-translate-y-0.5 select-none"
-        >
-          <div className="flex items-center justify-between mb-3">
-            <div className="w-9 h-9 rounded-xl bg-teal-50 border border-teal-100 flex items-center justify-center">
-              <svg className="w-4.5 h-4.5 text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+            {/* KPI 5 — Revenue */}
+            <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs hover:shadow-md hover:border-teal-200 transition-all duration-200 hover:-translate-y-0.5 select-none">
+              <div className="flex items-center justify-between mb-3">
+                <div className="w-9 h-9 rounded-xl bg-teal-50 border border-teal-100 flex items-center justify-center">
+                  <TrendingUp className="w-4.5 h-4.5 text-teal-600" />
+                </div>
+              </div>
+              <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Doanh Thu</p>
+              <p className="text-2xl font-extrabold text-slate-900 leading-none">12.45<span className="text-base font-bold text-slate-500 ml-0.5">tỷ</span></p>
+              <div className="flex items-center gap-1 mt-2">
+                <TrendingUp className="w-3 h-3 text-emerald-500" />
+                <span className="text-[11px] font-semibold text-emerald-600">+15% tháng trước</span>
+              </div>
             </div>
-          </div>
-          <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Doanh Thu</p>
-          <p className="text-2xl font-extrabold text-slate-900 leading-none">12.45<span className="text-base font-bold text-slate-500 ml-0.5">tỷ</span></p>
-          <div className="flex items-center gap-1 mt-2">
-            <TrendingUp className="w-3 h-3 text-emerald-500" />
-            <span className="text-[11px] font-semibold text-emerald-600">+15% tháng trước</span>
-          </div>
-        </div>
 
-        {/* KPI 6 — Attendance */}
-        <div
-          className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs hover:shadow-md hover:border-sky-200 transition-all duration-200 hover:-translate-y-0.5 select-none"
-        >
-          <div className="flex items-center justify-between mb-3">
-            <div className="w-9 h-9 rounded-xl bg-sky-50 border border-sky-100 flex items-center justify-center">
-              <svg className="w-4.5 h-4.5 text-sky-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5m.75-9l3-3 2.148 2.148A12.061 12.061 0 0116.5 7.605" />
-              </svg>
+            {/* KPI 6 — Attendance */}
+            <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs hover:shadow-md hover:border-sky-200 transition-all duration-200 hover:-translate-y-0.5 select-none">
+              <div className="flex items-center justify-between mb-3">
+                <div className="w-9 h-9 rounded-xl bg-sky-50 border border-sky-100 flex items-center justify-center">
+                  <Clock className="w-4.5 h-4.5 text-sky-600" />
+                </div>
+              </div>
+              <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Chuyên Cần TB</p>
+              <p className="text-2xl font-extrabold text-slate-900 leading-none">98.2%</p>
+              <div className="flex items-center gap-1 mt-2">
+                <TrendingUp className="w-3 h-3 text-emerald-500" />
+                <span className="text-[11px] font-semibold text-emerald-600">+2.1% tuần trước</span>
+              </div>
             </div>
-          </div>
-          <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Chuyên Cần TB</p>
-          <p className="text-2xl font-extrabold text-slate-900 leading-none">98.2%</p>
-          <div className="flex items-center gap-1 mt-2">
-            <TrendingUp className="w-3 h-3 text-emerald-500" />
-            <span className="text-[11px] font-semibold text-emerald-600">+2.1% tuần trước</span>
-          </div>
-        </div>
+          </>
+        ) : dashboardView === 'TRUONG_PHONG' ? (
+          <>
+            <div onClick={() => onShowTaskList && onShowTaskList('COMPLETED')} className="group cursor-pointer bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs hover:shadow-md hover:border-blue-200 transition-all">
+              <div className="flex items-center justify-between mb-3">
+                <div className="w-9 h-9 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center"><TrendingUp className="w-4.5 h-4.5 text-blue-600" /></div>
+              </div>
+              <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">KPI Bộ Phận</p>
+              <p className="text-2xl font-extrabold text-slate-900">{summaryMetrics.kpiRate}%</p>
+              <span className="text-[11px] font-semibold text-emerald-600 mt-2 block">Mục tiêu đạt chuẩn</span>
+            </div>
+            <div onClick={() => onShowTaskList && onShowTaskList('IN_PROGRESS')} className="group cursor-pointer bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs hover:shadow-md hover:border-blue-200 transition-all">
+              <div className="flex items-center justify-between mb-3">
+                <div className="w-9 h-9 rounded-xl bg-sky-50 border border-sky-100 flex items-center justify-center"><Activity className="w-4.5 h-4.5 text-sky-600" /></div>
+              </div>
+              <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Đang Thực Hiện</p>
+              <p className="text-2xl font-extrabold text-slate-900">{summaryMetrics.inProgress}</p>
+              <span className="text-[11px] font-semibold text-blue-600 mt-2 block">Nhiệm vụ đang chạy</span>
+            </div>
+            <div onClick={() => onShowTaskList && onShowTaskList('PENDING')} className="group cursor-pointer bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs hover:shadow-md hover:border-amber-200 transition-all">
+              <div className="flex items-center justify-between mb-3">
+                <div className="w-9 h-9 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center"><Hourglass className="w-4.5 h-4.5 text-amber-600" /></div>
+              </div>
+              <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Chờ Phê Duyệt</p>
+              <p className="text-2xl font-extrabold text-slate-900">{summaryMetrics.pendingApproval}</p>
+              <span className="text-[11px] font-semibold text-amber-600 mt-2 block">Cần thẩm định</span>
+            </div>
+            <div onClick={() => onShowTaskList && onShowTaskList('OVERDUE')} className="group cursor-pointer bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs hover:shadow-md hover:border-rose-200 transition-all">
+              <div className="flex items-center justify-between mb-3">
+                <div className="w-9 h-9 rounded-xl bg-rose-50 border border-rose-100 flex items-center justify-center"><AlertTriangle className="w-4.5 h-4.5 text-rose-600" /></div>
+              </div>
+              <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Quá Hạn</p>
+              <p className="text-2xl font-extrabold text-rose-600">{summaryMetrics.overdue}</p>
+              <span className="text-[11px] font-semibold text-rose-600 mt-2 block">Cần nhắc nhở gấp</span>
+            </div>
+            <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs hover:shadow-md transition-all">
+              <div className="flex items-center justify-between mb-3">
+                <div className="w-9 h-9 rounded-xl bg-violet-50 border border-violet-100 flex items-center justify-center"><Users className="w-4.5 h-4.5 text-violet-600" /></div>
+              </div>
+              <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Nhân Sự Trong Tổ</p>
+              <p className="text-2xl font-extrabold text-slate-900">{users.filter(u => u.workspaceId === currentUser.workspaceId).length}</p>
+              <span className="text-[11px] font-semibold text-slate-500 mt-2 block">Cán bộ giáo viên</span>
+            </div>
+            <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs hover:shadow-md transition-all">
+              <div className="flex items-center justify-between mb-3">
+                <div className="w-9 h-9 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center"><ShieldAlert className="w-4.5 h-4.5 text-indigo-600" /></div>
+              </div>
+              <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Chỉ Đạo BGH</p>
+              <p className="text-2xl font-extrabold text-indigo-600">{summaryMetrics.urgentDirectives}</p>
+              <span className="text-[11px] font-semibold text-indigo-600 mt-2 block">Chỉ thị khẩn cấp</span>
+            </div>
+          </>
+        ) : (
+          <>
+            <div onClick={() => onShowTaskList && onShowTaskList('COMPLETED')} className="group cursor-pointer bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs hover:shadow-md hover:border-blue-200 transition-all">
+              <div className="flex items-center justify-between mb-3">
+                <div className="w-9 h-9 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center"><CheckCircle2 className="w-4.5 h-4.5 text-blue-600" /></div>
+              </div>
+              <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">KPI Cá Nhân</p>
+              <p className="text-2xl font-extrabold text-slate-900">{summaryMetrics.kpiRate}%</p>
+              <span className="text-[11px] font-semibold text-emerald-600 mt-2 block">Tiến độ cá nhân</span>
+            </div>
+            <div onClick={() => onShowTaskList && onShowTaskList('IN_PROGRESS')} className="group cursor-pointer bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs hover:shadow-md hover:border-blue-200 transition-all">
+              <div className="flex items-center justify-between mb-3">
+                <div className="w-9 h-9 rounded-xl bg-sky-50 border border-sky-100 flex items-center justify-center"><Activity className="w-4.5 h-4.5 text-sky-600" /></div>
+              </div>
+              <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Việc Đang Làm</p>
+              <p className="text-2xl font-extrabold text-slate-900">{summaryMetrics.inProgress}</p>
+              <span className="text-[11px] font-semibold text-blue-600 mt-2 block">Đang xử lý</span>
+            </div>
+            <div onClick={() => onShowTaskList && onShowTaskList('PENDING')} className="group cursor-pointer bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs hover:shadow-md hover:border-amber-200 transition-all">
+              <div className="flex items-center justify-between mb-3">
+                <div className="w-9 h-9 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center"><Hourglass className="w-4.5 h-4.5 text-amber-600" /></div>
+              </div>
+              <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Chờ Nghiệm Thu</p>
+              <p className="text-2xl font-extrabold text-slate-900">{summaryMetrics.pendingApproval}</p>
+              <span className="text-[11px] font-semibold text-amber-600 mt-2 block">Đã nộp minh chứng</span>
+            </div>
+            <div onClick={() => onShowTaskList && onShowTaskList('OVERDUE')} className="group cursor-pointer bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs hover:shadow-md hover:border-rose-200 transition-all">
+              <div className="flex items-center justify-between mb-3">
+                <div className="w-9 h-9 rounded-xl bg-rose-50 border border-rose-100 flex items-center justify-center"><AlertTriangle className="w-4.5 h-4.5 text-rose-600" /></div>
+              </div>
+              <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Trễ Hạn</p>
+              <p className="text-2xl font-extrabold text-rose-600">{summaryMetrics.overdue}</p>
+              <span className="text-[11px] font-semibold text-rose-600 mt-2 block">Cần hoàn thành ngay</span>
+            </div>
+            <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs hover:shadow-md transition-all">
+              <div className="flex items-center justify-between mb-3">
+                <div className="w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center"><Sparkles className="w-4.5 h-4.5 text-emerald-600" /></div>
+              </div>
+              <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Giờ Bồi Dưỡng CPD</p>
+              <p className="text-2xl font-extrabold text-emerald-600">{currentUser.cpdHours || 0}<span className="text-sm text-slate-400 ml-1">giờ</span></p>
+              <span className="text-[11px] font-semibold text-emerald-600 mt-2 block">Đào tạo chuyên môn</span>
+            </div>
+            <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs hover:shadow-md transition-all">
+              <div className="flex items-center justify-between mb-3">
+                <div className="w-9 h-9 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center"><ShieldAlert className="w-4.5 h-4.5 text-indigo-600" /></div>
+              </div>
+              <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Chỉ Đạo BGH</p>
+              <p className="text-2xl font-extrabold text-indigo-600">{summaryMetrics.urgentDirectives}</p>
+              <span className="text-[11px] font-semibold text-indigo-600 mt-2 block">Nhiệm vụ được giao</span>
+            </div>
+          </>
+        )}
       </section>
 
       {/* ═══════════════════════════════════════════════════════════════
@@ -956,12 +1045,26 @@ export default function ExecutiveDashboard({
         <section className="lg:col-span-5 bg-white border border-slate-200/80 rounded-2xl shadow-xs overflow-hidden">
           <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-rose-50 border border-rose-100 flex items-center justify-center">
-                <ShieldAlert className="w-4 h-4 text-rose-600" />
+              <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                dashboardView === 'DIEU_HANH' ? 'bg-rose-50 border border-rose-100 text-rose-600' :
+                dashboardView === 'TRUONG_PHONG' ? 'bg-violet-50 border border-violet-100 text-violet-600' :
+                'bg-blue-50 border border-blue-100 text-blue-600'
+              }`}>
+                {dashboardView === 'DIEU_HANH' && <ShieldAlert className="w-4 h-4" />}
+                {dashboardView === 'TRUONG_PHONG' && <Users className="w-4 h-4" />}
+                {dashboardView === 'NHAN_SU' && <Activity className="w-4 h-4" />}
               </div>
               <div>
-                <h3 className="text-sm font-bold text-slate-900">Top Phòng Ban Có Vấn Đề</h3>
-                <p className="text-[11px] text-slate-400 font-medium">Rủi ro theo bộ phận</p>
+                <h3 className="text-sm font-bold text-slate-900">
+                  {dashboardView === 'DIEU_HANH' && 'Top Phòng Ban Có Vấn Đề'}
+                  {dashboardView === 'TRUONG_PHONG' && 'Hiệu Suất Cán Bộ Trong Tổ'}
+                  {dashboardView === 'NHAN_SU' && 'Danh Sách Nhiệm Vụ Của Bạn'}
+                </h3>
+                <p className="text-[11px] text-slate-400 font-medium">
+                  {dashboardView === 'DIEU_HANH' && 'Rủi ro theo bộ phận'}
+                  {dashboardView === 'TRUONG_PHONG' && 'Tiến độ chuyên môn'}
+                  {dashboardView === 'NHAN_SU' && 'Các công việc đang phụ trách'}
+                </p>
               </div>
             </div>
           </div>
@@ -970,14 +1073,34 @@ export default function ExecutiveDashboard({
             <table className="w-full">
               <thead>
                 <tr className="border-b border-slate-100">
-                  <th className="px-5 py-2.5 text-left text-[10px] font-black uppercase tracking-wider text-slate-400">Phòng ban</th>
-                  <th className="px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-wider text-slate-400">Vấn đề</th>
-                  <th className="px-3 py-2.5 text-center text-[10px] font-black uppercase tracking-wider text-slate-400">Mức độ</th>
-                  <th className="px-3 py-2.5 text-center text-[10px] font-black uppercase tracking-wider text-slate-400">Xu hướng</th>
+                  {dashboardView === 'DIEU_HANH' && (
+                    <>
+                      <th className="px-5 py-2.5 text-left text-[10px] font-black uppercase tracking-wider text-slate-400">Phòng ban</th>
+                      <th className="px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-wider text-slate-400">Vấn đề</th>
+                      <th className="px-3 py-2.5 text-center text-[10px] font-black uppercase tracking-wider text-slate-400">Mức độ</th>
+                      <th className="px-3 py-2.5 text-center text-[10px] font-black uppercase tracking-wider text-slate-400">Xu hướng</th>
+                    </>
+                  )}
+                  {dashboardView === 'TRUONG_PHONG' && (
+                    <>
+                      <th className="px-5 py-2.5 text-left text-[10px] font-black uppercase tracking-wider text-slate-400">Cán bộ giáo viên</th>
+                      <th className="px-3 py-2.5 text-center text-[10px] font-black uppercase tracking-wider text-slate-400">KPI</th>
+                      <th className="px-3 py-2.5 text-center text-[10px] font-black uppercase tracking-wider text-slate-400">Quá hạn / Chờ</th>
+                      <th className="px-3 py-2.5 text-center text-[10px] font-black uppercase tracking-wider text-slate-400">Đánh giá</th>
+                    </>
+                  )}
+                  {dashboardView === 'NHAN_SU' && (
+                    <>
+                      <th className="px-5 py-2.5 text-left text-[10px] font-black uppercase tracking-wider text-slate-400">Tiêu đề công việc</th>
+                      <th className="px-3 py-2.5 text-center text-[10px] font-black uppercase tracking-wider text-slate-400">Hạn chót</th>
+                      <th className="px-3 py-2.5 text-center text-[10px] font-black uppercase tracking-wider text-slate-400">Ưu tiên</th>
+                      <th className="px-3 py-2.5 text-center text-[10px] font-black uppercase tracking-wider text-slate-400">Trạng thái</th>
+                    </>
+                  )}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {dashboardView === 'DIEU_HANH' ? (
+                {dashboardView === 'DIEU_HANH' && (
                   departmentPerformance.slice(0, 5).map((dept) => {
                     const isRisk = dept.status === 'Nguy cơ';
                     const isWarn = dept.status === 'Cảnh báo';
@@ -1012,38 +1135,85 @@ export default function ExecutiveDashboard({
                       </tr>
                     );
                   })
-                ) : (
-                  [
-                    { name: 'Tuyển sinh', issue: 'KPI giảm 8%', severity: 'Cao', trend: 'down' },
-                    { name: 'Học vụ', issue: 'Chậm nhập điểm', severity: 'Trung bình', trend: 'neutral' },
-                    { name: 'Thiết bị', issue: 'Cơ sở vật chất cũ', severity: 'Trung bình', trend: 'neutral' },
-                    { name: 'Kế toán', issue: 'Công nợ quá hạn', severity: 'Cao', trend: 'down' },
-                  ].map((row, idx) => (
-                    <tr key={idx} className="hover:bg-slate-50/60 transition-colors">
-                      <td className="px-5 py-3"><span className="text-[12.5px] font-semibold text-slate-800">{row.name}</span></td>
-                      <td className="px-3 py-3"><span className="text-[11.5px] text-slate-500">{row.issue}</span></td>
-                      <td className="px-3 py-3 text-center">
-                        <span className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                          row.severity === 'Cao' ? 'bg-rose-50 text-rose-700 border border-rose-100' :
-                          'bg-amber-50 text-amber-700 border border-amber-100'
-                        }`}>{row.severity}</span>
-                      </td>
-                      <td className="px-3 py-3 text-center">
-                        {row.trend === 'down'
-                          ? <TrendingDown className="w-4 h-4 text-rose-500 mx-auto" />
-                          : <svg className="w-4 h-4 text-amber-400 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14" /></svg>
-                        }
-                      </td>
-                    </tr>
-                  ))
+                )}
+
+                {dashboardView === 'TRUONG_PHONG' && (
+                  memberPerformance.length === 0 ? (
+                    <tr><td colSpan={4} className="text-center py-6 text-xs text-slate-400">Không có dữ liệu thành viên</td></tr>
+                  ) : (
+                    memberPerformance.slice(0, 5).map((mem) => {
+                      const isRisk = mem.status === 'Nguy cơ';
+                      const isWarn = mem.status === 'Cảnh báo';
+                      return (
+                        <tr key={mem.id} className="hover:bg-slate-50/60 transition-colors">
+                          <td className="px-5 py-3">
+                            <span className="text-[12.5px] font-semibold text-slate-800 block truncate max-w-[140px]">{mem.name}</span>
+                            <span className="text-[10.5px] text-slate-400 block truncate max-w-[140px]">{mem.title}</span>
+                          </td>
+                          <td className="px-3 py-3 text-center">
+                            <span className="text-[12px] font-extrabold text-slate-800">{mem.kpi}%</span>
+                          </td>
+                          <td className="px-3 py-3 text-center">
+                            <span className="text-[11.5px] font-medium text-slate-600">
+                              <span className={mem.overdue > 0 ? 'text-rose-600 font-bold' : ''}>{mem.overdue} trễ</span> / {mem.pending} chờ
+                            </span>
+                          </td>
+                          <td className="px-3 py-3 text-center">
+                            <span className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                              isRisk ? 'bg-rose-50 text-rose-700 border border-rose-100' :
+                              isWarn ? 'bg-amber-50 text-amber-700 border border-amber-100' :
+                              'bg-emerald-50 text-emerald-700 border border-emerald-100'
+                            }`}>{mem.status}</span>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )
+                )}
+
+                {dashboardView === 'NHAN_SU' && (
+                  filteredTasks.length === 0 ? (
+                    <tr><td colSpan={4} className="text-center py-6 text-xs text-slate-400">Không có công việc nào</td></tr>
+                  ) : (
+                    filteredTasks.slice(0, 5).map((t) => {
+                      const isOverdue = t.status !== 'HOAN_THANH' && t.deadline < todayStr;
+                      return (
+                        <tr key={t.id} onClick={() => onViewDetails(t)} className="hover:bg-slate-50/60 cursor-pointer transition-colors">
+                          <td className="px-5 py-3">
+                            <span className="text-[12.5px] font-semibold text-slate-800 block truncate max-w-[150px]">{t.title}</span>
+                          </td>
+                          <td className="px-3 py-3 text-center">
+                            <span className={`text-[11.5px] font-mono ${isOverdue ? 'text-rose-600 font-bold' : 'text-slate-500'}`}>{t.deadline}</span>
+                          </td>
+                          <td className="px-3 py-3 text-center">
+                            <span className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                              t.priority === 'CAO' ? 'bg-rose-50 text-rose-700 border border-rose-100' :
+                              t.priority === 'TRUNG_BINH' ? 'bg-amber-50 text-amber-700 border border-amber-100' :
+                              'bg-slate-100 text-slate-600'
+                            }`}>{t.priority === 'CAO' ? 'Gấp' : t.priority === 'TRUNG_BINH' ? 'TB' : 'Thường'}</span>
+                          </td>
+                          <td className="px-3 py-3 text-center">
+                            <span className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                              t.status === 'HOAN_THANH' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' :
+                              t.status === 'CHO_DUYET' ? 'bg-amber-50 text-amber-700 border border-amber-100' :
+                              'bg-blue-50 text-blue-700 border border-blue-100'
+                            }`}>{t.status === 'HOAN_THANH' ? 'Xong' : t.status === 'CHO_DUYET' ? 'Chờ duyệt' : 'Đang làm'}</span>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )
                 )}
               </tbody>
             </table>
           </div>
 
           <div className="px-5 py-3 border-t border-slate-100">
-            <button className="text-[12px] font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1 transition-colors">
-              Xem chi tiết
+            <button
+              onClick={() => onShowTaskList && onShowTaskList('IN_PROGRESS')}
+              className="text-[12px] font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1 transition-colors cursor-pointer"
+            >
+              Xem tất cả chi tiết
               <ChevronRight className="w-3.5 h-3.5" />
             </button>
           </div>

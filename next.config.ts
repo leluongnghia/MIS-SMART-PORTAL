@@ -3,7 +3,7 @@ import type { NextConfig } from 'next';
 
 const withNextIntl = createNextIntlPlugin('./src/libs/I18n.ts');
 
-const nextConfig: NextConfig = {
+const nextConfig: any = {
   devIndicators: {
     position: 'bottom-right',
   },

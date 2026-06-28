@@ -492,7 +492,7 @@ function AppInner() {
 
   const requestNotificationPermission = async () => {
     if (!('Notification' in window)) {
-      alert('Trình duyệt của bạn không hỗ trợ tính năng thông báo.');
+      toast.warning('Trình duyệt không hỗ trợ', 'Trình duyệt của bạn không hỗ trợ tính năng thông báo.');
       return;
     }
     try {
@@ -3123,7 +3123,7 @@ function AppInner() {
                           type="button"
                           onClick={() => {
                             if (!newCpdTitle.trim()) {
-                              alert('Vui lòng nhập tên cuộc tập huấn hội thảo bồi dưỡng chuyên môn.');
+                              toast.warning('Thiếu thông tin', 'Vui lòng nhập tên cuộc tập huấn hội thảo bồi dưỡng chuyên môn.');
                               return;
                             }
                             const hours = parseInt(newCpdHours);
@@ -3198,7 +3198,7 @@ function AppInner() {
               const role = formData.get('role') as 'ADMIN' | 'MANAGER' | 'STAFF';
 
               if (!name || !title || !workspaceId) {
-                alert('Vui lòng hoàn tất điền đủ thông tin nhân sự!');
+                toast.warning('Thiếu thông tin', 'Vui lòng hoàn tất điền đủ thông tin nhân sự!');
                 return;
               }
 

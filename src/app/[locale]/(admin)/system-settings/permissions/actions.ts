@@ -60,7 +60,10 @@ export async function getPermissionOverview() {
     groupCount: groups.length,
     temporaryGroupCount: groups.filter(group => group.isTemporary).length,
     overrideCount: overrides.length,
-    denyOverrideCount: overrides.filter(override => override.effect === 'DENY').length,
+    denyOverrideCount: overrides.filter(override => {
+      const o = override.overrides as any;
+      return o && (o.effect === 'DENY' || (typeof o === 'object' && Object.values(o).some((v: any) => v?.effect === 'DENY')));
+    }).length,
     disabledModules,
     auditLogs,
   };
