@@ -112,7 +112,7 @@ const menuGroups: MenuItemGroup[] = [
     title: 'CÀI ĐẶT HỆ THỐNG',
     items: [
       { label: 'Cấu hình cá nhân', href: 'settings', icon: Settings, moduleCode: 'SYSTEM' },
-      { label: 'Quản trị phân quyền (Mới)', href: 'system-settings/permissions', icon: ShieldCheck, roles: ['ADMIN', 'MANAGER'], moduleCode: 'SYSTEM' },
+      { label: 'Quản trị phân quyền (Mới)', href: 'system-settings/permissions', icon: ShieldCheck, roles: ['ADMIN'], moduleCode: 'SYSTEM' },
     ],
   },
   {
@@ -529,10 +529,10 @@ export default function AdminShell({ locale, children }: { locale: string; child
 
     const MODULE_CODE_TO_SLUG: Record<string, string[]> = {
       'DASHBOARD': ['dashboard'],
-      'ACADEMIC': ['academic'],
+      'ACADEMIC': ['academic', 'classes', 'schedule', 'exams'],
       'CRM_ADMISSIONS': ['crm', 'admissions'],
-      'OPERATIONS': ['services', 'dashboard'],
-      'SYSTEM': ['system'],
+      'OPERATIONS': ['operations', 'services', 'dashboard', 'hrm'],
+      'SYSTEM': ['settings', 'system'],
       'SERVICES': ['services'],
       'FINANCE': ['finance'],
     };
@@ -540,7 +540,23 @@ export default function AdminShell({ locale, children }: { locale: string; child
     return mapped.map(group => ({
       ...group,
       items: group.items.filter(item => {
+        // 1. Nếu item có yêu cầu vai trò cụ thể (ví dụ ADMIN, MANAGER), người dùng bắt buộc phải có vai trò đó
+        if (item.roles && (!currentUser || !item.roles.includes(currentUser.role))) {
+          return false;
+        }
+        // 2. Các chức năng chuyên biệt của BGH chỉ dành cho workspace BGH hoặc ADMIN
+        const bghOnlyHrefs = ['dashboard/council', 'dashboard/academic', 'dashboard/okrs', 'risk', 'directives', 'system-settings/permissions'];
+        const baseHref = item.href.split('?')[0];
+        if (bghOnlyHrefs.includes(baseHref)) {
+          if (currentUser?.workspaceId !== 'BGH' && currentUser?.role !== 'ADMIN') {
+            return false;
+          }
+        }
+
         const hasLegacyAccess = !item.roles || (currentUser && item.roles.includes(currentUser.role));
+        if (item.moduleCode === 'SYSTEM' && (currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER')) {
+          return true;
+        }
         if (item.moduleCode && hasDynamicPermissions) {
           const targetSlugs = MODULE_CODE_TO_SLUG[item.moduleCode] || [item.moduleCode.toLowerCase()];
           return targetSlugs.some(slug => canAccessModule(slug));
