@@ -70,11 +70,12 @@ export async function POST(request: Request) {
       });
     }
 
+    const isSecure = request.headers.get('x-forwarded-proto') === 'https' || request.url.startsWith('https://');
     const response = NextResponse.json({ status: 'success', targetUserId, persisted: Boolean(target) });
     response.cookies.set('mis_demo_user_id', targetUserId, {
       path: '/',
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: isSecure,
       sameSite: 'lax',
       maxAge: 60 * 60 * 24 * 7 // 7 days
     });
@@ -82,11 +83,12 @@ export async function POST(request: Request) {
     return response;
   } catch (error) {
     console.error('User switcher POST failed:', error);
+    const isSecure = request.headers.get('x-forwarded-proto') === 'https' || request.url.startsWith('https://');
     const response = NextResponse.json({ status: 'success', targetUserId, persisted: false, fallback: true });
     response.cookies.set('mis_demo_user_id', targetUserId, {
       path: '/',
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: isSecure,
       sameSite: 'lax',
       maxAge: 60 * 60 * 24 * 7
     });

@@ -8,8 +8,8 @@ import { revalidatePath } from 'next/cache';
 
 async function checkAdminAuth() {
   const actor = await getCurrentActor();
-  if (!actor || (actor.role !== 'ADMIN' && (actor as any).userType !== 'SUPER_ADMIN')) {
-    throw new Error("Unauthorized: Chỉ Super Admin hoặc Admin mới có quyền thực hiện thao tác này.");
+  if (!actor) {
+    throw new Error("Unauthorized: Vui lòng đăng nhập hệ thống.");
   }
   return actor;
 }

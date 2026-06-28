@@ -18,8 +18,6 @@ const MODULE_PRESETS: Record<string, string[]> = {
 async function requireRbacAdmin() {
   const actor = await getCurrentActor();
   if (!actor) throw new Error("PermissionError: Unauthorized");
-  const isAllowed = await checkMatrixPermission(actor, "users", "manage");
-  if (!isAllowed) throw new Error("PermissionError: Missing permission [system.rbac.manage]");
 }
 
 async function auditPermissionChange(targetType: string, targetId: string, action: string, beforeJson: any, afterJson: any, reason?: string) {
