@@ -551,11 +551,21 @@ export default function AdminShell({ locale, children }: { locale: string; child
   if (!isLoggedIn || !currentUser) {
     return (
       <LoginPortal
-        onLoginSuccess={(user) => {
+        onLoginSuccess={async (user) => {
+          try {
+            await fetch('/api/settings/user-switcher', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ targetUserId: user.id }),
+            });
+          } catch (e) {
+            console.error('Failed to set login cookie', e);
+          }
           serverStorage.setItem('mis_edutask_logged_in', 'true');
           serverStorage.setItem('mis_edutask_logged_in_user_id', user.id);
           setCurrentUser(user);
           setIsLoggedIn(true);
+          window.location.reload();
         }}
         initialUser={MOCK_USERS[0]}
       />

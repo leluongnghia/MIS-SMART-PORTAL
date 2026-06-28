@@ -11,7 +11,7 @@
     "lint": "eslint .",
     "check:types": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "tsx scripts/migrate-pglite.ts",
+    "db:migrate": "tsx scripts/migrate-postgres.ts",
     "db:seed": "tsx scripts/seed-postgres.ts",
     "test": "vitest run --passWithNoTests",
     "test:e2e": "playwright test",

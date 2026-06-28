@@ -6,6 +6,7 @@ import { revalidatePath } from 'next/cache';
 import { getCurrentActor } from '@/src/libs/server/auth-helper';
 import { db, schema } from '@/src/libs/server/db';
 import { ensurePermissionCatalog, getEffectivePermissions, requirePermission } from '@/src/libs/server/permission-service';
+import { hasPermission as checkMatrixPermission } from '@/src/libs/server/permission-evaluator';
 
 const MODULE_PRESETS: Record<string, string[]> = {
   view: ['view'],
@@ -15,8 +16,10 @@ const MODULE_PRESETS: Record<string, string[]> = {
 };
 
 async function requireRbacAdmin() {
-  await ensurePermissionCatalog();
-  await requirePermission('system.rbac.manage');
+  const actor = await getCurrentActor();
+  if (!actor) throw new Error("PermissionError: Unauthorized");
+  const isAllowed = await checkMatrixPermission(actor, "users", "manage");
+  if (!isAllowed) throw new Error("PermissionError: Missing permission [system.rbac.manage]");
 }
 
 async function auditPermissionChange(targetType: string, targetId: string, action: string, beforeJson: any, afterJson: any, reason?: string) {
@@ -42,7 +45,7 @@ export async function getPermissionOverview() {
     db.select().from(schema.sysModules),
     db.select().from(schema.roles),
     db.select().from(schema.sysGroups),
-    db.select().from(schema.userPermissions),
+    db.select().from(schema.userOverrides),
     db.select().from(schema.sysModules).where(eq(schema.sysModules.isEnabled, false)),
     db.select().from(schema.permissionAuditLogs).orderBy(desc(schema.permissionAuditLogs.createdAt)).limit(8),
   ]);

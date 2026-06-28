@@ -55,20 +55,6 @@ export async function getCurrentActor(): Promise<Actor | null> {
     }
   }
 
-  // 3. Fallback to DB settings if no cookie and no Clerk
-  if (!userId) {
-    try {
-      const [setting] = await db
-        .select()
-        .from(schema.systemSettings)
-        .where(eq(schema.systemSettings.key, 'client:mis_edutask_logged_in_user_id'))
-        .limit(1);
-      userId = setting?.value;
-    } catch (e) {
-      // settings check failed
-    }
-  }
-
   if (userId) {
     const [user] = await db
       .select()

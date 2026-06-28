@@ -62,20 +62,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ status: 'error', error: 'Không được đổi sang role cao hơn.' }, { status: 403 });
     }
 
-    // Keep writing to systemSettings as fallback sync option
-    await db.insert(schema.systemSettings).values({
-      key: 'client:mis_edutask_logged_in_user_id',
-      value: targetUserId,
-      group: 'client',
-      label: 'Demo logged in user',
-      isEditable: true,
-      isSecret: false,
-      updatedAt: new Date(),
-      createdAt: new Date(),
-    }).onConflictDoUpdate({ target: schema.systemSettings.key, set: { value: targetUserId, updatedAt: new Date() } }).catch((error) => {
-      console.error('Persist switched user failed:', error);
-    });
-
     if (actor && target && policy.logSwitching) {
       await writeAuditLog(actor.id, 'SWITCH_DEMO_USER', 'AUTH_DEMO', targetUserId, {
         before: { userId: actor.id, role: actor.role },

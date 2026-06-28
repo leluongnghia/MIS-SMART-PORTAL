@@ -516,6 +516,7 @@ export async function requirePermission(permissionCode: string): Promise<Effecti
   const perm = effective.permissions.get(permissionCode);
 
   if (perm?.effect !== 'ALLOW') {
+    console.error('DEBUG PERMISSION DENIED:', { actorId: actor.id, role: actor.role, permissionCode, perm, count: effective.permissions.size, allowedModules: effective.allowedModules });
     throw new PermissionError('PERMISSION_DENIED', `Missing permission [${permissionCode}].`);
   }
 

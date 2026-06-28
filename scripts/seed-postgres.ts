@@ -1,4 +1,4 @@
-import { db, pgliteClient, schema } from '../src/libs/server/db';
+import { db, schema } from '../src/libs/server/db';
 import { INITIAL_TASKS, MOCK_USERS, WORKSPACES } from '../src/mockData';
 
 const now = new Date();

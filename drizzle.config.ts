@@ -4,8 +4,7 @@ export default defineConfig({
   schema: './src/models/Schema.ts',
   out: './migrations',
   dialect: 'postgresql',
-  driver: 'pglite',
   dbCredentials: {
-    url: './local.db',
+    url: process.env.DATABASE_URL || 'postgres://postgres:postgres@localhost:5432/mis',
   },
 });

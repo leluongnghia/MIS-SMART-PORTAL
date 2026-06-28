@@ -11,15 +11,20 @@ import {
 } from "@/src/libs/server/auth-helper";
 import { canManageUser, canAssignRole, canAssignDataScope } from "./users.permissions";
 import { UserRole, UserStatus, DataScope } from "./users.types";
+import { hasPermission } from "@/src/libs/server/permission-evaluator";
 
-export async function checkAccess() {
+export async function checkAccess(actionKey: string = "view") {
   const actor = await getCurrentActor();
   if (!actor) return { authorized: false, reason: "UNAUTHORIZED" };
-  // Only Admin, Chairman, BGH and Manager can access
-  const allowed = ['ADMIN', 'CHAIRMAN', 'BGH', 'MANAGER'];
-  if (!allowed.includes(actor.role)) {
+  
+  // Use generic central access logic
+  const isAllowed = await hasPermission(actor, "users", actionKey);
+  
+  if (!isAllowed) {
+    console.log(`checkAccess DENIED for actor: ${actor.email}, action: ${actionKey}`);
     return { authorized: false, reason: "FORBIDDEN" };
   }
+  
   return { authorized: true, actor };
 }
 
