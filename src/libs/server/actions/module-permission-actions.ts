@@ -19,7 +19,15 @@ async function checkAdminAuth() {
 // ==========================================
 export async function getAllModulesAdmin() {
   await checkAdminAuth();
-  return await db.select().from(schema.modules).orderBy(schema.modules.sort);
+  return await db.select({
+    id: schema.modules.id,
+    name: schema.modules.name,
+    slug: schema.modules.slug,
+    icon: schema.modules.icon,
+    parentId: schema.modules.parentId,
+    sort: schema.modules.sort,
+    status: schema.modules.status,
+  }).from(schema.modules).orderBy(schema.modules.sort);
 }
 
 export async function toggleModuleStatusAdmin(moduleId: string, status: boolean) {
@@ -66,6 +74,38 @@ export async function saveDepartmentModulesAdmin(departmentId: string, moduleIds
     await db.insert(schema.departmentModules).values(inserts).onConflictDoNothing();
   }
   revalidatePath('/[locale]/(admin)/system-settings/permissions', 'page');
+  return { success: true };
+}
+
+export async function createDepartmentAdmin(data: { name: string; code: string; type?: string; description?: string }) {
+  await checkAdminAuth();
+  const id = data.code.toUpperCase().replace(/\s+/g, '_').replace(/[^A-Z0-9_]/g, '');
+  if (!id || !data.name) throw new Error('Tên và mã phòng ban không được để trống.');
+  const now = new Date();
+  await db.insert(schema.departments).values({
+    id,
+    name: data.name.trim(),
+    code: id,
+    icon: 'Building',
+    color: '#2563eb',
+    sort: 99,
+    type: data.type || 'DEPARTMENT',
+    description: data.description || null,
+    status: 'ACTIVE',
+    payload: {},
+    createdAt: now,
+    updatedAt: now,
+  });
+  revalidatePath('/[locale]/(admin)/system-settings/permissions/departments', 'page');
+  return { success: true, id };
+}
+
+export async function deleteDepartmentAdmin(departmentId: string) {
+  await checkAdminAuth();
+  // Xóa module assignments trước
+  await db.delete(schema.departmentModules).where(eq(schema.departmentModules.departmentId, departmentId));
+  await db.delete(schema.departments).where(eq(schema.departments.id, departmentId));
+  revalidatePath('/[locale]/(admin)/system-settings/permissions/departments', 'page');
   return { success: true };
 }
 
