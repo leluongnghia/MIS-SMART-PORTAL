@@ -37,6 +37,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/src
 import { Badge } from '@/src/components/ui/badge';
 import { Button } from '@/src/components/ui/button';
 import { useToast } from '@/src/components/ui/Toast';
+import DashboardTuyenSinh from './dashboard-tuyen-sinh';
+import DashboardHanhChinh from './dashboard-hanh-chinh';
+import DashboardGiaoVien from './dashboard-giao-vien';
+import DashboardDichVu from './dashboard-dich-vu';
 
 interface DashboardClientProps {
   tab?: string;
@@ -177,8 +181,35 @@ export default function DashboardClient({ tab, initialData }: DashboardClientPro
     );
   }
 
-  // Render personal workspace for STAFF (Giáo viên / Nhân viên)
-  if (currentUser && currentUser.role === 'STAFF') {
+  // Branch to correct dashboard based on workspaceId and role
+  if (currentUser) {
+    const wsId = currentUser.workspaceId;
+    
+    // 1. Executive dashboard (BGH or ADMIN role)
+    if (wsId === 'BGH' || currentUser.role === 'ADMIN') {
+      // Allow execution to fall through to the BGH dashboard rendering at the end of the component
+    } 
+    // 2. Admissions & PR dashboard
+    else if (wsId === 'TUYEN_SINH_PR') {
+      return <DashboardTuyenSinh data={initialData} user={currentUser} />;
+    } 
+    // 3. HR & Admin & Accounting dashboard
+    else if (wsId === 'HANH_CHINH') {
+      return <DashboardHanhChinh data={initialData} user={currentUser} />;
+    } 
+    // 4. School services (transportation, canteen, events) dashboard
+    else if (wsId === 'DICH_VU_HOC_DUONG') {
+      return <DashboardDichVu data={initialData} user={currentUser} />;
+    } 
+    // 5. Subject groups (Teachers)
+    else if ([
+      'TOAN_TIN', 'VAN', 'NGOAI_NGU', 'KHTN', 
+      'LS_DL', 'GDCD_KTPL', 'NT_TC_QPAN', 'CN_TRAI_NGHIEM'
+    ].includes(wsId)) {
+      return <DashboardGiaoVien data={initialData} user={currentUser} />;
+    } 
+    // 6. Generic Staff / Personal dashboard
+    else if (currentUser.role === 'STAFF') {
     return (
       <div className="space-y-6">
         <div className="bg-slate-900 border border-slate-800 p-6 rounded-sm text-white flex items-center justify-between">
@@ -249,6 +280,7 @@ export default function DashboardClient({ tab, initialData }: DashboardClientPro
         </Card>
       </div>
     );
+  }
   }
 
   return (
