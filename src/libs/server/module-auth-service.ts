@@ -13,8 +13,8 @@ export async function getUserModules(userId: string): Promise<string[]> {
   const [user] = await db.select().from(schema.users).where(eq(schema.users.id, userId)).limit(1);
   if (!user || user.status !== 'ACTIVE') return [];
 
-  // SUPER_ADMIN có toàn bộ module đang active
-  if (user.userType === 'SUPER_ADMIN' || user.role === 'ADMIN') {
+  // SUPER_ADMIN, ADMIN, và BGH (Ban Giám hiệu) có toàn bộ module đang active
+  if (user.userType === 'SUPER_ADMIN' || user.role === 'ADMIN' || (user.role === 'MANAGER' && user.workspaceId === 'BGH')) {
     const allModules = await db.select().from(schema.modules).where(eq(schema.modules.status, true));
     return allModules.map(m => m.slug);
   }
