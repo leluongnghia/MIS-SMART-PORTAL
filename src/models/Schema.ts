@@ -10,6 +10,7 @@ export const users = pgTable('users', {
   id: text('id').primaryKey(),
   clerkUserId: text('clerk_user_id'),
   name: text('name').notNull(),
+  userType: text('user_type').default('USER').notNull(), // 'SUPER_ADMIN' | 'USER'
   role: text('role').notNull(),
   roleName: text('role_name'),
   title: text('title'),
@@ -447,6 +448,9 @@ export const departments = pgTable('departments', {
   id: text('id').primaryKey(),
   name: text('name').notNull(),
   code: text('code').notNull().unique(), // e.g., BGH, HANH_CHINH, TOAN_TIN, etc.
+  icon: text('icon').default('Building').notNull(),
+  color: text('color').default('#2563eb').notNull(),
+  sort: integer('sort').default(0).notNull(),
   type: text('type').default('DEPARTMENT').notNull(), // BOARD, BGH, ACADEMIC_OFFICE, SUBJECT_GROUP...
   parentDepartmentId: text('parent_department_id'), // Self referencing
   description: text('description'),
@@ -2070,6 +2074,54 @@ export const serviceTicketActivities = pgTable('service_ticket_activities', {
   ...timestamps,
 }, t => [
   index('service_ticket_activities_ticket_idx').on(t.ticketId),
+]);
+
+/* =============================================================================
+ * BLOCK: HỆ THỐNG PHÂN QUYỀN MỚI (DEPARTMENT -> MODULE -> USER OVERRIDE -> DATA SCOPE)
+ * Thêm: 2026-06-28 (Single Source of Truth)
+ * ============================================================================= */
+
+export const modules = pgTable('modules', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  slug: text('slug').notNull().unique(), // e.g. crm, admissions, academic, hrm...
+  icon: text('icon').default('LayoutDashboard').notNull(),
+  parentId: text('parent_id'), // Self referencing
+  sort: integer('sort').default(0).notNull(),
+  status: boolean('status').default(true).notNull(),
+  ...timestamps,
+});
+
+export const departmentModules = pgTable('department_modules', {
+  id: text('id').primaryKey(),
+  departmentId: text('department_id').notNull().references(() => departments.id, { onDelete: 'cascade' }),
+  moduleId: text('module_id').notNull().references(() => modules.id, { onDelete: 'cascade' }),
+  ...timestamps,
+}, t => [
+  index('dept_modules_dept_idx').on(t.departmentId),
+  uniqueIndex('dept_modules_unique').on(t.departmentId, t.moduleId),
+]);
+
+export const userModuleOverrides = pgTable('user_module_overrides', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  moduleId: text('module_id').notNull().references(() => modules.id, { onDelete: 'cascade' }),
+  effect: text('effect').notNull(), // 'ALLOW' | 'DENY'
+  ...timestamps,
+}, t => [
+  index('user_overrides_user_idx').on(t.userId),
+  uniqueIndex('user_overrides_unique').on(t.userId, t.moduleId),
+]);
+
+export const dataScopes = pgTable('data_scopes', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  moduleId: text('module_id').notNull().references(() => modules.id, { onDelete: 'cascade' }),
+  scope: text('scope').default('OWN').notNull(), // 'OWN' | 'DEPARTMENT' | 'SCHOOL' | 'ALL'
+  ...timestamps,
+}, t => [
+  index('data_scopes_user_idx').on(t.userId),
+  uniqueIndex('data_scopes_unique').on(t.userId, t.moduleId),
 ]);
 
 /* =============================================================================

@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { useParams, usePathname } from 'next/navigation';
-import { BarChart3, Building, Layers, Lock, Search, Shield, UserCog, Users } from 'lucide-react';
+import { Building, Layers, Search, Shield, UserCog } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 
 export default function PermissionsLayout({ children }: { children: React.ReactNode }) {
@@ -12,15 +12,10 @@ export default function PermissionsLayout({ children }: { children: React.ReactN
   const locale = (params?.locale as string) || 'vi';
 
   const tabs = [
-    { name: 'Tổng quan', href: '', icon: BarChart3, active: pathname.endsWith('/permissions') },
-    { name: 'Người dùng', href: 'users', icon: UserCog, active: pathname.includes('/permissions/users') },
-    { name: 'Vai trò', href: 'roles', icon: Shield, active: pathname.includes('/permissions/roles') },
-    { name: 'Module', href: 'modules', icon: Layers, active: pathname.includes('/permissions/modules') },
-    { name: 'Phòng ban', href: 'departments', icon: Building, active: pathname.includes('/permissions/departments') },
-    { name: 'Nhóm', href: 'groups', icon: Users, active: pathname.includes('/permissions/groups') },
-    { name: 'Ngoại lệ người dùng', href: 'overrides', icon: Users, active: pathname.includes('/permissions/overrides') },
-    { name: 'Kiểm tra', href: 'check', icon: Search, active: pathname.includes('/permissions/check') },
-    { name: 'Nhật ký (Audit)', href: 'audit', icon: Lock, active: pathname.includes('/permissions/audit') },
+    { name: 'Danh sách Module', href: '', icon: Layers, active: pathname.endsWith('/permissions') },
+    { name: 'Phân quyền Phòng ban', href: 'departments', icon: Building, active: pathname.includes('/permissions/departments') },
+    { name: 'Ngoại lệ & Data Scope', href: 'overrides', icon: UserCog, active: pathname.includes('/permissions/overrides') },
+    { name: 'Kiểm tra quyền thực tế', href: 'check', icon: Search, active: pathname.includes('/permissions/check') },
   ];
 
   return (
@@ -28,10 +23,10 @@ export default function PermissionsLayout({ children }: { children: React.ReactN
       <div className="flex flex-col gap-2">
         <h1 className="flex items-center gap-2 text-2xl font-bold text-slate-900 dark:text-white">
           <Shield className="h-6 w-6 text-indigo-600" />
-          Quản trị phân quyền
+          Quản trị phân quyền (Mô hình Phòng ban → Module)
         </h1>
         <p className="text-slate-500 dark:text-slate-400">
-          Quy trình đơn giản: module, vai trò mặc định, phòng ban/nhóm, ngoại lệ người dùng, kiểm tra và nhật ký thay đổi (audit).
+          Hệ thống phân quyền trung tâm Single Source of Truth: Quản lý module theo phòng ban, ngoại lệ cá nhân (Override) và phạm vi dữ liệu (Data Scope).
         </p>
       </div>
 

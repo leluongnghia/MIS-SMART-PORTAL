@@ -112,7 +112,7 @@ const menuGroups: MenuItemGroup[] = [
     title: 'CÀI ĐẶT HỆ THỐNG',
     items: [
       { label: 'Cấu hình cá nhân', href: 'settings', icon: Settings, moduleCode: 'SYSTEM' },
-      { label: 'Người dùng & phân quyền', href: 'system-settings/permissions/users', icon: ShieldCheck, roles: ['ADMIN', 'MANAGER'], moduleCode: 'SYSTEM' },
+      { label: 'Quản trị phân quyền (Mới)', href: 'system-settings/permissions', icon: ShieldCheck, roles: ['ADMIN', 'MANAGER'], moduleCode: 'SYSTEM' },
     ],
   },
   {
@@ -527,18 +527,28 @@ export default function AdminShell({ locale, children }: { locale: string; child
 
     const hasDynamicPermissions = !isPermissionsLoading && allowedModules.length > 0;
 
+    const MODULE_CODE_TO_SLUG: Record<string, string[]> = {
+      'DASHBOARD': ['dashboard'],
+      'ACADEMIC': ['academic'],
+      'CRM_ADMISSIONS': ['crm', 'admissions'],
+      'OPERATIONS': ['services', 'dashboard'],
+      'SYSTEM': ['system'],
+      'SERVICES': ['services'],
+      'FINANCE': ['finance'],
+    };
+
     return mapped.map(group => ({
       ...group,
-      // Use dynamic permissions when available; otherwise keep the legacy role/workspace menu.
       items: group.items.filter(item => {
         const hasLegacyAccess = !item.roles || (currentUser && item.roles.includes(currentUser.role));
         if (item.moduleCode && hasDynamicPermissions) {
-          return canAccessModule(item.moduleCode);
+          const targetSlugs = MODULE_CODE_TO_SLUG[item.moduleCode] || [item.moduleCode.toLowerCase()];
+          return targetSlugs.some(slug => canAccessModule(slug));
         }
         return hasLegacyAccess;
       })
     })).filter(group => group.items.length > 0);
-  }, [rawMenuGroups, currentUser, allowedModules.length, canAccessModule, isPermissionsLoading]);
+  }, [rawMenuGroups, currentUser, allowedModules, canAccessModule, isPermissionsLoading]);
 
   if (!isAuthReady) {
     return (

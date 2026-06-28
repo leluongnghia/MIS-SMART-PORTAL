@@ -2,6 +2,7 @@ import { randomUUID } from 'crypto';
 import { and, eq, inArray } from 'drizzle-orm';
 import { getCurrentActor } from './auth-helper';
 import { db, schema } from './db';
+import { getUserModules, getModuleDataScope } from './module-auth-service';
 
 export type ActionType = 'view' | 'create' | 'update' | 'delete' | 'approve' | 'export' | 'manage' | string;
 export type DataScope = 'none' | 'own' | 'class' | 'group' | 'department' | 'school' | 'all' | string;
@@ -476,7 +477,7 @@ export async function getEffectivePermissions(userId: string): Promise<UserEffec
       }
     }
 
-    result.allowedModules = Array.from(allowedModuleCodes);
+    result.allowedModules = await getUserModules(userId);
     result.deniedPermissions = Array.from(result.permissions.values())
       .filter(permission => permission.effect === 'DENY')
       .map(permission => permission.code);
@@ -501,34 +502,61 @@ export async function getPermissionScope(permissionCode: string): Promise<DataSc
   const actor = await getCurrentActor();
   if (!actor) return 'none';
 
-  const effective = await getEffectivePermissions(actor.id);
-  const perm = effective.permissions.get(permissionCode);
+  const prefix = permissionCode.split('.')[0].toLowerCase();
+  let moduleSlug = prefix;
+  if (prefix === 'crm' || prefix === 'admissions' || prefix === 'lead' || prefix === 'leads') moduleSlug = 'crm';
+  else if (prefix === 'academic' || prefix === 'student' || prefix === 'students' || prefix === 'classes') moduleSlug = 'academic';
+  else if (prefix === 'services' || prefix === 'ticket' || prefix === 'tickets') moduleSlug = 'services';
+  else if (prefix === 'finance' || prefix === 'payment' || prefix === 'payments') moduleSlug = 'finance';
+  else if (prefix === 'system' || prefix === 'user' || prefix === 'users' || prefix === 'role') moduleSlug = 'system';
+  else if (prefix === 'dashboard') moduleSlug = 'dashboard';
 
-  if (!perm || perm.effect === 'DENY') return 'none';
-  return perm.dataScope;
+  const scope = await getModuleDataScope(actor.id, moduleSlug);
+  return scope.toLowerCase() as any;
 }
 
 export async function requirePermission(permissionCode: string): Promise<EffectivePermission> {
   const actor = await getCurrentActor();
   if (!actor) throw new PermissionError('UNAUTHORIZED', 'Login required.');
 
-  const effective = await getEffectivePermissions(actor.id);
-  const perm = effective.permissions.get(permissionCode);
+  const prefix = permissionCode.split('.')[0].toLowerCase();
+  let moduleSlug = prefix;
+  if (prefix === 'crm' || prefix === 'admissions' || prefix === 'lead' || prefix === 'leads') moduleSlug = 'crm';
+  else if (prefix === 'academic' || prefix === 'student' || prefix === 'students' || prefix === 'classes') moduleSlug = 'academic';
+  else if (prefix === 'services' || prefix === 'ticket' || prefix === 'tickets') moduleSlug = 'services';
+  else if (prefix === 'finance' || prefix === 'payment' || prefix === 'payments') moduleSlug = 'finance';
+  else if (prefix === 'system' || prefix === 'user' || prefix === 'users' || prefix === 'role') moduleSlug = 'system';
+  else if (prefix === 'dashboard') moduleSlug = 'dashboard';
 
-  if (perm?.effect !== 'ALLOW') {
-    console.error('DEBUG PERMISSION DENIED:', { actorId: actor.id, role: actor.role, permissionCode, perm, count: effective.permissions.size, allowedModules: effective.allowedModules });
-    throw new PermissionError('PERMISSION_DENIED', `Missing permission [${permissionCode}].`);
+  const allowedModules = await getUserModules(actor.id);
+  const allowed = allowedModules.includes(moduleSlug) || allowedModules.includes(prefix) || actor.role === 'ADMIN' || (actor as any).userType === 'SUPER_ADMIN';
+
+  if (!allowed) {
+    throw new PermissionError('PERMISSION_DENIED', `Missing module access for [${permissionCode} -> ${moduleSlug}].`);
   }
 
-  return perm;
+  const newScope = await getModuleDataScope(actor.id, moduleSlug);
+  const dataScope = newScope.toLowerCase() as any;
+
+  return {
+    code: permissionCode,
+    action: 'manage',
+    effect: 'ALLOW',
+    dataScope,
+  };
 }
 
 export async function requireModuleAccess(moduleCode: string): Promise<void> {
   const actor = await getCurrentActor();
   if (!actor) throw new PermissionError('UNAUTHORIZED', 'Login required.');
 
-  const effective = await getEffectivePermissions(actor.id);
-  if (!effective.allowedModules.includes(moduleCode)) {
+  const slug = moduleCode.toLowerCase();
+  let targetSlug = slug;
+  if (slug === 'crm_admissions' || slug === 'admissions') targetSlug = 'crm';
+  else if (slug === 'operations') targetSlug = 'services';
+
+  const allowedModules = await getUserModules(actor.id);
+  if (!allowedModules.includes(targetSlug) && !allowedModules.includes(slug) && actor.role !== 'ADMIN' && (actor as any).userType !== 'SUPER_ADMIN') {
     throw new PermissionError('MODULE_DISABLED', `Missing access to module [${moduleCode}].`);
   }
 }

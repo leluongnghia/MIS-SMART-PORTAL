@@ -141,6 +141,13 @@
       "when": 1782446352356,
       "tag": "0019_even_starfox",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1782627596547,
+      "tag": "0020_sticky_radioactive_man",
+      "breakpoints": true
     }
   ]
 }

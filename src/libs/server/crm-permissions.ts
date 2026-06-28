@@ -38,11 +38,30 @@ async function userIdsForScope(actor: Actor, scope: DataScope) {
   if (scope === 'own' || scope === 'class') return [actor.id];
 
   if (scope === 'department') {
-    if (!actor.departmentId) return [];
-    const users = await db.select({ id: schema.users.id })
+    const userDepts = await db.select({ deptId: schema.userDepartments.departmentId })
+      .from(schema.userDepartments)
+      .where(eq(schema.userDepartments.userId, actor.id));
+    
+    const deptIds = userDepts.map(d => d.deptId);
+    if (actor.departmentId && !deptIds.includes(actor.departmentId)) {
+      deptIds.push(actor.departmentId);
+    }
+
+    if (deptIds.length === 0) return [actor.id];
+
+    const deptUsers = await db.select({ userId: schema.userDepartments.userId })
+      .from(schema.userDepartments)
+      .where(inArray(schema.userDepartments.departmentId, deptIds));
+    
+    const fallbackUsers = await db.select({ id: schema.users.id })
       .from(schema.users)
-      .where(eq(schema.users.departmentId, actor.departmentId));
-    return users.map(user => user.id);
+      .where(inArray(schema.users.departmentId, deptIds));
+
+    return Array.from(new Set([
+      ...deptUsers.map(u => u.userId),
+      ...fallbackUsers.map(u => u.id),
+      actor.id
+    ]));
   }
 
   if (scope === 'group') {
