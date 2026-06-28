@@ -112,7 +112,7 @@ const menuGroups: MenuItemGroup[] = [
     title: 'CÀI ĐẶT HỆ THỐNG',
     items: [
       { label: 'Cấu hình cá nhân', href: 'settings', icon: Settings, moduleCode: 'SYSTEM' },
-      { label: 'Quản trị phân quyền (Mới)', href: 'system-settings/permissions', icon: ShieldCheck, roles: ['ADMIN', 'MANAGER'], moduleCode: 'SYSTEM' },
+      { label: 'Quản trị phân quyền (Mới)', href: 'system-settings/permissions', icon: ShieldCheck, roles: ['ADMIN'], moduleCode: 'SYSTEM' },
     ],
   },
   {
@@ -545,7 +545,7 @@ export default function AdminShell({ locale, children }: { locale: string; child
           return false;
         }
         // 2. Các chức năng chuyên biệt của BGH chỉ dành cho workspace BGH hoặc ADMIN
-        const bghOnlyHrefs = ['dashboard/council', 'dashboard/academic', 'dashboard/okrs', 'risk', 'directives'];
+        const bghOnlyHrefs = ['dashboard/council', 'dashboard/academic', 'dashboard/okrs', 'risk', 'directives', 'system-settings/permissions'];
         const baseHref = item.href.split('?')[0];
         if (bghOnlyHrefs.includes(baseHref)) {
           if (currentUser?.workspaceId !== 'BGH' && currentUser?.role !== 'ADMIN') {
