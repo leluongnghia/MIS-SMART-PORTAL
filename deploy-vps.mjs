@@ -53,8 +53,9 @@ async function run() {
     }
 
     console.log('3. Running database migrations & modules seeding on live database...');
-    // Run npm run db:migrate and db:seed:modules inside duong-node-app using target database of production app
-    const migrateCmd = `DATABASE_URL=${remoteDir}/local.db npm run db:migrate && DATABASE_URL=${remoteDir}/local.db npm run db:seed:modules`;
+    // Run npm run db:migrate and db:seed:modules inside duong-node-app using live postgres DB
+    const liveDbUrl = "postgres://mis_user:mis_password123@localhost:5432/mis_portal";
+    const migrateCmd = `DATABASE_URL="${liveDbUrl}" npm run db:migrate && DATABASE_URL="${liveDbUrl}" npm run db:seed:modules`;
     console.log(`Running migration & seed command: ${migrateCmd}`);
     const migrateRes = await execCommand(migrateCmd, remoteGitDir);
     if (migrateRes.code !== 0) {
