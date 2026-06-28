@@ -1,6 +1,7 @@
 import { NodeSSH } from 'node-ssh';
 import fs from 'fs';
 import path from 'path';
+import { execSync } from 'child_process';
 
 const ssh = new NodeSSH();
 
@@ -64,10 +65,16 @@ async function run() {
       console.log('Database migrations and modules seeding completed successfully!');
     }
 
-    console.log('4. Uploading app.zip bundle...');
+    console.log('4. Building and preparing app.zip bundle locally...');
+    console.log('Running npm run build...');
+    execSync('npm run build', { stdio: 'inherit' });
+    console.log('Running node zip.mjs...');
+    execSync('node zip.mjs', { stdio: 'inherit' });
+    
     if (!fs.existsSync('./app.zip')) {
-      throw new Error('Local app.zip not found! Run npm run build and zip.mjs first.');
+      throw new Error('Local app.zip not found!');
     }
+    console.log('Uploading app.zip bundle...');
     await ssh.putFile('./app.zip', `${remoteDir}/app.zip`);
     console.log('Upload complete.');
 
