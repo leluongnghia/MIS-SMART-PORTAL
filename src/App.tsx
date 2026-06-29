@@ -243,62 +243,15 @@ function writeLocalJson<T>(key: string, value: T) {
 
 type OverviewTab = 'DASHBOARD' | 'STRATEGY_OKRS' | 'TASKS' | 'WORKFLOW_APPROVALS' | 'CRM_ADMISSIONS' | 'STUDENT_SUCCESS' | 'PARENT_PORTAL' | 'TEACHER_HR' | 'RISK_CENTER' | 'ANALYTICS' | 'BOARD_DIRECTIVES' | 'ACADEMIC_OPS' | 'LOGISTICS' | 'REQUESTS' | 'HRM' | 'LMS' | 'GOOGLE_SHEETS' | 'DOCUMENT' | 'MEETING' | 'KNOWLEDGE' | 'EVENTS';
 
-const canDisplayTabWithWorkspace = (tab: OverviewTab, role: Role, workspaceId?: string) => {
-  if (tab === 'TEACHER_HR') return false;
-  if (tab === 'CRM_ADMISSIONS') return workspaceId === 'TUYEN_SINH_PR';
+const canDisplayTabWithWorkspace = (tab: any, role: Role, workspaceId?: string, userPermissions: string[] = []) => {
   if (role === 'ADMIN' || workspaceId === 'BGH') return true;
-
-  switch (tab) {
-    case 'DASHBOARD':
-    case 'BOARD_DIRECTIVES':
-      return role === 'MANAGER' || workspaceId === 'HANH_CHINH' || workspaceId === 'TUYEN_SINH_PR';
-    
-    case 'STRATEGY_OKRS':
-    case 'RISK_CENTER':
-    case 'ANALYTICS':
-    case 'GOOGLE_SHEETS':
-      return false;
-
-    case 'TASKS':
-    case 'KNOWLEDGE':
-      return true;
-
-    case 'WORKFLOW_APPROVALS':
-      return workspaceId === 'HANH_CHINH' || role === 'MANAGER';
-
-    case 'STUDENT_SUCCESS':
-      return workspaceId === 'CTHS_TAM_LY';
-
-    case 'ACADEMIC_OPS':
-      return true;
-
-    case 'LOGISTICS':
-      return workspaceId === 'HANH_CHINH' || workspaceId === 'DICH_VU_HOC_DUONG';
-
-    case 'REQUESTS':
-      return role === 'STAFF' || workspaceId === 'HANH_CHINH';
-
-    case 'HRM':
-      return true;
-
-    case 'LMS':
-      return role === 'STAFF' || workspaceId === 'QUOC_TE';
-
-    case 'DOCUMENT':
-      return workspaceId === 'HANH_CHINH';
-
-    case 'MEETING':
-      return workspaceId === 'HANH_CHINH' || role === 'MANAGER';
-
-    case 'EVENTS':
-      return workspaceId === 'TUYEN_SINH_PR';
-
-    case 'PARENT_PORTAL':
-      return false;
-
-    default:
-      return false;
-  }
+  
+  // Các module chung ai cũng có quyền
+  if (tab === 'TASKS' || tab === 'KNOWLEDGE') return true;
+  
+  // Matrix RBAC Engine (Single Source of Truth)
+  // Check quyền VIEW cho tab tương ứng
+  return userPermissions.includes(`${tab}.VIEW`);
 };
 
 const canRoleAccessTab = (role: Role, workspaceId: string | undefined, tab: OverviewTab) => {
@@ -419,6 +372,19 @@ function AppInner() {
     const matched = MOCK_USERS.find(u => u.id === savedUserId);
     return matched ? normalizeUserProfile(enrichUserWithMIDetails(matched)) : normalizeUserProfile(enrichUserWithMIDetails(MOCK_USERS[0]));
   });
+
+  const [userPermissions, setUserPermissions] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (isLoggedIn && currentUser) {
+      fetch(`/api/auth/permissions?userId=${currentUser.id}&departmentId=${currentUser.workspaceId}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.permissions) setUserPermissions(data.permissions);
+        })
+        .catch(console.error);
+    }
+  }, [isLoggedIn, currentUser?.id, currentUser?.workspaceId]);
 
   const displayCurrentUser = translateUser(currentUser, lang);
 
@@ -591,7 +557,7 @@ function AppInner() {
   };
 
   const canDisplayTab = (tab: any) => {
-    return canDisplayTabWithWorkspace(tab, currentUser.role, currentUser.workspaceId);
+    return canDisplayTabWithWorkspace(tab, currentUser.role, currentUser.workspaceId, userPermissions);
   };
 
   const hasCapability = (capability: string, action: string = 'read', resourceOwnerId?: string) => {

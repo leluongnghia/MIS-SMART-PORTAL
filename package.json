@@ -29,6 +29,7 @@
     "@hookform/resolvers": "^5.2.2",
     "@tanstack/react-table": "^8.21.3",
     "clsx": "^2.1.1",
+    "dotenv": "^17.4.2",
     "drizzle-orm": "^0.45.2",
     "firebase": "^12.14.0",
     "framer-motion": "^12.40.0",

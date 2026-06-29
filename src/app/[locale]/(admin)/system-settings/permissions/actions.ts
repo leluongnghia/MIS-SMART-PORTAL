@@ -263,3 +263,53 @@ export async function checkUserPermission(formData: FormData) {
     deniedPermissions: effective.deniedPermissions,
   };
 }
+
+export async function getDepartmentMatrix(departmentId: string) {
+  await requireRbacAdmin();
+  const [deptPerms, permissions, features, modules] = await Promise.all([
+    db.select().from(schema.departmentPermissions).where(eq(schema.departmentPermissions.departmentId, departmentId)),
+    db.select().from(schema.sysPermissions),
+    db.select().from(schema.sysFeatures),
+    db.select().from(schema.sysModules).orderBy(schema.sysModules.sortOrder),
+  ]);
+
+  const grantedPerms = new Map(deptPerms.map(dp => [dp.permissionId, dp.dataScope]));
+
+  return modules.map(mod => {
+    const modFeatures = features.filter(f => f.moduleId === mod.id);
+    return {
+      ...mod,
+      features: modFeatures.map(feat => {
+        const featPerms = permissions.filter(p => p.featureId === feat.id);
+        return {
+          ...feat,
+          permissions: featPerms.map(p => ({
+            ...p,
+            granted: grantedPerms.has(p.id),
+            scope: grantedPerms.get(p.id) || 'department',
+          }))
+        };
+      })
+    };
+  });
+}
+
+export async function saveDepartmentMatrix(departmentId: string, permissionIds: string[], scope: string = 'department') {
+  await requireRbacAdmin();
+  
+  // Xóa quyền cũ
+  await db.delete(schema.departmentPermissions).where(eq(schema.departmentPermissions.departmentId, departmentId));
+  
+  // Thêm quyền mới
+  if (permissionIds.length > 0) {
+    await db.insert(schema.departmentPermissions).values(
+      permissionIds.map(pid => ({
+        id: randomUUID(),
+        departmentId,
+        permissionId: pid,
+        dataScope: scope,
+      }))
+    );
+  }
+  revalidatePath('/[locale]/system-settings/permissions', 'layout');
+}

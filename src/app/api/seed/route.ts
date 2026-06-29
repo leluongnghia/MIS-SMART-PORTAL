@@ -23,44 +23,105 @@ export async function GET() {
     }
 
     roles.forEach(r => {
-      if (r === "ADMIN" || r === "CHAIRMAN" || r === "BGH") {
+      matrix[r] = JSON.parse(JSON.stringify(limitedAccess));
+      
+      // ADMIN: Toàn quyền hệ thống
+      if (r === "ADMIN") {
         matrix[r] = JSON.parse(JSON.stringify(allAccess));
-      } else {
-        matrix[r] = JSON.parse(JSON.stringify(limitedAccess));
-        if (r === "HRM") {
-          matrix[r]["hrm"] = { ...allAccess["hrm"] };
-          matrix[r]["users"] = { view: true, create: true, edit: true };
+      } 
+      // HĐT / CHỦ TỊCH / BAN KIỂM SOÁT
+      else if (r === "CHAIRMAN" || r === "AUDIT") {
+        Object.keys(allAccess).forEach(mod => {
+          matrix[r][mod] = { view: true };
+        });
+        if (r === "CHAIRMAN") {
+          if (allAccess["plans"]) matrix[r]["plans"] = { view: true, approve: true };
+          if (allAccess["directives"]) matrix[r]["directives"] = { view: true, approve: true };
+          if (allAccess["events"]) matrix[r]["events"] = { view: true, approve: true };
         }
-        if (r === "ADMISSIONS") {
-          matrix[r]["crm"] = { ...allAccess["crm"] };
-          matrix[r]["admissions"] = { ...allAccess["admissions"] };
-        }
-        if (r === "FACILITIES") {
-          matrix[r]["facilities"] = { ...allAccess["facilities"] };
-        }
-        if (r === "TEACHER") {
-          matrix[r]["classes"] = { view: true, edit: true };
-          matrix[r]["students"] = { view: true, edit: true };
-          matrix[r]["timetable"] = { view: true };
-          matrix[r]["lesson-plans"] = { view: true, create: true, edit: true, delete: true };
-        }
+      }
+      // HIỆU TRƯỞNG & PHÓ HIỆU TRƯỞNG (BGH)
+      else if (r === "BGH") {
+        const academicModules = ["students", "classes", "timetable", "lesson-plans", "exams", "conduct", "events", "reports"];
+        academicModules.forEach(mod => {
+          if (allAccess[mod]) matrix[r][mod] = { ...allAccess[mod] };
+        });
+        // Xem các khối khác
+        ["hrm", "crm", "payments", "facilities"].forEach(mod => {
+          if (allAccess[mod]) matrix[r][mod] = { view: true };
+        });
+      }
+      // TRƯỞNG PHÒNG CHUYÊN MÔN / TỔ TRƯỞNG (MANAGER)
+      else if (r === "MANAGER") {
+        ["lesson-plans", "classes", "timetable"].forEach(mod => {
+          if (allAccess[mod]) matrix[r][mod] = { ...allAccess[mod] };
+        });
+        ["students", "reports"].forEach(mod => {
+          if (allAccess[mod]) matrix[r][mod] = { view: true };
+        });
+      }
+      // GIÁO VIÊN (TEACHER)
+      else if (r === "TEACHER") {
+        ["classes", "students", "conduct", "communication-book", "lesson-plans", "tickets"].forEach(mod => {
+          if (allAccess[mod]) matrix[r][mod] = { view: true, edit: true, create: true };
+        });
+      }
+      // CÁC ROLE NGHIỆP VỤ ĐẶC THÙ
+      else if (r === "HRM") {
+        if (allAccess["hrm"]) matrix[r]["hrm"] = { ...allAccess["hrm"] };
+        if (allAccess["users"]) matrix[r]["users"] = { view: true, create: true, edit: true };
+      }
+      else if (r === "ADMISSIONS") {
+        if (allAccess["crm"]) matrix[r]["crm"] = { view: true, create: true, edit: true };
+        if (allAccess["admissions"]) matrix[r]["admissions"] = { view: true, create: true, edit: true };
+      }
+      else if (r === "FACILITIES") {
+        if (allAccess["facilities"]) matrix[r]["facilities"] = { ...allAccess["facilities"] };
+      }
+      else if (r === "SCHOOL_SERVICE_STAFF" || r === "STAFF") {
+        if (allAccess["school-services"]) matrix[r]["school-services"] = { view: true, create: true, edit: true };
+        if (allAccess["tickets"]) matrix[r]["tickets"] = { view: true, create: true, edit: true };
+      }
+      else if (r === "SCHOOL_SERVICE_OPERATIONS_MANAGER") {
+        if (allAccess["school-services"]) matrix[r]["school-services"] = { ...allAccess["school-services"] };
+        if (allAccess["tickets"]) matrix[r]["tickets"] = { ...allAccess["tickets"] };
       }
     });
 
     departments.forEach(d => {
       matrix[d.id] = JSON.parse(JSON.stringify(limitedAccess));
       const lowerName = d.name.toLowerCase();
+      
       if (lowerName.includes("nhân sự")) {
-        matrix[d.id]["hrm"] = { ...allAccess["hrm"] };
+        if (allAccess["hrm"]) matrix[d.id]["hrm"] = { ...allAccess["hrm"] };
+        if (allAccess["users"]) matrix[d.id]["users"] = { view: true, create: true, edit: true };
       } else if (lowerName.includes("tuyển sinh")) {
-        matrix[d.id]["crm"] = { ...allAccess["crm"] };
-        matrix[d.id]["admissions"] = { ...allAccess["admissions"] };
+        if (allAccess["crm"]) matrix[d.id]["crm"] = { ...allAccess["crm"] };
+        if (allAccess["admissions"]) matrix[d.id]["admissions"] = { ...allAccess["admissions"] };
+        if (allAccess["reports"]) matrix[d.id]["reports"] = { view: true };
       } else if (lowerName.includes("kế toán") || lowerName.includes("tài chính")) {
-        matrix[d.id]["payments"] = { ...allAccess["payments"] };
+        if (allAccess["payments"]) matrix[d.id]["payments"] = { ...allAccess["payments"] };
       } else if (lowerName.includes("csvc") || lowerName.includes("cơ sở vật chất")) {
-        matrix[d.id]["facilities"] = { ...allAccess["facilities"] };
+        if (allAccess["facilities"]) matrix[d.id]["facilities"] = { ...allAccess["facilities"] };
+        if (allAccess["storage"]) matrix[d.id]["storage"] = { view: true, create: true, edit: true };
       } else if (lowerName.includes("y tế")) {
-        matrix[d.id]["health"] = { ...allAccess["health"] };
+        if (allAccess["health"]) matrix[d.id]["health"] = { ...allAccess["health"] };
+      } else if (lowerName.includes("xe") || lowerName.includes("đưa đón")) {
+        if (allAccess["transport"]) matrix[d.id]["transport"] = { ...allAccess["transport"] };
+      } else if (lowerName.includes("bếp") || lowerName.includes("bán trú")) {
+        if (allAccess["meals"]) matrix[d.id]["meals"] = { ...allAccess["meals"] };
+      } else if (lowerName.includes("truyền thông")) {
+        if (allAccess["media"]) matrix[d.id]["media"] = { ...allAccess["media"] };
+        if (allAccess["events"]) matrix[d.id]["events"] = { ...allAccess["events"] };
+        if (allAccess["announcements"]) matrix[d.id]["announcements"] = { ...allAccess["announcements"] };
+      } else if (lowerName.includes("dịch vụ") || lowerName.includes("cskh")) {
+        if (allAccess["school-services"]) matrix[d.id]["school-services"] = { ...allAccess["school-services"] };
+        if (allAccess["tickets"]) matrix[d.id]["tickets"] = { ...allAccess["tickets"] };
+        if (allAccess["communication-book"]) matrix[d.id]["communication-book"] = { view: true, create: true, edit: true };
+      } else if (lowerName.includes("kiểm soát") || lowerName.includes("audit")) {
+        Object.keys(allAccess).forEach(mod => {
+          matrix[d.id][mod] = { view: true };
+        });
       }
     });
 

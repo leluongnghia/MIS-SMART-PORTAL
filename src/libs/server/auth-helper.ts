@@ -2,6 +2,7 @@ import { db, schema } from './db';
 import { eq } from 'drizzle-orm';
 import { cookies } from 'next/headers';
 import { auth } from '@clerk/nextjs/server';
+import { hasPermissionByActor, getDataScope } from './rbac';
 
 export interface Actor {
   id: string;
@@ -188,12 +189,15 @@ export async function writeAuditLog(
 
 // User authorization helpers
 export function isAdminTruong(actor: Actor) {
-  return actor.role === 'ADMIN';
+  return actor.role === 'ADMIN' || actor.role === 'SUPER_ADMIN';
 }
 
 export function isTruongPhong(actor: Actor) {
-  return actor.role === 'MANAGER';
+  return actor.role === 'MANAGER' || actor.role === 'TRUONG_PHONG';
 }
+
+// Export RBAC methods directly from auth-helper for convenience
+export { hasPermissionByActor, getDataScope };
 
 function canViewUser(actor: Actor, targetUser: any) {
   if (isAdminTruong(actor)) return true;

@@ -3,6 +3,7 @@ import { UserRole, UserStatus, DataScope } from './users.types';
 export const ROLE_LABELS: Record<UserRole | string, string> = {
   ADMIN: "Admin hệ thống",
   CHAIRMAN: "Chủ tịch HĐT",
+  AUDIT: "Ban kiểm soát",
   BGH: "Ban Giám Hiệu",
   MANAGER: "Quản lý / Tổ trưởng",
   TEACHER: "Giáo viên",
@@ -44,6 +45,7 @@ export const DATA_SCOPE_OPTIONS = [
 export const ROLE_COLORS: Record<UserRole | string, string> = {
   ADMIN: "bg-red-500/10 text-red-650 border-red-500/20 dark:text-red-400",
   CHAIRMAN: "bg-purple-500/10 text-purple-650 border-purple-500/20 dark:text-purple-400",
+  AUDIT: "bg-gray-500/10 text-gray-650 border-gray-500/20 dark:text-gray-400",
   BGH: "bg-indigo-500/10 text-indigo-655 border-indigo-500/20 dark:text-indigo-400",
   MANAGER: "bg-blue-500/10 text-blue-650 border-blue-500/20 dark:text-blue-400",
   TEACHER: "bg-emerald-500/10 text-emerald-650 border-emerald-500/20 dark:text-emerald-400",
