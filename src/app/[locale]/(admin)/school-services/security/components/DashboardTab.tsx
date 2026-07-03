@@ -90,12 +90,12 @@ export default function DashboardTab() {
         <SparklineCard
           title="Camera lỗi"
           value={errorCameras.length.toString()}
-          icon={<VideoOff className="h-4 w-4 text-orange-500" />}
+          icon={<VideoOff className="h-4 w-4 text-amber-500" />}
           trend="down"
           trendValue={`${CAMERAS.length - errorCameras.length}/${CAMERAS.length} OK`}
           data={[{ value: 1 }, { value: 1 }, { value: 2 }, { value: 2 }, { value: 3 }, { value: 2 }, { value: 2 }]}
           subtitle="Mất kết nối/Lỗi"
-          color="orange"
+          color="amber"
         />
       </div>
 
@@ -113,12 +113,12 @@ export default function DashboardTab() {
         <SparklineCard
           title="PCCC cần kiểm tra"
           value={SECURITY_KPI.fireSafetyOverdue.toString()}
-          icon={<Flame className="h-4 w-4 text-red-500" />}
+          icon={<Flame className="h-4 w-4 text-rose-500" />}
           trend="up"
           trendValue="Quá hạn"
           data={[{ value: 0 }, { value: 0 }, { value: 0 }, { value: 1 }, { value: 1 }, { value: 1 }, { value: 1 }]}
           subtitle="Thiết bị quá hạn KT"
-          color="red"
+          color="rose"
         />
         <SparklineCard
           title="Khách ra/vào hôm nay"
