@@ -76,11 +76,11 @@ export default function DashboardTab() {
         <SparklineCard
           title="Quá hạn"
           value={SCHEDULE_KPI.overdue.toString()}
-          icon={<AlertTriangle className="h-4 w-4 text-red-500" />}
+          icon={<AlertTriangle className="h-4 w-4 text-rose-500" />}
           trend="up" trendValue="cần xử lý ngay"
           data={[{value:0},{value:1},{value:1},{value:2},{value:2},{value:2},{value:2}]}
           subtitle="Cần xử lý ngay"
-          color="red"
+          color="rose"
         />
       </div>
 
@@ -88,20 +88,20 @@ export default function DashboardTab() {
         <SparklineCard
           title="Chưa nhận"
           value={SCHEDULE_KPI.pending.toString()}
-          icon={<Clock className="h-4 w-4 text-slate-500" />}
+          icon={<Clock className="h-4 w-4 text-sky-500" />}
           trend="down" trendValue="cần phân công"
           data={[{value:10},{value:9},{value:8},{value:8},{value:8},{value:8},{value:8}]}
           subtitle="Chờ nhận việc"
-          color="slate"
+          color="sky"
         />
         <SparklineCard
           title="Khẩn cấp"
           value={SCHEDULE_KPI.urgent.toString()}
-          icon={<Zap className="h-4 w-4 text-red-500" />}
+          icon={<Zap className="h-4 w-4 text-rose-500" />}
           trend="up" trendValue="ưu tiên cao nhất"
           data={[{value:1},{value:1},{value:2},{value:3},{value:3},{value:3},{value:3}]}
           subtitle="Ưu tiên tối cao"
-          color="red"
+          color="rose"
         />
         <SparklineCard
           title="Sự kiện sắp tới"

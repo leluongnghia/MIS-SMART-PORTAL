@@ -94,11 +94,11 @@ export default function DashboardTab() {
         <SparklineCard
           title="Vị trí thiếu"
           value={STAFF_KPI.vacantPositions.toString()}
-          icon={<Briefcase className="h-4 w-4 text-red-500" />}
+          icon={<Briefcase className="h-4 w-4 text-rose-500" />}
           trend="down" trendValue="cần tuyển dụng"
           data={[{value:1},{value:1},{value:2},{value:2},{value:2},{value:2},{value:2}]}
           subtitle="Cần bổ sung"
-          color="red"
+          color="rose"
         />
       </div>
 
@@ -110,16 +110,16 @@ export default function DashboardTab() {
           trend="up" trendValue="hôm nay"
           data={[{value:1},{value:2},{value:2},{value:3},{value:3},{value:3},{value:3}]}
           subtitle="Vắng mặt"
-          color="slate"
+          color="sky"
         />
         <SparklineCard
           title="Nhiệm vụ tồn"
           value={STAFF_KPI.pendingTasks.toString()}
-          icon={<AlertTriangle className="h-4 w-4 text-orange-500" />}
+          icon={<AlertTriangle className="h-4 w-4 text-amber-500" />}
           trend="down" trendValue="chưa hoàn thành"
           data={[{value:10},{value:9},{value:9},{value:8},{value:8},{value:8},{value:8}]}
           subtitle="Cần xử lý"
-          color="orange"
+          color="amber"
         />
         <SparklineCard
           title="Chưa đào tạo"
