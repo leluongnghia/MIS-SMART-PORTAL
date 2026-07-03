@@ -10,6 +10,9 @@ interface ManagementReviewProps {
 
 export default function ManagementReview({ reviews, onAddReview }: { reviews: Review[]; onAddReview: (newReview: Review) => void }) {
   const { success: toastSuccess } = useToast();
+  
+  const [selectedDetail, setSelectedDetail] = useState<Review | null>(null);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Form State
@@ -114,7 +117,7 @@ export default function ManagementReview({ reviews, onAddReview }: { reviews: Re
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         {reviews.map(review => (
-          <div key={review.id} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden flex flex-col shadow-sm hover:border-rose-300 transition-colors">
+          <div key={review.id} onClick={() => setSelectedDetail(review)} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden flex flex-col shadow-sm hover:border-rose-300 transition-colors cursor-pointer">
             <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-start bg-slate-50/50 dark:bg-slate-800/20">
               <div>
                 <span className="text-[10px] font-mono font-black text-slate-500 block mb-1">{review.code}</span>
@@ -342,6 +345,39 @@ export default function ManagementReview({ reviews, onAddReview }: { reviews: Re
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {selectedDetail && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-lg p-6 shadow-xl relative animate-in zoom-in-95 duration-200">
+            <button onClick={() => setSelectedDetail(null)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+              <X className="w-5 h-5"/>
+            </button>
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4 pr-6 border-b pb-2">Chi tiết - {selectedDetail.code}</h3>
+            
+            <div className="space-y-4">
+              <div>
+                <h4 className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Nội dung cuộc họp:</h4>
+                <div className="text-sm text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-100 dark:border-slate-800 whitespace-pre-wrap leading-relaxed">
+                  {selectedDetail.content}
+                </div>
+              </div>
+              
+              <div>
+                <h4 className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Hướng xử lý / Chỉ đạo:</h4>
+                <div className="text-sm text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-100 dark:border-slate-800 whitespace-pre-wrap leading-relaxed">
+                  {selectedDetail.directives || 'Chưa có chỉ đạo cụ thể'}
+                  <br/><br/>
+                  Kết luận: {selectedDetail.conclusion || 'Đang cập nhật'}
+                </div>
+              </div>
+            </div>
+            
+            <div className="mt-6 flex justify-end">
+              <button onClick={() => setSelectedDetail(null)} className="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-sm font-bold transition-colors">Đóng</button>
+            </div>
           </div>
         </div>
       )}

@@ -1,4 +1,4 @@
-export type Role = 'ADMIN' | 'MANAGER' | 'STAFF' | 'PARENT' | 'STUDENT';
+export type Role = 'SUPER_ADMIN' | 'ADMIN' | 'MANAGER' | 'STAFF' | 'PARENT' | 'STUDENT';
 
 export interface RolePermissions {
   createTask: boolean;       // Khởi tạo chỉ đạo / nhiệm vụ mới

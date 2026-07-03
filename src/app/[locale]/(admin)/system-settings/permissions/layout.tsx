@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams, usePathname, useRouter } from 'next/navigation';
-import { Building, Layers, Search, Shield, UserCog } from 'lucide-react';
+import { Building, Layers, Search, Shield, UserCog, Clock, UserPlus } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 import { serverStorage } from '@/src/libs/client/server-storage';
 import { MOCK_USERS } from '@/src/mockData';
@@ -69,8 +69,10 @@ export default function PermissionsLayout({ children }: { children: React.ReactN
     { name: 'Danh sách Module', href: '', icon: Layers, active: pathname.endsWith('/permissions') },
     { name: 'Phân quyền Phòng ban', href: 'departments', icon: Building, active: pathname.endsWith('/permissions/departments') },
     { name: 'Ma trận quyền (Matrix)', href: 'departments-matrix', icon: Shield, active: pathname.includes('/permissions/departments-matrix') },
+    { name: 'Quyền Cá nhân', href: 'user-permissions', icon: UserPlus, active: pathname.includes('/permissions/user-permissions') },
     { name: 'Ngoại lệ & Data Scope', href: 'overrides', icon: UserCog, active: pathname.includes('/permissions/overrides') },
     { name: 'Kiểm tra quyền thực tế', href: 'check', icon: Search, active: pathname.includes('/permissions/check') },
+    { name: 'Lịch sử (Audit)', href: 'audit-logs', icon: Clock, active: pathname.includes('/permissions/audit-logs') },
   ];
 
   return (

@@ -11,8 +11,11 @@ interface CapaManagementProps {
 }
 
 export default function CapaManagement({ capas, ncs, onAddCapa, onUpdateCapaStatus }: CapaManagementProps) {
+  const [filterStatus, setFilterStatus] = useState<CapaStatus | 'ALL'>('ALL');
   const [searchTerm, setSearchTerm] = useState('');
   const { success: toastSuccess } = useToast();
+
+  const [selectedDetail, setSelectedDetail] = useState<Capa | null>(null);
 
   // Modals state
   const [isAddCapaOpen, setIsAddCapaOpen] = useState(false);
@@ -163,9 +166,8 @@ export default function CapaManagement({ capas, ncs, onAddCapa, onUpdateCapaStat
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {filteredCapas.map(capa => {
                 const isOverdue = new Date(capa.deadline) < new Date() && !['CLOSED', 'EFFECTIVE'].includes(capa.status);
-                
                 return (
-                  <tr key={capa.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
+                  <tr key={capa.id} onClick={() => setSelectedDetail(capa)} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors cursor-pointer">
                     <td className="px-4 py-3">
                       <div className="font-mono font-black text-slate-700 dark:text-slate-300">{capa.code}</div>
                       <div className="text-[10px] text-slate-400 mt-0.5">Ref NC: {capa.ncId}</div>
@@ -464,6 +466,39 @@ export default function CapaManagement({ capas, ncs, onAddCapa, onUpdateCapaStat
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {selectedDetail && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-lg p-6 shadow-xl relative animate-in zoom-in-95 duration-200">
+            <button onClick={() => setSelectedDetail(null)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+              <X className="w-5 h-5"/>
+            </button>
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4 pr-6 border-b pb-2">Chi tiết - {selectedDetail.code}</h3>
+            
+            <div className="space-y-4">
+              <div>
+                <h4 className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Nội dung / Mô tả vấn đề:</h4>
+                <div className="text-sm text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-100 dark:border-slate-800 whitespace-pre-wrap leading-relaxed">
+                  {selectedDetail.problemDescription}
+                </div>
+              </div>
+              
+              <div>
+                <h4 className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Hướng xử lý (Khắc phục & Phòng ngừa):</h4>
+                <div className="text-sm text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-100 dark:border-slate-800 whitespace-pre-wrap leading-relaxed">
+                  <strong>HĐ Khắc phục:</strong> {selectedDetail.correctiveAction}
+                  <br/><br/>
+                  <strong>HĐ Phòng ngừa:</strong> {selectedDetail.preventiveAction}
+                </div>
+              </div>
+            </div>
+            
+            <div className="mt-6 flex justify-end">
+              <button onClick={() => setSelectedDetail(null)} className="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-sm font-bold transition-colors">Đóng</button>
+            </div>
           </div>
         </div>
       )}

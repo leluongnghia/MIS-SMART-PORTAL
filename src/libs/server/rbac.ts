@@ -1,5 +1,5 @@
 import { db, schema } from './db';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, or, isNull, gt } from 'drizzle-orm';
 import { Actor } from './auth-helper';
 
 export interface EffectivePermission {
@@ -74,7 +74,15 @@ export async function getEffectivePermissions(userId: string): Promise<Effective
     effect: schema.userPermissions.effect,
   })
   .from(schema.userPermissions)
-  .where(eq(schema.userPermissions.userId, userId))
+  .where(
+    and(
+      eq(schema.userPermissions.userId, userId),
+      or(
+        isNull(schema.userPermissions.expiresAt),
+        gt(schema.userPermissions.expiresAt, new Date())
+      )
+    )
+  )
   .innerJoin(schema.sysPermissions, eq(schema.userPermissions.permissionId, schema.sysPermissions.id));
 
   for (const up of userPerms) {

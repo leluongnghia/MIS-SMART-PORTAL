@@ -442,7 +442,7 @@ export default function AdminShell({ locale, children }: { locale: string; child
 
   const allowedGroups = WORKSPACE_MENU_MAPPING[currentUser?.workspaceId || 'ALL'] || ['BỘ MÁY ĐIỀU HÀNH', 'CÀI ĐẶT HỆ THỐNG'];
 
-  const rawMenuGroups = (currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER') 
+  const rawMenuGroups = (currentUser?.role === 'SUPER_ADMIN' || currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER') 
     ? menuGroups 
     : currentUser?.workspaceId === 'KHAO_THI' ? [
     {
@@ -541,20 +541,20 @@ export default function AdminShell({ locale, children }: { locale: string; child
       ...group,
       items: group.items.filter(item => {
         // 1. Nếu item có yêu cầu vai trò cụ thể (ví dụ ADMIN, MANAGER), người dùng bắt buộc phải có vai trò đó
-        if (item.roles && (!currentUser || !item.roles.includes(currentUser.role))) {
+        if (item.roles && (!currentUser || (!item.roles.includes(currentUser.role) && currentUser.role !== 'SUPER_ADMIN'))) {
           return false;
         }
         // 2. Các chức năng chuyên biệt của BGH chỉ dành cho workspace BGH hoặc ADMIN
         const bghOnlyHrefs = ['dashboard/council', 'dashboard/academic', 'dashboard/okrs', 'risk', 'directives', 'system-settings/permissions'];
         const baseHref = item.href.split('?')[0];
         if (bghOnlyHrefs.includes(baseHref)) {
-          if (currentUser?.workspaceId !== 'BGH' && currentUser?.role !== 'ADMIN') {
+          if (currentUser?.workspaceId !== 'BGH' && currentUser?.role !== 'ADMIN' && currentUser?.role !== 'SUPER_ADMIN') {
             return false;
           }
         }
 
-        const hasLegacyAccess = !item.roles || (currentUser && item.roles.includes(currentUser.role));
-        if (item.moduleCode === 'SYSTEM' && (currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER')) {
+        const hasLegacyAccess = !item.roles || (currentUser && (item.roles.includes(currentUser.role) || currentUser.role === 'SUPER_ADMIN'));
+        if (item.moduleCode === 'SYSTEM' && (currentUser?.role === 'SUPER_ADMIN' || currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER')) {
           return true;
         }
         if (item.moduleCode && hasDynamicPermissions) {

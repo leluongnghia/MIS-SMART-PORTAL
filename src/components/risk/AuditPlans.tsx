@@ -15,6 +15,7 @@ export default function AuditPlans({
   onAddNC: (newNC: any) => void;
 }) {
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  const [selectedDetail, setSelectedDetail] = useState<AuditPlan | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { success: toastSuccess, error: toastError } = useToast();
 
@@ -155,7 +156,10 @@ export default function AuditPlans({
           {plans.map(plan => (
             <div 
               key={plan.id}
-              onClick={() => setSelectedPlan(plan.id === selectedPlan ? null : plan.id)}
+              onClick={() => {
+                setSelectedPlan(plan.id === selectedPlan ? null : plan.id);
+                setSelectedDetail(plan);
+              }}
               className={`p-4 rounded-2xl border cursor-pointer transition-all ${selectedPlan === plan.id ? 'bg-rose-50/50 border-rose-200 dark:bg-rose-900/10 dark:border-rose-800' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-rose-300'}`}
             >
               <div className="flex justify-between items-start mb-2">
@@ -346,6 +350,45 @@ export default function AuditPlans({
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {selectedDetail && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-lg p-6 shadow-xl relative animate-in zoom-in-95 duration-200">
+            <button onClick={() => setSelectedDetail(null)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+              <X className="w-5 h-5"/>
+            </button>
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4 pr-6 border-b pb-2">Chi tiết - {selectedDetail.code}</h3>
+            
+            <div className="space-y-4">
+              <div>
+                <h4 className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Nội dung / Phạm vi:</h4>
+                <div className="text-sm text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-100 dark:border-slate-800 whitespace-pre-wrap leading-relaxed">
+                  <strong>Kế hoạch:</strong> {selectedDetail.name}
+                  <br/>
+                  <strong>Phạm vi:</strong> {selectedDetail.scope}
+                  <br/>
+                  <strong>Tiêu chuẩn:</strong> {selectedDetail.criteria}
+                </div>
+              </div>
+              
+              <div>
+                <h4 className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Hướng xử lý / Trạng thái:</h4>
+                <div className="text-sm text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-100 dark:border-slate-800 whitespace-pre-wrap leading-relaxed">
+                  Đánh giá gồm <strong>{selectedDetail.checklist.length}</strong> tiêu chí.
+                  <br/><br/>
+                  Trạng thái hiện tại: <strong>{selectedDetail.status}</strong>
+                  <br/>
+                  <em>(Chi tiết các tiêu chí được hiển thị ở khung bên phải màn hình)</em>
+                </div>
+              </div>
+            </div>
+            
+            <div className="mt-6 flex justify-end">
+              <button onClick={() => setSelectedDetail(null)} className="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-sm font-bold transition-colors">Đóng</button>
+            </div>
           </div>
         </div>
       )}

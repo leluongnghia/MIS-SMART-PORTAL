@@ -18,8 +18,10 @@ export default function NonConformities({
   const [isNcModalOpen, setIsNcModalOpen] = useState(false);
   const [isCapaModalOpen, setIsCapaModalOpen] = useState(false);
   const [selectedNc, setSelectedNc] = useState<NonConformity | null>(null);
-  
+  const [filterSeverity, setFilterSeverity] = useState<NonConformity['severity'] | 'ALL'>('ALL');
   const { success: toastSuccess } = useToast();
+
+  const [selectedDetail, setSelectedDetail] = useState<NonConformity | null>(null);
 
   const [ncFormData, setNcFormData] = useState({
     description: '',
@@ -39,8 +41,9 @@ export default function NonConformities({
   });
 
   const filteredNcs = ncs.filter(nc => 
-    nc.code.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    nc.description.toLowerCase().includes(searchTerm.toLowerCase())
+    (nc.code.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    nc.description.toLowerCase().includes(searchTerm.toLowerCase())) &&
+    (filterSeverity === 'ALL' || nc.severity === filterSeverity)
   );
 
   const getSeverityStyle = (severity: NonConformity['severity']) => {
@@ -157,15 +160,27 @@ export default function NonConformities({
   return (
     <div className="space-y-4">
       <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
-          <input 
-            type="text" 
-            placeholder="Tìm mã NC, mô tả..." 
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs dark:text-white"
-          />
+        <div className="flex items-center gap-2 flex-1 max-w-lg">
+          <div className="relative flex-1">
+            <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
+            <input 
+              type="text" 
+              placeholder="Tìm mã NC, mô tả..." 
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs dark:text-white"
+            />
+          </div>
+          <select
+            value={filterSeverity}
+            onChange={e => setFilterSeverity(e.target.value as any)}
+            className="px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs dark:text-white"
+          >
+            <option value="ALL">Tất cả mức độ</option>
+            <option value="MINOR">Minor</option>
+            <option value="MAJOR">Major</option>
+            <option value="CRITICAL">Critical</option>
+          </select>
         </div>
         <button 
           onClick={() => setIsNcModalOpen(true)}
@@ -177,7 +192,7 @@ export default function NonConformities({
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {filteredNcs.map(nc => (
-          <div key={nc.id} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 flex flex-col hover:shadow-md transition-shadow">
+          <div key={nc.id} onClick={() => setSelectedDetail(nc)} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 flex flex-col hover:shadow-md transition-shadow cursor-pointer">
             <div className="flex justify-between items-start mb-3">
               <span className="font-mono text-xs font-black text-slate-700 dark:text-slate-300">{nc.code}</span>
               <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider border ${getSeverityStyle(nc.severity)}`}>{nc.severity}</span>
@@ -416,6 +431,37 @@ export default function NonConformities({
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {selectedDetail && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-lg p-6 shadow-xl relative animate-in zoom-in-95 duration-200">
+            <button onClick={() => setSelectedDetail(null)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+              <X className="w-5 h-5"/>
+            </button>
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4 pr-6 border-b pb-2">Chi tiết - {selectedDetail.code}</h3>
+            
+            <div className="space-y-4">
+              <div>
+                <h4 className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Nội dung chi tiết:</h4>
+                <div className="text-sm text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-100 dark:border-slate-800 whitespace-pre-wrap leading-relaxed">
+                  {selectedDetail.description}
+                </div>
+              </div>
+              
+              <div>
+                <h4 className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Hướng xử lý / Nguyên nhân sơ bộ:</h4>
+                <div className="text-sm text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-100 dark:border-slate-800 whitespace-pre-wrap leading-relaxed">
+                  {selectedDetail.initialCause || 'Chưa có thông tin'}
+                </div>
+              </div>
+            </div>
+            
+            <div className="mt-6 flex justify-end">
+              <button onClick={() => setSelectedDetail(null)} className="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-sm font-bold transition-colors">Đóng</button>
+            </div>
           </div>
         </div>
       )}

@@ -227,10 +227,41 @@ export async function saveRoleModulePreset(formData: FormData) {
 
 export async function getPermissionAuditLogs() {
   await requireRbacAdmin();
-  return await db.select()
+  const logs = await db.select({
+    id: schema.permissionAuditLogs.id,
+    createdAt: schema.permissionAuditLogs.createdAt,
+    targetType: schema.permissionAuditLogs.targetType,
+    targetId: schema.permissionAuditLogs.targetId,
+    action: schema.permissionAuditLogs.action,
+    reason: schema.permissionAuditLogs.reason,
+    actorName: schema.users.name,
+    actorEmail: schema.users.email,
+  })
     .from(schema.permissionAuditLogs)
+    .leftJoin(schema.users, eq(schema.permissionAuditLogs.actorUserId, schema.users.id))
     .orderBy(desc(schema.permissionAuditLogs.createdAt))
     .limit(100);
+
+  const roleIds = Array.from(new Set(logs.filter(l => l.targetType === 'ROLE').map(l => l.targetId)));
+  const deptIds = Array.from(new Set(logs.filter(l => l.targetType === 'DEPARTMENT').map(l => l.targetId)));
+  const userIds = Array.from(new Set(logs.filter(l => l.targetType === 'USER').map(l => l.targetId)));
+
+  const roles = roleIds.length > 0 ? await db.select({ id: schema.roles.id, name: schema.roles.name }).from(schema.roles).where(inArray(schema.roles.id, roleIds)) : [];
+  const depts = deptIds.length > 0 ? await db.select({ id: schema.departments.id, name: schema.departments.name }).from(schema.departments).where(inArray(schema.departments.id, deptIds)) : [];
+  const users = userIds.length > 0 ? await db.select({ id: schema.users.id, name: schema.users.name }).from(schema.users).where(inArray(schema.users.id, userIds)) : [];
+
+  const roleMap = new Map(roles.map(r => [r.id, r.name]));
+  const deptMap = new Map(depts.map(d => [d.id, d.name]));
+  const userMap = new Map(users.map(u => [u.id, u.name]));
+
+  return logs.map(log => {
+    let targetName = log.targetId;
+    if (log.targetType === 'ROLE') targetName = roleMap.get(log.targetId) || log.targetId;
+    else if (log.targetType === 'DEPARTMENT') targetName = deptMap.get(log.targetId) || log.targetId;
+    else if (log.targetType === 'USER') targetName = userMap.get(log.targetId) || log.targetId;
+    
+    return { ...log, targetName };
+  });
 }
 
 export async function getPermissionUsers() {
@@ -311,5 +342,64 @@ export async function saveDepartmentMatrix(departmentId: string, permissionIds: 
       }))
     );
   }
+  revalidatePath('/[locale]/system-settings/permissions', 'layout');
+}
+
+export async function getUserPermissionsMatrix(userId: string) {
+  await requireRbacAdmin();
+  const [userPerms, permissions, features, modules] = await Promise.all([
+    db.select().from(schema.userPermissions).where(eq(schema.userPermissions.userId, userId)),
+    db.select().from(schema.sysPermissions),
+    db.select().from(schema.sysFeatures),
+    db.select().from(schema.sysModules).orderBy(schema.sysModules.sortOrder),
+  ]);
+
+  const grantedPerms = new Map(userPerms.map(up => [up.permissionId, up]));
+
+  return modules.map(mod => {
+    const modFeatures = features.filter(f => f.moduleId === mod.id);
+    return {
+      ...mod,
+      features: modFeatures.map(feat => {
+        const featPerms = permissions.filter(p => p.featureId === feat.id);
+        return {
+          ...feat,
+          permissions: featPerms.map(p => {
+            const up = grantedPerms.get(p.id);
+            return {
+              ...p,
+              granted: !!up,
+              scope: up?.dataScope || 'own',
+              expiresAt: up?.expiresAt ? up.expiresAt.toISOString() : null,
+              effect: up?.effect || 'ALLOW',
+            };
+          })
+        };
+      })
+    };
+  });
+}
+
+export async function saveUserPermissionsMatrix(userId: string, permissionIds: string[], expiresAt: string | null = null, scope: string = 'own') {
+  await requireRbacAdmin();
+  
+  const before = await db.select().from(schema.userPermissions).where(eq(schema.userPermissions.userId, userId));
+  
+  await db.delete(schema.userPermissions).where(eq(schema.userPermissions.userId, userId));
+  
+  let after = [];
+  if (permissionIds.length > 0) {
+    after = permissionIds.map(pid => ({
+      id: randomUUID(),
+      userId,
+      permissionId: pid,
+      dataScope: scope,
+      effect: 'ALLOW',
+      expiresAt: expiresAt ? new Date(expiresAt) : null,
+    }));
+    await db.insert(schema.userPermissions).values(after as any);
+  }
+  
+  await auditPermissionChange('USER', userId, 'UPDATE_USER_PERMISSIONS', before, after, 'Update temporary permissions');
   revalidatePath('/[locale]/system-settings/permissions', 'layout');
 }

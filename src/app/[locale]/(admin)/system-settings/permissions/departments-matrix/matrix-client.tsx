@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useTransition } from 'react';
-import { getDepartmentMatrix, saveDepartmentMatrix, createDepartmentAdmin } from '../actions';
+import { getDepartmentMatrix, saveDepartmentMatrix } from '../actions';
+import { createDepartmentAdmin } from '@/src/libs/server/actions/module-permission-actions';
 import { Button } from '@/src/components/ui/button';
 import { Building2, Save, Loader2, Shield, Plus, X } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
