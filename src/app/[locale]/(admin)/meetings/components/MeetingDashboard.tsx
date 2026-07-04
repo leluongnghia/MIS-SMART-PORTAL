@@ -10,9 +10,7 @@ import {
 import { Badge } from '@/src/components/ui/badge';
 import { Button } from '@/src/components/ui/button';
 import { Input } from '@/src/components/ui/input';
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue
-} from '@/src/components/ui/select';
+import { Select } from '@/src/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/src/components/ui/card';
 import { cn } from '@/src/lib/utils';
 import {
@@ -521,38 +519,23 @@ export default function MeetingDashboard() {
               onChange={e => setSearch(e.target.value)}
               className="pl-9 h-9 text-sm" />
           </div>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="h-9 w-[160px] text-sm">
-              <SelectValue placeholder="Trạng thái" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tất cả trạng thái</SelectItem>
-              {(['Sắp diễn ra','Đang diễn ra','Đã hoàn thành','Đã hủy','Chờ duyệt phòng','Từ chối đặt phòng'] as MeetingStatus[]).map(s => (
-                <SelectItem key={s} value={s}>{s}</SelectItem>
-              ))}
-            </SelectContent>
+          <Select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="h-9 w-[160px] text-sm">
+            <option value="all">Tất cả trạng thái</option>
+            {(['Sắp diễn ra','Đang diễn ra','Đã hoàn thành','Đã hủy','Chờ duyệt phòng','Từ chối đặt phòng'] as MeetingStatus[]).map(s => (
+              <option key={s} value={s}>{s}</option>
+            ))}
           </Select>
-          <Select value={typeFilter} onValueChange={setTypeFilter}>
-            <SelectTrigger className="h-9 w-[160px] text-sm">
-              <SelectValue placeholder="Loại họp" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tất cả loại</SelectItem>
-              {(['Họp cá nhân','Họp phòng ban','Họp toàn trường','Họp BGH','Họp chuyên môn'] as MeetingType[]).map(t => (
-                <SelectItem key={t} value={t}>{t}</SelectItem>
-              ))}
-            </SelectContent>
+          <Select value={typeFilter} onChange={e => setTypeFilter(e.target.value)} className="h-9 w-[160px] text-sm">
+            <option value="all">Tất cả loại họp</option>
+            {(['Họp cá nhân','Họp phòng ban','Họp toàn trường','Họp BGH','Họp chuyên môn'] as MeetingType[]).map(t => (
+              <option key={t} value={t}>{t}</option>
+            ))}
           </Select>
-          <Select value={roomFilter} onValueChange={setRoomFilter}>
-            <SelectTrigger className="h-9 w-[150px] text-sm">
-              <SelectValue placeholder="Phòng họp" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tất cả phòng</SelectItem>
-              {MEETING_ROOMS.map(r => (
-                <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
-              ))}
-            </SelectContent>
+          <Select value={roomFilter} onChange={e => setRoomFilter(e.target.value)} className="h-9 w-[150px] text-sm">
+            <option value="all">Tất cả phòng</option>
+            {MEETING_ROOMS.map(r => (
+              <option key={r.id} value={r.id}>{r.name}</option>
+            ))}
           </Select>
           {(search || statusFilter !== 'all' || typeFilter !== 'all' || roomFilter !== 'all') && (
             <Button size="sm" variant="ghost" onClick={() => { setSearch(''); setStatusFilter('all'); setTypeFilter('all'); setRoomFilter('all'); }}
