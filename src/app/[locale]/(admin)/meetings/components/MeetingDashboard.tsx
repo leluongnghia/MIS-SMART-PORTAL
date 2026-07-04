@@ -5,18 +5,17 @@ import {
   Calendar, Clock, MapPin, Users, Video, ChevronDown, ChevronRight,
   CheckCircle2, XCircle, AlertCircle, ClockIcon, Eye, FileText,
   Paperclip, MoreHorizontal, UserCheck, Bell, Filter, Search,
-  CalendarDays, List, RefreshCw, Zap, Check, X, MessageSquare,
+  CalendarDays, List, RefreshCw, Zap, Check, X, MessageSquare, Plus,
 } from 'lucide-react';
-import { Badge } from '@/src/components/ui/badge';
 import { Button } from '@/src/components/ui/button';
 import { Input } from '@/src/components/ui/input';
 import { Select } from '@/src/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle } from '@/src/components/ui/card';
 import { cn } from '@/src/lib/utils';
 import {
   Meeting, MeetingStatus, ResponseStatus, MeetingType,
-  MEETINGS, MEETING_KPI, MEETING_ROOMS,
+  MEETINGS, MEETING_ROOMS,
 } from '@/src/mockData/meetings';
+import CreateMeetingForm from './CreateMeetingForm';
 
 // ─── Status config ──────────────────────────────────────────────
 const STATUS_CONFIG: Record<MeetingStatus, { label: string; color: string; dot: string; icon: React.ReactNode }> = {
@@ -384,6 +383,24 @@ export default function MeetingDashboard() {
   const [view, setView] = useState<'week' | 'day' | 'list'>('week');
   const [selectedDate, setSelectedDate] = useState('2026-07-04');
   const [meetings, setMeetings] = useState<Meeting[]>(MEETINGS);
+  const [showCreate, setShowCreate] = useState(false);
+  const [toast, setToast] = useState<{ msg: string; type: 'success' | 'info' } | null>(null);
+
+  const showToast = (msg: string, type: 'success' | 'info' = 'success') => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 3500);
+  };
+
+  const handleMeetingCreated = (meeting: Partial<Meeting>, isDraft: boolean) => {
+    setMeetings(prev => [meeting as Meeting, ...prev]);
+    setShowCreate(false);
+    showToast(
+      isDraft
+        ? `Đã lưu nháp: "${meeting.title}"`
+        : `Đã tạo và gửi thư mời: "${meeting.title}"`,
+      isDraft ? 'info' : 'success'
+    );
+  };
 
   const kpi = useMemo(() => ({
     todayTotal: meetings.filter(m => m.startTime.startsWith('2026-07-04')).length,
@@ -427,6 +444,23 @@ export default function MeetingDashboard() {
 
   return (
     <div className="space-y-5">
+      {/* Toast */}
+      {toast && (
+        <div className={cn(
+          'fixed top-4 right-4 z-50 flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg border text-sm font-medium animate-fade-in',
+          toast.type === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-blue-50 border-blue-200 text-blue-800'
+        )}>
+          <CheckCircle2 className="h-4 w-4 shrink-0" />
+          {toast.msg}
+        </div>
+      )}
+      {/* Create form modal */}
+      {showCreate && (
+        <CreateMeetingForm
+          onClose={() => setShowCreate(false)}
+          onCreated={handleMeetingCreated}
+        />
+      )}
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
@@ -434,8 +468,9 @@ export default function MeetingDashboard() {
           <p className="text-sm text-slate-500">Theo dõi lịch họp cá nhân, phòng ban và toàn trường</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">
-            <Calendar className="h-3.5 w-3.5 mr-1.5" />Tạo lịch họp
+          <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white"
+            onClick={() => setShowCreate(true)}>
+            <Plus className="h-3.5 w-3.5 mr-1.5" />Tạo lịch họp
           </Button>
           <Button size="sm" variant="outline">
             <CalendarDays className="h-3.5 w-3.5 mr-1.5" />Đặt phòng
