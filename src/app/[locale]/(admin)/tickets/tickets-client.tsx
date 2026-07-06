@@ -7,8 +7,13 @@ import {
   updateTicketStatus, 
   reopenTicket, 
   addTicketComment, 
-  getTicketActivities 
+  getTicketActivities,
+  reassignTicket,
+  rateTicket
 } from './actions';
+import {
+  PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend
+} from 'recharts';
 import { 
   AlertTriangle, 
   Clock, 
@@ -23,7 +28,11 @@ import {
   X, 
   Send,
   Loader2,
-  ListFilter
+  ListFilter,
+  CalendarClock,
+  ArrowRightLeft,
+  Star,
+  BarChart2
 } from 'lucide-react';
 import type { Actor } from '@/src/libs/server/auth-helper';
 
@@ -47,6 +56,12 @@ type Ticket = {
   slaBreached: boolean;
   hoursElapsed: number;
   slaHours: number;
+  hoursRemaining: number;
+  isOverdue: boolean;
+  isNearOverdue: boolean;
+  isUnassigned: boolean;
+  isUrgentUnprocessed: boolean;
+  deadline: Date | string;
 };
 
 type StaffUser = {
@@ -102,8 +117,10 @@ export default function TicketsClient({
   currentActor: Actor | null;
   students: { id: string; fullName: string; className: string | null }[];
   classes: { id: string; name: string }[];
+  initialStats?: any;
 }) {
   const [tickets] = useState<Ticket[]>(initialTickets);
+  const [activeTab, setActiveTab] = useState<'list' | 'dashboard'>('list');
   const [selected, setSelected] = useState<Ticket | null>(null);
   const [activities, setActivities] = useState<any[]>([]);
   const [loadingActivities, setLoadingActivities] = useState(false);
@@ -119,10 +136,26 @@ export default function TicketsClient({
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [showAssignForm, setShowAssignForm] = useState(false);
   const [showReopenForm, setShowReopenForm] = useState(false);
+  const [showReassignForm, setShowReassignForm] = useState(false);
+  const [showRatingForm, setShowRatingForm] = useState(false);
   
   const [assigneeId, setAssigneeId] = useState('');
   const [reopenReason, setReopenReason] = useState('');
   const [commentText, setCommentText] = useState('');
+
+  const [reassignForm, setReassignForm] = useState({
+    category: '',
+    assignedToId: '',
+    priority: '',
+    expectedResolutionDate: '',
+    note: ''
+  });
+
+  const [ratingForm, setRatingForm] = useState({
+    rating: 5,
+    comment: '',
+    isReopen: false
+  });
 
   // Create Form State
   const [form, setForm] = useState({
@@ -161,7 +194,10 @@ export default function TicketsClient({
     open: tickets.filter(t => t.status === 'open' || t.status === 'reopened').length,
     inProgress: tickets.filter(t => t.status === 'in_progress').length,
     resolved: tickets.filter(t => t.status === 'resolved').length,
-    sla: initialSlaBreaches.length,
+    sla: tickets.filter(t => t.isOverdue).length,
+    nearSla: tickets.filter(t => t.isNearOverdue).length,
+    unassigned: tickets.filter(t => t.isUnassigned).length,
+    urgentUnprocessed: tickets.filter(t => t.isUrgentUnprocessed).length,
   };
 
   const actorName = currentActor?.name || 'Nhân viên';
@@ -193,6 +229,40 @@ export default function TicketsClient({
     startTransition(async () => {
       await assignTicket(selected.id, assigneeId, actorName);
       setShowAssignForm(false);
+      window.location.reload();
+    });
+  }
+
+  function handleReassign(e: React.FormEvent) {
+    e.preventDefault();
+    if (!selected) return;
+    startTransition(async () => {
+      await reassignTicket(
+        selected.id,
+        reassignForm.category,
+        reassignForm.assignedToId || null,
+        reassignForm.expectedResolutionDate || null,
+        reassignForm.priority,
+        reassignForm.note,
+        actorName
+      );
+      setShowReassignForm(false);
+      window.location.reload();
+    });
+  }
+
+  function handleRateTicket(e: React.FormEvent) {
+    e.preventDefault();
+    if (!selected) return;
+    startTransition(async () => {
+      await rateTicket(
+        selected.id,
+        ratingForm.rating,
+        ratingForm.comment,
+        ratingForm.isReopen,
+        actorName
+      );
+      setShowRatingForm(false);
       window.location.reload();
     });
   }
@@ -237,22 +307,60 @@ export default function TicketsClient({
           <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">Trung tâm Ticket</h1>
           <p className="text-sm text-slate-500 mt-0.5">Tiếp nhận, xử lý và theo dõi phản hồi phản ánh dịch vụ học đường</p>
         </div>
-        <button
-          onClick={() => setShowCreateForm(true)}
-          className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2.5 rounded-xl hover:bg-indigo-700 shadow-sm hover:shadow transition-all text-sm font-semibold cursor-pointer w-fit"
-        >
-          <Plus className="w-4 h-4" />
-          Tạo Ticket mới
-        </button>
+        <div className="flex flex-wrap items-center gap-3">
+          {(isAdmin || isDeptHead) && (
+            <div className="flex bg-slate-200/50 dark:bg-slate-800/50 p-1 rounded-xl">
+              <button
+                onClick={() => setActiveTab('list')}
+                className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-all ${activeTab === 'list' ? 'bg-white dark:bg-slate-700 shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}
+              >
+                Danh sách
+              </button>
+              <button
+                onClick={() => setActiveTab('dashboard')}
+                className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-all flex items-center gap-1.5 ${activeTab === 'dashboard' ? 'bg-white dark:bg-slate-700 shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}
+              >
+                <BarChart2 className="w-4 h-4" /> Báo cáo
+              </button>
+            </div>
+          )}
+          <button
+            onClick={() => setShowCreateForm(true)}
+            className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2.5 rounded-xl hover:bg-indigo-700 shadow-sm hover:shadow transition-all text-sm font-semibold cursor-pointer w-fit"
+          >
+            <Plus className="w-4 h-4" />
+            Tạo Ticket mới
+          </button>
+        </div>
       </div>
 
       {/* SLA Alert */}
-      {stats.sla > 0 && (
-        <div className="flex items-center gap-3 bg-rose-50 border border-rose-200 rounded-2xl px-4 py-3 mb-6 dark:bg-rose-950/20 dark:border-rose-900/50">
-          <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0 animate-bounce" />
-          <p className="text-sm text-rose-800 dark:text-rose-300 font-semibold">
-            Có {stats.sla} ticket đã vượt quá hạn cam kết SLA. Vui lòng phân công hoặc xử lý khẩn cấp!
-          </p>
+      {(stats.sla > 0 || stats.nearSla > 0 || stats.urgentUnprocessed > 0) && (
+        <div className="flex flex-col gap-2 mb-6">
+          {stats.sla > 0 && (
+            <div className="flex items-center gap-3 bg-rose-50 border border-rose-200 rounded-2xl px-4 py-3 dark:bg-rose-950/20 dark:border-rose-900/50">
+              <AlertOctagon className="w-5 h-5 text-rose-600 shrink-0 animate-bounce" />
+              <p className="text-sm text-rose-800 dark:text-rose-300 font-semibold">
+                Có {stats.sla} ticket đã vượt quá hạn cam kết SLA. Vui lòng xử lý khẩn cấp!
+              </p>
+            </div>
+          )}
+          {stats.nearSla > 0 && (
+            <div className="flex items-center gap-3 bg-orange-50 border border-orange-200 rounded-2xl px-4 py-3 dark:bg-orange-950/20 dark:border-orange-900/50">
+              <CalendarClock className="w-5 h-5 text-orange-600 shrink-0" />
+              <p className="text-sm text-orange-800 dark:text-orange-300 font-semibold">
+                Có {stats.nearSla} ticket sắp quá hạn (dưới 4 giờ). Cần tập trung xử lý ngay!
+              </p>
+            </div>
+          )}
+          {stats.urgentUnprocessed > 0 && (
+            <div className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-2xl px-4 py-3 dark:bg-red-950/20 dark:border-red-900/50">
+              <AlertTriangle className="w-5 h-5 text-red-600 shrink-0" />
+              <p className="text-sm text-red-800 dark:text-red-300 font-semibold">
+                Có {stats.urgentUnprocessed} ticket MỨC KHẨN CẤP chưa có người tiếp nhận!
+              </p>
+            </div>
+          )}
         </div>
       )}
 
@@ -276,8 +384,9 @@ export default function TicketsClient({
         ))}
       </div>
 
-      {/* Grid Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+      {/* Grid Layout (List Tab) */}
+      {activeTab === 'list' && (
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         
         {/* Sidebar Filter and List */}
         <div className="lg:col-span-2 flex flex-col gap-4">
@@ -427,7 +536,7 @@ export default function TicketsClient({
               )}
 
               {/* Assignee & SLA Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-slate-50/50 dark:bg-slate-900/30 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 bg-slate-50/50 dark:bg-slate-900/30 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 text-xs">
                 <div>
                   <span className="text-slate-400 font-semibold block mb-1">Người phụ trách</span>
                   <span className="font-bold text-slate-800 dark:text-slate-200">
@@ -435,16 +544,26 @@ export default function TicketsClient({
                   </span>
                 </div>
                 <div>
-                  <span className="text-slate-400 font-semibold block mb-1">Thời gian chờ xử lý</span>
-                  <span className={`font-bold ${selected.slaBreached ? 'text-rose-600' : 'text-slate-800 dark:text-slate-200'}`}>
-                    {selected.hoursElapsed} giờ
+                  <span className="text-slate-400 font-semibold block mb-1">SLA Cam kết</span>
+                  <span className="font-bold text-slate-800 dark:text-slate-200">
+                    {selected.slaHours} giờ ({PRIORITY_MAP[selected.priority]?.label})
                   </span>
                 </div>
                 <div>
-                  <span className="text-slate-400 font-semibold block mb-1">Cam kết xử lý (SLA)</span>
+                  <span className="text-slate-400 font-semibold block mb-1">Hạn xử lý</span>
                   <span className="font-bold text-slate-800 dark:text-slate-200">
-                    {selected.slaHours} giờ
+                    {new Date(selected.deadline).toLocaleString('vi-VN')}
                   </span>
+                </div>
+                <div>
+                  <span className="text-slate-400 font-semibold block mb-1">Thời gian còn lại</span>
+                  {selected.status === 'resolved' || selected.status === 'cancelled' ? (
+                    <span className="font-bold text-slate-500">-</span>
+                  ) : (
+                    <span className={`font-bold ${selected.isOverdue ? 'text-rose-600' : selected.isNearOverdue ? 'text-orange-500' : 'text-emerald-600'}`}>
+                      {selected.isOverdue ? `Quá hạn ${Math.abs(selected.hoursRemaining)} giờ` : `Còn ${selected.hoursRemaining} giờ`}
+                    </span>
+                  )}
                 </div>
               </div>
 
@@ -455,14 +574,23 @@ export default function TicketsClient({
                   
                   <div className="flex flex-wrap gap-2.5">
                     
-                    {/* Assign Action */}
+                    {/* Reassign / SLA Action */}
                     {(isAdmin || isDeptHead) && (
                       <button
-                        onClick={() => setShowAssignForm(true)}
+                        onClick={() => {
+                          setReassignForm({
+                            category: selected.category,
+                            assignedToId: selected.assignedTo || '',
+                            priority: selected.priority,
+                            expectedResolutionDate: selected.expectedResolutionDate ? new Date(selected.expectedResolutionDate).toISOString().slice(0, 16) : '',
+                            note: ''
+                          });
+                          setShowReassignForm(true);
+                        }}
                         className="flex items-center gap-1.5 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-3 py-2 rounded-xl hover:border-slate-300 font-semibold text-slate-700 dark:text-slate-300 cursor-pointer shadow-3xs"
                       >
-                        <UserPlus className="w-3.5 h-3.5 text-indigo-500" />
-                        Phân công xử lý
+                        <ArrowRightLeft className="w-3.5 h-3.5 text-indigo-500" />
+                        Phân công & SLA
                       </button>
                     )}
 
@@ -545,20 +673,25 @@ export default function TicketsClient({
                 </div>
               )}
 
-              {/* Reopen Action (For Parent/Admin when ticket is resolved/closed) */}
+              {/* Rating & Reopen Action (For Parent/Admin when ticket is resolved/cancelled) */}
               {(selected.status === 'resolved' || selected.status === 'cancelled') && (
                 <div className="bg-emerald-50/40 dark:bg-emerald-950/10 border border-emerald-100 dark:border-emerald-900/50 p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                   <div>
                     <h4 className="font-bold text-sm text-emerald-800 dark:text-emerald-300">Ticket đã được giải quyết</h4>
-                    <p className="text-xs text-slate-500 mt-0.5">Nếu kết quả chưa đạt yêu cầu, bạn có thể gửi yêu cầu mở lại ticket.</p>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      {selected.satisfactionRating 
+                        ? `Đánh giá chất lượng: ${selected.satisfactionRating} sao.` 
+                        : 'Vui lòng đánh giá chất lượng hỗ trợ. Nếu chưa hài lòng, bạn có thể gửi yêu cầu mở lại.'}
+                    </p>
                   </div>
-                  <button
-                    onClick={() => setShowReopenForm(true)}
-                    className="flex items-center gap-1.5 text-xs bg-indigo-600 text-white px-4 py-2 rounded-xl hover:bg-indigo-700 font-semibold cursor-pointer shadow-sm"
-                  >
-                    <Undo2 className="w-4 h-4" />
-                    Mở lại Ticket
-                  </button>
+                  {!selected.satisfactionRating && (
+                    <button
+                      onClick={() => setShowRatingForm(true)}
+                      className="flex items-center gap-1.5 text-xs bg-indigo-600 text-white px-4 py-2 rounded-xl hover:bg-indigo-700 font-semibold cursor-pointer shadow-sm shrink-0"
+                    >
+                      <Star className="w-3.5 h-3.5" /> Đánh giá dịch vụ
+                    </button>
+                  )}
                 </div>
               )}
 
@@ -624,9 +757,79 @@ export default function TicketsClient({
                 )}
               </div>
             </div>
+            </div>
           )}
         </div>
       </div>
+      )}
+
+      {/* Dashboard Layout (Dashboard Tab) */}
+      {activeTab === 'dashboard' && initialStats && (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl flex items-center justify-between shadow-3xs">
+              <div>
+                <p className="text-slate-500 text-sm font-semibold mb-1">Điểm hài lòng (CSAT)</p>
+                <div className="text-3xl font-black text-slate-900 dark:text-white">{initialStats.avgRating} <span className="text-yellow-500 text-xl">★</span></div>
+              </div>
+              <div className="w-12 h-12 rounded-full bg-yellow-50 dark:bg-yellow-950/30 flex items-center justify-center">
+                <Star className="w-6 h-6 text-yellow-600" />
+              </div>
+            </div>
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl flex items-center justify-between shadow-3xs">
+              <div>
+                <p className="text-slate-500 text-sm font-semibold mb-1">Tỷ lệ hoàn thành đúng hạn</p>
+                <div className="text-3xl font-black text-emerald-600">{initialStats.total > 0 ? Math.round(((initialStats.total - initialStats.overdue) / initialStats.total) * 100) : 100}%</div>
+              </div>
+              <div className="w-12 h-12 rounded-full bg-emerald-50 dark:bg-emerald-950/30 flex items-center justify-center">
+                <CheckCircle2 className="w-6 h-6 text-emerald-600" />
+              </div>
+            </div>
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl flex items-center justify-between shadow-3xs">
+              <div>
+                <p className="text-slate-500 text-sm font-semibold mb-1">Ticket phải mở lại</p>
+                <div className="text-3xl font-black text-rose-600">{initialStats.reopened}</div>
+              </div>
+              <div className="w-12 h-12 rounded-full bg-rose-50 dark:bg-rose-950/30 flex items-center justify-center">
+                <Undo2 className="w-6 h-6 text-rose-600" />
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl shadow-3xs">
+              <h3 className="font-bold text-slate-900 dark:text-white mb-6">Phân bổ theo bộ phận</h3>
+              <div className="h-[300px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={initialStats.categoryCount} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} label>
+                      {initialStats.categoryCount.map((entry: any, index: number) => (
+                        <Cell key={`cell-${index}`} fill={['#6366f1', '#ec4899', '#14b8a6', '#f59e0b', '#3b82f6'][index % 5]} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value: any, name: string) => [value, CATEGORY_MAP[name]?.label || name]} />
+                    <Legend formatter={(value: string) => CATEGORY_MAP[value]?.label || value} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+            
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl shadow-3xs">
+              <h3 className="font-bold text-slate-900 dark:text-white mb-6">Khối lượng công việc theo nhân sự</h3>
+              <div className="h-[300px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={initialStats.assigneeCount} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                    <XAxis type="number" />
+                    <YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 12 }} />
+                    <Tooltip />
+                    <Bar dataKey="value" fill="#6366f1" radius={[0, 4, 4, 0]} name="Ticket đang xử lý" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* MODAL: Create Ticket */}
       {showCreateForm && (
@@ -733,48 +936,96 @@ export default function TicketsClient({
         </div>
       )}
 
-      {/* MODAL: Assign Ticket */}
-      {showAssignForm && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-3xs z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-2xl w-full max-w-sm p-6 relative">
+      {/* MODAL: Reassign / SLA Ticket */}
+      {showReassignForm && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-3xs z-50 flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-2xl w-full max-w-md p-6 relative my-auto">
             <button 
-              onClick={() => setShowAssignForm(false)} 
+              onClick={() => setShowReassignForm(false)} 
               className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
-            <h2 className="text-base font-bold text-slate-900 dark:text-white mb-4">Giao việc cho nhân sự</h2>
+            <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4">Phân công & Cập nhật SLA</h2>
             
-            <form onSubmit={handleAssign} className="space-y-4">
+            <form onSubmit={handleReassign} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1 block">Bộ phận xử lý</label>
+                  <select 
+                    value={reassignForm.category} 
+                    onChange={e => setReassignForm({...reassignForm, category: e.target.value})} 
+                    className="w-full border border-slate-200 dark:border-slate-800 bg-transparent rounded-xl px-3 py-2 text-sm focus:outline-none dark:bg-slate-900"
+                  >
+                    {Object.entries(CATEGORY_MAP).map(([k, v]) => (
+                      <option key={k} value={k}>{v.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1 block">Mức độ ưu tiên</label>
+                  <select 
+                    value={reassignForm.priority} 
+                    onChange={e => setReassignForm({...reassignForm, priority: e.target.value})} 
+                    className="w-full border border-slate-200 dark:border-slate-800 bg-transparent rounded-xl px-3 py-2 text-sm focus:outline-none dark:bg-slate-900"
+                  >
+                    <option value="low">Thấp (Định kỳ)</option>
+                    <option value="normal">Bình thường (48h)</option>
+                    <option value="high">Cao (24h)</option>
+                    <option value="urgent">Khẩn cấp (Trong ngày)</option>
+                  </select>
+                </div>
+              </div>
+
               <div>
-                <label className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1 block">Chọn cán bộ xử lý</label>
+                <label className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1 block">Cán bộ phụ trách (Tùy chọn)</label>
                 <select 
-                  required
-                  value={assigneeId} 
-                  onChange={e => setAssigneeId(e.target.value)} 
+                  value={reassignForm.assignedToId} 
+                  onChange={e => setReassignForm({...reassignForm, assignedToId: e.target.value})} 
                   className="w-full border border-slate-200 dark:border-slate-800 bg-transparent rounded-xl px-3 py-2 text-sm focus:outline-none dark:bg-slate-900"
                 >
-                  <option value="">-- Chọn nhân sự --</option>
+                  <option value="">-- Chưa phân công --</option>
                   {staffUsers.map(user => (
                     <option key={user.id} value={user.id}>{user.name} ({user.title || user.role})</option>
                   ))}
                 </select>
               </div>
 
+              <div>
+                <label className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1 block">Hạn xử lý mới (Tùy chọn)</label>
+                <input 
+                  type="datetime-local" 
+                  value={reassignForm.expectedResolutionDate} 
+                  onChange={e => setReassignForm({...reassignForm, expectedResolutionDate: e.target.value})} 
+                  className="w-full border border-slate-200 dark:border-slate-800 bg-transparent rounded-xl px-3 py-2 text-sm focus:outline-none dark:bg-slate-900"
+                />
+                <p className="text-[10px] text-slate-500 mt-1">Bỏ trống để hệ thống tự tính toán SLA theo độ ưu tiên</p>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1 block">Ghi chú phân công / chuyển giao</label>
+                <textarea 
+                  value={reassignForm.note} 
+                  onChange={e => setReassignForm({...reassignForm, note: e.target.value})} 
+                  placeholder="Lý do chuyển bộ phận, hoặc lưu ý xử lý..."
+                  className="w-full border border-slate-200 dark:border-slate-800 bg-transparent rounded-xl px-3 py-2 text-sm focus:outline-none dark:bg-slate-900 min-h-[80px]"
+                />
+              </div>
+
               <div className="flex gap-3 pt-2">
                 <button 
                   type="button" 
-                  onClick={() => setShowAssignForm(false)} 
+                  onClick={() => setShowReassignForm(false)} 
                   className="flex-1 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 py-2.5 rounded-xl text-sm font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
                 >
                   Hủy
                 </button>
                 <button 
                   type="submit" 
-                  disabled={isPending || !assigneeId} 
+                  disabled={isPending} 
                   className="flex-1 bg-indigo-600 text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 cursor-pointer shadow-sm"
                 >
-                  Bàn giao việc
+                  Cập nhật phân công
                 </button>
               </div>
             </form>
@@ -821,6 +1072,74 @@ export default function TicketsClient({
                   className="flex-1 bg-rose-600 text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-rose-700 disabled:opacity-50 cursor-pointer shadow-sm"
                 >
                   Gửi yêu cầu mở lại
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {/* MODAL: Rating Form */}
+      {showRatingForm && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-3xs z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-2xl w-full max-w-sm p-6 relative">
+            <button 
+              onClick={() => setShowRatingForm(false)} 
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <h2 className="text-base font-bold text-slate-900 dark:text-white mb-4">Đánh giá chất lượng dịch vụ</h2>
+            
+            <form onSubmit={handleRateTicket} className="space-y-4">
+              <div>
+                <label className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-2 block">Mức độ hài lòng của bạn</label>
+                <div className="flex gap-2 mb-4">
+                  {[1,2,3,4,5].map(star => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setRatingForm({...ratingForm, rating: star})}
+                      className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${ratingForm.rating >= star ? 'bg-yellow-100 text-yellow-500' : 'bg-slate-100 text-slate-300 hover:bg-slate-200'}`}
+                    >
+                      <Star className="w-5 h-5" fill={ratingForm.rating >= star ? 'currentColor' : 'none'} />
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1 block">Góp ý thêm (Không bắt buộc)</label>
+                <textarea 
+                  rows={2}
+                  value={ratingForm.comment} 
+                  placeholder="Chia sẻ thêm về trải nghiệm của bạn..."
+                  onChange={e => setRatingForm({...ratingForm, comment: e.target.value})} 
+                  className="w-full border border-slate-200 dark:border-slate-800 bg-transparent rounded-xl px-3 py-2 text-xs focus:outline-none resize-none"
+                />
+              </div>
+
+              {ratingForm.rating <= 2 && (
+                <div className="bg-rose-50 border border-rose-200 rounded-xl p-3 flex gap-2 items-start text-xs text-rose-700">
+                  <input
+                    type="checkbox"
+                    id="isReopen"
+                    checked={ratingForm.isReopen}
+                    onChange={e => setRatingForm({...ratingForm, isReopen: e.target.checked})}
+                    className="mt-0.5 w-4 h-4 text-indigo-600 bg-gray-100 border-gray-300 rounded focus:ring-indigo-500"
+                  />
+                  <label htmlFor="isReopen" className="font-semibold cursor-pointer">
+                    Tôi chưa hài lòng và muốn yêu cầu mở lại ticket để xử lý tiếp.
+                  </label>
+                </div>
+              )}
+
+              <div className="flex gap-3 pt-2">
+                <button 
+                  type="submit" 
+                  disabled={isPending} 
+                  className="flex-1 bg-indigo-600 text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 cursor-pointer shadow-sm"
+                >
+                  Gửi đánh giá
                 </button>
               </div>
             </form>

@@ -5,7 +5,7 @@ import { eq, desc, and, lt, isNull, inArray } from "drizzle-orm";
 import { getCurrentActor } from "@/src/libs/server/auth-helper";
 import { revalidatePath } from "next/cache";
 
-const SLA_HOURS: Record<string, number> = { normal: 48, high: 24, urgent: 4 };
+const SLA_HOURS: Record<string, number> = { low: 168, normal: 72, high: 24, urgent: 8 };
 
 const CATEGORY_TO_DEPT: Record<string, string[]> = {
   TUYEN_SINH_PR: ["admissions", "pr", "events"],
@@ -81,13 +81,33 @@ export async function getTickets(filters?: { status?: string; priority?: string;
   return tickets.map(t => {
     const slaH = SLA_HOURS[t.priority] ?? 48;
     const createdAt = new Date(t.createdAt);
+    
+    let deadline = new Date(createdAt.getTime() + slaH * 3600000);
+    if (t.expectedResolutionDate) {
+      deadline = new Date(t.expectedResolutionDate);
+    }
+    
     const hoursElapsed = (now.getTime() - createdAt.getTime()) / 3_600_000;
-    const isOpen = t.status === "open" || t.status === "received" || t.status === "in_progress" || t.status === "reopened";
+    const hoursRemaining = (deadline.getTime() - now.getTime()) / 3_600_000;
+    
+    const isOpen = t.status !== "resolved" && t.status !== "cancelled";
+    
+    const isOverdue = isOpen && hoursRemaining < 0;
+    const isNearOverdue = isOpen && hoursRemaining >= 0 && hoursRemaining <= 4;
+    const isUnassigned = isOpen && !t.assignedTo;
+    const isUrgentUnprocessed = isOpen && t.priority === "urgent" && t.status === "open";
+
     return {
       ...t,
-      slaBreached: isOpen && hoursElapsed > slaH,
+      slaBreached: isOverdue,
       hoursElapsed: Math.round(hoursElapsed),
       slaHours: slaH,
+      hoursRemaining: Math.round(hoursRemaining),
+      isOverdue,
+      isNearOverdue,
+      isUnassigned,
+      isUrgentUnprocessed,
+      deadline,
     };
   });
 }
@@ -190,6 +210,61 @@ export async function assignTicket(ticketId: string, assignedToId: string, actor
   await sendNotification(assignedToId, "Bạn có ticket mới", `Bạn đã được phân công xử lý ticket ${ticketId}`);
 }
 
+export async function reassignTicket(
+  ticketId: string, 
+  category: string, 
+  assignedToId: string | null, 
+  expectedResolutionDate: string | null,
+  priority: string,
+  note: string, 
+  actorName: string
+) {
+  const updates: any = { 
+    category, 
+    priority,
+    updatedAt: new Date() 
+  };
+  
+  if (expectedResolutionDate) {
+    updates.expectedResolutionDate = new Date(expectedResolutionDate);
+  }
+  
+  let assigneeName = "Chưa phân công";
+  if (assignedToId) {
+    updates.assignedTo = assignedToId;
+    updates.status = "received";
+    
+    const [targetUser] = await db
+      .select({ name: schema.users.name })
+      .from(schema.users)
+      .where(eq(schema.users.id, assignedToId))
+      .limit(1);
+    if (targetUser) assigneeName = targetUser.name;
+  } else {
+    updates.assignedTo = null;
+    updates.status = "open";
+  }
+
+  await db
+    .update(schema.parentTickets)
+    .set(updates)
+    .where(eq(schema.parentTickets.id, ticketId));
+
+  await db.insert(schema.parentTicketActivities).values({
+    id: `ACT-${Date.now()}`,
+    ticketId,
+    actorName,
+    action: "assign",
+    content: `Cập nhật phân công: Bộ phận ${category}, Người PT: ${assigneeName}. Ghi chú: ${note || 'Không có'}`,
+    meta: { assignedToId, category, assigneeName, expectedResolutionDate, priority },
+  });
+
+  revalidatePath("/[locale]/(admin)/tickets", "page");
+  if (assignedToId) {
+    await sendNotification(assignedToId, "Cập nhật phân công", `Bạn được phân công xử lý ticket ${ticketId}`);
+  }
+}
+
 export async function updateTicketStatus(ticketId: string, status: string, actorName: string, note?: string) {
   const updates: any = { status, updatedAt: new Date() };
   if (status === "resolved") {
@@ -289,4 +364,84 @@ export async function getClasses() {
     })
     .from(schema.classes)
     .orderBy(schema.classes.name);
+}
+
+export async function rateTicket(ticketId: string, rating: number, comment: string, isReopen: boolean, actorName: string) {
+  const updates: any = { 
+    satisfactionRating: rating,
+    updatedAt: new Date()
+  };
+
+  let action = "rate";
+  let content = `Đánh giá chất lượng xử lý: ${rating} sao.`;
+  if (comment) {
+    content += ` Góp ý: ${comment}`;
+  }
+
+  if (isReopen) {
+    updates.status = "reopened";
+    updates.resolvedAt = null;
+    action = "reopen";
+    content = `Không hài lòng và yêu cầu mở lại ticket. Đánh giá: ${rating} sao. Góp ý: ${comment}`;
+  }
+
+  await db
+    .update(schema.parentTickets)
+    .set(updates)
+    .where(eq(schema.parentTickets.id, ticketId));
+
+  await db.insert(schema.parentTicketActivities).values({
+    id: `ACT-${Date.now()}`,
+    ticketId,
+    actorName,
+    action,
+    content,
+    meta: { rating, isReopen },
+  });
+
+  revalidatePath("/[locale]/(admin)/tickets", "page");
+  
+  if (isReopen) {
+    const [t] = await db.select({ assignedTo: schema.parentTickets.assignedTo }).from(schema.parentTickets).where(eq(schema.parentTickets.id, ticketId)).limit(1);
+    if (t?.assignedTo) {
+      await sendNotification(t.assignedTo, "Ticket bị mở lại", `Ticket ${ticketId} đã bị người dùng mở lại với đánh giá ${rating} sao.`);
+    }
+  }
+}
+
+export async function getTicketStats() {
+  const all = await getTickets();
+  const total = all.length;
+  
+  let open = 0, inProgress = 0, resolved = 0, overdue = 0, reopened = 0;
+  let totalRating = 0, ratedCount = 0;
+  const categoryCount: Record<string, number> = {};
+  const assigneeCount: Record<string, number> = {};
+  
+  for (const t of all) {
+    if (t.status === "open" || t.status === "received") open++;
+    else if (t.status === "in_progress") inProgress++;
+    else if (t.status === "resolved") resolved++;
+    else if (t.status === "reopened") reopened++;
+
+    if (t.isOverdue) overdue++;
+    
+    if (t.satisfactionRating) {
+      totalRating += t.satisfactionRating;
+      ratedCount++;
+    }
+
+    categoryCount[t.category] = (categoryCount[t.category] || 0) + 1;
+    
+    if (t.assigneeName) {
+      assigneeCount[t.assigneeName] = (assigneeCount[t.assigneeName] || 0) + (t.status !== "resolved" && t.status !== "cancelled" ? 1 : 0);
+    }
+  }
+
+  return {
+    total, open, inProgress, resolved, overdue, reopened,
+    avgRating: ratedCount > 0 ? Number((totalRating / ratedCount).toFixed(1)) : 0,
+    categoryCount: Object.entries(categoryCount).map(([name, value]) => ({ name, value })),
+    assigneeCount: Object.entries(assigneeCount).map(([name, value]) => ({ name, value })),
+  };
 }
