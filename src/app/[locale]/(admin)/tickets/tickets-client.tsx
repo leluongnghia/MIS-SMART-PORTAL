@@ -757,7 +757,6 @@ export default function TicketsClient({
                 )}
               </div>
             </div>
-            </div>
           )}
         </div>
       </div>

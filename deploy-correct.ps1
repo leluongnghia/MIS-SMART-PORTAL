@@ -4,16 +4,18 @@ $b64 = [Convert]::ToBase64String([IO.File]::ReadAllBytes(".env.local"))
 $remoteCmd = @"
 export NVM_DIR="`$HOME/.nvm"
 [ -s "`$NVM_DIR/nvm.sh" ] && \. "`$NVM_DIR/nvm.sh"
-cd /home/duong/duong-node-app
+cd /home/duong/duong.nghiadev.net
 git clean -fd -e node_modules -e .env.local -e local.db
 git reset --hard
 git fetch --all
 git reset --hard origin/main
 echo $b64 | base64 -d > .env.local
-node update-db-columns.cjs
 npm install --legacy-peer-deps --no-package-lock
 npm run build
-pm2 restart duong-node-app || pm2 start npm --name duong-node-app -- start
+cp -r .next/standalone/* ./
+cp -r public .next/standalone/ || true
+cp -r .next/static .next/standalone/.next/ || true
+pm2 restart mis-portal || pm2 start server.js --name mis-portal
 pm2 save
 "@
 
