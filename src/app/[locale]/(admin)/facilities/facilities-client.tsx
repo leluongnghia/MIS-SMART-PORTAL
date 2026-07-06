@@ -555,10 +555,6 @@ function DataTable({ title, desc, rows, columns, labels, statusMap, onAdd, onVie
         <div className="overflow-x-auto rounded-xl border">
           <table className="w-full min-w-[760px] text-sm">
             <thead className="bg-muted/50 text-muted-foreground">
-        )}
-        <div className="overflow-x-auto rounded-xl border">
-          <table className="w-full min-w-[760px] text-sm">
-            <thead className="bg-muted/50 text-muted-foreground">
               <tr>
                 {labels.map((l: string) => <th key={l} className="p-3 text-left font-medium">{l}</th>)}
                 <th className="p-3 text-right font-medium">Thao tác</th>
