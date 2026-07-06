@@ -403,7 +403,7 @@ export default function FacilitiesClient({ initialLocations = [], initialAssets 
       <TabsContent value="supplies" activeValue={activeTab} className="m-0"><SuppliesTab initialSupplies={supplies} /></TabsContent>
       <TabsContent value="handover" activeValue={activeTab} className="m-0"><BookingsTab initialBookings={initialBookings} /></TabsContent>
       <TabsContent value="inventory" activeValue={activeTab} className="m-0"><InventoryTab initialChecks={initialInventoryChecks} /></TabsContent>
-      <TabsContent value="reports" activeValue={activeTab} className="m-0"><Placeholder title="Báo cáo" desc="Tổng hợp tài sản, sửa chữa, bảo trì, vật tư và đề xuất mua sắm." /></TabsContent>
+      <TabsContent value="reports" activeValue={activeTab} className="m-0"><ReportsTab assets={assets} repairRequests={repairRequests} maintenanceLogs={maintenanceLogs} supplies={supplies} /></TabsContent>
     </Tabs>
 
     {/* Real details pop-up modal dialog overlay */}
