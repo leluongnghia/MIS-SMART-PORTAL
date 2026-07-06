@@ -555,6 +555,10 @@ function DataTable({ title, desc, rows, columns, labels, statusMap, onAdd, onVie
         <div className="overflow-x-auto rounded-xl border">
           <table className="w-full min-w-[760px] text-sm">
             <thead className="bg-muted/50 text-muted-foreground">
+        )}
+        <div className="overflow-x-auto rounded-xl border">
+          <table className="w-full min-w-[760px] text-sm">
+            <thead className="bg-muted/50 text-muted-foreground">
               <tr>
                 {labels.map((l: string) => <th key={l} className="p-3 text-left font-medium">{l}</th>)}
                 <th className="p-3 text-right font-medium">Thao tác</th>
@@ -593,6 +597,97 @@ function DataTable({ title, desc, rows, columns, labels, statusMap, onAdd, onVie
   );
 }
 
-function Placeholder({ title, desc }: { title: string; desc: string }) {
-  return <Card className="shadow-sm"><CardHeader><CardTitle>{title}</CardTitle><CardDescription>{desc}</CardDescription></CardHeader><CardContent><div className="rounded-xl border bg-muted/20 p-6 text-sm text-muted-foreground">Đã tạo khung nghiệp vụ, sẵn sàng nối dữ liệu/chi tiết theo kiến trúc hiện có.</div></CardContent></Card>;
+function ReportsTab({ assets, repairRequests, maintenanceLogs, supplies }: { assets: any[]; repairRequests: any[]; maintenanceLogs: any[]; supplies: any[] }) {
+  const total = assets.length;
+  const assetByStatus = [
+    { label: 'Đang sử dụng', count: assets.filter(a => ['ACTIVE','READY'].includes(a.status)).length, color: 'bg-emerald-500', tone: 'text-emerald-700' },
+    { label: 'Cần bảo trì',  count: assets.filter(a => a.status === 'MAINTENANCE').length, color: 'bg-orange-500', tone: 'text-orange-700' },
+    { label: 'Đang sửa',     count: assets.filter(a => a.status === 'REPAIRING').length, color: 'bg-amber-500', tone: 'text-amber-700' },
+    { label: 'Hỏng nặng',    count: assets.filter(a => a.status === 'BROKEN').length, color: 'bg-rose-500', tone: 'text-rose-700' },
+    { label: 'Tạm ngừng',    count: assets.filter(a => a.status === 'SUSPENDED').length, color: 'bg-slate-400', tone: 'text-slate-600' },
+    { label: 'Thanh lý/Mất', count: assets.filter(a => ['DISPOSED','LOST'].includes(a.status)).length, color: 'bg-red-600', tone: 'text-red-700' },
+  ];
+  const repairDone    = repairRequests.filter(r => r.status === 'DONE' || r.status === 'COMPLETED').length;
+  const repairPending = repairRequests.filter(r => ['NEW','PROCESSING','WAITING_PART'].includes(r.status)).length;
+  const maintDone     = maintenanceLogs.filter(m => m.status === 'COMPLETED').length;
+  const maintOverdue  = maintenanceLogs.filter(m => m.status === 'OVERDUE').length;
+  const lowStock      = supplies.filter(s => s.currentQuantity <= s.minimumQuantity).length;
+
+  return (
+    <div className="space-y-4">
+      <div className="grid gap-4 sm:grid-cols-3">
+        {[
+          { label: 'Tổng tài sản', value: total, desc: 'Trong danh mục', color: 'text-blue-700', border: 'border-l-blue-500' },
+          { label: 'Ticket sửa chữa đã xử lý', value: repairDone, desc: `${repairPending} đang chờ`, color: 'text-emerald-700', border: 'border-l-emerald-500' },
+          { label: 'Bảo trì quá hạn', value: maintOverdue, desc: `${maintDone} đã hoàn thành`, color: 'text-rose-700', border: 'border-l-rose-500' },
+        ].map(c => (
+          <Card key={c.label} className={`shadow-sm border-l-4 ${c.border}`}>
+            <CardContent className="p-4">
+              <p className="text-xs font-semibold uppercase text-muted-foreground">{c.label}</p>
+              <div className={`text-3xl font-extrabold mt-1 ${c.color}`}>{c.value}</div>
+              <p className="text-xs text-muted-foreground mt-0.5">{c.desc}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      <div className="grid gap-4 xl:grid-cols-2">
+        <Card className="shadow-sm">
+          <CardHeader><CardTitle>Phân bổ tài sản theo trạng thái</CardTitle><CardDescription>Tỷ lệ % dựa trên {total} tài sản đang quản lý</CardDescription></CardHeader>
+          <CardContent className="space-y-3">
+            {assetByStatus.map(s => (
+              <div key={s.label}>
+                <div className="flex justify-between text-sm mb-1">
+                  <span className="font-medium">{s.label}</span>
+                  <span className={`font-bold ${s.tone}`}>{s.count} ({total > 0 ? Math.round((s.count / total) * 100) : 0}%)</span>
+                </div>
+                <div className="h-2.5 rounded-full bg-muted">
+                  <div className={`h-2.5 rounded-full ${s.color} transition-all`} style={{ width: `${total > 0 ? (s.count / total) * 100 : 0}%` }} />
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        <div className="space-y-4">
+          <Card className="shadow-sm">
+            <CardHeader><CardTitle>Thống kê sửa chữa</CardTitle></CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-3 text-center">
+                {[
+                  { label: 'Tổng ticket', value: repairRequests.length, color: 'text-slate-800' },
+                  { label: 'Đã xử lý', value: repairDone, color: 'text-emerald-700' },
+                  { label: 'Đang xử lý', value: repairPending, color: 'text-amber-700' },
+                  { label: 'Quá hạn', value: repairRequests.filter(r => r.dueDate && !r.completedAt && new Date(r.dueDate) < new Date()).length, color: 'text-rose-700' },
+                ].map(s => (
+                  <div key={s.label} className="rounded-xl border bg-muted/20 p-3">
+                    <div className={`text-2xl font-black ${s.color}`}>{s.value}</div>
+                    <div className="text-xs text-muted-foreground mt-0.5">{s.label}</div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-sm">
+            <CardHeader><CardTitle>Vật tư tồn kho thấp</CardTitle></CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-4">
+                <div className="text-4xl font-black text-rose-600">{lowStock}</div>
+                <div className="text-sm text-muted-foreground">mặt hàng dưới mức tồn kho tối thiểu cần đặt mua bổ sung</div>
+              </div>
+              <button onClick={() => {
+                const csv = ['Tên,Tồn,Tối thiểu,Đơn vị', ...supplies.map(s => `"${s.name}",${s.currentQuantity},${s.minimumQuantity},"${s.unit}"`)].join('\n');
+                const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+                const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: `Bao_cao_vat_tu_${new Date().toISOString().slice(0,10)}.csv` });
+                document.body.appendChild(a); a.click(); document.body.removeChild(a);
+              }} className="mt-3 w-full text-sm py-2 rounded-lg border border-slate-200 hover:bg-slate-50 font-semibold text-slate-700 transition-colors flex items-center justify-center gap-2">
+                <Download className="h-4 w-4" />Xuất báo cáo vật tư CSV
+              </button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
 }
