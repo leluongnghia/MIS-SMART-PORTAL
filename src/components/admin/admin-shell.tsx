@@ -115,8 +115,8 @@ const menuGroups: MenuItemGroup[] = [
   {
     title: 'CÀI ĐẶT HỆ THỐNG',
     items: [
-      { label: 'Dữ liệu hệ thống', href: 'system-data', icon: FileText, moduleCode: 'SYSTEM' },
-      { label: 'Cấu hình chung', href: 'system-settings', icon: Settings, moduleCode: 'SYSTEM' },
+      { label: 'Dữ liệu hệ thống', href: 'system-data/storage', icon: FileText, moduleCode: 'SYSTEM' },
+      { label: 'Cấu hình chung', href: 'settings', icon: Settings, moduleCode: 'SYSTEM' },
       { label: 'Quản trị phân quyền (Mới)', href: 'system-settings/permissions', icon: ShieldCheck, roles: ['ADMIN'], moduleCode: 'SYSTEM' },
     ],
   },

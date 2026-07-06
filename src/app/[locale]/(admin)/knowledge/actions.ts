@@ -178,7 +178,7 @@ export async function getKnowledgeDocuments(): Promise<DocumentItem[]> {
           status: doc.status,
           uploadedBy: doc.createdBy || 'admin',
           uploadedByName: doc.ownerId || 'Ban KSNB',
-          version: parseFloat(doc.version) || 1,
+          version: Math.round(parseFloat(doc.version)) || 1,
           metadata: {
             docCode: doc.docCode,
             purpose: doc.purpose || '',
