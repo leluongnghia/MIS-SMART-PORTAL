@@ -93,11 +93,15 @@ export default function TicketsClient({
   initialSlaBreaches,
   staffUsers,
   currentActor,
+  students,
+  classes,
 }: {
   initialTickets: Ticket[];
   initialSlaBreaches: Ticket[];
   staffUsers: StaffUser[];
   currentActor: Actor | null;
+  students: { id: string; fullName: string; className: string | null }[];
+  classes: { id: string; name: string }[];
 }) {
   const [tickets] = useState<Ticket[]>(initialTickets);
   const [selected, setSelected] = useState<Ticket | null>(null);

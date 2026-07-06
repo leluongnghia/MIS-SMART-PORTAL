@@ -1605,6 +1605,11 @@ export const parentTickets = pgTable('parent_tickets', {
   firstRespondedAt: timestamp('first_responded_at', { withTimezone: true }),
   resolvedAt: timestamp('resolved_at', { withTimezone: true }),
   satisfactionRating: integer('satisfaction_rating'), // 1-5
+  senderRole: text('sender_role'),
+  className: text('class_name'),
+  fileUrl: text('file_url'),
+  fileName: text('file_name'),
+  expectedResolutionDate: timestamp('expected_resolution_date', { withTimezone: true }),
   deletedAt: timestamp('deleted_at', { withTimezone: true }),
   ...timestamps,
 }, t => [

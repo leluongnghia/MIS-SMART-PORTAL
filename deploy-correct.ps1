@@ -10,6 +10,7 @@ git reset --hard
 git fetch --all
 git reset --hard origin/main
 echo $b64 | base64 -d > .env.local
+node update-db-columns.cjs
 npm install --legacy-peer-deps --no-package-lock
 npm run build
 pm2 restart duong-node-app || pm2 start npm --name duong-node-app -- start

@@ -63,6 +63,11 @@ export async function getTickets(filters?: { status?: string; priority?: string;
       firstRespondedAt: schema.parentTickets.firstRespondedAt,
       resolvedAt: schema.parentTickets.resolvedAt,
       satisfactionRating: schema.parentTickets.satisfactionRating,
+      senderRole: schema.parentTickets.senderRole,
+      className: schema.parentTickets.className,
+      fileUrl: schema.parentTickets.fileUrl,
+      fileName: schema.parentTickets.fileName,
+      expectedResolutionDate: schema.parentTickets.expectedResolutionDate,
       createdAt: schema.parentTickets.createdAt,
       updatedAt: schema.parentTickets.updatedAt,
       assigneeName: schema.users.name,
@@ -100,6 +105,11 @@ export async function getStaffUsers() {
     .orderBy(schema.users.name);
 }
 
+export async function sendNotification(userId: string, title: string, message: string) {
+  // MOCK: Replace with real email/push later
+  console.log(`[NOTIFICATION -> ${userId}]: ${title} - ${message}`);
+}
+
 export async function createTicket(data: {
   studentId?: string;
   parentName: string;
@@ -108,13 +118,30 @@ export async function createTicket(data: {
   subject: string;
   description?: string;
   priority?: string;
+  senderRole?: string;
+  className?: string;
+  fileUrl?: string;
+  fileName?: string;
+  expectedResolutionDate?: string;
 }) {
   const id = `TKT-${Date.now()}`;
+  const parsedDate = data.expectedResolutionDate ? new Date(data.expectedResolutionDate) : null;
+
   await db.insert(schema.parentTickets).values({
     id,
-    ...data,
-    status: "open",
+    studentId: data.studentId || null,
+    parentName: data.parentName,
+    parentPhone: data.parentPhone || null,
+    category: data.category,
+    subject: data.subject,
+    description: data.description || null,
     priority: data.priority ?? "normal",
+    status: "open",
+    senderRole: data.senderRole || null,
+    className: data.className || null,
+    fileUrl: data.fileUrl || null,
+    fileName: data.fileName || null,
+    expectedResolutionDate: parsedDate,
   });
 
   await db.insert(schema.parentTicketActivities).values({
@@ -127,6 +154,7 @@ export async function createTicket(data: {
   });
 
   revalidatePath("/[locale]/(admin)/tickets", "page");
+  await sendNotification("ADMIN", "Ticket mới", `Ticket ${id} đã được tạo bởi ${data.parentName}`);
   return { id };
 }
 
@@ -159,6 +187,7 @@ export async function assignTicket(ticketId: string, assignedToId: string, actor
   });
 
   revalidatePath("/[locale]/(admin)/tickets", "page");
+  await sendNotification(assignedToId, "Bạn có ticket mới", `Bạn đã được phân công xử lý ticket ${ticketId}`);
 }
 
 export async function updateTicketStatus(ticketId: string, status: string, actorName: string, note?: string) {
@@ -190,6 +219,7 @@ export async function updateTicketStatus(ticketId: string, status: string, actor
   });
 
   revalidatePath("/[locale]/(admin)/tickets", "page");
+  await sendNotification("PARENT/STUDENT", "Cập nhật trạng thái ticket", `Ticket ${ticketId} đã chuyển sang trạng thái: ${status}`);
 }
 
 export async function reopenTicket(ticketId: string, actorName: string, reason: string) {
@@ -238,4 +268,25 @@ export async function getTicketActivities(ticketId: string) {
 export async function getSlaBreaches() {
   const all = await getTickets({ status: "open" });
   return all.filter(t => t.slaBreached);
+}
+
+export async function getStudents() {
+  return await db
+    .select({
+      id: schema.students.id,
+      fullName: schema.students.fullName,
+      className: schema.students.className,
+    })
+    .from(schema.students)
+    .orderBy(schema.students.fullName);
+}
+
+export async function getClasses() {
+  return await db
+    .select({
+      id: schema.classes.id,
+      name: schema.classes.name,
+    })
+    .from(schema.classes)
+    .orderBy(schema.classes.name);
 }
