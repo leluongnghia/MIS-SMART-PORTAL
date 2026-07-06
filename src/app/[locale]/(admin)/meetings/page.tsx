@@ -2,7 +2,7 @@ import React from 'react';
 import { getCurrentActor } from '@/src/libs/server/auth-helper';
 import { redirect } from 'next/navigation';
 import { Calendar } from 'lucide-react';
-import MeetingDashboard from './components/MeetingDashboard';
+import MeetingsModuleClient from './components/MeetingsModuleClient';
 
 export default async function MeetingsPage() {
   const actor = await getCurrentActor();
@@ -24,14 +24,14 @@ export default async function MeetingsPage() {
               Lịch họp &amp; Đặt phòng
             </h1>
             <p className="text-sm text-blue-100/80 font-light leading-relaxed">
-              Quản lý lịch họp giao ban, sự kiện nội bộ, đặt phòng chức năng và xác nhận tham dự.
+              Quản lý lịch họp, đặt phòng chức năng, kiểm tra phòng trống và xác nhận tham dự.
             </p>
           </div>
         </div>
       </div>
 
-      {/* Dashboard */}
-      <MeetingDashboard />
+      {/* Module tabs */}
+      <MeetingsModuleClient />
     </div>
   );
 }
