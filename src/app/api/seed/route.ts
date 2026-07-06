@@ -62,7 +62,7 @@ export async function GET() {
       }
       // GIÁO VIÊN (TEACHER)
       else if (r === "TEACHER") {
-        ["classes", "students", "conduct", "communication-book", "lesson-plans", "tickets"].forEach(mod => {
+        ["classes", "students", "communication-conduct", "class-timetable", "lesson-plans", "tickets"].forEach(mod => {
           if (allAccess[mod]) matrix[r][mod] = { view: true, edit: true, create: true };
         });
       }
@@ -115,9 +115,8 @@ export async function GET() {
         if (allAccess["events"]) matrix[d.id]["events"] = { ...allAccess["events"] };
         if (allAccess["announcements"]) matrix[d.id]["announcements"] = { ...allAccess["announcements"] };
       } else if (lowerName.includes("dịch vụ") || lowerName.includes("cskh")) {
-        if (allAccess["school-services"]) matrix[d.id]["school-services"] = { ...allAccess["school-services"] };
         if (allAccess["tickets"]) matrix[d.id]["tickets"] = { ...allAccess["tickets"] };
-        if (allAccess["communication-book"]) matrix[d.id]["communication-book"] = { view: true, create: true, edit: true };
+        if (allAccess["communication-conduct"]) matrix[d.id]["communication-conduct"] = { view: true, create: true, edit: true };
       } else if (lowerName.includes("kiểm soát") || lowerName.includes("audit")) {
         Object.keys(allAccess).forEach(mod => {
           matrix[d.id][mod] = { view: true };

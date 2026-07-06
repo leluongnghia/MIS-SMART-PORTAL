@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { fetchTimetable, createTimetableSlot } from '../app/[locale]/(admin)/timetable/actions';
+import { fetchTimetable, createTimetableSlot } from '../app/[locale]/(admin)/class-timetable/actions';
 import { fetchLessonPlans, addLessonPlan, submitPlanForApproval, approvePlan, rejectPlan } from '../app/[locale]/(admin)/lesson-plans/actions';
 import { useLanguage } from '../context/LanguageContext';
 import { translateLessonPlan, translateSubject, translateTitle } from '../utils/translations';
