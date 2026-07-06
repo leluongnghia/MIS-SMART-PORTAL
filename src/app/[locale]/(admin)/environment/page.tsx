@@ -6,8 +6,8 @@ import {
   ENVIRONMENT_REPORTS, 
   CLEANING_CHECKLISTS, 
   ENVIRONMENT_STATS 
-} from '@/mockData/environment';
-import { PageHeader } from '@/components/page-header';
+} from '@/src/mockData/environment';
+import { PageHeader } from '@/src/components/page-header';
 
 export default function EnvironmentPage() {
   return (
