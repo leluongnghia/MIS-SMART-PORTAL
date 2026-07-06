@@ -1,20 +1,22 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Calendar, Building2, Users, FileText, Shield } from 'lucide-react';
+import { Calendar, Building2, Users, FileText, Shield, Bell } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 import MeetingDashboard from './MeetingDashboard';
 import RoomBookingManager from './RoomBookingManager';
 import ParticipantManager from './ParticipantManager';
 import MinutesManager from './MinutesManager';
 import MeetingSettingsPanel from './MeetingSettingsPanel';
+import MeetingReportsPanel from './MeetingReportsPanel';
 
 const TABS = [
-  { id: 'dashboard',    label: 'Dashboard',       icon: Calendar  },
-  { id: 'rooms',        label: 'Đặt phòng họp',   icon: Building2 },
-  { id: 'participants', label: 'Người tham gia',   icon: Users     },
-  { id: 'minutes',      label: 'Biên bản họp',     icon: FileText  },
-  { id: 'settings',     label: 'Phân quyền & Cấu hình', icon: Shield },
+  { id: 'dashboard',    label: 'Dashboard',            icon: Calendar  },
+  { id: 'rooms',        label: 'Đặt phòng',             icon: Building2 },
+  { id: 'participants', label: 'Người tham gia',        icon: Users     },
+  { id: 'minutes',      label: 'Biên bản',              icon: FileText  },
+  { id: 'reports',      label: 'Thông báo & Báo cáo',   icon: Bell      },
+  { id: 'settings',     label: 'Phân quyền',            icon: Shield    },
 ] as const;
 
 type TabId = (typeof TABS)[number]['id'];
@@ -51,6 +53,7 @@ export default function MeetingsModuleClient() {
       {activeTab === 'rooms'        && <RoomBookingManager />}
       {activeTab === 'participants' && <ParticipantManager />}
       {activeTab === 'minutes'      && <MinutesManager />}
+      {activeTab === 'reports'      && <MeetingReportsPanel />}
       {activeTab === 'settings'     && <MeetingSettingsPanel />}
     </div>
   );
