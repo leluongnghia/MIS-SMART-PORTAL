@@ -62,6 +62,7 @@ type Ticket = {
   isUnassigned: boolean;
   isUrgentUnprocessed: boolean;
   deadline: Date | string;
+  expectedResolutionDate?: Date | null | string;
 };
 
 type StaffUser = {
@@ -71,7 +72,7 @@ type StaffUser = {
   title: string | null;
 };
 
-const CATEGORY_MAP: Record<string, { label: string; bg: string; text: string }> = {
+const CATEGORY_MAP: Record<string, { label: string; bg: string; text?: string }> = {
   academic: { label: 'Học vụ', bg: 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300' },
   admissions: { label: 'Tuyển sinh', bg: 'bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300' },
   support: { label: 'Chăm sóc phụ huynh', bg: 'bg-pink-50 text-pink-700 dark:bg-pink-950/40 dark:text-pink-300' },
@@ -649,7 +650,7 @@ export default function TicketsClient({
                       </button>
                     )}
 
-                    {selected.status === 'pending_approval' && (isAdmin || isBghOrAdmin) && (
+                    {selected.status === 'pending_approval' && isAdmin && (
                       <button
                         onClick={() => handleStatusChange('resolved', 'Phê duyệt hoàn thành bởi BGH')}
                         className="text-xs bg-emerald-600 text-white px-3.5 py-2 rounded-xl hover:bg-emerald-700 font-semibold cursor-pointer shadow-sm"
