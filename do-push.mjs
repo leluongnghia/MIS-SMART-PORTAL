@@ -13,7 +13,7 @@ async function run() {
   // Run drizzle-kit push
   const pushCmd = 'npx drizzle-kit push --force';
   console.log('Running:', pushCmd);
-  const pushRes = await ssh.execCommand(pushCmd, { cwd: `/home/${user}/duong-node-app` });
+  const pushRes = await ssh.execCommand(pushCmd, { cwd: remoteDir });
   console.log(pushRes.stdout);
   if (pushRes.stderr) console.error('stderr:', pushRes.stderr);
 

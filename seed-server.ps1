@@ -1,7 +1,7 @@
 $remoteCmd = @"
 export NVM_DIR="`$HOME/.nvm"
 [ -s "`$NVM_DIR/nvm.sh" ] && \. "`$NVM_DIR/nvm.sh"
-cd /home/duong/duong-node-app
+cd /home/duong/duong.nghiadev.net
 npm run db:seed
 "@
 

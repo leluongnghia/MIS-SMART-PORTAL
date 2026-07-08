@@ -110,6 +110,7 @@ export default function TicketsClient({
   currentActor,
   students,
   classes,
+  initialStats,
 }: {
   initialTickets: Ticket[];
   initialSlaBreaches: Ticket[];

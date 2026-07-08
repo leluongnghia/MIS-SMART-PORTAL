@@ -40,7 +40,7 @@ async function run() {
     await execCommand(`pm2 delete duong-node-app || true`);
     await execCommand(`cd ${remoteDir} && pm2 stop mis-portal || true`);
     await execCommand(`cd ${remoteDir} && pm2 delete mis-portal || true`);
-    await execCommand(`cd ${remoteDir} && pm2 start server.js --name mis-portal --env PORT=3000`);
+    await execCommand(`cd ${remoteDir} && pm2 start server.js --name mis-portal --node-args="-r dotenv/config" --env PORT=3000`);
     await execCommand(`pm2 save`);
 
     console.log('Configuring Nginx...');

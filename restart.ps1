@@ -1,7 +1,12 @@
 $remoteCmd = @"
 export NVM_DIR="`$HOME/.nvm"
 [ -s "`$NVM_DIR/nvm.sh" ] && \. "`$NVM_DIR/nvm.sh"
-pm2 restart duong-node-app || pm2 start npm --name duong-node-app -- start
+pm2 stop duong-node-app || true
+pm2 delete duong-node-app || true
+cd /home/duong/duong.nghiadev.net
+pm2 stop mis-portal || true
+pm2 delete mis-portal || true
+pm2 start server.js --name mis-portal --node-args="-r dotenv/config"
 pm2 save
 "@
 
