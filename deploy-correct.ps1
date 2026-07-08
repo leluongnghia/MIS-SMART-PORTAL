@@ -17,6 +17,7 @@ cp -r public .next/standalone/ || true
 cp -r .next/static .next/standalone/.next/ || true
 pm2 restart mis-portal || pm2 start server.js --name mis-portal
 pm2 save
+exit
 "@
 
 $remoteCmd | .\plink.exe -ssh duong@192.168.49.206 -pw "d123456" -hostkey "ssh-ed25519 255 SHA256:bYJyCtOaLSbt8pGdgX7jt27x/l4MeuqXmYl6dJtVJAc" -batch

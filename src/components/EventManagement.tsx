@@ -22,7 +22,9 @@ import {
   Users,
   CalendarHeart,
   ShieldAlert,
-  ClipboardList
+  ClipboardList,
+  MapPin,
+  Radio
 } from 'lucide-react';
 import { ParentSupportTicket, CommunicationContent, Survey, SchoolEvent, CrisisIncident } from '../types';
 
@@ -47,7 +49,9 @@ export default function EventManagement({ initialData, actions }: any) {
   const getCreateButtonConfig = () => {
     switch(activeTab) {
       case 'events': return { label: 'Tạo Sự kiện', action: () => openForm('EVENTS'), icon: Plus, color: 'bg-rose-600 hover:bg-rose-700' };
+      case 'communications': return { label: 'Tạo Chiến dịch', action: () => openForm('COMMUNICATIONS'), icon: Plus, color: 'bg-emerald-600 hover:bg-emerald-700' };
       case 'surveys': return { label: 'Tạo Khảo sát', action: () => openForm('SURVEYS'), icon: Plus, color: 'bg-amber-600 hover:bg-amber-700' };
+      case 'crisis': return { label: 'Báo cáo Sự cố', action: () => openForm('CRISIS'), icon: Plus, color: 'bg-red-600 hover:bg-red-700' };
       default: return { label: 'Tạo mới', action: () => openForm('EVENTS'), icon: Plus, color: 'bg-indigo-600 hover:bg-indigo-700' };
     }
   };
@@ -76,7 +80,9 @@ export default function EventManagement({ initialData, actions }: any) {
       <div className="flex items-center gap-2 border-b border-slate-200 mb-6 overflow-x-auto no-scrollbar">
         {[
           { id: 'events', label: 'Sự kiện', icon: CalendarHeart },
-          { id: 'surveys', label: 'Khảo sát', icon: ClipboardList }
+          { id: 'communications', label: 'Truyền thông', icon: Megaphone },
+          { id: 'surveys', label: 'Khảo sát', icon: ClipboardList },
+          { id: 'crisis', label: 'Khủng hoảng', icon: ShieldAlert }
         ].map(tab => (
           <button
             key={tab.id}
