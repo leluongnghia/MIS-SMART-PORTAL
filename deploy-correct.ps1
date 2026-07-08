@@ -10,6 +10,7 @@ git reset --hard
 git fetch --all
 git reset --hard origin/main
 echo $b64 | base64 -d > .env.local
+mkdir -p .next/types
 npm install --legacy-peer-deps --no-package-lock
 npm run build
 cp -r .next/standalone/* ./
