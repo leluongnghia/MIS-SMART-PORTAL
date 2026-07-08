@@ -36,27 +36,124 @@ export async function getInitialData() {
       }
       data = await db.select().from(schema.events).where(isNull(schema.events.deletedAt));
     }
-    return { data };
+    
+    // Fetch campaigns
+    const campaigns = await db.select().from(schema.communicationCampaigns).where(isNull(schema.communicationCampaigns.deletedAt));
+    
+    return { data, campaigns };
   } catch (e) {
     console.error("Events getInitialData failed:", e);
-    return { data: [] };
+    return { data: [], campaigns: [] };
   }
 }
 
-export async function createEvent(formData: { title: string; date: string; department: string; desc: string; location: string }) {
+export async function createEvent(formData: any) {
   try {
     const id = 'event_' + Math.random().toString(36).substring(2, 11);
+    
+    // Build payload object
+    const payload = {
+      desc: formData.description,
+      objective: formData.objective,
+      isOnline: formData.isOnline,
+      onlineLink: formData.onlineLink,
+      participants: formData.participants,
+      gradeIds: formData.gradeIds,
+      classIds: formData.classIds,
+      expectedAttendees: formData.expectedAttendees,
+      guestNote: formData.guestNote,
+      coDepartments: formData.coDepartments,
+      eventTeam: formData.eventTeam,
+      approverId: formData.approverId,
+      content: formData.content,
+      checklist: formData.checklist,
+      needCommunicationPlan: formData.needCommunicationPlan,
+      needParentNotice: formData.needParentNotice,
+      communicationChannels: formData.communicationChannels,
+      plannedAnnouncementAt: formData.plannedAnnouncementAt,
+      riskLevel: formData.riskLevel,
+      safetyPlan: formData.safetyPlan,
+      medicalSupportNeeded: formData.medicalSupportNeeded,
+      securitySupportNeeded: formData.securitySupportNeeded,
+      emergencyContact: formData.emergencyContact,
+      createRiskRecord: formData.createRiskRecord,
+      postEventReport: null
+    };
+
     await db.insert(schema.events).values({
       id,
-      title: formData.title,
-      date: new Date(formData.date),
-      department: formData.department,
-      payload: { desc: formData.desc, location: formData.location }
+      title: formData.eventName,
+      type: formData.eventType,
+      status: formData.status || 'draft',
+      date: new Date(formData.startAt || Date.now()), // date is required by schema, fallback
+      startAt: formData.startAt ? new Date(formData.startAt) : null,
+      endAt: formData.endAt ? new Date(formData.endAt) : null,
+      location: formData.location,
+      department: formData.ownerDepartment,
+      managerId: formData.ownerId,
+      budget: formData.budget || 0,
+      payload
     });
+    
     revalidatePath('/[locale]/events', 'layout');
     return { success: true };
   } catch (e: any) {
     console.error("Create event failed:", e);
+    return { success: false, error: e.message };
+  }
+}
+
+export async function updateEventStatus(eventId: string, newStatus: string) {
+  try {
+    await db.update(schema.events)
+      .set({ status: newStatus, updatedAt: new Date() })
+      .where(eq(schema.events.id, eventId));
+    revalidatePath('/[locale]/events', 'layout');
+    return { success: true };
+  } catch (e: any) {
+    console.error("Update event status failed:", e);
+    return { success: false, error: e.message };
+  }
+}
+
+export async function updateEventChecklist(eventId: string, checklist: any[]) {
+  try {
+    const event = await db.select().from(schema.events).where(eq(schema.events.id, eventId)).limit(1);
+    if (!event || event.length === 0) throw new Error("Event not found");
+    const existingPayload = event[0].payload as any;
+    
+    await db.update(schema.events)
+      .set({ 
+        payload: { ...existingPayload, checklist }, 
+        updatedAt: new Date() 
+      })
+      .where(eq(schema.events.id, eventId));
+      
+    revalidatePath('/[locale]/events', 'layout');
+    return { success: true };
+  } catch (e: any) {
+    console.error("Update event checklist failed:", e);
+    return { success: false, error: e.message };
+  }
+}
+
+export async function submitPostEventReport(eventId: string, reportData: any) {
+  try {
+    const event = await db.select().from(schema.events).where(eq(schema.events.id, eventId)).limit(1);
+    if (!event || event.length === 0) throw new Error("Event not found");
+    const existingPayload = event[0].payload as any;
+    
+    await db.update(schema.events)
+      .set({ 
+        payload: { ...existingPayload, postEventReport: reportData }, 
+        updatedAt: new Date() 
+      })
+      .where(eq(schema.events.id, eventId));
+      
+    revalidatePath('/[locale]/events', 'layout');
+    return { success: true };
+  } catch (e: any) {
+    console.error("Submit report failed:", e);
     return { success: false, error: e.message };
   }
 }

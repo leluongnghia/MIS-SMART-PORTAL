@@ -34,6 +34,9 @@ const formSchema = z.object({
   coDepartments: z.array(z.string()).optional(),
   eventTeam: z.array(z.string()).optional(),
   approverId: z.string().optional(),
+  
+  budget: z.number().min(0).optional(),
+  content: z.string().optional(),
 
   checklist: z.array(z.object({
     id: z.string(),
@@ -288,8 +291,17 @@ export default function CreateEventForm({ onClose, onSubmit }: CreateEventFormPr
                 <ErrorMsg name="objective" />
               </div>
               <div className="space-y-1.5 md:col-span-2">
+                <label className="text-xs font-bold text-slate-600">Nội dung chương trình</label>
+                <textarea {...register('content')} rows={3} placeholder="Mô tả chi tiết nội dung chương trình, các hoạt động chính..." className="w-full text-sm border-slate-200 rounded-xl focus:ring-indigo-500"></textarea>
+              </div>
+              <div className="space-y-1.5">
                 <label className="text-xs font-bold text-slate-600">Mô tả ngắn</label>
                 <textarea {...register('description')} rows={2} className="w-full text-sm border-slate-200 rounded-xl focus:ring-indigo-500"></textarea>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-600">Ngân sách dự kiến (VND)</label>
+                <input type="number" {...register('budget', { valueAsNumber: true })} placeholder="Ví dụ: 10000000" className="w-full text-sm border-slate-200 rounded-xl focus:ring-indigo-500 font-mono" />
+                <ErrorMsg name="budget" />
               </div>
             </div>
           </section>
